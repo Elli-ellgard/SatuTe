@@ -2,6 +2,7 @@
 #-----------------------------------------------------
 import sys
 import argparse
+import glob
 import numpy as np
 import regex as re
 import pandas as pd
@@ -35,12 +36,14 @@ def parse_input():
     parser.add_argument("-o",help="output files prefix",default="satute_output_file",metavar="<file_name>")
     parser.add_argument("-dir",help="path to input directory",default="no directory",metavar="<file_name>")
     parser.add_argument("-iqtree",help="path to IQ-TREE",default="iqtree2",metavar="<file_name>")
+    parser.add_argument("-model", help="model of evolution", type=str, default="",metavar="<str>")
     parser.add_argument("-nr", help="number of rate categories", type=int, default=1,metavar="<num>")
+    parser.add_argument("-ufboot", help="Replicates for ultrafast bootstrap (>=1000)", type=int, default=0,metavar="<num>")
+    parser.add_argument("-boot", help="Replicates for bootstrap + ML tree + consensus tree", type=int, default=0,metavar="<num>")
 
-    #parsing arguments
+    # parsing arguments
     args = parser.parse_args(sys.argv[1:])
     #------------------------------------
-    
     d=vars(args)
     file=open(args.o+".log","w")
     file.write("-"*100+'\n')
@@ -57,19 +60,41 @@ def parse_input():
     file.close()
 
     #-------------
-    check_input(d["iqtree"], d["dir"], d["nr"], d["o"])
+    check_input(d["iqtree"], d["dir"],d["model"], d["nr"], d["o"],d["ufboot"],d["boot"])
 
 
-def check_input(iqtree,idir,nr,o):
+def check_input(iqtree,idir,m,nr,o,ufboot,boot):
     """ 
     Check if all parameters are correct and which files the input directory includes
     """
     print("Check available input")
     if os.path.isdir(idir):
-        if os.path.isfile(idir + ".+.fasta"):
-            print("fasta file exists")
-        elif os.path.isfile(idir + ".+.phy"):
-            print("phy file exists")
+        #check if it is a possible input msa for iqtree is present
+        input_msa = ""
+        lst = ["fasta", "nex", "phy"]
+        for file in os.listdir(idir):
+                for suffix in lst:
+                    if(file.find(suffix) != -1):
+                        input_msa = idir + file
+                        print(suffix," file",input_msa," exists")
+        if input_msa == "":
+            sys.exit("INPUT_ERROR: no multiple sequence alignment is given")
+
+        #check if treefile is present
+        lst = ["treefile", "nex", "nwk"]
+        treefile = ""
+        for file in os.listdir(idir):
+            for suffix in lst:
+                if(file.find(suffix)!=-1):
+                    treefile =idir + file
+                    print(suffix, "file", treefile, "exists")
+        
+        if(treefile != ""):
+            print("run iqtree with fixed tree")
+        else:
+            print("run iqtree")
+
+   
         
     else:
         sys.exit("INPUT_ERROR: input directory does not exist")
