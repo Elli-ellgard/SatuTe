@@ -982,7 +982,6 @@ def diagonalisation(n,path):
     return array_eigenvectors,multiplicity
 
 
-
 def saturationTest(pathDATA, pathIQTREE, runIQTREE = True, runBOOTSRAP = True, dimension = 4, number_rates = 4, chosen_rate = str(4), z_alpha = 2.33, newickformat = 1, epsilon = 0.01, rawMemory = True):
     """IQ-TREE"""
     if runIQTREE:
@@ -1242,8 +1241,6 @@ def saturationTest(pathDATA, pathIQTREE, runIQTREE = True, runBOOTSRAP = True, d
     results_file.write("\n\nFor better reference, this is the reconstructed tree topology :\n\n")
     results_file.write(T.copy("newick").get_ascii(attributes=["name","label","distance"]))
     print("\n\nThe T2T status uses as threshold the saturation coherence between two sequences, which is ", "{:.4f}".format(c_sTwoSequence))
-
-
 
 
 if __name__ == '__main__':
