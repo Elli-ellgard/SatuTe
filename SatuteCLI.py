@@ -6,12 +6,15 @@ import os
 import logging
 import subprocess
 from pathlib import Path
+import re
+
 
 # Configure the logging settings (optional)
 logging.basicConfig(
     level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
+
 
 class Satute:
     def __init__(self, iqtree, input_dir, model, nr, output_prefix, ufboot, boot):
@@ -45,7 +48,7 @@ class Satute:
                 "metavar": "<file_name>",
             },
             {
-                "flag": "-model",
+                "flag": "-m",
                 "help": "Model of evolution",
                 "type": str,
                 "default": self.model,
@@ -100,10 +103,24 @@ class Satute:
     def run(self):
         # Run the Satute command-line tool.
         self.parse_input()
-        self.check_input()
-        self.run_subprocess(f"{self.input_args.iqtree} -s {self.input_args.dir}")
-        # Run the desired functionality of your tool
+        file_arguments = self.check_input()
+        self.run_iqtree_with_arguments(file_arguments)
         self.write_log()
+
+    def run_iqtree_with_arguments(self, file_argument):
+        argument_list = []
+        for key, value in self.input_args_dict.items():
+            if key != "iqtree" and value and key != "dir":
+                argument_list.append(f"-{key} {value}")
+        logger = logging.getLogger(__name__)
+        logger.info(f"Running IQ-TREE with the following arguments: {argument_list}")
+        iq_tree_command = f"{self.input_args.iqtree} {file_argument['argument']} {file_argument['file']} {' '.join(argument_list)}"
+        logger.info(f"Running IQ-TREE with the following command: {iq_tree_command}")
+        try:
+            subprocess.run(iq_tree_command, shell=True, check=True)
+            logger.info("IQ-TREE execution completed successfully.")
+        except subprocess.CalledProcessError as e:
+            logger.error(f"IQ-TREE execution failed with the following error: {e}")    
 
     def run_subprocess(self, command):
         try:
@@ -116,13 +133,11 @@ class Satute:
                 logging.error(f"Error occurred: {stderr.decode('utf-8')}")
             else:
                 logging.info(f"Output: {stdout.decode('utf-8')}")
-
         except Exception as e:
             logging.error(f"An error occurred while running the subprocess: {str(e)}")
 
     def check_input(self):
         logger.info("Check available input")
-
         self.input_args.dir = Path(self.input_args.dir)
         self.input_args.iqtree = Path(self.input_args.iqtree)
 
@@ -132,19 +147,21 @@ class Satute:
 
         msa_file_types = {".fasta", ".nex", ".phy"}
         tree_file_types = {".treefile", ".nex", ".nwk"}
+            
+        tree_file = self.find_file(tree_file_types)
+        msa_file = self.find_file(msa_file_types)
 
-        input_msa = self.find_file(msa_file_types)
-        if input_msa is None:
+        if msa_file is None:
             logger.error("INPUT_ERROR: no multiple sequence alignment is given")
             sys.exit()
-        logger.info(f"{input_msa.suffix} file {input_msa} exists")
-
-        tree_file = self.find_file(tree_file_types)
         if tree_file:
+            logger.info("Run iqtree with fixed tree")
             logger.info(f"{tree_file.suffix} file {tree_file} exists")
-            logger.info("run iqtree with fixed tree")
+            return {"option": "fixed_tree", "file": tree_file, 'argument': '-t'}
         else:
-            logger.info("run iqtree")
+            logger.info("Run iqtree")
+            logger.info(f"{msa_file.suffix} file {msa_file} exists")
+            return {"option": "msa", "file": msa_file, 'argument': "-s"}
 
     def find_file(self, suffixes):
         for file in self.input_args.dir.iterdir():
@@ -152,15 +169,54 @@ class Satute:
                 return file
         return None
 
+    def extract_best_model_from_log_file(self, file_path):
+        if not self.file_exists(file_path):
+            print("File does not exist.")
+            return []
+
+        with open(file_path, 'r') as file:
+            content = file.read()
+
+        table_pattern = re.compile(r'No.\s+Model\s+-LnL\s+df\s+AIC\s+AICc\s+BIC\n(.*?\n)---', re.DOTALL)
+        table_match = re.search(table_pattern, content)
+
+        if table_match:
+            table_content = table_match.group(1)
+            rows = table_content.strip().split('\n')
+            row_data = re.split(r'\s+', rows[0].strip())
+            model_info = []
+            model_info.append({
+                'No.': row_data[0],
+                'Model': row_data[1],
+                '-LnL': row_data[2],
+                'df': row_data[3],
+                'AIC': row_data[4],
+                'AICc': row_data[5],
+                'BIC': row_data[6]
+            })
+
+            return model_info
+        else:
+            print("Table not found in the file.")
+            return []
+
+    def file_exists(self, file_path):
+        try:
+            with open(file_path):
+                pass
+            return True
+        except FileNotFoundError:
+            return False
+
 if __name__ == "__main__":
     # Instantiate the Satute class with your desired arguments
     iqtree_path = "iqtree2"
-    input_directory = "no directory"
-    model = ""
-    num_rate_categories = 1
-    output_prefix = "satute_output_file"
-    ufboot_replicates = 0
-    boot_replicates = 0
+    input_directory = Path("./")
+    output_prefix = None    
+    model = None
+    num_rate_categories = None
+    ufboot_replicates = None
+    boot_replicates = None
 
     satute = Satute(
         iqtree=iqtree_path,
@@ -173,3 +229,11 @@ if __name__ == "__main__":
     )
     # Run the tool
     satute.run()
+    # Example usage
+    file_path = './test/octo-kraken-test/example.phy.log'
+    model_info = satute.extract_best_model_from_log_file(file_path)
+
+
+
+ 
+

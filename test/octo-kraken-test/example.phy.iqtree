@@ -1,8 +1,8 @@
 IQ-TREE 2.2.0 COVID-edition built Jun  1 2022
 
-Input file name: test/octo-kraken-test
+Input file name: test/octo-kraken-test/example.phy
 Type of analysis: ModelFinder + tree reconstruction
-Random seed number: 366076
+Random seed number: 623673
 
 REFERENCES
 ----------
@@ -195,7 +195,7 @@ Tree in newick format:
 TIME STAMP
 ----------
 
-Date and time: Thu May 25 16:25:34 2023
-Total CPU time used: 5.85914 seconds (0h:0m:5s)
-Total wall-clock time used: 5.74089 seconds (0h:0m:5s)
+Date and time: Fri May 26 12:05:40 2023
+Total CPU time used: 5.66611 seconds (0h:0m:5s)
+Total wall-clock time used: 5.52381 seconds (0h:0m:5s)
 

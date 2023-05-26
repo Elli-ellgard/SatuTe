@@ -1,0 +1,30 @@
+IQ-TREE multicore version 2.2.0 COVID-edition for Mac OS X 64-bit built Jun  1 2022
+Developed by Bui Quang Minh, James Barbetti, Nguyen Lam Tung,
+Olga Chernomor, Heiko Schmidt, Dominik Schrempf, Michael Woodhams, Ly Trong Nhan.
+
+Input tree/split network file name: test/octo-kraken-test/example.phy.treefile
+Input file format: Newick
+
+Type of measure: Unrooted phylogenetic diversity (PD)
+Search objective: Maximum
+Search algorithm: Detected -> Greedy
+Search option: Single optimal set
+
+Type of analysis: Subset size k on tree
+Tree size: 17 taxa, 31 branches
+
+==============================================================================
+For k = 4 the optimal PD score is 1.83784
+The optimal PD set has 4 taxa:
+Crocodile
+LngfishSA
+Human
+Lizard
+
+Corresponding sub-tree: 
+(Crocodile:0.306468,(Lizard:0.386908,(Human:0.429762,LngfishSA:0.518314):0.0741317):0.12226);
+
+==============================================================================
+Time used: 1.7e-05 seconds.
+Finished time: Fri May 26 12:53:12 2023
+
