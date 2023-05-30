@@ -14,17 +14,17 @@ Type of analysis: Subset size k on tree
 Tree size: 17 taxa, 31 branches
 
 ==============================================================================
-For k = 4 the optimal PD score is 1.83784
+For k = 4 the optimal PD score is 1.19292
 The optimal PD set has 4 taxa:
 Crocodile
-LngfishSA
-Human
+LngfishAf
+Whale
 Lizard
 
 Corresponding sub-tree: 
-(Crocodile:0.306468,(Lizard:0.386908,(Human:0.429762,LngfishSA:0.518314):0.0741317):0.12226);
+(Crocodile:0.17853,(Lizard:0.23755,(Whale:0.291083,LngfishAf:0.339672):0.0843303):0.0617579);
 
 ==============================================================================
-Time used: 1.7e-05 seconds.
-Finished time: Fri May 26 12:53:12 2023
+Time used: 2e-05 seconds.
+Finished time: Tue May 30 14:38:17 2023
 
