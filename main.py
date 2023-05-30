@@ -18,6 +18,8 @@ def remove_filename(path):
     pathFOLDER = '/'.join(parts)+"/" #Path where the we create folders
     return pathFOLDER
 
+
+""" Read newick string from .iqtree file """
 def read_tree(path,newickformat):
 
     filne = path +".iqtree"
@@ -100,7 +102,7 @@ def modify_seqfile(path,leaves,option):
 
     filesequence = path
 
-    if option==1:
+    if option==1: #assumption: msa in  phylip format
 
         with open(filesequence, 'r+') as f:
             with open(path+".txt", 'w') as writer:
@@ -112,7 +114,7 @@ def modify_seqfile(path,leaves,option):
                             lmod = l[:len(i)-1] + '*' + l[len(i)-1:]
                             writer.write(lmod)
 
-    elif option==2:
+    elif option==2: #assumption:  msa in fasta file 
 
         with open(filesequence, 'r+') as f:
             with open(path+".txt", 'w') as writer:
@@ -911,15 +913,16 @@ def rate_and_frequenciesALTERNATIVE(path,number_rates, dimension):
             f1.write(modelAndFrequency)
     return state_frequencies_vect
 
-"""## DIAGONALISATION OF THE RATE MATRIX
-
-"""
-
+""" DIAGONALISATION OF THE RATE MATRIX
+    output: array of eigenvectors for the dominant non-zero eigenvalue, length of array = multiplicity
+    This way of diagonalisation only works for REVERSIBLE rate matrices!!!
+ """
 def diagonalisation(n,path):
 
     ratematrix = np.zeros((n,n))
     phimatrix = np.zeros((n,n))
 
+    """ get the rate matrix Q and stationary distribution pi from .iqtree file"""
     filne = path+".iqtree"
     with open(filne, 'r+') as f:
         lines = f.readlines()
@@ -940,11 +943,13 @@ def diagonalisation(n,path):
             elif "State frequencies: (equal frequencies)" in line:
                 for j in range(n):
                     phimatrix[j,j] = 0.25
-
+    """ Then phimatrix := Diag(pi). Recall that matrix Q is reversible iff M:= phimatrix^1/2 x Q xphimatrix^{-1/2} is symmetric.
+      """
     M = scipy.linalg.fractional_matrix_power(phimatrix, +1/2)@ratematrix
     M = M@scipy.linalg.fractional_matrix_power(phimatrix, -1/2)
 
-    lamb,w =  np.linalg.eig(M) #Compute the eigenvalues and right eigenvectors.
+    """ diagonalisation of M"""
+    lamb,w =  np.linalg.eig(M) #Compute the eigenvalues and right eigenvectors .
     idx = lamb.argsort()[::-1] #Order from large to small.
     lamb = lamb[idx]
     w = w[:,idx]
@@ -955,7 +960,7 @@ def diagonalisation(n,path):
             lamb_nozero.append(i)
 
     index = []
-    max_lambda = max(lamb_nozero)
+    max_lambda = max(lamb_nozero) # dominant non-zero eigenvalue
     index.append((lamb.tolist()).index(max_lambda))
 
     lamb_nozero.remove(max_lambda)
@@ -982,9 +987,8 @@ def diagonalisation(n,path):
     return array_eigenvectors,multiplicity
 
 
-
 def saturationTest(pathDATA, pathIQTREE, runIQTREE = True, runBOOTSRAP = True, dimension = 4, number_rates = 4, chosen_rate = str(4), z_alpha = 2.33, newickformat = 1, epsilon = 0.01, rawMemory = True):
-    """IQ-TREE"""
+    """ Run IQ-TREE -----> delete """
     if runIQTREE:
         modelRatesInv = "GTR+G"+str(number_rates)+"+I"
         modelHomo = "GTR"
@@ -1011,15 +1015,22 @@ def saturationTest(pathDATA, pathIQTREE, runIQTREE = True, runBOOTSRAP = True, d
             if not word.isnumeric():
                 option = 2 #Since the first line is not only numbers, we assume it is a fasta file
 
-    """PATHS"""
+    """ PATH  to input directory
+        Need  to be changed"""
     pathFOLDER = remove_filename(pathDATA)
-    "MAIN"
+
+    " MAIN"
+    """ data structure for phylogenetic tree"""
     t,T =  read_tree(pathDATA,newickformat)
     leaves,internal_nodes =  node_type(T)
     vector_branches,vector_distances =  branches_lengths(T)
 
+    """get sequences from msa (in phylip format or fasta format)
+        save them into new INPUTMSA.txt file """
     modify_seqfile(pathDATA,leaves,option)
 
+    """" no idea, where I need this,
+        copy .state to memory.csv"""
     nodes_number,nucleotides_sites =  number_nodes_sites(pathDATA)
 
     if number_rates>1:
@@ -1036,8 +1047,9 @@ def saturationTest(pathDATA, pathIQTREE, runIQTREE = True, runBOOTSRAP = True, d
         sequences_clades(pathDATA,number_rates,nodes_number,nucleotides_sites,clades1,clades2,option,newickformat,internal_nodes, [])
     state_frequencies_vect =  rate_and_frequenciesALTERNATIVE(pathDATA,number_rates, dimension)
 
+    
+    """ get the eigenvector(s) of the dominate non-zero eigenvalue"""
     array_eigenvectors,multiplicity =  diagonalisation(dimension,pathDATA)
-
 
 
     """BASH SCRIPT BEFORE TEST"""
@@ -1064,7 +1076,7 @@ def saturationTest(pathDATA, pathIQTREE, runIQTREE = True, runBOOTSRAP = True, d
                 
     os.system("bash -c '%s'" % script)
 
-
+    """" If we change the data structure before, the  main part would be here"""
 
     """SATURATION TEST FOR ALL BRANCHES"""
 
@@ -1257,9 +1269,9 @@ if __name__ == '__main__':
 #    pathIQTREE = input("What is the path to IQ-TREE?\n")
 #    numberRates = int(input("How many rate categories do you want to use?\n"))
     
-    DIR = "/home/elgert/Desktop/Neue_Daten_2023_05_12/results/pbmc3k/satute/"
+    DIR_p = "/home/elgert/Desktop/Cassius/Satute/test/case_fasta/"
 
-    pathDATA = DIR + "/subsampled_alignment_pbmc3k_500hvg_genewisenormed/"+"/subsampled_alignment_pbmc3k_500hvg_genewisenormed.fasta"
+    pathDATA = DIR_p + "subsampled_alignment_pbmc3k_100hvg_genewisenormed.fasta"
     #"/home/elgert/Desktop/Neue_Daten_2023_05_12/satute/subsampled_alignment_pbmc3k_500hvg_genewisenormed/fourRates/subsampled_alignment_pbmc3k_500hvg_genewisenormed.fasta"
     # "/home/elgert/Desktop/Neue_Daten_2023_05_12/satute/subsampled_alignment_pbmc3k_100hvg_genewisenormed/subsampled_alignment_pbmc3k_100hvg_genewisenormed.fasta"
     #"/home/elgert/Desktop/Neue_Daten_2023_05_12/satute/subsampled_alignment_pbmc3k_100randomgenes_genewisenormed/subsampled_alignment_pbmc3k_100randomgenes_genewisenormed.fasta"
