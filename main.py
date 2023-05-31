@@ -3,9 +3,7 @@
 import numpy as np
 import regex as re
 import pandas as pd
-import ete3
 from ete3 import Tree
-import csv
 import os
 import scipy
 import scipy.linalg
@@ -539,7 +537,6 @@ def save_rates(path,number_rates):
     return rates
 
 """## MODIFY BRANCHES LENGTHS (if it corresponds), ADD FOO AND SAVE CLADES"""
-
 def save_clades(path,number_rates,clades1,clades2,newickformat,rates):
     pathFolder = remove_filename(path)
     if number_rates==1:
@@ -1064,7 +1061,6 @@ def saturationTest(pathDATA, pathIQTREE, runIQTREE = True, runBOOTSRAP = True, d
     os.system("bash -c '%s'" % script)
 
 
-
     """SATURATION TEST FOR ALL BRANCHES"""
 
     U = 1.0/float(min(state_frequencies_vect)) - 1
@@ -1272,3 +1268,6 @@ if __name__ == '__main__':
         else:
             saturationTest(pathDATA, pathIQTREE, False, False, 4, numberRates, str(numberRates-i), 2.33, 1, 0.01, True)
 
+
+    # MSA + Tree + Model
+    # 
