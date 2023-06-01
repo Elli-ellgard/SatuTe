@@ -184,7 +184,7 @@ class Satute:
                 saturation_test_cli(
                     str(arguments_dict["msa_file"]),
                     newick_string,
-                    self.input_args.iqtree,
+                    str(self.input_args.iqtree),
                     4,
                     number_rates,
                     str(number_rates - i),
@@ -197,7 +197,7 @@ class Satute:
                 saturation_test_cli(
                     str(arguments_dict["msa_file"]),
                     newick_string,
-                    self.input_args.iqtree,
+                    str(self.input_args.iqtree),
                     4,
                     number_rates,
                     str(number_rates - i),

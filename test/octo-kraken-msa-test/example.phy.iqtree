@@ -1,0 +1,117 @@
+IQ-TREE 2.2.0 COVID-edition built Jun  1 2022
+
+Input file name: test/octo-kraken-msa-test/example.phy
+User tree file name: test/octo-kraken-msa-test/example.phy.treefile
+Type of analysis: tree reconstruction
+Random seed number: 187553
+
+REFERENCES
+----------
+
+To cite IQ-TREE please use:
+
+Bui Quang Minh, Heiko A. Schmidt, Olga Chernomor, Dominik Schrempf,
+Michael D. Woodhams, Arndt von Haeseler, and Robert Lanfear (2020)
+IQ-TREE 2: New models and efficient methods for phylogenetic inference
+in the genomic era. Mol. Biol. Evol., in press.
+https://doi.org/10.1093/molbev/msaa015
+
+SEQUENCE ALIGNMENT
+------------------
+
+Input data: 17 sequences with 1998 nucleotide sites
+Number of constant sites: 686 (= 34.3343% of all sites)
+Number of invariant (constant or ambiguous constant) sites: 686 (= 34.3343% of all sites)
+Number of parsimony informative sites: 1009
+Number of distinct site patterns: 1152
+
+SUBSTITUTION PROCESS
+--------------------
+
+Model of substitution: GTR+F
+
+Rate parameter R:
+
+  A-C: 3.4464
+  A-G: 4.5633
+  A-T: 3.5732
+  C-G: 0.5359
+  C-T: 8.7272
+  G-T: 1.0000
+
+State frequencies: (empirical counts from alignment)
+
+  pi(A) = 0.3547
+  pi(C) = 0.2282
+  pi(G) = 0.1919
+  pi(T) = 0.2252
+
+Rate matrix Q:
+
+  A   -0.8873    0.2829     0.315    0.2894
+  C    0.4396    -1.183   0.03699    0.7068
+  G    0.5821   0.04399   -0.7071   0.08099
+  T    0.4558    0.7164   0.06903    -1.241
+
+Model of rate heterogeneity: Uniform
+
+USER TREE
+---------
+
+Log-likelihood of the tree: -22701.4647 (s.e. 344.5118)
+Unconstrained log-likelihood (without tree): -11402.5956
+Number of free parameters (#branches + #model parameters): 39
+Akaike information criterion (AIC) score: 45480.9295
+Corrected Akaike information criterion (AICc) score: 45482.5229
+Bayesian information criterion (BIC) score: 45699.3257
+
+Total tree length (sum of branch lengths): 2.8622
+Sum of internal branch lengths: 0.7065 (24.6827% of tree length)
+
+NOTE: Tree is UNROOTED although outgroup taxon 'LngfishAu' is drawn at root
+
++-------------LngfishAu
+| (Node1)
+|        +--------------LngfishSA
++--------| (Node2)
+|        +--------------LngfishAf
+|
+|      +------------------Frog
++------| (Node3)
+       |                    +-----------------Turtle
+       |                 +--| (Node7)
+       |                 |  |      +---------------------Crocodile
+       |                 |  +------| (Node8)
+       |                 |         +-----------------Bird
+       |              +--| (Node6)
+       |              |  +-----------------------Sphenodon
+       |         +----| (Node5)
+       |         |    +-------------------------Lizard
+       +---------| (Node4)
+                 |                +---------------Human
+                 |             +--| (Node11)
+                 |             |  |  +--------Seal
+                 |             |  +--| (Node12)
+                 |             |     |  +-------Cow
+                 |             |     +--| (Node13)
+                 |             |        +---------Whale
+                 |         +---| (Node10)
+                 |         |   |         +-----Mouse
+                 |         |   +---------| (Node14)
+                 |         |             +-------Rat
+                 +---------| (Node9)
+                           |   +---------------Platypus
+                           +---| (Node15)
+                               +------------Opossum
+
+Tree in newick format:
+
+(LngfishAu:0.1207008632,(LngfishSA:0.1242517730,LngfishAf:0.1249090110)Node2:0.0727114487,(Frog:0.1589815218,((((Turtle:0.1456197582,(Crocodile:0.1790418293,Bird:0.1517822102)Node8:0.0585771074)Node7:0.0291575452,Sphenodon:0.2013696130)Node6:0.0258961893,Lizard:0.2172481541)Node5:0.0482859400,(((Human:0.1361646501,(Seal:0.0757216303,(Cow:0.0684332556,Whale:0.0820524794)Node13:0.0315470025)Node12:0.0231773733)Node11:0.0288899032,(Mouse:0.0538574905,Rat:0.0713369243)Node14:0.0815393240)Node10:0.0399564471,(Platypus:0.1332819647,Opossum:0.1109921420)Node15:0.0389819687)Node9:0.0840553463)Node4:0.0824463843)Node3:0.0612521628)Node1;
+
+TIME STAMP
+----------
+
+Date and time: Thu Jun  1 18:39:56 2023
+Total CPU time used: 0.090468 seconds (0h:0m:0s)
+Total wall-clock time used: 0.130105 seconds (0h:0m:0s)
+

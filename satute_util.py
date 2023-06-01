@@ -9,6 +9,7 @@ import scipy
 import scipy.linalg
 import subprocess
 
+
 def remove_filename(path):
     parts = path.split("/")
     nameFILE = parts[-1]
@@ -18,6 +19,8 @@ def remove_filename(path):
 
 
 """## INTERNAL NODES AND LEAVES"""
+
+
 def node_type(T):
     leaves = []
     for i in T.get_leaves():
@@ -1335,32 +1338,39 @@ def saturation_test_cli(
     """ get the eigenvector(s) of the dominate non-zero eigenvalue"""
     array_eigenvectors, multiplicity = diagonalisation(dimension, pathDATA)
     script = ""
+    model_and_frequency = ""
+    path_new_folder = ""
 
     """BASH SCRIPT BEFORE TEST"""
     if number_rates > 1:
-        pathNEWFOLDER = pathFOLDER + "subsequences/subseq" + chosen_rate + "/clades/*"
+        path_new_folder = pathFOLDER + "subsequences/subseq" + chosen_rate + "/clades/*"
 
         with open(f"{pathFOLDER}subsequences/subseq{chosen_rate}/model.txt") as toModel:
             model_and_frequency = toModel.readline().strip("\n")
 
-        script = f"""
-            for d in ${pathNEWFOLDER}; do 
-                cd "$d"; 
-                {str(pathIQTREE)} -s sequence.txt -te tree.txt -m "\'"{model_and_frequency}"\'" -asr -blfix -o FOO -pre output -redo -quiet     
-            done
-            """
-
     else:
-        pathNEWFOLDER = pathFOLDER + "clades/*"
+        path_new_folder = pathFOLDER + "clades/*"
         with open(pathFOLDER + "model.txt", "r") as toModel:
             model_and_frequency = toModel.readline().strip("\n")
 
-        script = f"""
-            for d in ${pathNEWFOLDER}; do 
-                cd $d; 
-                {str(pathIQTREE)} -s sequence.txt -te tree.txt -m "\'"{model_and_frequency}"\'" -asr -blfix -o FOO -pre output -redo -quiet     
-            done
-            """
+
+    script = (
+        """
+        CURRENT_DIR=$(pwd)
+        for d in """
+        + path_new_folder
+        + """; do
+                    cd "$d"
+                    """
+        + pathIQTREE
+        + """ -s sequence.txt -te tree.txt -m \"'\""""
+        + model_and_frequency
+        + """\"'\" -asr -blfix -o FOO -pre output -redo -quiet
+            cd "$CURRENT_DIR"                    
+        done"""
+    )
+
+    print(script)
 
     os.system("bash -c '%s'" % script)
 

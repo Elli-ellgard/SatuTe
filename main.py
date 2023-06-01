@@ -18,7 +18,6 @@ def remove_filename(path):
     pathFOLDER = '/'.join(parts)+"/" #Path where the we create folders
     return pathFOLDER
 
-
 """ Read newick string from .iqtree file """
 def read_tree(path,newickformat):
 
@@ -1058,21 +1057,25 @@ def saturationTest(pathDATA, pathIQTREE, runIQTREE = True, runBOOTSRAP = True, d
 
         with open(pathFOLDER+"subsequences/subseq"+chosen_rate+"/model.txt", "r") as toModel:
             modelAndFrequency = toModel.readline().strip('\n')
+
         script = """
                 for d in """ + pathNEWFOLDER + """; do
                     cd "$d"
                     """ +pathIQTREE +  """ -s sequence.txt -te tree.txt -m \"'\"""" + modelAndFrequency+ """\"'\" -asr -blfix -o FOO -pre output -redo -quiet
                 done   
                 """
+        
     else:
         pathNEWFOLDER  = pathFOLDER+"clades/*"
         with open(pathFOLDER+"model.txt", "r") as toModel:
             modelAndFrequency = toModel.readline().strip('\n')
+
         script = """
                 for d in """ + pathNEWFOLDER + """; do
                     cd "$d"
                     """ +pathIQTREE +  """ -s sequence.txt -te tree.txt -m \"'\"""" + modelAndFrequency+ """\"'\" -asr -blfix -o FOO -pre output -redo -quiet
                 done"""
+
                 
     os.system("bash -c '%s'" % script)
 
