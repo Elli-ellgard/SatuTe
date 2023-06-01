@@ -140,7 +140,7 @@ class Satute:
         arguments_dict = self.construct_arguments()
 
         # Running IQ-TREE with constructed arguments
-        self.run_iqtree_with_arguments(arguments_dict["arguments"])
+        self.run_iqtree_with_arguments(arguments_dict["arguments"],["--quiet"])
 
         # If no model specified in input arguments, extract best model from log file
         if not self.input_args.model:
@@ -158,9 +158,8 @@ class Satute:
             # Update model in input arguments and re-construct arguments
             self.input_args.model = best_model_name
             arguments_dict = self.construct_arguments()
-
-        # Running IQ-TREE a second time with updated arguments and --redo option
-        self.run_iqtree_with_arguments(arguments_dict["arguments"], ["--redo", "--quiet"])
+            # Running IQ-TREE a second time with updated arguments and --redo option
+            self.run_iqtree_with_arguments(arguments_dict["arguments"], ["--quiet"])
 
         # Here then should come the code, where we should start the saturation test
         # I don't get idea how to do it, so I just call the function from main.py

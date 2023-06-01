@@ -9,7 +9,6 @@ import scipy
 import scipy.linalg
 import subprocess
 
-
 def remove_filename(path):
     parts = path.split("/")
     nameFILE = parts[-1]
@@ -17,79 +16,8 @@ def remove_filename(path):
     pathFOLDER = "/".join(parts) + "/"  # Path where the we create folders
     return pathFOLDER
 
-    filne = path + ".iqtree"
-    with open(filne, "r+") as f:
-        lines = f.readlines()
-        for i in range(0, len(lines)):
-            line = lines[i]
-            if "Tree in newick format:" in line:
-                t = lines[i + 2]
-                break
-
-    T = Tree(t, format=newickformat)
-
-    for node in T.traverse("levelorder"):
-        l = len(node.name)
-        for i in range(len(t)):
-            if t[i : i + l] == str(node.name) and (t[i + l] == ";" or t[i + l] == ":"):
-                t = t[: i + l] + "*" + t[i + l :]
-
-    T = Tree(t, format=newickformat)
-
-    root = T.get_tree_root()
-    root_children = root.get_children()
-    leaves = T.get_leaves()
-
-    root_children_leaves = []
-    for i in root_children:
-        if i in leaves:
-            root_children_leaves.append(i)
-
-    if len(root_children_leaves) >= 2:
-        for i in root_children_leaves:
-            for j in range(len(t)):
-                if t[j : j + len(i.name)] == i.name:
-                    cont = 0
-                    split0 = t.split(i.name, 1)[0]
-                    split1 = t.split(i.name, 1)[1]
-                    for k in range(len(split0)):
-                        if split0[k] == "(":
-                            cont += 1
-                    if cont > 1:
-                        t = t.replace(i.name, "")
-                        if len(split1[0 : split1.find(")")]) < len(
-                            split1[0 : split1.find(",")]
-                        ):
-                            t = t.replace(split1[0 : split1.find(")")], "")
-                            t = (
-                                t[0]
-                                + str(i.name)
-                                + split1[0 : split1.find(")")]
-                                + ","
-                                + t[1:-1]
-                            )
-                        else:
-                            t = t.replace(split1[0 : split1.find(",")], "")
-                            t = (
-                                t[0]
-                                + str(i.name)
-                                + split1[0 : split1.find(",")]
-                                + ","
-                                + t[1:-1]
-                            )
-
-    for i in range(len(t)):
-        if t[i : i + 2] == ",)":
-            t = t.replace(t[i : i + 2], ")")
-
-    T = Tree(t, format=newickformat)
-    # print("This is the reconstructed tree topology :\n",T.copy("newick").get_ascii(attributes=["name","label","distance"]))
-    return t, T
-
 
 """## INTERNAL NODES AND LEAVES"""
-
-
 def node_type(T):
     leaves = []
     for i in T.get_leaves():
@@ -1410,7 +1338,6 @@ def saturation_test_cli(
 
     """BASH SCRIPT BEFORE TEST"""
     if number_rates > 1:
-
         pathNEWFOLDER = pathFOLDER + "subsequences/subseq" + chosen_rate + "/clades/*"
 
         with open(f"{pathFOLDER}subsequences/subseq{chosen_rate}/model.txt") as toModel:
@@ -1424,7 +1351,6 @@ def saturation_test_cli(
             """
 
     else:
-
         pathNEWFOLDER = pathFOLDER + "clades/*"
         with open(pathFOLDER + "model.txt", "r") as toModel:
             model_and_frequency = toModel.readline().strip("\n")
@@ -1468,7 +1394,6 @@ def saturation_test_cli(
                     for j in range(len(lines[8:])):
                         writer.write(lines[j + 8])
 
-
             file2 = pathFOLDER + "clades/Branch" + str(i) + "_clade2/output.state"
 
             with open(file2, "r+") as f2:
@@ -1491,7 +1416,7 @@ def saturation_test_cli(
                 sep="\t",
                 engine="python",
             )
-            
+
             number_sites = len(df1["Site"].unique())
 
             number_nodes_1 = len(df1["Node"].unique())
@@ -1524,7 +1449,6 @@ def saturation_test_cli(
                 results_file.write("\n")
 
         else:  # if gamma model
-
             file1 = (
                 pathFOLDER
                 + "subsequences/subseq"
