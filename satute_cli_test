@@ -40,7 +40,6 @@ class SatuteCLITestCase(unittest.TestCase):
             # logger.info(stderr)
             logger.error("An error occurred while testing Satute CLI with a tree file: " + str(e))
 
-
         # Further tests can be done by opening the output file and checking its contents.
         # For instance, checking if the file contains a specific line, word or if the format of the output file is correct. 
     def test_satute_cli_with_alignment(self):

@@ -8,7 +8,7 @@ from pathlib import Path
 import re
 import subprocess
 import os
-from main import saturationTest
+from main import saturation_test_cli
 
 
 # Configure the logging settings (optional)
@@ -20,14 +20,14 @@ logger = logging.getLogger(__name__)
 
 class InvalidDirectoryError(Exception):
     """Exception raised when the input directory does not exist."""
+
     pass
 
 
 class NoAlignmentFileError(Exception):
     """Exception raised when no multiple sequence alignment file is found."""
+
     pass
-
-
 
 
 class Satute:
@@ -159,8 +159,57 @@ class Satute:
             self.input_args.model = best_model_name
             arguments_dict = self.construct_arguments()
 
-            # Running IQ-TREE a second time with updated arguments and --redo option
-            self.run_iqtree_with_arguments(arguments_dict["arguments"], ["--redo"])
+        # Running IQ-TREE a second time with updated arguments and --redo option
+        self.run_iqtree_with_arguments(arguments_dict["arguments"], ["--redo"])
+
+        # Here then should come the code, where we should start the saturation test
+        # I don't get idea how to do it, so I just call the function from main.py
+        # I don't know if it is correct, but it works not
+        # saturationTest(self.input_args.dir, self.input_args.o)
+        # Something like his should be here:
+        # saturationTest(pathDATA, pathIQTREE, runIQTREE = True, runBOOTSRAP = True, dimension = 4, number_rates = 4, chosen_rate = str(4), z_alpha = 2.33, newickformat = 1, epsilon = 0.01, rawMemory = True)
+
+        number_rates = 1
+
+        tree_file_path = self.find_file({".treefile", ".nex", ".nwk"})
+        iqtree_file_path = self.find_file({".iqtree"})
+        newick_string = ""
+
+        if tree_file_path is not None:
+            newick_string = self.get_newick_string(tree_file_path)
+        else:
+            newick_string = self.get_newick_string_from_iq_tree_file(iqtree_file_path)
+
+        for i in range(number_rates):
+            logger.info(f"Here comes the {i+1} th fastest evolving region: ")
+            if i == 0:
+                saturation_test_cli(
+                    str(arguments_dict["msa_file"]),
+                    newick_string,
+                    self.input_args.iqtree,
+                    4,
+                    number_rates,
+                    str(number_rates - i),
+                    2.33,
+                    1,
+                    0.01,
+                    True,
+                )
+            else:
+                saturation_test_cli(
+                    str(arguments_dict["msa_file"]),
+                    newick_string,
+                    self.input_args.iqtree,
+                    4,
+                    number_rates,
+                    str(number_rates - i),
+                    2.33,
+                    1,
+                    0.01,
+                    True,
+                )
+
+        # End of the code, which should be here
 
         logger.info(f"Arguments: {arguments_dict}")
 
@@ -236,6 +285,8 @@ class Satute:
             if "Gamma" in self.input_args.model:
                 argument_option["arguments"].extend(["-wspr"])
 
+            # Todo Check if markov model is reversible if not throw error:
+
         # Return the constructed argument options
         return argument_option
 
@@ -284,6 +335,41 @@ class Satute:
     def file_exists(self, file_path):
         """Check if a file exists."""
         return Path(file_path).exists()
+
+    def get_newick_string_from_iq_tree_file(self, path):
+        iq_tree_file = path + ".iqtree"
+        newick_string = ""
+        with open(iq_tree_file, "r+") as f:
+            lines = f.readlines()
+            for i in range(0, len(lines)):
+                line = lines[i]
+                if "Tree in newick format:" in line:
+                    newick_string = lines[i + 2]
+                    break
+        return newick_string
+
+    def get_newick_string(self, file_path):
+        """Fetch the Newick string from a file."""
+        from pathlib import Path
+
+        # Check if file exists
+        if not Path(file_path).is_file():
+            raise FileNotFoundError(f"The file at path {file_path} does not exist.")
+
+        with open(file_path, "r") as file:
+            newick_string = file.read().strip()
+
+        # Check if file is empty
+        if not newick_string:
+            raise ValueError(f"The file at path {file_path} is empty.")
+
+        # Check if file contains a valid Newick string
+        if not newick_string.endswith(";"):
+            raise ValueError(
+                f"The file at path {file_path} does not contain a valid Newick string."
+            )
+
+        return newick_string
 
 
 if __name__ == "__main__":
