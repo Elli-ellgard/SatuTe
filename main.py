@@ -1892,7 +1892,7 @@ def saturation_test_cli(
                 done
                 """
         )
-        
+
     else:
         pathNEWFOLDER = pathFOLDER + "clades/*"
         with open(pathFOLDER + "model.txt", "r") as toModel:
@@ -1914,326 +1914,326 @@ def saturation_test_cli(
     
     os.system("bash -c '%s'" % script)
 
-    # """
-    # TODO: If we change the data structure before, the  main part would be here
-    # SATURATION TEST FOR ALL BRANCHES
-    # """
-    # U = 1.0 / float(min(state_frequencies_vect)) - 1
-    # K = dimension - 1
-    # number_standard_deviations = 2  # Confidence intervals of 98% (one sided)
+    """
+    TODO: If we change the data structure before, the  main part would be here
+    SATURATION TEST FOR ALL BRANCHES
+    """
+    U = 1.0 / float(min(state_frequencies_vect)) - 1
+    K = dimension - 1
+    number_standard_deviations = 2  # Confidence intervals of 98% (one sided)
 
-    # print(
-    #     "{:6s}  {:6s}  {:6s}  {:14s} {:14s} {:100s}".format(
-    #         "Order", " delta", " c_s", "Branch status", "T2T status", " Branch"
-    #     )
-    # )
+    print(
+        "{:6s}  {:6s}  {:6s}  {:14s} {:14s} {:100s}".format(
+            "Order", " delta", " c_s", "Branch status", "T2T status", " Branch"
+        )
+    )
 
-    # for i in range(0, len(internal_nodes) + len(leaves)):
-    #     if number_rates == 1:  # if not gamma model
-    #         file1 = pathFOLDER + "clades/Branch" + str(i) + "_clade1/output.state"
-    #         with open(file1, "r+") as f1:
-    #             with open(
-    #                 pathFOLDER + "clades/Branch" + str(i) + "_clade1/memory.csv", "w"
-    #             ) as writer:
-    #                 lines = f1.readlines()
-    #                 out = lines[8:-1]
-    #                 for j in range(len(lines[8:])):
-    #                     writer.write(lines[j + 8])
+    for i in range(0, len(internal_nodes) + len(leaves)):
+        if number_rates == 1:  # if not gamma model
+            file1 = pathFOLDER + "clades/Branch" + str(i) + "_clade1/output.state"
+            with open(file1, "r+") as f1:
+                with open(
+                    pathFOLDER + "clades/Branch" + str(i) + "_clade1/memory.csv", "w"
+                ) as writer:
+                    lines = f1.readlines()
+                    out = lines[8:-1]
+                    for j in range(len(lines[8:])):
+                        writer.write(lines[j + 8])
 
-    #         file2 = pathFOLDER + "clades/Branch" + str(i) + "_clade2/output.state"
-    #         with open(file2, "r+") as f2:
-    #             with open(
-    #                 pathFOLDER + "clades/Branch" + str(i) + "_clade2/memory.csv", "w"
-    #             ) as writer:
-    #                 lines = f2.readlines()
-    #                 out = lines[8:-1]
-    #                 for j in range(len(lines[8:])):
-    #                     writer.write(lines[j + 8])
+            file2 = pathFOLDER + "clades/Branch" + str(i) + "_clade2/output.state"
+            with open(file2, "r+") as f2:
+                with open(
+                    pathFOLDER + "clades/Branch" + str(i) + "_clade2/memory.csv", "w"
+                ) as writer:
+                    lines = f2.readlines()
+                    out = lines[8:-1]
+                    for j in range(len(lines[8:])):
+                        writer.write(lines[j + 8])
 
-    #         df1 = pd.read_csv(
-    #             pathFOLDER + "clades/Branch" + str(i) + "_clade1/memory.csv",
-    #             sep="\t",
-    #             engine="python",
-    #         )
-    #         df2 = pd.read_csv(
-    #             pathFOLDER + "clades/Branch" + str(i) + "_clade2/memory.csv",
-    #             sep="\t",
-    #             engine="python",
-    #         )
-    #         number_sites = len(df1["Site"].unique())
-    #         number_nodes_1 = len(df1["Node"].unique())
-    #         number_nodes_2 = len(df2["Node"].unique())
+            df1 = pd.read_csv(
+                pathFOLDER + "clades/Branch" + str(i) + "_clade1/memory.csv",
+                sep="\t",
+                engine="python",
+            )
+            df2 = pd.read_csv(
+                pathFOLDER + "clades/Branch" + str(i) + "_clade2/memory.csv",
+                sep="\t",
+                engine="python",
+            )
+            number_sites = len(df1["Site"].unique())
+            number_nodes_1 = len(df1["Node"].unique())
+            number_nodes_2 = len(df2["Node"].unique())
 
-    #         if i == 0:
-    #             T = Tree(t, format=newickformat)
+            if i == 0:
+                T = Tree(t, format=newickformat)
 
-    #             results_file = open(
-    #                 pathFOLDER + "/resultsRate" + chosen_rate + ".txt", "w"
-    #             )  # To store test results. We open file in first iteration (branch).
-    #             # results_file.write(T.copy("newick").get_ascii(attributes=["name","label","distance"]))
-    #             results_file.write("\n")
-    #             results_file.write(
-    #                 "{:6s}\t{:6s}\t{:6s}\t{:14s}\t{:14s}\t{:100s}".format(
-    #                     "Order",
-    #                     " delta",
-    #                     " c_s",
-    #                     " Branch status ",
-    #                     "T2T status",
-    #                     "Branch",
-    #                     "\n",
-    #                 )
-    #             )
-    #             results_file.write("\n")
+                results_file = open(
+                    pathFOLDER + "/resultsRate" + chosen_rate + ".txt", "w"
+                )  # To store test results. We open file in first iteration (branch).
+                # results_file.write(T.copy("newick").get_ascii(attributes=["name","label","distance"]))
+                results_file.write("\n")
+                results_file.write(
+                    "{:6s}\t{:6s}\t{:6s}\t{:14s}\t{:14s}\t{:100s}".format(
+                        "Order",
+                        " delta",
+                        " c_s",
+                        " Branch status ",
+                        "T2T status",
+                        "Branch",
+                        "\n",
+                    )
+                )
+                results_file.write("\n")
 
-    #     else:  # if gamma model
-    #         file1 = (
-    #             pathFOLDER
-    #             + "subsequences/subseq"
-    #             + chosen_rate
-    #             + "/clades/Branch"
-    #             + str(i)
-    #             + "_clade1/output.state"
-    #         )
-    #         with open(file1, "r+") as f1:
-    #             with open(
-    #                 pathFOLDER
-    #                 + "subsequences/subseq"
-    #                 + chosen_rate
-    #                 + "/clades/Branch"
-    #                 + str(i)
-    #                 + "_clade1/memory.csv",
-    #                 "w",
-    #             ) as writer:
-    #                 lines = f1.readlines()
-    #                 out = lines[8:-1]
-    #                 for j in range(len(lines[8:])):
-    #                     writer.write(lines[j + 8])
+        else:  # if gamma model
+            file1 = (
+                pathFOLDER
+                + "subsequences/subseq"
+                + chosen_rate
+                + "/clades/Branch"
+                + str(i)
+                + "_clade1/output.state"
+            )
+            with open(file1, "r+") as f1:
+                with open(
+                    pathFOLDER
+                    + "subsequences/subseq"
+                    + chosen_rate
+                    + "/clades/Branch"
+                    + str(i)
+                    + "_clade1/memory.csv",
+                    "w",
+                ) as writer:
+                    lines = f1.readlines()
+                    out = lines[8:-1]
+                    for j in range(len(lines[8:])):
+                        writer.write(lines[j + 8])
 
-    #         file2 = (
-    #             pathFOLDER
-    #             + "subsequences/subseq"
-    #             + chosen_rate
-    #             + "/clades/Branch"
-    #             + str(i)
-    #             + "_clade2/output.state"
-    #         )
-    #         with open(file2, "r+") as f2:
-    #             with open(
-    #                 pathFOLDER
-    #                 + "subsequences/subseq"
-    #                 + chosen_rate
-    #                 + "/clades/Branch"
-    #                 + str(i)
-    #                 + "_clade2/memory.csv",
-    #                 "w",
-    #             ) as writer:
-    #                 lines = f2.readlines()
-    #                 out = lines[8:-1]
-    #                 for j in range(len(lines[8:])):
-    #                     writer.write(lines[j + 8])
+            file2 = (
+                pathFOLDER
+                + "subsequences/subseq"
+                + chosen_rate
+                + "/clades/Branch"
+                + str(i)
+                + "_clade2/output.state"
+            )
+            with open(file2, "r+") as f2:
+                with open(
+                    pathFOLDER
+                    + "subsequences/subseq"
+                    + chosen_rate
+                    + "/clades/Branch"
+                    + str(i)
+                    + "_clade2/memory.csv",
+                    "w",
+                ) as writer:
+                    lines = f2.readlines()
+                    out = lines[8:-1]
+                    for j in range(len(lines[8:])):
+                        writer.write(lines[j + 8])
 
-    #         df1 = pd.read_csv(
-    #             pathFOLDER
-    #             + "subsequences/subseq"
-    #             + chosen_rate
-    #             + "/clades/Branch"
-    #             + str(i)
-    #             + "_clade1/memory.csv",
-    #             sep="\t",
-    #             engine="python",
-    #         )
-    #         df2 = pd.read_csv(
-    #             pathFOLDER
-    #             + "subsequences/subseq"
-    #             + chosen_rate
-    #             + "/clades/Branch"
-    #             + str(i)
-    #             + "_clade2/memory.csv",
-    #             sep="\t",
-    #             engine="python",
-    #         )
-    #         number_sites = len(df1["Site"].unique())
-    #         number_nodes_1 = len(df1["Node"].unique())
-    #         number_nodes_2 = len(df2["Node"].unique())
+            df1 = pd.read_csv(
+                pathFOLDER
+                + "subsequences/subseq"
+                + chosen_rate
+                + "/clades/Branch"
+                + str(i)
+                + "_clade1/memory.csv",
+                sep="\t",
+                engine="python",
+            )
+            df2 = pd.read_csv(
+                pathFOLDER
+                + "subsequences/subseq"
+                + chosen_rate
+                + "/clades/Branch"
+                + str(i)
+                + "_clade2/memory.csv",
+                sep="\t",
+                engine="python",
+            )
+            number_sites = len(df1["Site"].unique())
+            number_nodes_1 = len(df1["Node"].unique())
+            number_nodes_2 = len(df2["Node"].unique())
 
-    #         if i == 0:
-    #             T = Tree(t, format=newickformat)
-    #             results_file = open(
-    #                 pathFOLDER + "/resultsRate" + chosen_rate + ".txt", "w"
-    #             )  # To store test results.  We open file in first iteration (branch).
-    #             results_file.write("\n")
-    #             results_file.write(
-    #                 "{:6s}\t{:6s}\t{:6s}\t{:14s}\t{:14s}\t{:100s}\n".format(
-    #                     "Order",
-    #                     " delta",
-    #                     " c_s",
-    #                     "Branch status",
-    #                     "T2T status",
-    #                     " Branch",
-    #                     "\n",
-    #                 )
-    #             )
-    #             results_file.write("\n")
+            if i == 0:
+                T = Tree(t, format=newickformat)
+                results_file = open(
+                    pathFOLDER + "/resultsRate" + chosen_rate + ".txt", "w"
+                )  # To store test results.  We open file in first iteration (branch).
+                results_file.write("\n")
+                results_file.write(
+                    "{:6s}\t{:6s}\t{:6s}\t{:14s}\t{:14s}\t{:100s}\n".format(
+                        "Order",
+                        " delta",
+                        " c_s",
+                        "Branch status",
+                        "T2T status",
+                        " Branch",
+                        "\n",
+                    )
+                )
+                results_file.write("\n")
 
-    #     estimation_dt = np.sqrt(U * min(K, U / 4) / number_sites)
-    #     if not rawMemory:
-    #         upper_ci = number_standard_deviations * estimation_dt
-    #     else:
-    #         upper_ci = float(0)
+        estimation_dt = np.sqrt(U * min(K, U / 4) / number_sites)
+        if not rawMemory:
+            upper_ci = number_standard_deviations * estimation_dt
+        else:
+            upper_ci = float(0)
 
-    #     if multiplicity == 1:  # if D=1
-    #         v1 = array_eigenvectors[0]
+        if multiplicity == 1:  # if D=1
+            v1 = array_eigenvectors[0]
 
-    #         a = (
-    #             []
-    #         )  # vector to store all products v1*rootsitesposteriorprobabilitiescladeA
-    #         b = (
-    #             []
-    #         )  # vector to store all products v1*rootsitesposteriorprobabilitiescladeB
+            a = (
+                []
+            )  # vector to store all products v1*rootsitesposteriorprobabilitiescladeA
+            b = (
+                []
+            )  # vector to store all products v1*rootsitesposteriorprobabilitiescladeB
 
-    #         for k in range(
-    #             number_sites * (number_nodes_1 - 1), number_sites * number_nodes_1
-    #         ):
-    #             a.append(v1 @ np.asarray(df1.iloc[k, 3:7]))
+            for k in range(
+                number_sites * (number_nodes_1 - 1), number_sites * number_nodes_1
+            ):
+                a.append(v1 @ np.asarray(df1.iloc[k, 3:7]))
 
-    #         for k in range(
-    #             number_sites * (number_nodes_2 - 1), number_sites * number_nodes_2
-    #         ):
-    #             b.append(v1 @ np.asarray(df2.iloc[k, 3:7]))
+            for k in range(
+                number_sites * (number_nodes_2 - 1), number_sites * number_nodes_2
+            ):
+                b.append(v1 @ np.asarray(df2.iloc[k, 3:7]))
 
-    #         delta = (
-    #             np.asarray(a) @ np.asarray(b) / number_sites
-    #         )  # computing the dominant sample coherence
-    #         # print(np.multiply(a, b))
-    #         if i < len(internal_nodes):
-    #             M_a = np.asarray(a) @ np.asarray(a) / number_sites + upper_ci
-    #             M_a = min(1, M_a)
-    #         else:  # if clade A is a single leaf
-    #             M_a = 1
+            delta = (
+                np.asarray(a) @ np.asarray(b) / number_sites
+            )  # computing the dominant sample coherence
+            # print(np.multiply(a, b))
+            if i < len(internal_nodes):
+                M_a = np.asarray(a) @ np.asarray(a) / number_sites + upper_ci
+                M_a = min(1, M_a)
+            else:  # if clade A is a single leaf
+                M_a = 1
 
-    #         M_b = np.asarray(b) @ np.asarray(b) / number_sites + upper_ci
-    #         M_b = min(1, M_b)
-    #         aux = M_a * M_b
-    #         c_s = (
-    #             z_alpha * np.sqrt(aux) / np.sqrt(number_sites)
-    #         )  # computing the saturation coherence
-    #         c_sTwoSequence = z_alpha / np.sqrt(
-    #             number_sites
-    #         )  # computing the saturation coherence between two sequences
-    #     else:
-    #         c_sTwoSequence = (
-    #             multiplicity * z_alpha / np.sqrt(number_sites)
-    #         )  # computing the saturation coherence between two sequences
-    #         delta = 0
+            M_b = np.asarray(b) @ np.asarray(b) / number_sites + upper_ci
+            M_b = min(1, M_b)
+            aux = M_a * M_b
+            c_s = (
+                z_alpha * np.sqrt(aux) / np.sqrt(number_sites)
+            )  # computing the saturation coherence
+            c_sTwoSequence = z_alpha / np.sqrt(
+                number_sites
+            )  # computing the saturation coherence between two sequences
+        else:
+            c_sTwoSequence = (
+                multiplicity * z_alpha / np.sqrt(number_sites)
+            )  # computing the saturation coherence between two sequences
+            delta = 0
 
-    #         for j in range(multiplicity):
-    #             a = []
-    #             b = []
+            for j in range(multiplicity):
+                a = []
+                b = []
 
-    #             v1 = array_eigenvectors[j]
+                v1 = array_eigenvectors[j]
 
-    #             for k in range(
-    #                 number_sites * (number_nodes_1 - 1), number_sites * number_nodes_1
-    #             ):
-    #                 a.append(v1 @ np.asarray(df1.iloc[k, 3:7]))
+                for k in range(
+                    number_sites * (number_nodes_1 - 1), number_sites * number_nodes_1
+                ):
+                    a.append(v1 @ np.asarray(df1.iloc[k, 3:7]))
 
-    #             for k in range(
-    #                 number_sites * (number_nodes_2 - 1), number_sites * number_nodes_2
-    #             ):
-    #                 b.append(v1 @ np.asarray(df2.iloc[k, 3:7]))
+                for k in range(
+                    number_sites * (number_nodes_2 - 1), number_sites * number_nodes_2
+                ):
+                    b.append(v1 @ np.asarray(df2.iloc[k, 3:7]))
 
-    #             delta += np.asarray(a) @ np.asarray(b)
+                delta += np.asarray(a) @ np.asarray(b)
 
-    #         delta = delta / number_sites
+            delta = delta / number_sites
 
-    #         variance = 0
+            variance = 0
 
-    #         for j in range(multiplicity):
-    #             for k in range(multiplicity):
-    #                 a = []
-    #                 b = []
+            for j in range(multiplicity):
+                for k in range(multiplicity):
+                    a = []
+                    b = []
 
-    #                 v_j = array_eigenvectors[j]
-    #                 v_k = array_eigenvectors[k]
+                    v_j = array_eigenvectors[j]
+                    v_k = array_eigenvectors[k]
 
-    #                 for l in range(
-    #                     number_sites * (number_nodes_1 - 1),
-    #                     number_sites * number_nodes_1,
-    #                 ):
-    #                     a.append(v_j @ np.asarray(df1.iloc[l, 3:7]))
+                    for l in range(
+                        number_sites * (number_nodes_1 - 1),
+                        number_sites * number_nodes_1,
+                    ):
+                        a.append(v_j @ np.asarray(df1.iloc[l, 3:7]))
 
-    #                 for l in range(
-    #                     number_sites * (number_nodes_2 - 1),
-    #                     number_sites * number_nodes_2,
-    #                 ):
-    #                     b.append(v_k @ np.asarray(df2.iloc[l, 3:7]))
+                    for l in range(
+                        number_sites * (number_nodes_2 - 1),
+                        number_sites * number_nodes_2,
+                    ):
+                        b.append(v_k @ np.asarray(df2.iloc[l, 3:7]))
 
-    #                 # variance = np.asarray(a)@np.asarray(b)
-    #                 variance += max(
-    #                     np.asarray(a - upper_ci) @ np.asarray(b - upper_ci),
-    #                     np.asarray(a + upper_ci) @ np.asarray(b + upper_ci),
-    #                     np.asarray(a + upper_ci) @ np.asarray(b - upper_ci),
-    #                     np.asarray(a - upper_ci) @ np.asarray(b + upper_ci),
-    #                 )
+                    # variance = np.asarray(a)@np.asarray(b)
+                    variance += max(
+                        np.asarray(a - upper_ci) @ np.asarray(b - upper_ci),
+                        np.asarray(a + upper_ci) @ np.asarray(b + upper_ci),
+                        np.asarray(a + upper_ci) @ np.asarray(b - upper_ci),
+                        np.asarray(a - upper_ci) @ np.asarray(b + upper_ci),
+                    )
 
-    #         variance = variance / (number_sites * number_sites)
+            variance = variance / (number_sites * number_sites)
 
-    #         if variance < 0:
-    #             print(
-    #                 "VARIANCE ESTIMATION IS NEGATIVE - CONSIDER INCREASING THE NUMBER OF STANDARD DEVIATIONS (number_standard_deviations) (CONFIDENCE INTERVAL)"
-    #             )
-    #             c_s = 999999999
-    #         else:
-    #             c_s = z_alpha * np.sqrt(variance)
+            if variance < 0:
+                print(
+                    "VARIANCE ESTIMATION IS NEGATIVE - CONSIDER INCREASING THE NUMBER OF STANDARD DEVIATIONS (number_standard_deviations) (CONFIDENCE INTERVAL)"
+                )
+                c_s = 999999999
+            else:
+                c_s = z_alpha * np.sqrt(variance)
 
-    #     if c_s > delta:
-    #         result_test = "Saturated"
-    #     else:
-    #         result_test = "Informative"
+        if c_s > delta:
+            result_test = "Saturated"
+        else:
+            result_test = "Informative"
 
-    #     if c_sTwoSequence > delta:
-    #         result_test_tip2tip = "SatuT2T"
-    #     else:
-    #         result_test_tip2tip = "InfoT2T"
-    #     print(
-    #         "{:6d}  {:6.4f}  {:6.4f}  {:14s} {:14s} {:100s}".format(
-    #             i + 1,
-    #             delta,
-    #             c_s,
-    #             result_test,
-    #             result_test_tip2tip,
-    #             vector_branches[i],
-    #             "\n",
-    #         )
-    #     )
-    #     results_file.write(
-    #         "{:6d}\t{:6.4f}\t{:6.4f}\t{:14s}\t{:14s}\t{:100s}".format(
-    #             i + 1,
-    #             delta,
-    #             c_s,
-    #             result_test,
-    #             result_test_tip2tip,
-    #             vector_branches[i],
-    #             "\n",
-    #         )
-    #     )
-    #     results_file.write("\n\n")
+        if c_sTwoSequence > delta:
+            result_test_tip2tip = "SatuT2T"
+        else:
+            result_test_tip2tip = "InfoT2T"
+        print(
+            "{:6d}  {:6.4f}  {:6.4f}  {:14s} {:14s} {:100s}".format(
+                i + 1,
+                delta,
+                c_s,
+                result_test,
+                result_test_tip2tip,
+                vector_branches[i],
+                "\n",
+            )
+        )
+        results_file.write(
+            "{:6d}\t{:6.4f}\t{:6.4f}\t{:14s}\t{:14s}\t{:100s}".format(
+                i + 1,
+                delta,
+                c_s,
+                result_test,
+                result_test_tip2tip,
+                vector_branches[i],
+                "\n",
+            )
+        )
+        results_file.write("\n\n")
 
-    # results_file.write(
-    #     "\n\nThe T2T status uses as threshold the saturation coherence between two sequences, which is  {:6.4f}".format(
-    #         c_sTwoSequence
-    #     )
-    # )
-    # results_file.write(
-    #     "\n\nFor better reference, this is the reconstructed tree topology :\n\n"
-    # )
-    # results_file.write(
-    #     T.copy("newick").get_ascii(attributes=["name", "label", "distance"])
-    # )
-    # print(
-    #     "\n\nThe T2T status uses as threshold the saturation coherence between two sequences, which is ",
-    #     "{:.4f}".format(c_sTwoSequence),
-    # )
+    results_file.write(
+        "\n\nThe T2T status uses as threshold the saturation coherence between two sequences, which is  {:6.4f}".format(
+            c_sTwoSequence
+        )
+    )
+    results_file.write(
+        "\n\nFor better reference, this is the reconstructed tree topology :\n\n"
+    )
+    results_file.write(
+        T.copy("newick").get_ascii(attributes=["name", "label", "distance"])
+    )
+    print(
+        "\n\nThe T2T status uses as threshold the saturation coherence between two sequences, which is ",
+        "{:.4f}".format(c_sTwoSequence),
+    )
 
 
 """ Read newick string from convert to ete3 satute format """
