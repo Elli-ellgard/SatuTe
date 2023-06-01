@@ -140,7 +140,7 @@ class Satute:
         arguments_dict = self.construct_arguments()
 
         # Running IQ-TREE with constructed arguments
-        self.run_iqtree_with_arguments(arguments_dict["arguments"],["--quiet"])
+        self.run_iqtree_with_arguments(arguments_dict["arguments"], ["--quiet"])
 
         # If no model specified in input arguments, extract best model from log file
         if not self.input_args.model:
