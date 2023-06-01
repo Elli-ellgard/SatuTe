@@ -8,7 +8,7 @@ from pathlib import Path
 import re
 import subprocess
 import os
-from main import saturation_test_cli
+from satute_util import saturation_test_cli
 
 
 # Configure the logging settings (optional)
@@ -160,7 +160,7 @@ class Satute:
             arguments_dict = self.construct_arguments()
 
         # Running IQ-TREE a second time with updated arguments and --redo option
-        self.run_iqtree_with_arguments(arguments_dict["arguments"], ["--redo"])
+        self.run_iqtree_with_arguments(arguments_dict["arguments"], ["--redo", "--quiet"])
 
         # Here then should come the code, where we should start the saturation test
         # I don't get idea how to do it, so I just call the function from main.py
@@ -170,7 +170,6 @@ class Satute:
         # saturationTest(pathDATA, pathIQTREE, runIQTREE = True, runBOOTSRAP = True, dimension = 4, number_rates = 4, chosen_rate = str(4), z_alpha = 2.33, newickformat = 1, epsilon = 0.01, rawMemory = True)
 
         number_rates = 1
-
         tree_file_path = self.find_file({".treefile", ".nex", ".nwk"})
         iqtree_file_path = self.find_file({".iqtree"})
         newick_string = ""

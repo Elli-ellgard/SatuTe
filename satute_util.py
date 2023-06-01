@@ -17,9 +17,6 @@ def remove_filename(path):
     pathFOLDER = "/".join(parts) + "/"  # Path where the we create folders
     return pathFOLDER
 
-
-""" Read newick string from .iqtree file """
-def read_tree(path, newickformat):
     filne = path + ".iqtree"
     with open(filne, "r+") as f:
         lines = f.readlines()
@@ -1140,9 +1137,9 @@ def rate_and_frequenciesALTERNATIVE(path, number_rates, dimension):
     return state_frequencies_vect
 
 
-""" DIAGONALISATION OF THE RATE MATRIX
+""" DIAGONALIZATION OF THE RATE MATRIX
     output: array of eigenvectors for the dominant non-zero eigenvalue, length of array = multiplicity
-    This way of diagonalisation only works for REVERSIBLE rate matrices!!!
+    This way of diagonalization only works for REVERSIBLE rate matrices!!!
  """
 
 
@@ -1219,11 +1216,98 @@ def diagonalisation(n, path):
     return array_eigenvectors, multiplicity
 
 
-def saturationTest(
+""" Read newick string from convert to ete3 satute format """
+
+
+def convert_newick_to_satute_ete3_format(t, newickformat):
+    T = Tree(t, format=newickformat)
+
+    for node in T.traverse("levelorder"):
+        l = len(node.name)
+        for i in range(len(t)):
+            if t[i : i + l] == str(node.name) and (t[i + l] == ";" or t[i + l] == ":"):
+                t = t[: i + l] + "*" + t[i + l :]
+
+    T = Tree(t, format=newickformat)
+
+    root = T.get_tree_root()
+    root_children = root.get_children()
+    leaves = T.get_leaves()
+
+    root_children_leaves = []
+    for i in root_children:
+        if i in leaves:
+            root_children_leaves.append(i)
+
+    if len(root_children_leaves) >= 2:
+        for i in root_children_leaves:
+            for j in range(len(t)):
+                if t[j : j + len(i.name)] == i.name:
+                    cont = 0
+                    split0 = t.split(i.name, 1)[0]
+                    split1 = t.split(i.name, 1)[1]
+                    for k in range(len(split0)):
+                        if split0[k] == "(":
+                            cont += 1
+                    if cont > 1:
+                        t = t.replace(i.name, "")
+                        if len(split1[0 : split1.find(")")]) < len(
+                            split1[0 : split1.find(",")]
+                        ):
+                            t = t.replace(split1[0 : split1.find(")")], "")
+                            t = (
+                                t[0]
+                                + str(i.name)
+                                + split1[0 : split1.find(")")]
+                                + ","
+                                + t[1:-1]
+                            )
+                        else:
+                            t = t.replace(split1[0 : split1.find(",")], "")
+                            t = (
+                                t[0]
+                                + str(i.name)
+                                + split1[0 : split1.find(",")]
+                                + ","
+                                + t[1:-1]
+                            )
+
+    for i in range(len(t)):
+        if t[i : i + 2] == ",)":
+            t = t.replace(t[i : i + 2], ")")
+
+    T = Tree(t, format=newickformat)
+
+    return t, T
+
+
+def guess_msa_file_format(file_path):
+    """
+    Guess the format of a file based on its first line.
+
+    :param file_path: Path to the file
+    :return: The guessed file format or None if the format could not be guessed
+    """
+    with open(file_path, "r") as file:
+        first_line = file.readline().strip()
+
+    # FASTA files typically start with a '>' character
+    if first_line.startswith(">"):
+        return 0  #'FASTA'
+
+    # PHYLIP files typically start with two integers (number of species and number of characters)
+    line_parts = first_line.split()
+    if len(line_parts) == 2 and line_parts[0].isdigit() and line_parts[1].isdigit():
+        return 1  ##'PHYLIP'
+
+    return None
+
+
+# -------------  CODE REFACTORED BY ENES BERK ZEKI SAKALLI --------------- #
+def saturation_test_cli(
     pathDATA,
+    newick_string,
     pathIQTREE,
-    runIQTREE=True,
-    runBOOTSRAP=True,
     dimension=4,
     number_rates=4,
     chosen_rate=str(4),
@@ -1232,107 +1316,52 @@ def saturationTest(
     epsilon=0.01,
     rawMemory=True,
 ):
-    """Run IQ-TREE -----> delete"""
-    if runIQTREE:
-        modelRatesInv = "GTR+G" + str(number_rates) + "+I"
-        modelHomo = "GTR"
-        if runBOOTSRAP:
-            if number_rates > 1:
-                subprocess.run(
-                    [
-                        pathIQTREE,
-                        "-redo",
-                        "-s",
-                        pathDATA,
-                        "-m",
-                        modelRatesInv,
-                        "-asr",
-                        "-wspr",
-                        "-seed",
-                        "10",
-                        "-quiet",
-                        "-b",
-                        "100",
-                    ]
-                )
-            else:
-                subprocess.run(
-                    [
-                        pathIQTREE,
-                        "-redo",
-                        "-s",
-                        pathDATA,
-                        "-m",
-                        modelHomo,
-                        "-asr",
-                        "-seed",
-                        "10",
-                        "-quiet",
-                        "-b",
-                        "100",
-                    ]
-                )
+    """
+    :param pathDATA: str
+        A string representing the path to the data file. This file should be in the appropriate format for the analysis to be performed.
 
-        else:
-            if number_rates > 1:
-                subprocess.run(
-                    [
-                        pathIQTREE,
-                        "-redo",
-                        "-s",
-                        pathDATA,
-                        "-m",
-                        modelRatesInv,
-                        "-asr",
-                        "-wspr",
-                        "-seed",
-                        "10",
-                        "-quiet",
-                    ]
-                )
-            else:
-                subprocess.run(
-                    [
-                        pathIQTREE,
-                        "-redo",
-                        "-s",
-                        pathDATA,
-                        "-m",
-                        modelHomo,
-                        "-asr",
-                        "-seed",
-                        "10",
-                        "-quiet",
-                    ]
-                )
+    :param pathIQTREE: str
+        A string representing the path to the IQ-TREE executable file.
+
+    :param dimension: int, default = 4
+        The dimension of the data. This refers to the number of distinct symbols in the sequence data (e.g., for DNA, dimension would typically be 4 corresponding to A, C, G, T).
+
+    :param number_rates: int, default = 4
+        The number of rate categories to use in the analysis.
+
+    :param chosen_rate: str, default = '4'
+        The rate category to be used for the analysis. The rates are numbered starting from 1.
+
+    :param z_alpha: float, default = 2.33
+        The critical value for the test statistic under the null hypothesis. It depends on the chosen significance level of the test.
+
+    :param newickformat: int, default = 1
+        The format of the output tree file. The default format (1) is the standard Newick format.
+
+    :param epsilon: float, default = 0.01
+        A small positive number used as a tolerance in numerical calculations.
+
+    :param rawMemory: bool, default = True
+        If True, the function will store raw data in memory. This may speed up the calculations but requires more memory.
+
+    """
 
     """Check type if the alignment is Phylip or fasta format"""
+    option = guess_msa_file_format(pathDATA)
 
-    option = 1  # If sequence file has phylip format
-    # Check if otherwise we assume fasta file:
-    with open(pathDATA, "r") as toData:
-        firstLine = toData.readline().strip("\n")
-        words = firstLine.split()
-        for word in words:
-            if not word.isnumeric():
-                option = 2  # Since the first line is not only numbers, we assume it is a fasta file
+    """ PATH  to input directory Need to be changed """
+    pathFOLDER = remove_filename(str(pathDATA))
 
-    """ PATH  to input directory
-        Need  to be changed"""
-    pathFOLDER = remove_filename(pathDATA)
-
-    " MAIN"
     """ data structure for phylogenetic tree"""
-    t, T = read_tree(pathDATA, newickformat)
+    t, T = convert_newick_to_satute_ete3_format(newick_string, newickformat)
+
     leaves, internal_nodes = node_type(T)
     vector_branches, vector_distances = branches_lengths(T)
 
-    """get sequences from msa (in phylip format or fasta format)
-        save them into new INPUTMSA.txt file """
+    # """get sequences from msa (in phylip format or fasta format) save them into new INPUTMSA.txt file """
     modify_seqfile(pathDATA, leaves, option)
 
-    """" no idea, where I need this,
-        copy .state to memory.csv"""
+    # """" no idea, where I need this, copy .state to memory.csv"""
     nodes_number, nucleotides_sites = number_nodes_sites(pathDATA)
 
     if number_rates > 1:
@@ -1343,6 +1372,7 @@ def saturationTest(
 
     clades1, clades2 = clades(T, t, newickformat, internal_nodes, leaves)
     save_clades(pathDATA, number_rates, clades1, clades2, newickformat, rates)
+
     if number_rates > 1:
         sequences_clades(
             pathDATA,
@@ -1369,94 +1399,66 @@ def saturationTest(
             internal_nodes,
             [],
         )
+
     state_frequencies_vect = rate_and_frequenciesALTERNATIVE(
         pathDATA, number_rates, dimension
     )
 
     """ get the eigenvector(s) of the dominate non-zero eigenvalue"""
     array_eigenvectors, multiplicity = diagonalisation(dimension, pathDATA)
-
     script = ""
-    model_and_frequency = ""
 
     """BASH SCRIPT BEFORE TEST"""
     if number_rates > 1:
+
         pathNEWFOLDER = pathFOLDER + "subsequences/subseq" + chosen_rate + "/clades/*"
 
-        with open(
-            pathFOLDER + "subsequences/subseq" + chosen_rate + "/model.txt", "r"
-        ) as toModel:
+        with open(f"{pathFOLDER}subsequences/subseq{chosen_rate}/model.txt") as toModel:
             model_and_frequency = toModel.readline().strip("\n")
 
         script = f"""
-        for d in {pathNEWFOLDER}; do
-            cd "$d"
-            {pathIQTREE} -s sequence.txt -te tree.txt -m \"{model_and_frequency}\" -asr -blfix -o FOO -pre output -redo -quiet
-        done
-        """
-
-        # script = (
-        # """
-        #     for d in """
-        # + pathNEWFOLDER
-        # + """; do
-        #         cd "$d"
-        #         """
-        # + pathIQTREE
-        # + """ -s sequence.txt -te tree.txt -m \"'\""""
-        # + modelAndFrequency
-        # + """\"'\" -asr -blfix -o FOO -pre output -redo -quiet
-        #     done
-        #     """)
+            for d in ${pathNEWFOLDER}; do 
+                cd "$d"; 
+                {str(pathIQTREE)} -s sequence.txt -te tree.txt -m "\'"{model_and_frequency}"\'" -asr -blfix -o FOO -pre output -redo -quiet     
+            done
+            """
 
     else:
+
         pathNEWFOLDER = pathFOLDER + "clades/*"
         with open(pathFOLDER + "model.txt", "r") as toModel:
             model_and_frequency = toModel.readline().strip("\n")
 
         script = f"""
-            for d din {pathNEWFOLDER}; do
-                cd "$d"
-                {pathIQTREE} -s sequence.txt -te tree.txt -m \"{model_and_frequency}\" -asr -blfix -o FOO -pre output -redo -quiet
+            for d in ${pathNEWFOLDER}; do 
+                cd $d; 
+                {str(pathIQTREE)} -s sequence.txt -te tree.txt -m "\'"{model_and_frequency}"\'" -asr -blfix -o FOO -pre output -redo -quiet     
             done
             """
 
-    # script = (
-    #     """
-    #         for d in """
-    #     + pathNEWFOLDER
-    #     + """; do
-    #             cd "$d"
-    #             """
-    #     + pathIQTREE
-    #     + """ -s sequence.txt -te tree.txt -m \"'\""""
-    #     + modelAndFrequency
-    #     + """\"'\" -asr -blfix -o FOO -pre output -redo -quiet
-    #         done"""
-    # )
-
-    print(script)
-
     os.system("bash -c '%s'" % script)
 
-    """" If we change the data structure before, the  main part would be here"""
-
-    """SATURATION TEST FOR ALL BRANCHES"""
+    """
+    TODO: If we change the data structure before, the  main part would be here
+    
+    SATURATION TEST FOR ALL BRANCHES
+    """
 
     U = 1.0 / float(min(state_frequencies_vect)) - 1
+
     K = dimension - 1
+
     number_standard_deviations = 2  # Confidence intervals of 98% (one sided)
 
     print(
         "{:6s}  {:6s}  {:6s}  {:14s} {:14s} {:100s}".format(
-            "Order", " delta", " c_s", "Branch status", "T2T status", " Branch", "\n"
+            "Order", " delta", " c_s", "Branch status", "T2T status", " Branch"
         )
     )
 
     for i in range(0, len(internal_nodes) + len(leaves)):
         if number_rates == 1:  # if not gamma model
             file1 = pathFOLDER + "clades/Branch" + str(i) + "_clade1/output.state"
-
             with open(file1, "r+") as f1:
                 with open(
                     pathFOLDER + "clades/Branch" + str(i) + "_clade1/memory.csv", "w"
@@ -1466,7 +1468,9 @@ def saturationTest(
                     for j in range(len(lines[8:])):
                         writer.write(lines[j + 8])
 
+
             file2 = pathFOLDER + "clades/Branch" + str(i) + "_clade2/output.state"
+
             with open(file2, "r+") as f2:
                 with open(
                     pathFOLDER + "clades/Branch" + str(i) + "_clade2/memory.csv", "w"
@@ -1481,13 +1485,17 @@ def saturationTest(
                 sep="\t",
                 engine="python",
             )
+
             df2 = pd.read_csv(
                 pathFOLDER + "clades/Branch" + str(i) + "_clade2/memory.csv",
                 sep="\t",
                 engine="python",
             )
+            
             number_sites = len(df1["Site"].unique())
+
             number_nodes_1 = len(df1["Node"].unique())
+
             number_nodes_2 = len(df2["Node"].unique())
 
             if i == 0:
@@ -1495,9 +1503,12 @@ def saturationTest(
 
                 results_file = open(
                     pathFOLDER + "/resultsRate" + chosen_rate + ".txt", "w"
-                )  # To store test results. We open file in first iteration (branch).
+                )
+
+                # To store test results. We open file in first iteration (branch).
                 # results_file.write(T.copy("newick").get_ascii(attributes=["name","label","distance"]))
                 results_file.write("\n")
+
                 results_file.write(
                     "{:6s}\t{:6s}\t{:6s}\t{:14s}\t{:14s}\t{:100s}".format(
                         "Order",
@@ -1509,9 +1520,11 @@ def saturationTest(
                         "\n",
                     )
                 )
+
                 results_file.write("\n")
 
         else:  # if gamma model
+
             file1 = (
                 pathFOLDER
                 + "subsequences/subseq"
@@ -1520,6 +1533,7 @@ def saturationTest(
                 + str(i)
                 + "_clade1/output.state"
             )
+
             with open(file1, "r+") as f1:
                 with open(
                     pathFOLDER
@@ -1750,7 +1764,6 @@ def saturationTest(
             c_sTwoSequence
         )
     )
-
     results_file.write(
         "\n\nFor better reference, this is the reconstructed tree topology :\n\n"
     )
@@ -1761,61 +1774,3 @@ def saturationTest(
         "\n\nThe T2T status uses as threshold the saturation coherence between two sequences, which is ",
         "{:.4f}".format(c_sTwoSequence),
     )
-
-
-# -------------  CODE REFACTORED BY ENES BERK ZEKI SAKALLI --------------- #
-
-
-if __name__ == "__main__":
-    print(
-        "Hello! If you give me an alignment, I can check how saturated it is.\n"
-        "I will divide the alignment into regions using IQ-TREE to reconstruct the phylogeny assuming the GTR+I+Gamma model.\n"
-        "Then I will separate all sites depending on how fast they evolve.\n"
-        "For each of these regions, in the reconstructed phylogeny we will test for branch saturation and tip-to-tip (T2T) saturation.\n"
-    )
-
-    #    pathDATA = input("What is the path to the alignment?\n")
-    #    pathIQTREE = input("What is the path to IQ-TREE?\n")
-    #    numberRates = int(input("How many rate categories do you want to use?\n"))
-    DIR_p = "/home/elgert/Desktop/Cassius/Satute/test/case_fasta/"
-    pathDATA = DIR_p + "subsampled_alignment_pbmc3k_100hvg_genewisenormed.fasta"
-    # "/home/elgert/Desktop/Neue_Daten_2023_05_12/satute/subsampled_alignment_pbmc3k_500hvg_genewisenormed/fourRates/subsampled_alignment_pbmc3k_500hvg_genewisenormed.fasta"
-    # "/home/elgert/Desktop/Neue_Daten_2023_05_12/satute/subsampled_alignment_pbmc3k_100hvg_genewisenormed/subsampled_alignment_pbmc3k_100hvg_genewisenormed.fasta"
-    # "/home/elgert/Desktop/Neue_Daten_2023_05_12/satute/subsampled_alignment_pbmc3k_100randomgenes_genewisenormed/subsampled_alignment_pbmc3k_100randomgenes_genewisenormed.fasta"
-    # pathTREE= "/home/elgert/Desktop/Neue_Daten_2023_05_12/results/pbmc3k/subsampled_alignment_pbmc3k_100hvg/boot/subsampled_alignment_pbmc3k_100hvg.fasta.treefile"
-    pathIQTREE = "/home/elgert/IQ-TREE/iqtree-2.2.2.4-Linux/bin/iqtree2"
-    numberRates = 1
-
-    # saturationTest(pathDATA, pathIQTREE, runIQTREE = True, runBOOTSRAP = True, dimension = 4, number_rates = 4, chosen_rate = str(4), z_alpha = 2.33, newickformat = 1, epsilon = 0.01, rawMemory = True)
-    for i in range(numberRates):
-        print("Here comes the ", i + 1, "'th fastest evolving region: ")
-        if i == 0:
-            saturationTest(
-                pathDATA,
-                pathIQTREE,
-                True,
-                False,
-                4,
-                numberRates,
-                str(numberRates - i),
-                2.33,
-                1,
-                0.01,
-                True,
-            )
-        else:
-            saturationTest(
-                pathDATA,
-                pathIQTREE,
-                False,
-                False,
-                4,
-                numberRates,
-                str(numberRates - i),
-                2.33,
-                1,
-                0.01,
-                True,
-            )
-
-
