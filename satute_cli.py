@@ -50,8 +50,8 @@ class Satute:
         self.header = f"{'=' * 100}\n\nSatute - asymptotic test for branch saturation\n\n{'=' * 100}\nAuthor:\nCitation:\n{'=' * 100}\n\n"
         self.arguments = [
             {
-                "flag": "-o",
-                "help": "Output files prefix",
+                "flag": "-outdir",
+                "help": "Output File Directory",
                 "default": self.output_prefix,
                 "metavar": "<file_name>",
             },
@@ -113,7 +113,7 @@ class Satute:
         self.input_args = parser.parse_args()
         self.input_args_dict = vars(self.input_args)
 
-    def write_log(self):
+    def write_log(self, msa_file):
         """Write the log file."""
         log_lines = []
         log_lines.append(self.header)
@@ -128,8 +128,9 @@ class Satute:
             log_lines.append(f"{key}:{value}")
         log_lines.append("-" * 100)
 
-        with open(f"{self.input_args_dict['o']}.log", "w") as f:
-            f.write("\n".join(log_lines))
+        if self.input_args.dir:
+            with open(f"{str(msa_file)}-satute.log", "w") as f:
+                f.write("\n".join(log_lines))
 
     def run(self):
         """
@@ -212,7 +213,7 @@ class Satute:
         logger.info(f"Arguments: {arguments_dict}")
 
         # Writing log file
-        self.write_log()
+        self.write_log(arguments_dict["msa_file"])
 
     def run_iqtree_with_arguments(self, arguments, extra_arguments=[]):
         """Run IQ-TREE with given arguments and extra arguments."""
@@ -307,6 +308,7 @@ class Satute:
         table_pattern = re.compile(
             r"No.\s+Model\s+-LnL\s+df\s+AIC\s+AICc\s+BIC\n(.*?\n)---", re.DOTALL
         )
+
         table_match = re.search(table_pattern, content)
 
         if table_match:
