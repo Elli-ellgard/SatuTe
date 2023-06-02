@@ -37,7 +37,7 @@ echo "TEST 2a: only fasta alignment file"
 echo ""
     DIR=$path/test/case_fasta
     python3 satute_cli.py  -iqtree $iqtree_path -dir $DIR
-    mv example.fasta $path
+    mv $DIR/example.fasta $path
     rm -r $DIR
     mkdir $DIR
     mv $path/example.fasta  $DIR
