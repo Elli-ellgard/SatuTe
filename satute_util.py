@@ -6,6 +6,8 @@ import scipy.linalg
 import subprocess
 from pathlib import Path
 import os
+import re
+
 
 def remove_filename(path):
     parts = path.split("/")
@@ -35,6 +37,7 @@ def node_type(T):
 
 #### We modified the nodes names in order to have indistinguishable names. We need to modify as well the sequence file.
 """
+
 
 def modify_seqfile(path, leaves, option):
     filesequence = path
@@ -1325,6 +1328,37 @@ def run_iqtree_for_each_clade(pathFOLDER, number_rates, chosen_rate, iqtree_path
                 )
 
 
+def map_values_to_newick(file_path, newick_string):
+    # Parsing the file of values into a dictionary
+    values_dict = {}
+    with open(file_path, "r") as file:
+        data = file.readlines()
+        for line in data[2:]:  # Skip header lines
+            # Assuming that the columns are separated by tabs
+            columns = line.strip().split("\t")
+            if len(columns) == 6:  # Only process lines with correct number of columns
+                order, delta, c_s, branch_status, t2t_status, branch = columns
+                # Extracting the first value before the separator
+                node1, node2 = branch.split("-")
+                node2 = node2.split('*')[0]  # remove trailing '*'
+                values_dict[node2] = {'delta': delta.strip(),  'c_s': c_s.strip(), 'status': delta.strip()} 
+    saturised_newick_string = map_values_to_newick_regex(values_dict, newick_string)
+    return saturised_newick_string
+
+def map_values_to_newick_regex(values_dict, newick_string):
+    print(newick_string)
+    for node_name, values in values_dict.items():
+        delta = values['delta']    
+        c_s = values['c_s']
+        branch_status = values['status']
+        print(f'{node_name}[delta={delta}; c_s={c_s}; branch_status={branch_status}]')
+        newick_string = re.sub(
+            rf"({node_name})",
+            rf'\1[delta={delta}; c_s={c_s}; branch_status={branch_status}]',
+            newick_string
+        )
+    return newick_string
+
 # -------------  CODE REFACTORED BY ENES BERK ZEKI SAKALLI --------------- #
 def saturation_test_cli(
     pathDATA,
@@ -1433,6 +1467,8 @@ def saturation_test_cli(
             "Order", " delta", " c_s", "Branch status", "T2T status", " Branch"
         )
     )
+
+    result_list = []
 
     for i in range(0, len(internal_nodes) + len(leaves)):
         if number_rates == 1:  # if not gamma model
@@ -1581,7 +1617,8 @@ def saturation_test_cli(
                 T = Tree(t, format=newickformat)
                 results_file = open(
                     pathFOLDER + "/resultsRate" + chosen_rate + ".txt", "w"
-                )  # To store test results.  We open file in first iteration (branch).
+                )
+                # To store test results.  We open file in first iteration (branch).
                 results_file.write("\n")
                 results_file.write(
                     "{:6s}\t{:6s}\t{:6s}\t{:14s}\t{:14s}\t{:100s}\n".format(
@@ -1716,28 +1753,25 @@ def saturation_test_cli(
             result_test_tip2tip = "SatuT2T"
         else:
             result_test_tip2tip = "InfoT2T"
+
         print(
             "{:6d}  {:6.4f}  {:6.4f}  {:14s} {:14s} {:100s}".format(
-                i + 1,
-                delta,
-                c_s,
-                result_test,
-                result_test_tip2tip,
-                vector_branches[i],
-                "\n",
+                i + 1, delta, c_s, result_test, result_test_tip2tip, vector_branches[i]
             )
         )
+
+        result_list.append(
+            "{:6d}  {:6.4f}  {:6.4f}  {:14s} {:14s} {:100s}".format(
+                i + 1, delta, c_s, result_test, result_test_tip2tip, vector_branches[i]
+            )
+        )
+
         results_file.write(
             "{:6d}\t{:6.4f}\t{:6.4f}\t{:14s}\t{:14s}\t{:100s}".format(
-                i + 1,
-                delta,
-                c_s,
-                result_test,
-                result_test_tip2tip,
-                vector_branches[i],
-                "\n",
+                i + 1, delta, c_s, result_test, result_test_tip2tip, vector_branches[i]
             )
         )
+
         results_file.write("\n\n")
 
     results_file.write(
@@ -1753,6 +1787,13 @@ def saturation_test_cli(
     results_file.write(
         T.copy("newick").get_ascii(attributes=["name", "label", "distance"])
     )
+    results_file.close()
+
+    # Use the function
+    results_file = f"{pathFOLDER}/resultsRate{chosen_rate}.txt"
+    print(t)
+
+    print(map_values_to_newick(results_file, newick_string))
 
     print(
         "\n\nThe T2T status uses as threshold the saturation coherence between two sequences, which is ",
@@ -1762,3 +1803,5 @@ def saturation_test_cli(
 
 from pathlib import Path
 import shutil
+
+
