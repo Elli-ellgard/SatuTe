@@ -10,7 +10,7 @@ Clone this repository to your local machine and navigate to the root directory. 
 Satute provides a command-line interface for easy usage. After installation, you can use the following command to run Satute:
 
 ```bash
-python3 SatuteCLI.py -dir test/octo-kraken-test -iqtree ./iqtree/bin/iqtree
+python satute_cli.py -dir ./test/octo-kraken-msa-test -iqtree iqtree -model GTR+F
 ```
 
 This command will start a saturation test on the data in the `test/octo-kraken-test` directory, using the IQ-TREE executable located at `./iqtree/bin/iqtree`.

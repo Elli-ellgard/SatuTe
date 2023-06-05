@@ -35,9 +35,7 @@ class Satute:
 
     def __init__(self, iqtree, input_dir, model, nr, output_prefix, ufboot, boot):
         self.iqtree = iqtree
-        self.input_dir = Path(
-            input_dir
-        )  # Convert to Path object for convenient file path manipulation
+        self.input_dir = None
         self.model = model
         self.nr = nr
         self.output_prefix = output_prefix
@@ -50,9 +48,15 @@ class Satute:
         self.header = f"{'=' * 100}\n\nSatute - asymptotic test for branch saturation\n\n{'=' * 100}\nAuthor:\nCitation:\n{'=' * 100}\n\n"
         self.arguments = [
             {
-                "flag": "-o",
-                "help": "Output files prefix",
+                "flag": "-outdir",
+                "help": "Output File Directory",
                 "default": self.output_prefix,
+                "metavar": "<file_name>",
+            },
+            {
+                "flag": "-dir",
+                "help": "Path to input directory",
+                "default": self.input_dir,
                 "metavar": "<file_name>",
             },
             {
@@ -62,8 +66,8 @@ class Satute:
                 "metavar": "<file_name>",
             },
             {
-                "flag": "-dir",
-                "help": "Path to input directory",
+                "flag": "-msa",
+                "help": "Path to MSA",
                 "default": self.input_dir,
                 "metavar": "<file_name>",
             },
@@ -113,7 +117,7 @@ class Satute:
         self.input_args = parser.parse_args()
         self.input_args_dict = vars(self.input_args)
 
-    def write_log(self):
+    def write_log(self, msa_file):
         """Write the log file."""
         log_lines = []
         log_lines.append(self.header)
@@ -128,19 +132,18 @@ class Satute:
             log_lines.append(f"{key}:{value}")
         log_lines.append("-" * 100)
 
-        with open(f"{self.input_args_dict['o']}.log", "w") as f:
-            f.write("\n".join(log_lines))
+        if self.input_args.dir:
+            with open(f"{str(msa_file)}-satute.log", "w") as f:
+                f.write("\n".join(log_lines))
 
     def run(self):
-        """
-        Main entry point for running the Satute command-line tool.
-        """
+        """Main entry point for running the Satute command-line tool."""
         # Parsing input arguments and constructing IQ-TREE command-line arguments
         self.parse_input()
         arguments_dict = self.construct_arguments()
 
         # Running IQ-TREE with constructed arguments
-        self.run_iqtree_with_arguments(arguments_dict["arguments"],["--quiet"])
+        self.run_iqtree_with_arguments(arguments_dict["arguments"], ["--quiet"])
 
         # If no model specified in input arguments, extract best model from log file
         if not self.input_args.model:
@@ -161,22 +164,23 @@ class Satute:
             # Running IQ-TREE a second time with updated arguments and --redo option
             self.run_iqtree_with_arguments(arguments_dict["arguments"], ["--quiet"])
 
-        # Here then should come the code, where we should start the saturation test
-        # I don't get idea how to do it, so I just call the function from main.py
-        # I don't know if it is correct, but it works not
-        # saturationTest(self.input_args.dir, self.input_args.o)
-        # Something like his should be here:
-        # saturationTest(pathDATA, pathIQTREE, runIQTREE = True, runBOOTSRAP = True, dimension = 4, number_rates = 4, chosen_rate = str(4), z_alpha = 2.33, newickformat = 1, epsilon = 0.01, rawMemory = True)
-
-        number_rates = 1
-        tree_file_path = self.find_file({".treefile", ".nex", ".nwk"})
-        iqtree_file_path = self.find_file({".iqtree"})
-        newick_string = ""
-
-        if tree_file_path is not None:
-            newick_string = self.get_newick_string(tree_file_path)
+        if self.input_args.nr:
+            number_rates = self.input_args.nr
         else:
-            newick_string = self.get_newick_string_from_iq_tree_file(iqtree_file_path)
+            number_rates = 1
+
+        if self.input_args.dir:
+            tree_file_path = self.find_file({".treefile", ".nex", ".nwk"})
+            iqtree_file_path = self.find_file({".iqtree"})
+            if tree_file_path is not None:
+                newick_string = self.get_newick_string(tree_file_path)
+            else:
+                newick_string = self.get_newick_string_from_iq_tree_file(
+                    iqtree_file_path
+                )
+        elif self.input_args.tree:
+            tree_file_path = self.input_args.tree
+            newick_string = self.get_newick_string(tree_file_path)
 
         for i in range(number_rates):
             logger.info(f"Here comes the {i+1} th fastest evolving region: ")
@@ -212,7 +216,7 @@ class Satute:
         logger.info(f"Arguments: {arguments_dict}")
 
         # Writing log file
-        self.write_log()
+        self.write_log(arguments_dict["msa_file"])
 
     def run_iqtree_with_arguments(self, arguments, extra_arguments=[]):
         """Run IQ-TREE with given arguments and extra arguments."""
@@ -239,40 +243,68 @@ class Satute:
     def construct_arguments(self):
         """
         Validate and process input arguments.
+        
+        Raises:
+            InvalidDirectoryError: If the input directory does not exist.
+            NoAlignmentFileError: If no multiple sequence alignment file is found.
+
+        Returns:
+            A dictionary with keys 'option', 'msa_file', and 'arguments' that represents the argument options for the process.
         """
-
-        # Convert input paths to Path objects for easier handling
-        self.input_args.dir = Path(self.input_args.dir)
-        self.input_args.iqtree = Path(self.input_args.iqtree)
-
-        # Check if the input directory exists
-        if not self.input_args.dir.is_dir():
-            raise InvalidDirectoryError("Input directory does not exist")
-
         # Define the acceptable file types for sequence alignments and trees
         msa_file_types = {".fasta", ".nex", ".phy"}
         tree_file_types = {".treefile", ".nex", ".nwk"}
 
-        # Find the tree and sequence alignment files in the directory
-        tree_file = self.find_file(tree_file_types)
-        msa_file = self.find_file(msa_file_types)
+        # Convert input paths to Path objects for easier handling
+        if self.input_args.dir:
+            self.input_args.dir = Path(self.input_args.dir)
 
-        # Check if a sequence alignment file was found
-        if msa_file is None:
-            raise NoAlignmentFileError("No multiple sequence alignment file found")
+        if self.input_args.iqtree:
+            self.input_args.iqtree = Path(self.input_args.iqtree)
 
-        # Initialize the dictionary that will store the argument options
-        argument_option = {
-            "option": "msa",
-            "msa_file": msa_file,
-            "arguments": ["-s", str(msa_file), "-asr"],
-        }
+        if self.input_args.msa:
+            self.input_args.msa = Path(self.input_args.msa)
 
-        # Check if a tree file was found
-        if tree_file:
-            logger.info(f"{tree_file.suffix} file {tree_file} exists")
-            argument_option["option"] = "msa + tree"
-            argument_option["arguments"].extend(["-te", str(tree_file)])
+        if self.input_args.tree:
+            self.input_args.tree = Path(self.input_args.tree)
+
+        argument_option = {}
+        if self.input_args.dir:
+            # Check if the input directory exists
+            if not self.input_args.dir.is_dir():
+                raise InvalidDirectoryError("Input directory does not exist")
+
+            # Find the tree and sequence alignment files in the directory
+            tree_file = self.find_file(tree_file_types)
+            msa_file = self.find_file(msa_file_types)
+
+            # Check if a sequence alignment file was found
+            if msa_file is None:
+                raise NoAlignmentFileError("No multiple sequence alignment file found")
+
+            argument_option = {
+                "option": "msa",
+                "msa_file": msa_file,
+                "arguments": ["-s", str(msa_file), "-asr"],
+            }
+
+            # Check if a tree file was found
+            if tree_file:
+                print(f"{tree_file.suffix} file {tree_file} exists")
+                argument_option["option"] = "msa + tree"
+                argument_option["arguments"].extend(["-te", str(tree_file)])
+
+        else:
+            if self.input_args.msa:
+                argument_option = {
+                    "option": "msa",
+                    "msa_file": self.input_args.msa,
+                    "arguments": ["-s", str(self.input_args.msa), "-asr"],
+                }
+
+            if self.input_args.tree:
+                argument_option["option"] = "msa + tree"
+                argument_option["arguments"].extend(["-te", str(self.input_args.tree)])
 
         # If a model was specified in the input arguments, add it to the argument options
         if self.input_args.model:
@@ -282,8 +314,6 @@ class Satute:
             # If the model includes a Gamma distribution, add the corresponding argument
             if "Gamma" in self.input_args.model:
                 argument_option["arguments"].extend(["-wspr"])
-
-            # Todo Check if markov model is reversible if not throw error:
 
         # Return the constructed argument options
         return argument_option
@@ -307,6 +337,7 @@ class Satute:
         table_pattern = re.compile(
             r"No.\s+Model\s+-LnL\s+df\s+AIC\s+AICc\s+BIC\n(.*?\n)---", re.DOTALL
         )
+
         table_match = re.search(table_pattern, content)
 
         if table_match:
@@ -373,7 +404,7 @@ class Satute:
 if __name__ == "__main__":
     # Instantiate the Satute class with your desired arguments
     iqtree_path = "iqtree"
-    input_directory = Path("./")
+    input_directory = None  # Path("./")
     output_prefix = None
     model = None
     num_rate_categories = None
