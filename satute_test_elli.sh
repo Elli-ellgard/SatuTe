@@ -34,6 +34,7 @@ echo ""
 
 echo "-----------------------------------"
 echo "TEST 2a: only fasta alignment file"
+echo "using full path for the input directory"
 echo ""
     DIR=$path/test/case_fasta
     python3 satute_cli.py  -iqtree $iqtree_path -dir $DIR
@@ -48,8 +49,18 @@ echo ""
 
 echo "-----------------------------------"
 echo "TEST 2b: only phylip alignment file"
+echo "using relative path for the input directory"
 echo ""
+    echo ""
+    DIR=./test/case_phylip
+    python3 satute_cli.py  -iqtree $iqtree_path -dir $DIR
+    mv $DIR/example.phy $path
+    rm -r $DIR
+    mkdir $DIR
+    mv $path/example.phy  $DIR
 
+echo "-----------------------------------"
+echo ""
 echo "-----------------------------------"
 echo ""
 
@@ -57,6 +68,14 @@ echo ""
 echo "-----------------------------------"
 echo  "TEST 3: directory with complete iqtree output"
 echo ""
+    echo "Subtest 1: no iqtree run, only test for saturation"
+    DIR=./test/case_complete
+    python3 satute_cli.py  -iqtree $iqtree_path -dir $DIR
+    rm -r $DIR/clades  $DIR/*.csv $DIR/*.txt 
+
+
+
+
 
 echo "-----------------------------------"
 echo ""
