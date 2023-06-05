@@ -7,6 +7,7 @@ import subprocess
 from pathlib import Path
 import os
 import re
+from pathlib import Path
 
 
 def remove_filename(path):
@@ -1340,24 +1341,30 @@ def map_values_to_newick(file_path, newick_string):
                 order, delta, c_s, branch_status, t2t_status, branch = columns
                 # Extracting the first value before the separator
                 node1, node2 = branch.split("-")
-                node2 = node2.split('*')[0]  # remove trailing '*'
-                values_dict[node2] = {'delta': delta.strip(),  'c_s': c_s.strip(), 'status': delta.strip()} 
+                node2 = node2.split("*")[0]  # remove trailing '*'
+                values_dict[node2] = {
+                    "delta": delta.strip(),
+                    "c_s": c_s.strip(),
+                    "status": delta.strip(),
+                }
     saturised_newick_string = map_values_to_newick_regex(values_dict, newick_string)
     return saturised_newick_string
+
 
 def map_values_to_newick_regex(values_dict, newick_string):
     print(newick_string)
     for node_name, values in values_dict.items():
-        delta = values['delta']    
-        c_s = values['c_s']
-        branch_status = values['status']
-        print(f'{node_name}[delta={delta}; c_s={c_s}; branch_status={branch_status}]')
+        delta = values["delta"]
+        c_s = values["c_s"]
+        branch_status = values["status"]
+        print(f"{node_name}[delta={delta}; c_s={c_s}; branch_status={branch_status}]")
         newick_string = re.sub(
             rf"({node_name})",
-            rf'\1[delta={delta}; c_s={c_s}; branch_status={branch_status}]',
-            newick_string
+            rf"\1[delta={delta}; c_s={c_s}; branch_status={branch_status}]",
+            newick_string,
         )
     return newick_string
+
 
 # -------------  CODE REFACTORED BY ENES BERK ZEKI SAKALLI --------------- #
 def saturation_test_cli(
@@ -1371,7 +1378,8 @@ def saturation_test_cli(
     newickformat=1,
     epsilon=0.01,
     rawMemory=True,
-):
+    pre_state_frequencies_vector = [],
+    ):
     """
     :param pathDATA: str
         A string representing the path to the data file. This file should be in the appropriate format for the analysis to be performed.
@@ -1445,9 +1453,8 @@ def saturation_test_cli(
         last_argument,
     )
 
-    state_frequencies_vect = rate_and_frequenciesALTERNATIVE(
-        pathDATA, number_rates, dimension
-    )
+    state_frequencies_vect = pre_state_frequencies_vector
+    # rate_and_frequenciesALTERNATIVE(pathDATA, number_rates, dimension)
 
     """ get the eigenvector(s) of the dominate non-zero eigenvalue """
     array_eigenvectors, multiplicity = diagonalisation(dimension, pathDATA)
@@ -1791,17 +1798,9 @@ def saturation_test_cli(
 
     # Use the function
     results_file = f"{pathFOLDER}/resultsRate{chosen_rate}.txt"
-    print(t)
-
-    print(map_values_to_newick(results_file, newick_string))
-
+    # print(t)
+    # print(map_values_to_newick(results_file, newick_string))
     print(
         "\n\nThe T2T status uses as threshold the saturation coherence between two sequences, which is ",
         "{:.4f}".format(c_sTwoSequence),
     )
-
-
-from pathlib import Path
-import shutil
-
-

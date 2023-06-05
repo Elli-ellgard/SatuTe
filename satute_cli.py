@@ -30,6 +30,136 @@ class NoAlignmentFileError(Exception):
     pass
 
 
+def parse_rate_and_frequencies_alternative_and_create_model_files(
+    path, number_rates, dimension, model="GTR"
+):
+    """
+    Note: not my function
+    Parse the rate parameter and state frequencies from the IQ-TREE log file.
+    """
+
+    with open(path + ".iqtree", "r") as f:
+        found = 0
+
+        number_lines = 0
+
+        modelString = ""
+
+        for line in f:
+            if "Rate parameter R:" in line:
+                found = 1
+            if found and number_lines < dimension * (dimension - 1) // 2 + 1:
+                if number_lines > 1:
+                    modelString += line[7:]
+                number_lines += 1
+        separated = modelString.splitlines()
+
+        modelFinal = model + "{"
+        modelFinal += separated[0]
+
+        for words in separated[1:]:
+            modelFinal += "," + words
+
+        modelFinal += "}"
+
+    with open(path + ".iqtree", "r") as f:
+        # FIX: Use split instead of character position, too delicate otherwise
+
+        found = 0
+
+        number_lines = 0
+
+        frequencyString = ""
+
+        for line in f:
+            if "State frequencies:" in line:
+                found = 1
+            if found and number_lines < dimension + 2:
+                if "equal frequencies" in line:
+                    frequencyString = "0.25\n" * dimension
+                    break
+
+                if number_lines > 1:
+                    frequencyString += line[10:]
+
+                number_lines += 1
+
+        separated = frequencyString.splitlines()
+
+        frequencyFinal = "FU{"
+
+        frequencyFinal += separated[0]
+
+        for words in separated[1:]:
+            frequencyFinal += "," + words
+        frequencyFinal += "}"
+        modelAndFrequency = modelFinal + "+" + frequencyFinal
+
+    state_frequencies_vector = []
+
+    # Convert string to float
+    for state_frequency in separated:
+        state_frequencies_vector.append(float(state_frequency))
+
+    path_folder = remove_filename(path)
+
+    if number_rates == 1:
+        f1 = open(path_folder + "model.txt", "w")
+        f1.write(modelAndFrequency)
+    else:
+        for i in range(number_rates):
+            f1 = open(
+                path_folder + "subsequences/subseq" + str(i + 1) + "/model.txt", "w"
+            )
+            f1.write(modelAndFrequency)
+
+    return state_frequencies_vector
+
+
+def parse_rate_from_model(model):
+    try:
+        # Find the index of '+G' in the model string
+        plus_g_index = model.index("+G")
+
+        # Extract the substring after '+G'
+        number = model[plus_g_index + 2 :]
+
+        # Parse the extracted substring as an integer
+        rate = int(number)
+
+        return rate
+    except ValueError:
+        # If '+G' is not found or the number after '+G' is not a valid integer
+        # Return None or an appropriate value for error handling
+        logger.info("Could not find a Gamma distribution in the model.")
+        logger.info("So not rates were found.")
+        return 1
+
+
+def remove_filename(path):
+    parts = path.split("/")
+    parts.pop()
+    path_folder = "/".join(parts) + "/"  # Path where the we create folders
+    return path_folder
+
+
+def parse_substitution_model(file_path):
+    try:
+        with open(file_path, "r") as file:
+            content = file.read()
+            # Find the index of ':' in the file content
+            colon_index = content.index(":")
+
+            # Extract the substring after ':'
+            model_string = content[colon_index + 1 :].strip()
+
+            return model_string
+    except (IOError, ValueError):
+        # If the file cannot be read or ':' is not found in the content
+        # Return None or an appropriate value for error handling
+        return None
+
+
 class Satute:
     """Class representing Satute command-line tool for wrapping up functions of IQ-TREE."""
 
@@ -143,44 +273,78 @@ class Satute:
         arguments_dict = self.construct_arguments()
 
         # Running IQ-TREE with constructed arguments
-        self.run_iqtree_with_arguments(arguments_dict["arguments"], ["--quiet"])
-
         # If no model specified in input arguments, extract best model from log file
         if not self.input_args.model:
-            best_model_log_path = f"{arguments_dict['msa_file']}.log"
-            best_model = self.extract_best_model_from_log_file(best_model_log_path)
+            # best_model_log_path = f"{arguments_dict['msa_file']}.log"
+            # best_model = # This is wrong # parse_rate_and_frequencies_alternative(best_model_log_path)
+            # best_model_name = best_model[0]["Model"]
+            # self.run_iqtree_with_arguments([ar,"-m TESTONLY"], ["--redo", "--quiet"])
 
-            if not best_model:
-                raise ValueError("Could not find a model in the log file.")
-
-            best_model_name = best_model[0]["Model"]
-
-            logger.info(f"Best model: {best_model_name}")
-            logger.info(f"Running a second time with the best model: {best_model_name}")
-
+            self.run_iqtree_with_arguments(
+                arguments_dict["arguments"], ["-m", "TESTONLY", "--redo", "--quiet"]
+            )
+            substitution_model = parse_substitution_model(
+                str(arguments_dict["msa_file"]) + ".iqtree"
+            )
+            logger.info(f"Best model: {substitution_model}")
+            logger.info(
+                f"Running a second time with the best model: {substitution_model}"
+            )
             # Update model in input arguments and re-construct arguments
-            self.input_args.model = best_model_name
+            self.input_args.model = substitution_model
             arguments_dict = self.construct_arguments()
-            # Running IQ-TREE a second time with updated arguments and --redo option
-            self.run_iqtree_with_arguments(arguments_dict["arguments"], ["--quiet"])
 
+        # =========  Number Rate Handling =========
+        number_rates = 1
+        # If no number of rate categories specified in input arguments, extract it from the model
         if self.input_args.nr:
             number_rates = self.input_args.nr
         else:
-            number_rates = 1
+            if self.input_args.model:
+                number_rates = parse_rate_from_model(self.input_args.model)
+        # =========  End of Number Rate Handling =========
 
+        # =========  IF Tree File  =========
         if self.input_args.dir:
+            # CHECK IF Tree File IS DEFINED
             tree_file_path = self.find_file({".treefile", ".nex", ".nwk"})
+            # CHECK IF NOT SEE IF IQ Tree File IS DEFINED
             iqtree_file_path = self.find_file({".iqtree"})
+
+            # FIND Tree is file and get Newick String
             if tree_file_path is not None:
                 newick_string = self.get_newick_string(tree_file_path)
             else:
                 newick_string = self.get_newick_string_from_iq_tree_file(
                     iqtree_file_path
                 )
+        # =========  IF parameter -tree TREE IS DEFINED =========
         elif self.input_args.tree:
+            # CHECK IF Tree File IS DEFINED
             tree_file_path = self.input_args.tree
+            # GET Newick String
             newick_string = self.get_newick_string(tree_file_path)
+        # ======== End Tree File Handling =========
+        logger.info(f"Run Initial IQ-Tree with options {arguments_dict['option']}")
+
+        extra_arguments = arguments_dict.get("model_arguments", []) + [
+            "--quiet",
+            "--redo",
+        ]
+
+        self.run_iqtree_with_arguments(
+            arguments=arguments_dict["arguments"], extra_arguments=extra_arguments
+        )
+
+        state_frequencies_vector = (
+            parse_rate_and_frequencies_alternative_and_create_model_files(
+                str(arguments_dict["msa_file"]), number_rates, 4
+            )
+        )
+
+        logger.info(f"Run Saturation Test with Model {self.input_args.model}")
+        logger.info(f"Run Saturation Test with {number_rates} rate categories")
+        logger.info(f"Run Saturation Test with Rates {state_frequencies_vector}")
 
         for i in range(number_rates):
             logger.info(f"Here comes the {i+1} th fastest evolving region: ")
@@ -196,6 +360,7 @@ class Satute:
                     1,
                     0.01,
                     True,
+                    state_frequencies_vector
                 )
             else:
                 saturation_test_cli(
@@ -209,12 +374,11 @@ class Satute:
                     1,
                     0.01,
                     True,
+                    state_frequencies_vector,
                 )
 
         # End of the code, which should be here
-
         logger.info(f"Arguments: {arguments_dict}")
-
         # Writing log file
         self.write_log(arguments_dict["msa_file"])
 
@@ -243,7 +407,7 @@ class Satute:
     def construct_arguments(self):
         """
         Validate and process input arguments.
-        
+
         Raises:
             InvalidDirectoryError: If the input directory does not exist.
             NoAlignmentFileError: If no multiple sequence alignment file is found.
@@ -264,6 +428,7 @@ class Satute:
 
         if self.input_args.msa:
             self.input_args.msa = Path(self.input_args.msa)
+            self.input_args.dir = self.input_args.msa.parent
 
         if self.input_args.tree:
             self.input_args.tree = Path(self.input_args.tree)
@@ -309,12 +474,10 @@ class Satute:
         # If a model was specified in the input arguments, add it to the argument options
         if self.input_args.model:
             argument_option["option"] += " + model"
-            argument_option["arguments"].extend(["-m", self.input_args.model])
-
+            argument_option["model_arguments"] = ["-m", self.input_args.model]
             # If the model includes a Gamma distribution, add the corresponding argument
-            if "Gamma" in self.input_args.model:
-                argument_option["arguments"].extend(["-wspr"])
-
+            if "+G" in self.input_args.model:
+                argument_option["model_arguments"].extend(["-wspr"])
         # Return the constructed argument options
         return argument_option
 
