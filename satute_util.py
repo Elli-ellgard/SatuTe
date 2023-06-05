@@ -10,6 +10,95 @@ import re
 from pathlib import Path
 
 
+def parse_rate_and_frequencies_alternative_and_create_model_files(
+    path, number_rates, dimension, model="GTR"
+):
+    """
+    Note: not my function
+    Parse the rate parameter and state frequencies from the IQ-TREE log file.
+    """
+
+    with open(path + ".iqtree", "r") as f:
+        found = 0
+        number_lines = 0
+        modelString = ""
+
+        for line in f:
+            if "Rate parameter R:" in line:
+                found = 1
+            if found and number_lines < dimension * (dimension - 1) // 2 + 1:
+                if number_lines > 1:
+                    modelString += line[7:]
+                number_lines += 1
+
+        separated = modelString.splitlines()
+        separated = list(set(separated))
+
+        splitted_model = model.split("+")
+        modelFinal = splitted_model[0] + "{"
+
+        modelFinal += separated[0]
+
+        for words in separated[1:]:
+            modelFinal += "," + words
+
+        modelFinal += "}"
+
+    with open(path + ".iqtree", "r") as f:
+        # FIX: Use split instead of character position, too delicate otherwise
+
+        found = 0
+
+        number_lines = 0
+
+        frequencyString = ""
+
+        for line in f:
+            if "State frequencies:" in line:
+                found = 1
+            if found and number_lines < dimension + 2:
+                if "equal frequencies" in line:
+                    frequencyString = "0.25\n" * dimension
+                    break
+
+                if number_lines > 1:
+                    frequencyString += line[10:]
+
+                number_lines += 1
+
+        separated = frequencyString.splitlines()
+
+        frequencyFinal = "FU{"
+
+        frequencyFinal += separated[0]
+
+        for words in separated[1:]:
+            frequencyFinal += "," + words
+
+        frequencyFinal += "}"
+        modelAndFrequency = modelFinal + "+" + frequencyFinal
+
+    state_frequencies_vector = []
+
+    # Convert string to float
+    for state_frequency in separated:
+        state_frequencies_vector.append(float(state_frequency))
+
+    path_folder = remove_filename(path)
+
+    if number_rates == 1:
+        f1 = open(path_folder + "model.txt", "w")
+        f1.write(modelAndFrequency)
+    else:
+        for i in range(number_rates):
+            f1 = open(
+                path_folder + "subsequences/subseq" + str(i + 1) + "/model.txt", "w"
+            )
+            f1.write(modelAndFrequency)
+
+    return state_frequencies_vector
+
+
 def remove_filename(path):
     parts = path.split("/")
     nameFILE = parts[-1]
@@ -1009,8 +1098,7 @@ def sequences_clades(
 
 
 """## RATE PARAMETER AND STATE FREQUENCIES (from the original reconstruction)"""
-
-
+"""
 def rate_and_frequenciesALTERNATIVE(path, number_rates, dimension):
     with open(path + ".iqtree", "r") as f:
         found = 0
@@ -1066,8 +1154,7 @@ def rate_and_frequenciesALTERNATIVE(path, number_rates, dimension):
             )
             f1.write(modelAndFrequency)
     return state_frequencies_vect
-
-
+"""
 """ DIAGONALIZATION OF THE RATE MATRIX
     output: array of eigenvectors for the dominant non-zero eigenvalue, length of array = multiplicity
     This way of diagonalization only works for REVERSIBLE rate matrices!!!
@@ -1378,8 +1465,8 @@ def saturation_test_cli(
     newickformat=1,
     epsilon=0.01,
     rawMemory=True,
-    pre_state_frequencies_vector = [],
-    ):
+    model="GTR",
+):
     """
     :param pathDATA: str
         A string representing the path to the data file. This file should be in the appropriate format for the analysis to be performed.
@@ -1453,8 +1540,11 @@ def saturation_test_cli(
         last_argument,
     )
 
-    state_frequencies_vect = pre_state_frequencies_vector
-    # rate_and_frequenciesALTERNATIVE(pathDATA, number_rates, dimension)
+    state_frequencies_vect = (
+        parse_rate_and_frequencies_alternative_and_create_model_files(
+            pathDATA, number_rates, dimension, model
+        )
+    )
 
     """ get the eigenvector(s) of the dominate non-zero eigenvalue """
     array_eigenvectors, multiplicity = diagonalisation(dimension, pathDATA)

@@ -30,92 +30,6 @@ class NoAlignmentFileError(Exception):
     pass
 
 
-def parse_rate_and_frequencies_alternative_and_create_model_files(
-    path, number_rates, dimension, model="GTR"
-):
-    """
-    Note: not my function
-    Parse the rate parameter and state frequencies from the IQ-TREE log file.
-    """
-
-    with open(path + ".iqtree", "r") as f:
-        found = 0
-
-        number_lines = 0
-
-        modelString = ""
-
-        for line in f:
-            if "Rate parameter R:" in line:
-                found = 1
-            if found and number_lines < dimension * (dimension - 1) // 2 + 1:
-                if number_lines > 1:
-                    modelString += line[7:]
-                number_lines += 1
-        separated = modelString.splitlines()
-
-        modelFinal = model + "{"
-        modelFinal += separated[0]
-
-        for words in separated[1:]:
-            modelFinal += "," + words
-
-        modelFinal += "}"
-
-    with open(path + ".iqtree", "r") as f:
-        # FIX: Use split instead of character position, too delicate otherwise
-
-        found = 0
-
-        number_lines = 0
-
-        frequencyString = ""
-
-        for line in f:
-            if "State frequencies:" in line:
-                found = 1
-            if found and number_lines < dimension + 2:
-                if "equal frequencies" in line:
-                    frequencyString = "0.25\n" * dimension
-                    break
-
-                if number_lines > 1:
-                    frequencyString += line[10:]
-
-                number_lines += 1
-
-        separated = frequencyString.splitlines()
-
-        frequencyFinal = "FU{"
-
-        frequencyFinal += separated[0]
-
-        for words in separated[1:]:
-            frequencyFinal += "," + words
-        frequencyFinal += "}"
-        modelAndFrequency = modelFinal + "+" + frequencyFinal
-
-    state_frequencies_vector = []
-
-    # Convert string to float
-    for state_frequency in separated:
-        state_frequencies_vector.append(float(state_frequency))
-
-    path_folder = remove_filename(path)
-
-    if number_rates == 1:
-        f1 = open(path_folder + "model.txt", "w")
-        f1.write(modelAndFrequency)
-    else:
-        for i in range(number_rates):
-            f1 = open(
-                path_folder + "subsequences/subseq" + str(i + 1) + "/model.txt", "w"
-            )
-            f1.write(modelAndFrequency)
-
-    return state_frequencies_vector
-
-
 def parse_rate_from_model(model):
     try:
         # Find the index of '+G' in the model string
@@ -147,13 +61,10 @@ def parse_substitution_model(file_path):
     try:
         with open(file_path, "r") as file:
             content = file.read()
-            # Find the index of ':' in the file content
-            colon_index = content.index(":")
-
-            # Extract the substring after ':'
-            model_string = content[colon_index + 1 :].strip()
-
-            return model_string
+            for line in content.splitlines():
+                if "Best-fit model according to BIC:" in line:
+                    model_string = line.split(":")[1].strip()
+                    return model_string
     except (IOError, ValueError):
         # If the file cannot be read or ':' is not found in the content
         # Return None or an appropriate value for error handling
@@ -177,12 +88,6 @@ class Satute:
         # Define the program header and command-line arguments
         self.header = f"{'=' * 100}\n\nSatute - asymptotic test for branch saturation\n\n{'=' * 100}\nAuthor:\nCitation:\n{'=' * 100}\n\n"
         self.arguments = [
-            {
-                "flag": "-outdir",
-                "help": "Output File Directory",
-                "default": self.output_prefix,
-                "metavar": "<file_name>",
-            },
             {
                 "flag": "-dir",
                 "help": "Path to input directory",
@@ -229,7 +134,7 @@ class Satute:
                 "metavar": "<num>",
             },
             {
-                "flag": "-b",
+                "flag": "-boot",
                 "help": "Replicates for bootstrap + ML tree + consensus tree",
                 "type": int,
                 "default": self.boot,
@@ -275,17 +180,13 @@ class Satute:
         # Running IQ-TREE with constructed arguments
         # If no model specified in input arguments, extract best model from log file
         if not self.input_args.model:
-            # best_model_log_path = f"{arguments_dict['msa_file']}.log"
-            # best_model = # This is wrong # parse_rate_and_frequencies_alternative(best_model_log_path)
-            # best_model_name = best_model[0]["Model"]
-            # self.run_iqtree_with_arguments([ar,"-m TESTONLY"], ["--redo", "--quiet"])
-
             self.run_iqtree_with_arguments(
                 arguments_dict["arguments"], ["-m", "TESTONLY", "--redo", "--quiet"]
             )
             substitution_model = parse_substitution_model(
                 str(arguments_dict["msa_file"]) + ".iqtree"
             )
+
             logger.info(f"Best model: {substitution_model}")
             logger.info(
                 f"Running a second time with the best model: {substitution_model}"
@@ -332,50 +233,40 @@ class Satute:
             "--redo",
         ]
 
+        if self.input_args.ufboot and self.input_args.boot:
+            return ValueError("Cannot run both ufboot and boot at the same time")
+        else:
+            if self.input_args.ufboot:
+                if self.input_args.ufboot < 1000:
+                    return ValueError("ufboot must be >= 1000")
+                extra_arguments.append(f"--ufboot {self.input_args.ufboot}")
+            if self.input_args.boot:
+                if self.input_args.boot < 100:
+                    return ValueError("boot must be >= 100")
+                extra_arguments.append(f"--boot {self.input_args.boot}")
+
         self.run_iqtree_with_arguments(
             arguments=arguments_dict["arguments"], extra_arguments=extra_arguments
         )
 
-        state_frequencies_vector = (
-            parse_rate_and_frequencies_alternative_and_create_model_files(
-                str(arguments_dict["msa_file"]), number_rates, 4
-            )
-        )
-
         logger.info(f"Run Saturation Test with Model {self.input_args.model}")
         logger.info(f"Run Saturation Test with {number_rates} rate categories")
-        logger.info(f"Run Saturation Test with Rates {state_frequencies_vector}")
 
         for i in range(number_rates):
             logger.info(f"Here comes the {i+1} th fastest evolving region: ")
-            if i == 0:
-                saturation_test_cli(
-                    str(arguments_dict["msa_file"]),
-                    newick_string,
-                    str(self.input_args.iqtree),
-                    4,
-                    number_rates,
-                    str(number_rates - i),
-                    2.33,
-                    1,
-                    0.01,
-                    True,
-                    state_frequencies_vector
-                )
-            else:
-                saturation_test_cli(
-                    str(arguments_dict["msa_file"]),
-                    newick_string,
-                    str(self.input_args.iqtree),
-                    4,
-                    number_rates,
-                    str(number_rates - i),
-                    2.33,
-                    1,
-                    0.01,
-                    True,
-                    state_frequencies_vector,
-                )
+            saturation_test_cli(
+                str(arguments_dict["msa_file"]),
+                newick_string,
+                str(self.input_args.iqtree),
+                4,
+                number_rates,
+                str(number_rates - i),
+                2.33,
+                1,
+                0.01,
+                True,
+                self.input_args.model,
+            )
 
         # End of the code, which should be here
         logger.info(f"Arguments: {arguments_dict}")
