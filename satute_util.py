@@ -1453,13 +1453,14 @@ def map_values_to_newick(file_path, newick_string):
             # Assuming that the columns are separated by tabs
             columns = line.strip().split("\t")
             if len(columns) == 6:  # Only process lines with correct number of columns
-                order, delta, c_s, branch_status, t2t_status, branch = columns
+                order, delta, c_s, p_value, branch_status, t2t_status, branch = columns
                 # Extracting the first value before the separator
                 node1, node2 = branch.split("-")
                 node2 = node2.split("*")[0]  # remove trailing '*'
                 values_dict[node2] = {
                     "delta": delta.strip(),
                     "c_s": c_s.strip(),
+                    "p-value": p_value.strip(),
                     "status": delta.strip(),
                 }
     saturised_newick_string = map_values_to_newick_regex(values_dict, newick_string)
@@ -1471,11 +1472,12 @@ def map_values_to_newick_regex(values_dict, newick_string):
     for node_name, values in values_dict.items():
         delta = values["delta"]
         c_s = values["c_s"]
+        p_value = values["p-value"]
         branch_status = values["status"]
-        print(f"{node_name}[delta={delta}; c_s={c_s}; branch_status={branch_status}]")
+        print(f"{node_name}[delta={delta}; c_s={c_s}; p_value={p_value}; branch_status={branch_status}]")
         newick_string = re.sub(
             rf"({node_name})",
-            rf"\1[delta={delta}; c_s={c_s}; branch_status={branch_status}]",
+            rf"\1[delta={delta}; c_s={c_s}; p_value={p_value}; branch_status={branch_status}]",
             newick_string,
         )
     return newick_string
@@ -1637,7 +1639,7 @@ def saturation_test_cli(
     number_standard_deviations = 2  # Confidence intervals of 98% (one sided)
 
     print(
-        "{:6s}  {:6s}  {:6s} {:6s} {:14s} {:14s} {:100s}".format(
+        "{:6s}\t{:6s}\t{:6s}\t{:6s}\t{:14s}\t{:14s}\t{:100s}".format(
             "Order", 
             "delta",
             "c_s",
@@ -1846,17 +1848,16 @@ def saturation_test_cli(
 
             M_b = np.asarray(b) @ np.asarray(b) / number_sites + upper_ci
             M_b = min(1, M_b)
-            variance = M_a * M_b / number_sites # variance of normal distribution
+            variance = M_a * M_b / np.sqrt(number_sites)
             c_s = (
-                z_alpha * np.sqrt(variance)
+                z_alpha * np.sqrt(variance) 
             )  # computing the saturation coherence
 
             c_sTwoSequence = z_alpha / np.sqrt(
                 number_sites
             )  # computing the saturation coherence between two sequences
-
-            p_value = st.norm.sf(abs(delta/np.sqrt(variance))) # p-value
-
+            
+            p_value = st.norm.sf(abs(delta/np.sqrt(variance)))
         else:
             c_sTwoSequence = (
                 multiplicity * z_alpha / np.sqrt(number_sites)
@@ -1923,7 +1924,7 @@ def saturation_test_cli(
                 p_value = -1
             else:
                 c_s = z_alpha * np.sqrt(variance)
-                p_value = st.norm.sf(abs(delta/np.sqrt(variance))) # p-value
+                p_value = st.norm.sf(abs(delta/np.sqrt(variance)))
 
         if c_s > delta:
             result_test = "Saturated"
