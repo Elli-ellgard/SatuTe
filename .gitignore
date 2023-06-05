@@ -1,3 +1,7 @@
+# test
+./test/case_fasta/example.fasta.*
+./test/case_phylip/example.phy.*
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
