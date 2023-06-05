@@ -453,6 +453,14 @@ class Satute:
             )
 
         return newick_string
+    
+    def print_args(self):
+        print("")
+        print("="*10)
+        print(self.input_args)
+        print("="*10)
+        print("")
+
 
 
 if __name__ == "__main__":
@@ -476,3 +484,4 @@ if __name__ == "__main__":
     )
     # Run the tool
     satute.run()
+    #satute.print_args()

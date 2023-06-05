@@ -1,3 +1,10 @@
+# test
+test/case_fasta/example.fasta.*
+test/case_fasta/clades/*
+test/case_fasta/m*
+test/case_phylip/example.phy.*
+test/octo-kraken-msa-test/*
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
