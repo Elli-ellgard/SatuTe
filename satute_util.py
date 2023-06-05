@@ -1200,8 +1200,8 @@ def parse_matrices(n, path):
                 except (IndexError, ValueError):
                     raise Exception("Error while parsing empirical state frequencies.")
             elif "State frequencies: (equal frequencies)" in line:
-                phi_matrix.fill(0.25)
-
+                for j in range(n):
+                    phi_matrix[j,j] = 0.25
     return rate_matrix, phi_matrix
 
 
@@ -1889,8 +1889,8 @@ def saturation_test_cli(
 
     # Use the function
     results_file = f"{pathFOLDER}/resultsRate{chosen_rate}.txt"
-    # print(t)
-    # print(map_values_to_newick(results_file, newick_string))
+    print(t)
+    print(map_values_to_newick(results_file, newick_string))
     print(
         "\n\nThe T2T status uses as threshold the saturation coherence between two sequences, which is ",
         "{:.4f}".format(c_sTwoSequence),
