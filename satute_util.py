@@ -7,6 +7,7 @@ import csv
 import os
 import scipy
 import scipy.linalg
+import scipy.stats as st
 import subprocess
 from pathlib import Path
 import os
@@ -1845,13 +1846,17 @@ def saturation_test_cli(
 
             M_b = np.asarray(b) @ np.asarray(b) / number_sites + upper_ci
             M_b = min(1, M_b)
-            aux = M_a * M_b
+            variance = M_a * M_b / number_sites # variance of normal distribution
             c_s = (
-                z_alpha * np.sqrt(aux) / np.sqrt(number_sites)
+                z_alpha * np.sqrt(variance)
             )  # computing the saturation coherence
+
             c_sTwoSequence = z_alpha / np.sqrt(
                 number_sites
             )  # computing the saturation coherence between two sequences
+
+            p_value = st.norm.sf(abs(delta/np.sqrt(variance))) # p-value
+
         else:
             c_sTwoSequence = (
                 multiplicity * z_alpha / np.sqrt(number_sites)
@@ -1915,8 +1920,10 @@ def saturation_test_cli(
                     "VARIANCE ESTIMATION IS NEGATIVE - CONSIDER INCREASING THE NUMBER OF STANDARD DEVIATIONS (number_standard_deviations) (CONFIDENCE INTERVAL)"
                 )
                 c_s = 999999999
+                p_value = -1
             else:
                 c_s = z_alpha * np.sqrt(variance)
+                p_value = st.norm.sf(abs(delta/np.sqrt(variance))) # p-value
 
         if c_s > delta:
             result_test = "Saturated"
@@ -1928,7 +1935,7 @@ def saturation_test_cli(
         else:
             result_test_tip2tip = "InfoT2T"
         print(
-            "{:6d}  {:6.4f}  {:6.4f} {:6.4f} {:14s} {:14s} {:100s}".format(
+            "{:6d}\t{:6.4f}\t{:6.4f}\t{:6.10f}\t{:14s}\t{:14s}\t{:100s}".format(
                 i + 1,
                 delta,
                 c_s,
@@ -1940,7 +1947,7 @@ def saturation_test_cli(
             )
         )
         results_file.write(
-            "{:6d}\t{:6.4f}\t{:6.4f}\t{:6.4f}\t{:14s}\t{:14s}\t{:100s}".format(
+            "{:6d}\t{:6.4f}\t{:6.4f}\t{:6.10f}\t{:14s}\t{:14s}\t{:100s}".format(
                 i + 1,
                 delta,
                 c_s,
