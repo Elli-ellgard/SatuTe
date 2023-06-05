@@ -1,6 +1,10 @@
 import numpy as np
+import regex as re
 import pandas as pd
+import ete3
 from ete3 import Tree
+import csv
+import os
 import scipy
 import scipy.linalg
 import subprocess
@@ -123,7 +127,7 @@ def node_type(T):
     return leaves, internal_nodes
 
 
-"""## MODIFYING SEQUENCE FILEx
+"""## MODIFYING SEQUENCE FILE
 
 #### We modified the nodes names in order to have indistinguishable names. We need to modify as well the sequence file.
 """
@@ -1206,8 +1210,30 @@ def parse_matrices(n, path):
 
 
 def diagonalisation(n, path):
-    ratematrix, phimatrix = parse_matrices(n, path)
+    ratematrix = np.zeros((n, n))
+    phimatrix = np.zeros((n, n))
 
+    """ get the rate matrix Q and stationary distribution pi from .iqtree file"""
+    filne = path + ".iqtree"
+    with open(filne, "r+") as f:
+        lines = f.readlines()
+        for i in range(0, len(lines)):
+            line = lines[i]
+            if "Rate matrix Q:" in line:
+                for j in range(n):
+                    listEntries = lines[i + j + 2].split()
+                    for k in range(n):
+                        if "e" in listEntries[k + 1]:
+                            ratematrix[j, k] = "0"
+                        else:
+                            ratematrix[j, k] = listEntries[k + 1]
+            if "State frequencies: (empirical counts from alignment)" in line:
+                for j in range(n):
+                    entry = lines[i + j + 2].split()
+                    phimatrix[j, j] = entry[2]
+            elif "State frequencies: (equal frequencies)" in line:
+                for j in range(n):
+                    phimatrix[j, j] = 0.25
     """ Then phimatrix := Diag(pi). Recall that matrix Q is reversible iff M:= phimatrix^1/2 x Q xphimatrix^{-1/2} is symmetric.
       """
     M = scipy.linalg.fractional_matrix_power(phimatrix, +1 / 2) @ ratematrix
@@ -1523,23 +1549,34 @@ def saturation_test_cli(
         rates = 1
 
     clades1, clades2 = clades(T, t, newickformat, internal_nodes, leaves)
-
     save_clades(pathDATA, number_rates, clades1, clades2, newickformat, rates)
 
-    last_argument = numbersitesperrate if number_rates > 1 else []
-
-    sequences_clades(
-        pathDATA,
-        number_rates,
-        nodes_number,
-        nucleotides_sites,
-        clades1,
-        clades2,
-        option,
-        newickformat,
-        internal_nodes,
-        last_argument,
-    )
+    if number_rates > 1:
+        sequences_clades(
+            pathDATA,
+            number_rates,
+            nodes_number,
+            nucleotides_sites,
+            clades1,
+            clades2,
+            option,
+            newickformat,
+            internal_nodes,
+            numbersitesperrate,
+        )
+    else:
+        sequences_clades(
+            pathDATA,
+            number_rates,
+            nodes_number,
+            nucleotides_sites,
+            clades1,
+            clades2,
+            option,
+            newickformat,
+            internal_nodes,
+            [],
+        )
 
     state_frequencies_vect = (
         parse_rate_and_frequencies_alternative_and_create_model_files(
@@ -1547,39 +1584,78 @@ def saturation_test_cli(
         )
     )
 
-    """ get the eigenvector(s) of the dominate non-zero eigenvalue """
+    """ get the eigenvector(s) of the dominate non-zero eigenvalue"""
     array_eigenvectors, multiplicity = diagonalisation(dimension, pathDATA)
-    run_iqtree_for_each_clade(pathFOLDER, number_rates, chosen_rate, pathIQTREE)
+    script = ""
+    model_and_frequency = ""
+    path_new_folder = ""
+
+    """BASH SCRIPT BEFORE TEST"""
+    if number_rates > 1:
+        path_new_folder = pathFOLDER + "subsequences/subseq" + chosen_rate + "/clades/*"
+
+        with open(f"{pathFOLDER}subsequences/subseq{chosen_rate}/model.txt") as toModel:
+            model_and_frequency = toModel.readline().strip("\n")
+
+    else:
+        path_new_folder = pathFOLDER + "clades/*"
+        with open(pathFOLDER + "model.txt", "r") as toModel:
+            model_and_frequency = toModel.readline().strip("\n")
+
+
+    script = (
+        """
+        CURRENT_DIR=$(pwd)
+        for d in """
+        + path_new_folder
+        + """; do
+                    cd "$d"
+                    """
+        + pathIQTREE
+        + """ -s sequence.txt -te tree.txt -m \"'\""""
+        + model_and_frequency
+        + """\"'\" -asr -blfix -o FOO -pre output -redo -quiet
+            cd "$CURRENT_DIR"                    
+        done"""
+    )
+
+    print(script)
+
+    os.system("bash -c '%s'" % script)
 
     """
     TODO: If we change the data structure before, the  main part would be here
-        SATURATION TEST FOR ALL BRANCHES
+    
+    SATURATION TEST FOR ALL BRANCHES
     """
 
     U = 1.0 / float(min(state_frequencies_vect)) - 1
+
     K = dimension - 1
+
     number_standard_deviations = 2  # Confidence intervals of 98% (one sided)
 
     print(
-        "{:6s}  {:6s}  {:6s}  {:14s} {:14s} {:100s}".format(
-            "Order", " delta", " c_s", "Branch status", "T2T status", " Branch"
+        "{:6s}  {:6s}  {:6s} {:6s} {:14s} {:14s} {:100s}".format(
+            "Order", 
+            "delta",
+            "c_s",
+            "p-value",
+            "Branch status",
+            "T2T status",
+            "Branch"
         )
     )
-
-    result_list = []
 
     for i in range(0, len(internal_nodes) + len(leaves)):
         if number_rates == 1:  # if not gamma model
             file1 = pathFOLDER + "clades/Branch" + str(i) + "_clade1/output.state"
-
             with open(file1, "r+") as f1:
                 with open(
                     pathFOLDER + "clades/Branch" + str(i) + "_clade1/memory.csv", "w"
                 ) as writer:
                     lines = f1.readlines()
-
                     out = lines[8:-1]
-
                     for j in range(len(lines[8:])):
                         writer.write(lines[j + 8])
 
@@ -1590,18 +1666,16 @@ def saturation_test_cli(
                     pathFOLDER + "clades/Branch" + str(i) + "_clade2/memory.csv", "w"
                 ) as writer:
                     lines = f2.readlines()
-
                     out = lines[8:-1]
-
                     for j in range(len(lines[8:])):
                         writer.write(lines[j + 8])
-
+            """ get the posterior probabilities of the left subtree"""
             df1 = pd.read_csv(
                 pathFOLDER + "clades/Branch" + str(i) + "_clade1/memory.csv",
                 sep="\t",
                 engine="python",
             )
-
+            """get the posterior probabilities of the right subtree"""
             df2 = pd.read_csv(
                 pathFOLDER + "clades/Branch" + str(i) + "_clade2/memory.csv",
                 sep="\t",
@@ -1626,11 +1700,12 @@ def saturation_test_cli(
                 results_file.write("\n")
 
                 results_file.write(
-                    "{:6s}\t{:6s}\t{:6s}\t{:14s}\t{:14s}\t{:100s}".format(
+                    "{:6s}\t{:6s}\t{:6s}\t{:6s}\t{:14s}\t{:14s}\t{:100s}".format(
                         "Order",
-                        " delta",
-                        " c_s",
-                        " Branch status ",
+                        "delta",
+                        "c_s",
+                        "p-value",
+                        "Branch status ",
                         "T2T status",
                         "Branch",
                         "\n",
@@ -1686,7 +1761,7 @@ def saturation_test_cli(
                     out = lines[8:-1]
                     for j in range(len(lines[8:])):
                         writer.write(lines[j + 8])
-
+            """ get the posterior probabilities of the left subtree"""
             df1 = pd.read_csv(
                 pathFOLDER
                 + "subsequences/subseq"
@@ -1697,6 +1772,7 @@ def saturation_test_cli(
                 sep="\t",
                 engine="python",
             )
+            """ get the posterior probabilities of the right subtree"""
             df2 = pd.read_csv(
                 pathFOLDER
                 + "subsequences/subseq"
@@ -1715,17 +1791,17 @@ def saturation_test_cli(
                 T = Tree(t, format=newickformat)
                 results_file = open(
                     pathFOLDER + "/resultsRate" + chosen_rate + ".txt", "w"
-                )
-                # To store test results.  We open file in first iteration (branch).
+                )  # To store test results.  We open file in first iteration (branch).
                 results_file.write("\n")
                 results_file.write(
-                    "{:6s}\t{:6s}\t{:6s}\t{:14s}\t{:14s}\t{:100s}\n".format(
+                    "{:6s}\t{:6s}\t{:6s}\t{:6s}\t{:14s}\t{:14s}\t{:100s}\n".format(
                         "Order",
-                        " delta",
-                        " c_s",
+                        "delta",
+                        "c_s",
+                        "p-value",
                         "Branch status",
                         "T2T status",
-                        " Branch",
+                        "Branch",
                         "\n",
                     )
                 )
@@ -1851,25 +1927,30 @@ def saturation_test_cli(
             result_test_tip2tip = "SatuT2T"
         else:
             result_test_tip2tip = "InfoT2T"
-
         print(
-            "{:6d}  {:6.4f}  {:6.4f}  {:14s} {:14s} {:100s}".format(
-                i + 1, delta, c_s, result_test, result_test_tip2tip, vector_branches[i]
+            "{:6d}  {:6.4f}  {:6.4f} {:6.4f} {:14s} {:14s} {:100s}".format(
+                i + 1,
+                delta,
+                c_s,
+                p_value,
+                result_test,
+                result_test_tip2tip,
+                vector_branches[i],
+                "\n",
             )
         )
-
-        result_list.append(
-            "{:6d}  {:6.4f}  {:6.4f}  {:14s} {:14s} {:100s}".format(
-                i + 1, delta, c_s, result_test, result_test_tip2tip, vector_branches[i]
-            )
-        )
-
         results_file.write(
-            "{:6d}\t{:6.4f}\t{:6.4f}\t{:14s}\t{:14s}\t{:100s}".format(
-                i + 1, delta, c_s, result_test, result_test_tip2tip, vector_branches[i]
+            "{:6d}\t{:6.4f}\t{:6.4f}\t{:6.4f}\t{:14s}\t{:14s}\t{:100s}".format(
+                i + 1,
+                delta,
+                c_s,
+                p_value,
+                result_test,
+                result_test_tip2tip,
+                vector_branches[i],
+                "\n",
             )
         )
-
         results_file.write("\n\n")
 
     results_file.write(
@@ -1877,11 +1958,9 @@ def saturation_test_cli(
             c_sTwoSequence
         )
     )
-
     results_file.write(
         "\n\nFor better reference, this is the reconstructed tree topology :\n\n"
     )
-
     results_file.write(
         T.copy("newick").get_ascii(attributes=["name", "label", "distance"])
     )
