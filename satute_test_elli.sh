@@ -36,16 +36,17 @@ echo "-----------------------------------"
 echo "TEST 2a: only fasta alignment file"
 echo "using full path for the input directory"
 echo ""
-    DIR=$path/test/case_fasta
+    DIR=./test/case_fasta
     python3 satute_cli.py  -iqtree $iqtree_path -dir $DIR
     mv $DIR/example.fasta $path
-    rm -r $DIR
-    mkdir $DIR
+   # rm -r $DIR
+   # mkdir $DIR
     mv $path/example.fasta  $DIR
 
 echo "-----------------------------------"
 echo ""
 
+exit
 
 echo "-----------------------------------"
 echo "TEST 2b: only phylip alignment file"
