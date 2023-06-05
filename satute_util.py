@@ -1175,6 +1175,7 @@ def parse_matrices(n, path):
     phi_matrix = np.zeros((n, n))
     filename = f"{path}.iqtree"
 
+
     # Check if file exists
     if not os.path.isfile(filename):
         raise FileNotFoundError(f"The file '{filename}' does not exist.")
