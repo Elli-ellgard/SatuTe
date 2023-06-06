@@ -1261,7 +1261,7 @@ def guess_msa_file_format(file_path):
     return None
 
 
-import pandas as pd
+
 
 
 def write_results_and_newick_tree(
