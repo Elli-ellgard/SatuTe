@@ -1,9 +1,4 @@
-# test
-test/case_fasta/example.fasta.*
-test/case_fasta/clades/*
-test/case_fasta/m*
-test/case_phylip/example.phy.*
-test/octo-kraken-msa-test/*
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -167,3 +162,4 @@ cython_debug/
 #  and can be added to the global gitignore or merged into this file.  For a more nuclear
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
+test

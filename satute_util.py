@@ -1576,9 +1576,7 @@ def saturation_test_cli(
     :param epsilon: float, default = 0.01
         A small positive number used as a tolerance in numerical calculations.
 
-    :param rawMemory: bool, default = True
-        If True, the function will store raw data in memory. This may speed up the calculations but requires more memory.
-
+    :param rawMemory: bool, default = True       
     """
 
     results_list = []
@@ -1661,10 +1659,9 @@ def saturation_test_cli(
     for i in range(0, len(internal_nodes) + len(leaves)):
         if number_rates == 1:  # if not gamma model
             file1 = pathFOLDER + "clades/Branch" + str(i) + "_clade1/output.state"
+
             with open(file1, "r+") as f1:
-                with open(
-                    pathFOLDER + "clades/Branch" + str(i) + "_clade1/memory.csv", "w"
-                ) as writer:
+                with open(pathFOLDER + "clades/Branch" + str(i) + "_clade1/memory.csv", "w") as writer:
                     lines = f1.readlines()
                     out = lines[8:-1]
                     for j in range(len(lines[8:])):
@@ -1709,7 +1706,6 @@ def saturation_test_cli(
                 )
 
                 # To store test results. We open file in first iteration (branch).
-                # results_file.write(T.copy("newick").get_ascii(attributes=["name","label","distance"]))
                 results_file.write("\n")
 
                 results_file.write(
@@ -1721,10 +1717,9 @@ def saturation_test_cli(
                         "Branch status ",
                         "T2T status",
                         "Branch",
-                        "\n",
                     )
                 )
-
+                
                 results_file.write("\n")
 
         else:  # if gamma model
@@ -1774,6 +1769,7 @@ def saturation_test_cli(
                     out = lines[8:-1]
                     for j in range(len(lines[8:])):
                         writer.write(lines[j + 8])
+
             """ get the posterior probabilities of the left subtree"""
             df1 = pd.read_csv(
                 pathFOLDER
@@ -1785,6 +1781,7 @@ def saturation_test_cli(
                 sep="\t",
                 engine="python",
             )
+
             """ get the posterior probabilities of the right subtree"""
             df2 = pd.read_csv(
                 pathFOLDER
@@ -1796,6 +1793,7 @@ def saturation_test_cli(
                 sep="\t",
                 engine="python",
             )
+            
             number_sites = len(df1["Site"].unique())
             number_nodes_1 = len(df1["Node"].unique())
             number_nodes_2 = len(df2["Node"].unique())
@@ -1815,7 +1813,6 @@ def saturation_test_cli(
                         "Branch status",
                         "T2T status",
                         "Branch",
-                        "\n",
                     )
                 )
                 results_file.write("\n")
