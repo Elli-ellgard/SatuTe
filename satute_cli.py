@@ -77,6 +77,8 @@ class Satute:
     def __init__(self, iqtree=None, input_dir=None, model=None, nr="None", output_prefix = None, ufboot = None, boot = None):
         self.iqtree = iqtree
         self.input_dir = None
+        self.tree = None
+        self.msa = None
         self.model = model
         self.nr = nr
         self.output_prefix = output_prefix
@@ -97,13 +99,13 @@ class Satute:
             {
                 "flag": "-tree",
                 "help": "Path to input tree file",
-                "default": self.input_dir,
+                "default": self.tree,
                 "metavar": "<file_name>",
             },
             {
                 "flag": "-msa",
                 "help": "Path to MSA",
-                "default": self.input_dir,
+                "default": self.msa,
                 "metavar": "<file_name>",
             },
             {
