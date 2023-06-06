@@ -68,6 +68,18 @@ Satute provides the following methods:
 - `extract_best_model_from_log_file(file_path)`: Extracts best model from IQ-TREE log file.
 - `file_exists(file_path)`: Checks if a file exists.
 
+## Visualisation
+To visualize the results of Statute, run the following bash script with an absolute path of the directory, where the results files of statute and the msa and tree file is present, as argument
+
+```bash
+cd visualisation
+./script-annotate-trees-from-satute.sh $(pwd)/../test/visual_example/
+```
+The bash script executes the  R script
+   1. script-annotate-tree-satute.R: Creation of newick string and nexus file with all meta data
+   2. script-visualize-satute-tree.R: Generating three plots using delta value, p-value and branch status
+
+
 ## Satute Project To-Do List
 1. **Diagonalisation in Saturation Test**
    - Remove the process of diagonalisation from the saturation test.
@@ -89,6 +101,10 @@ Satute provides the following methods:
 
 7. **Command Line Interface and Function Calls**
    - Currently, Satute is designed to be used as a command-line tool which can make calls from another Python script challenging. Consider implementing a way for Satute to be easily called from another Python script.
+    
+8. **Calculation of test according to the non-dominant, non-zero eigenvalues**
+9. **Integrate other arguments like seed and significance level, remove c_s value**
+10. **Check calculation of the delta value, especially for multipliyity >1**
 
 By addressing these tasks, we can improve the efficiency and flexibility of the Satute project, allowing it to be utilized more effectively in a variety of workflows. Remember that productive collaboration and regular code reviews will significantly contribute to achieving these goals.
 
