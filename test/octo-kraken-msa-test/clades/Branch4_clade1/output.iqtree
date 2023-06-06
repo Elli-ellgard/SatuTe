@@ -1,0 +1,117 @@
+IQ-TREE 2.2.2.4 COVID-edition built Apr 13 2023
+
+Input file name: sequence.txt
+User tree file name: tree.txt
+Type of analysis: tree reconstruction
+Random seed number: 452101
+
+REFERENCES
+----------
+
+To cite IQ-TREE please use:
+
+Bui Quang Minh, Heiko A. Schmidt, Olga Chernomor, Dominik Schrempf,
+Michael D. Woodhams, Arndt von Haeseler, and Robert Lanfear (2020)
+IQ-TREE 2: New models and efficient methods for phylogenetic inference
+in the genomic era. Mol. Biol. Evol., in press.
+https://doi.org/10.1093/molbev/msaa015
+
+SEQUENCE ALIGNMENT
+------------------
+
+Input data: 9 sequences with 1998 nucleotide sites
+Number of constant sites: 1148 (= 57.4575% of all sites)
+Number of invariant (constant or ambiguous constant) sites: 1148 (= 57.4575% of all sites)
+Number of parsimony informative sites: 530
+Number of distinct site patterns: 547
+
+SUBSTITUTION PROCESS
+--------------------
+
+Model of substitution: GTR+FU
+
+Rate parameter R:
+
+  A-C: 3.3824
+  A-G: 4.4648
+  A-T: 3.4864
+  C-G: 0.5251
+  C-T: 8.4803
+  G-T: 1.0000
+
+State frequencies: (user-defined)
+
+  pi(A) = 0.3547
+  pi(C) = 0.2282
+  pi(G) = 0.1919
+  pi(T) = 0.2252
+
+Rate matrix Q:
+
+  A   -0.8886    0.2842    0.3154     0.289
+  C    0.4417    -1.182    0.0371    0.7031
+  G     0.583   0.04411     -0.71    0.0829
+  T    0.4552    0.7124   0.07065    -1.238
+
+Model of rate heterogeneity: Uniform
+
+USER TREE
+---------
+
+Log-likelihood of the tree: -10055.3707 (s.e. 172.5489)
+Unconstrained log-likelihood (without tree): -8021.7528
+Number of free parameters (#branches + #model parameters): 0
+Akaike information criterion (AIC) score: 20110.7413
+Corrected Akaike information criterion (AICc) score: 20110.7413
+Bayesian information criterion (BIC) score: 20110.7413
+
+Total tree length (sum of branch lengths): 0.9760
+Sum of internal branch lengths: 0.2442 (25.0161% of tree length)
+
+NOTE: Tree is UNROOTED although outgroup taxon 'FOO' is drawn at root
+
+                   +--------------------------------------Human_
+           +-------| (Node11*)
+           |       |     +---------------------Seal_
+           |       +-----| (Node12*)
+           |             |        +-------------------Cow_
+           |             +--------| (Node13*)
+           |                      +----------------------Whale_
++----------| (Node10*)
+|          |                      +--------------Mouse_
+|          +----------------------| (Node14*)
+|                                 +-------------------Rat_
+| (Node1)
+|          +-------------------------------------Platypus_
++----------| (Node15*)
+|          +-------------------------------Opossum_
+|
++--FOO
+
+Tree in newick format:
+
+(((Human_:0.1355954288,(Seal_:0.0761842710,(Cow_:0.0688952091,Whale_:0.0815716635)Node13*:0.0315373532)Node12*:0.0235227076)Node11*:0.0289169254,(Mouse_:0.0540491650,Rat_:0.0711633291)Node14*:0.0810932082)Node10*:0.0403965219,(Platypus_:0.1321045850,Opossum_:0.1117584007)Node15*:0.0386837876,FOO:0.0005008348)Node1;
+
+ALISIM COMMAND
+--------------
+To simulate an alignment of the same length as the original alignment, using the tree and model parameters estimated from this analysis, you can use the following command:
+
+--alisim simulated_MSA -t output.treefile -m "GTR{3.3824,4.4648,3.4864,0.5251,8.4803}+FU{0.3547,0.2282,0.1919,0.2252}" --length 1998
+
+To mimic the alignment used to produce this analysis, i.e. simulate an alignment of the same length as the original alignment, using the tree and model parameters estimated from this analysis *and* copying the same gap positions as the original alignment, you can use the following command:
+
+iqtree -s sequence.txt --alisim mimicked_MSA
+
+To simulate any number of alignments in either of the two commandlines above, use the --num-alignments options, for example mimic 100 alignments you would use the command line:
+
+iqtree -s sequence.txt --alisim mimicked_MSA --num-alignments 100
+
+For more information on using AliSim, please visit: www.iqtree.org/doc/AliSim
+
+TIME STAMP
+----------
+
+Date and time: Mon Jun  5 14:47:55 2023
+Total CPU time used: 0.020087 seconds (0h:0m:0s)
+Total wall-clock time used: 0.0316531 seconds (0h:0m:0s)
+
