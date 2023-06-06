@@ -104,7 +104,7 @@ The bash script executes the  R script
     
 8. **Calculation of test according to the non-dominant, non-zero eigenvalues**
 9. **Integrate other arguments like seed and significance level, remove c_s value**
-10. **Check calculation of the delta value, especially for multipliyity >1**
+10. **Check calculation of the delta value, especially for multiplicity >1**
 
 By addressing these tasks, we can improve the efficiency and flexibility of the Satute project, allowing it to be utilized more effectively in a variety of workflows. Remember that productive collaboration and regular code reviews will significantly contribute to achieving these goals.
 
