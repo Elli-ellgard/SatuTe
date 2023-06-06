@@ -1,70 +1,71 @@
 
 Order 	delta 	c_s   	p-value	Branch status 	T2T status    	Branch                                                                                              
-     1	0.8264	0.0493	0.0000000000	Informative   	InfoT2T       	Node1*-Node2*                                                                                       
 
-     2	0.8045	0.0484	0.0000000000	Informative   	InfoT2T       	Node1*-Node3*                                                                                       
+     1	0.9026	0.5089	0.0000179640	Informative   	InfoT2T       	Node1*-Node2*                                                                                       
 
-     3	0.7880	0.0480	0.0000000000	Informative   	InfoT2T       	Node3*-Node4*                                                                                       
+     2	0.8685	0.4950	0.0000217457	Informative   	InfoT2T       	Node1*-Node3*                                                                                       
 
-     4	0.7945	0.0473	0.0600000000	Saturated   	InfoT2T       	Node4*-Node5*                                                                                       
+     3	0.8960	0.4991	0.0000144107	Informative   	InfoT2T       	Node3*-Node4*                                                                                       
 
-     5	0.7914	0.0477	0.0000000000	Informative   	InfoT2T       	Node4*-Node9*                                                                                       
+     4	0.9428	0.5105	0.0000084002	Informative   	InfoT2T       	Node4*-Node5*                                                                                       
 
-     6	0.8203	0.0474	0.0000000000	Informative   	InfoT2T       	Node5*-Node6*                                                                                       
+     5	0.9291	0.5090	0.0000105333	Informative   	InfoT2T       	Node4*-Node9*                                                                                       
 
-     7	0.8260	0.0474	0.0000000000	Informative   	InfoT2T       	Node9*-Node10*                                                                                      
+     6	0.9615	0.5164	0.0000071851	Informative   	InfoT2T       	Node5*-Node6*                                                                                       
 
-     8	0.8056	0.0465	0.0000000000	Informative   	InfoT2T       	Node9*-Node15*                                                                                      
+     7	0.9149	0.5026	0.0000111338	Informative   	InfoT2T       	Node9*-Node10*                                                                                      
 
-     9	0.7774	0.0462	0.0000000000	Informative   	InfoT2T       	Node6*-Node7*                                                                                       
+     8	0.8892	0.4933	0.0000133753	Informative   	InfoT2T       	Node9*-Node15*                                                                                      
 
-    10	0.8033	0.0475	0.0000000000	Informative   	InfoT2T       	Node6*-Node8*                                                                                       
+     9	0.8716	0.4857	0.0000144683	Informative   	InfoT2T       	Node6*-Node7*                                                                                       
 
-    11	0.8392	0.0479	0.0000000000	Informative   	InfoT2T       	Node10*-Node11*                                                                                     
+    10	0.8903	0.4928	0.0000127727	Informative   	InfoT2T       	Node6*-Node8*                                                                                       
 
-    12	0.8299	0.0481	0.0000000000	Informative   	InfoT2T       	Node10*-Node14*                                                                                     
+    11	0.9167	0.4956	0.0000081639	Informative   	InfoT2T       	Node10*-Node11*                                                                                     
 
-    13	0.8578	0.0484	0.0000000000	Informative   	InfoT2T       	Node11*-Node12*                                                                                     
+    12	0.9139	0.4982	0.0000095815	Informative   	InfoT2T       	Node10*-Node14*                                                                                     
 
-    14	0.8744	0.0488	0.0700000000	Saturated   	InfoT2T       	Node12*-Node13*                                                                                     
+    13	0.9278	0.4985	0.0000072235	Informative   	InfoT2T       	Node11*-Node12*                                                                                     
 
-    15	0.8574	0.0504	0.0000000000	Informative   	InfoT2T       	Node1*-LngfishAu*                                                                                   
+    14	0.9323	0.4997	0.0000068869	Informative   	InfoT2T       	Node12*-Node13*                                                                                     
 
-    16	0.8680	0.0511	0.0000000000	Informative   	InfoT2T       	Node2*-LngfishSA*                                                                                   
+    15	0.9077	0.5218	0.0000252715	Informative   	InfoT2T       	Node1*-LngfishAu*                                                                                   
 
-    17	0.8758	0.0505	0.0000000000	Informative   	InfoT2T       	Node2*-LngfishAf*                                                                                   
+    16	0.9524	0.5234	0.0000111954	Informative   	InfoT2T       	Node2*-LngfishSA*                                                                                   
 
-    18	0.8147	0.0501	0.0000000000	Informative   	InfoT2T       	Node3*-Frog*                                                                                        
+    17	0.9461	0.5230	0.0000125154	Informative   	InfoT2T       	Node2*-LngfishAf*                                                                                   
 
-    19	0.8137	0.0502	0.0000000000	Informative   	InfoT2T       	Node5*-Turtle*                                                                                      
+    18	0.8419	0.5237	0.0000899588	Informative   	InfoT2T       	Node3*-Frog*                                                                                        
 
-    20	0.7832	0.0499	0.0000000000	Informative   	InfoT2T       	Node15*-Platypus*                                                                                   
+    19	0.9530	0.5280	0.0000130480	Informative   	InfoT2T       	Node5*-Turtle*                                                                                      
 
-    21	0.7702	0.0500	0.0000000000	Informative   	InfoT2T       	Node15*-Opossum*                                                                                    
+    20	0.8964	0.5266	0.0000364731	Informative   	InfoT2T       	Node15*-Platypus*                                                                                   
 
-    22	0.8019	0.0500	0.0000000000	Informative   	InfoT2T       	Node7*-Sphenodon*                                                                                   
+    21	0.9137	0.5262	0.0000261015	Informative   	InfoT2T       	Node15*-Opossum*                                                                                    
 
-    23	0.8243	0.0495	0.0000000000	Informative   	InfoT2T       	Node7*-Lizard*                                                                                      
+    22	0.8800	0.5234	0.0000447579	Informative   	InfoT2T       	Node7*-Sphenodon*                                                                                   
 
-    24	0.8678	0.0499	0.0000000000	Informative   	InfoT2T       	Node8*-Crocodile*                                                                                   
+    23	0.9208	0.5136	0.0000147331	Informative   	InfoT2T       	Node7*-Lizard*                                                                                      
 
-    25	0.8821	0.0502	0.0000000000	Informative   	InfoT2T       	Node8*-Bird*                                                                                        
+    24	0.9237	0.5162	0.0000152672	Informative   	InfoT2T       	Node8*-Crocodile*                                                                                   
 
-    26	0.8886	0.0504	0.0000000000	Informative   	InfoT2T       	Node11*-Human*                                                                                      
+    25	0.9372	0.5165	0.0000117853	Informative   	InfoT2T       	Node8*-Bird*                                                                                        
 
-    27	0.8941	0.0503	0.0000000000	Informative   	InfoT2T       	Node14*-Mouse*                                                                                      
+    26	0.9313	0.5154	0.0000127485	Informative   	InfoT2T       	Node11*-Human*                                                                                      
 
-    28	0.8688	0.0496	0.0000000000	Informative   	InfoT2T       	Node14*-Rat*                                                                                        
+    27	0.9359	0.5150	0.0000114632	Informative   	InfoT2T       	Node14*-Mouse*                                                                                      
 
-    29	0.8690	0.0496	0.0000000000	Informative   	InfoT2T       	Node12*-Seal*                                                                                       
+    28	0.9189	0.5143	0.0000157212	Informative   	InfoT2T       	Node14*-Rat*                                                                                        
 
-    30	0.8265	0.0493	0.0510000000	Saturated   	InfoT2T       	Node13*-Cow*                                                                                        
+    29	0.9131	0.5142	0.0000175292	Informative   	InfoT2T       	Node12*-Seal*                                                                                       
 
-    31	0.8224	0.0496	0.0000000000	Informative   	InfoT2T       	Node13*-Whale*                                                                                      
+    30	0.9100	0.5164	0.0000200984	Informative   	InfoT2T       	Node13*-Cow*                                                                                        
+
+    31	0.9118	0.5166	0.0000195256	Informative   	InfoT2T       	Node13*-Whale*                                                                                      
 
 
 
-The T2T status uses as threshold the saturation coherence between two sequences, which is  0.0521
+The T2T status uses as threshold the saturation coherence between two sequences, which is  0.1220
 
 For better reference, this is the reconstructed tree topology :
 

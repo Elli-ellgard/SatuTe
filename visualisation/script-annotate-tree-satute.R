@@ -9,8 +9,18 @@ suppressPackageStartupMessages({
   if(!require("ape"))install.packages("ape");library(ape)
 })
 
-library(stringr)
-library(ggtree)
+suppressWarnings(suppressMessages(
+  if(!require("BiocManager", quietly = TRUE))
+  {
+    install.packages("BiocManager", repos = "http://cran.us.r-project.org")
+    BiocManager::install(c("ggtree","treeio"))
+  }))
+
+suppressWarnings(suppressMessages(library("ggtree")))
+suppressWarnings(suppressMessages(library("treeio")))
+# library(stringr)
+# library(ggtree)
+
 
 # Input files -----------------------------------
 args <- commandArgs()
@@ -20,11 +30,11 @@ dir <- args[8]
 output_file <-args[9]
 
 
-## example octo-kraken-msa-test
-dir="/home/elgert/Desktop/Cassius/Satute2/test/octo-kraken-msa-test/"
-tree_file=sprintf("%s/example.phy.treefile", dir)
-res_file=sprintf("%s/tree_resultsRate1_table",dir)
-output_file=sprintf("%s/outfile",dir)
+# ## example test/visual_example
+# dir="/home/elgert/Desktop/Cassius/Satute2/test/visual_example"
+# tree_file=sprintf("%s/example.phy.treefile", dir)
+# res_file=sprintf("%s/tree_resultsRate4_table",dir)
+# output_file="outfile"
 
 # Main -------------------
 
@@ -49,28 +59,28 @@ pair_2<-gsub(" ", "", pair_2, fixed = TRUE)
 res_satute$node_1<-pair_1
 res_satute$node_2<-pair_2
 
-info_satute <- res_satute[, c("Branch status","p_value", "node_2")]
-colnames(info_satute)<-c("Branch_status","p_value", "label")
+info_satute <- res_satute[, c("delta","c_s", "p_value","Branch status", "node_2")]
+colnames(info_satute)<-c("delta","c_s", "p_value", "Branch_status", "label")
 
 table2<-ttable%>% left_join(info_satute, by='label')
 tree2<-as.treedata(table2);
 
 
 #save nexus file 
-tree_nexus=sprintf("%s/%s", dir, output_file)
+tree_nexus=sprintf("%s/%s.nex", dir, output_file)
 write.beast(tree2, file=tree_nexus)
-# tree_nwk=sprintf("%s/%s_treefile_extended.nwk", dir, name)
-# write.beast.newick(tree2,tree_nwk)
+tree_nwk=sprintf("%s/%s.nwk", dir, output_file)
+write.beast.newick(tree2,tree_nwk)
 
-# plot of tree 
-tree_plot <- ggtree(tree2,layout="slanted", aes(col=Branch_status))+geom_tippoint() 
-  #+geom_tiplab(align=TRUE, col="black", hjust = -.5, size =6)
-print(tree_plot)
-
-plot_file=sprintf("%s/Tree_Rplot.pdf", dir)
-pdf(plot_file)
-print(tree_plot)
-dev.off()
+# # plot of tree 
+# tree_plot <- ggtree(tree2,layout="slanted", aes(col=Branch_status))+geom_tippoint() 
+#   #+geom_tiplab(align=TRUE, col="black", hjust = -.5, size =6)
+# print(tree_plot)
+# 
+# plot_file=sprintf("%s/Tree_Rplot.pdf", dir)
+# pdf(plot_file)
+# print(tree_plot)
+# dev.off()
 
 
 
