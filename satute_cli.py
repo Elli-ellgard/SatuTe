@@ -74,7 +74,16 @@ def parse_substitution_model(file_path):
 class Satute:
     """Class representing Satute command-line tool for wrapping up functions of IQ-TREE."""
 
-    def __init__(self, iqtree=None, input_dir=None, model=None, nr="None", output_prefix = None, ufboot = None, boot = None):
+    def __init__(
+        self,
+        iqtree=None,
+        input_dir=None,
+        model=None,
+        nr="None",
+        output_prefix=None,
+        ufboot=None,
+        boot=None,
+    ):
         self.iqtree = iqtree
         self.input_dir = None
         self.model = model
@@ -447,20 +456,12 @@ class Satute:
             )
 
         return newick_string
-    
-    def print_args(self):
-        print("")
-        print("="*10)
-        print(self.input_args)
-        print("="*10)
-        print("")
-
 
 
 if __name__ == "__main__":
     # Instantiate the Satute class with your desired arguments
     iqtree_path = "iqtree"
-    input_directory = None 
+    input_directory = None
     output_prefix = None
     model = None
     num_rate_categories = None
@@ -468,7 +469,7 @@ if __name__ == "__main__":
     boot_replicates = None
 
     satute = Satute(
-        iqtree= iqtree_path,
+        iqtree=iqtree_path,
         input_dir=input_directory,
         model=model,
         nr=num_rate_categories,
@@ -476,7 +477,5 @@ if __name__ == "__main__":
         ufboot=ufboot_replicates,
         boot=boot_replicates,
     )
-    
     # Run the tool
     satute.run()
-    #satute.print_args()
