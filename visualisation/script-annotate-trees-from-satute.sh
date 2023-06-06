@@ -31,7 +31,7 @@ if [ -f $input_dir/${name}_resultsRate1.nwk ]
 then
 	rm -r  $input_dir/*.nwk $input_dir/*table $input_dir/*.nex $input_dir/*.pdf
 fi
-exit
+
 number_rates=0
 for res in $input_dir/resultsRate*
 do
