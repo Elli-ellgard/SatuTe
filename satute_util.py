@@ -14,87 +14,33 @@ import os
 import re
 from pathlib import Path
 
-
-def generate_bash_script_and_execute(number_rates, chosen_rate, pathFOLDER, pathIQTREE):
-    """
-    Generate a bash script based on the provided parameters and execute it.
-
-    Parameters:
-    number_rates (int): The number of rates.
-    chosen_rate (str): The chosen rate.
-    pathFOLDER (str): The path to the folder.
-    pathIQTREE (str): The path to the IQTREE.
-
-    """
-    script = ""
-    model_and_frequency = ""
-    path_new_folder = ""
-
-    """BASH SCRIPT BEFORE TEST"""
-    if number_rates > 1:
-        path_new_folder = pathFOLDER + "subsequences/subseq" + chosen_rate + "/clades/*"
-
-        with open(f"{pathFOLDER}subsequences/subseq{chosen_rate}/model.txt") as toModel:
-            model_and_frequency = toModel.readline().strip("\n")
-
-    else:
-        path_new_folder = pathFOLDER + "clades/*"
-        with open(pathFOLDER + "model.txt", "r") as toModel:
-            model_and_frequency = toModel.readline().strip("\n")
-
-    script = (
-        """
-        CURRENT_DIR=$(pwd)
-        for d in """
-        + path_new_folder
-        + """; do
-                    cd "$d"
-                    """
-        + pathIQTREE
-        + """ -s sequence.txt -te tree.txt -m \"'\""""
-        + model_and_frequency
-        + """\"'\" -asr -blfix -o FOO -pre output -redo -quiet
-            cd "$CURRENT_DIR"                    
-        done"""
-    )
-
-    print(script)
-    os.system("bash -c '%s'" % script)
-
-
-def parse_rate_and_frequencies_alternative_and_create_model_files(
-    path, number_rates, dimension, model="GTR"
-):
-    """
-    Note: not my function
-    Parse the rate parameter and state frequencies from the IQ-TREE log file.
-    """
-
-    with open(path + ".iqtree", "r") as f:
+def parse_rate_parameters(file_path, dimension, model="GTR"):
+    with open(file_path, "r") as f:
         found = 0
         number_lines = 0
-        modelString = ""
-
+        rates = []
         for line in f:
             if "Rate parameter R:" in line:
                 found = 1
             if found and number_lines < dimension * (dimension - 1) // 2 + 1:
                 if number_lines > 1:
-                    modelString += line[7:]
+                    line = line.split(":")
+                    rates.append(line[1].strip())
                 number_lines += 1
-
-        separated = modelString.splitlines()
-        separated = list(set(separated))
-
         splitted_model = model.split("+")
-        modelFinal = splitted_model[0] + "{"
 
-        modelFinal += separated[0]
+        rates_list = ",".join(list(dict.fromkeys(rates)))
+        model_compound_token = f"{splitted_model[0]}{{{rates_list}}}"
+        return model_compound_token
 
-        for words in separated[1:]:
-            modelFinal += "," + words
-
-        modelFinal += "}"
+def parse_rate_and_frequencies_alternative_and_create_model_files(
+    path, number_rates, dimension, model="GTR"
+):
+    """
+    Note: Slowly my function
+    Parse the rate parameter and state frequencies from the IQ-TREE log file.    
+    """
+    model_final = parse_rate_parameters(path + ".iqtree", dimension, model=model)
 
     with open(path + ".iqtree", "r") as f:
         # FIX: Use split instead of character position, too delicate otherwise
@@ -128,7 +74,7 @@ def parse_rate_and_frequencies_alternative_and_create_model_files(
             frequencyFinal += "," + words
 
         frequencyFinal += "}"
-        modelAndFrequency = modelFinal + "+" + frequencyFinal
+        modelAndFrequency = model_final + "+" + frequencyFinal
 
     state_frequencies_vector = []
 
@@ -160,8 +106,6 @@ def remove_filename(path):
 
 
 """## INTERNAL NODES AND LEAVES"""
-
-
 def node_type(T):
     leaves = []
     for i in T.get_leaves():
@@ -1149,70 +1093,6 @@ def sequences_clades(
             print("FILE FORMAT OPTION NOT VALID")
 
 
-"""## RATE PARAMETER AND STATE FREQUENCIES (from the original reconstruction)"""
-"""
-def rate_and_frequenciesALTERNATIVE(path, number_rates, dimension):
-    with open(path + ".iqtree", "r") as f:
-        found = 0
-        number_lines = 0
-        modelString = ""
-        for line in f:
-            if "Rate parameter R:" in line:
-                found = 1
-            if found and number_lines < dimension * (dimension - 1) // 2 + 1:
-                if number_lines > 1:
-                    modelString += line[7:]
-                number_lines += 1
-        separated = modelString.splitlines()
-        modelFinal = "GTR{"
-        modelFinal += separated[0]
-        for words in separated[1:]:
-            modelFinal += "," + words
-        modelFinal += "}"
-
-    with open(path + ".iqtree", "r") as f:
-        # FIX: Use split instead of character position, too delicate otherwise
-        found = 0
-        number_lines = 0
-        frequencyString = ""
-        for line in f:
-            if "State frequencies:" in line:
-                found = 1
-            if found and number_lines < dimension + 2:
-                if "equal frequencies" in line:
-                    frequencyString = "0.25\n" * dimension
-                    break
-                if number_lines > 1:
-                    frequencyString += line[10:]
-                number_lines += 1
-        separated = frequencyString.splitlines()
-        frequencyFinal = "FU{"
-        frequencyFinal += separated[0]
-        for words in separated[1:]:
-            frequencyFinal += "," + words
-        frequencyFinal += "}"
-        modelAndFrequency = modelFinal + "+" + frequencyFinal
-    state_frequencies_vect = []
-    for words in separated:
-        state_frequencies_vect.append(float(words))
-    pathFolder = remove_filename(path)
-    if number_rates == 1:
-        f1 = open(pathFolder + "model.txt", "w")
-        f1.write(modelAndFrequency)
-    else:
-        for i in range(number_rates):
-            f1 = open(
-                pathFolder + "subsequences/subseq" + str(i + 1) + "/model.txt", "w"
-            )
-            f1.write(modelAndFrequency)
-    return state_frequencies_vect
-"""
-""" DIAGONALIZATION OF THE RATE MATRIX
-    output: array of eigenvectors for the dominant non-zero eigenvalue, length of array = multiplicity
-    This way of diagonalization only works for REVERSIBLE rate matrices!!!
- """
-
-
 def compare_arrays(array1, array2):
     """Compare two numpy arrays for equality and print a message."""
     if np.array_equal(array1, array2):
@@ -1527,7 +1407,9 @@ def map_values_to_newick_regex(values_dict, newick_string):
         c_s = values["c_s"]
         p_value = values["p-value"]
         branch_status = values["status"]
-
+        print(
+            f"{node_name}[delta={delta}; c_s={c_s}; p_value={p_value}; branch_status={branch_status}]"
+        )
         newick_string = re.sub(
             rf"({node_name})",
             rf"\1[delta={delta}; c_s={c_s}; p_value={p_value}; branch_status={branch_status}]",
@@ -1643,6 +1525,41 @@ def saturation_test_cli(
 
     """ get the eigenvector(s) of the dominate non-zero eigenvalue"""
     array_eigenvectors, multiplicity = diagonalisation(dimension, pathDATA)
+    script = ""
+    model_and_frequency = ""
+    path_new_folder = ""
+
+    """BASH SCRIPT BEFORE TEST"""
+    if number_rates > 1:
+        path_new_folder = pathFOLDER + "subsequences/subseq" + chosen_rate + "/clades/*"
+
+        with open(f"{pathFOLDER}subsequences/subseq{chosen_rate}/model.txt") as toModel:
+            model_and_frequency = toModel.readline().strip("\n")
+
+    else:
+        path_new_folder = pathFOLDER + "clades/*"
+        with open(pathFOLDER + "model.txt", "r") as toModel:
+            model_and_frequency = toModel.readline().strip("\n")
+
+    script = (
+        """
+        CURRENT_DIR=$(pwd)
+        for d in """
+        + path_new_folder
+        + """; do
+                    cd "$d"
+                    """
+        + pathIQTREE
+        + """ -s sequence.txt -te tree.txt -m \"'\""""
+        + model_and_frequency
+        + """\"'\" -asr -blfix -o FOO -pre output -redo -quiet
+            cd "$CURRENT_DIR"                    
+        done"""
+    )
+
+    print(script)
+
+    os.system("bash -c '%s'" % script)
 
     """BASH SCRIPT BEFORE TEST
         TODO: If we change the data structure before, the  main part would be here
@@ -1655,6 +1572,12 @@ def saturation_test_cli(
     K = dimension - 1
 
     number_standard_deviations = 2  # Confidence intervals of 98% (one sided)
+
+    print(
+        "{:6s}\t{:6s}\t{:6s}\t{:6s}\t{:14s}\t{:14s}\t{:100s}".format(
+            "Order", "delta", "c_s", "p-value", "Branch status", "T2T status", "Branch"
+        )
+    )
 
     for i in range(0, len(internal_nodes) + len(leaves)):
         if number_rates == 1:  # if not gamma model

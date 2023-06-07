@@ -151,6 +151,8 @@ class Satute:
             },
         ]
 
+        self.active_directory = None
+
     def parse_input(self):
         """Parse command-line arguments."""
         parser = argparse.ArgumentParser(description="Satute")
@@ -316,13 +318,14 @@ class Satute:
         # Convert input paths to Path objects for easier handling
         if self.input_args.dir:
             self.input_args.dir = Path(self.input_args.dir)
+            self.active_directory = self.input_args.dir
 
         if self.input_args.iqtree:
             self.input_args.iqtree = Path(self.input_args.iqtree)
 
         if self.input_args.msa:
             self.input_args.msa = Path(self.input_args.msa)
-            self.input_args.dir = self.input_args.msa.parent
+            self.active_directory = self.input_args.msa.parent
 
         if self.input_args.tree:
             self.input_args.tree = Path(self.input_args.tree)
@@ -377,7 +380,7 @@ class Satute:
 
     def find_file(self, suffixes):
         """Find file in input directory with given suffixes."""
-        for file in self.input_args.dir.iterdir():
+        for file in self.active_directory.iterdir():
             if file.suffix in suffixes:
                 return file
         return None
