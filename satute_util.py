@@ -1810,6 +1810,8 @@ def saturation_test_cli(
                 )
                 results_file.write("\n")
 
+        """TODO: not necessary?  
+        arrays below convert into float"""
         estimation_dt = np.sqrt(U * min(K, U / 4) / number_sites)
         if not rawMemory:
             upper_ci = number_standard_deviations * estimation_dt
@@ -1840,8 +1842,13 @@ def saturation_test_cli(
                 np.asarray(a) @ np.asarray(b) / number_sites
             )  # computing the dominant sample coherence
             # print(np.multiply(a, b))
+
             if i < len(internal_nodes):
                 M_a = np.asarray(a) @ np.asarray(a) / number_sites + upper_ci
+                """
+                only conversion into float?
+                M_a = float(np.asarray(a) @ np.asarray(a)) / float(number_sites) #+ upper_ci
+                """
                 M_a = min(1, M_a)
             else:  # if clade A is a single leaf
                 M_a = 1
@@ -1972,7 +1979,7 @@ def saturation_test_cli(
     results_file.write(
         T.copy("newick").get_ascii(attributes=["name", "label", "distance"])
     )
-    results_file.close()
+    #results_file.close()
 
     # Use the function
     results_file = f"{pathFOLDER}/resultsRate{chosen_rate}.txt"
