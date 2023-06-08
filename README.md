@@ -1,9 +1,21 @@
 # Satute
-Satute is a asymptotic test for branch saturation tool that utilizes IQ-TREE for its core operations. It provides a command-line interface for running saturation tests in a more streamlined and manageable way. While it heavily interacts with IQ-TREE, it is not merely a wrapper but incorporates additional functionalities specific to saturation testing. For the saturation test, we assume as model of sequence evolution a general reversible model in equilibrium.
+Satute is a Python program to test for branch saturation in a phylogeny. As an intuition, a branch is saturated when it is too long, although sometimes the cause is more technical than just branch length.
+
+Satute uses IQ-TREE for its core operations (http://www.iqtree.org) and provides a command-line interface for running saturation tests in a streamlined and manageable way. It also contains additional functionalities specific to saturation testing.
+
+For the saturation test, we assume that the model of sequence evolution is reversible and stationary.
 
 ## Installation
 
-Clone this repository to your local machine and navigate to the root directory. Satute is written in Python, so you need to have Python installed on your machine to use it. IQ-TREE should also be installed, and its executable should be within your system's PATH.
+Clone this repository to your local machine and navigate to the root directory. Satute is written in Python, so you need to have Python3 installed on your machine to use it. IQ-TREE should also be installed, and its executable should be within your system's PATH.
+
+## Workflow
+
+The minimum input required to run Satute is an alignment file in phylip or fasta format. IQ-TREE reconstructs an evolutionary tree and then Satute will tell us, for every branch of this tree, whether this branch is saturated or not. If the sites have different evolutionary speeds (e.g. due to the Gamma model), then Satute will separate the alignment sites into the rate categories that likely generated them.
+
+The final output is a result file listing, for every branch, its saturation status. If there are different rate categories, then one result file is generated for each category.
+
+The statistic we use to test for branch saturation is the coherence of the branch, which has a value typically between 0 (saturated) and 1 (unsaturated).
 
 ## Usage
 
