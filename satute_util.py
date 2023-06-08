@@ -1826,8 +1826,7 @@ def saturation_test_cli(
                 multiplicity * z_alpha / np.sqrt(number_sites)
             )  # computing the saturation coherence between two sequences
 
-             """  estimating dominant sample coherence and its variance
-             """
+            """  estimating dominant sample coherence and its variance"""
             delta = 0
 
             for j in range(multiplicity):
@@ -1848,7 +1847,7 @@ def saturation_test_cli(
 
                 delta += np.asarray(a) @ np.asarray(b)
 
-             """ computing the dominant sample coherence called delta = sample mean of the coefficent C_{1}"""
+            """computing the dominant sample coherence called delta = sample mean of the coefficent C_{1}"""
             delta = delta / number_sites
 
             variance = 0
