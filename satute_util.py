@@ -2,15 +2,12 @@ import numpy as np
 import regex as re
 import pandas as pd
 from ete3 import Tree
-import os
 import scipy
 import scipy.linalg
 import scipy.stats as st
 import subprocess
 from pathlib import Path
 import os
-import re
-from pathlib import Path
 from rich import print
 
 from satute_repository import (
@@ -1551,7 +1548,7 @@ def saturation_test_cli(
     results_file.write(
         T.copy("newick").get_ascii(attributes=["name", "label", "distance"])
     )
-    results_file.close()
+    #results_file.close()
 
     print(
         "\n\nThe T2T status uses as threshold the saturation coherence between two sequences, which is ",
