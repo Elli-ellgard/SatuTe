@@ -1,5 +1,5 @@
 # Satute
-Satute is a Python program to test for branch saturation in a phylogeny. As an intuition, a branch is saturated when it is too long, although sometimes the cause is more technical than just branch length.
+Satute is a tool to test for branch saturation in a phylogeny. As an intuition, a branch is saturated when it is too long, although sometimes the cause is more technical than just branch length.
 
 Satute uses IQ-TREE for its core operations (http://www.iqtree.org) and provides a command-line interface for running saturation tests in a streamlined and manageable way. It also contains additional functionalities specific to saturation testing.
 
