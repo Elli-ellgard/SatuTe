@@ -14,6 +14,7 @@ import os
 import re
 from pathlib import Path
 
+
 def parse_rate_parameters(file_path, dimension, model="GTR"):
     with open(file_path, "r") as f:
         found = 0
@@ -33,68 +34,57 @@ def parse_rate_parameters(file_path, dimension, model="GTR"):
         model_compound_token = f"{splitted_model[0]}{{{rates_list}}}"
         return model_compound_token
 
-def parse_rate_and_frequencies_alternative_and_create_model_files(
+
+def parse_state_frequencies(log_content, dimension=4):
+    if "equal frequencies" not in log_content:
+        frequencies = {}
+        start_line = "State frequencies: (empirical counts from alignment)"
+        end_line = "Rate matrix Q:"
+        lines = log_content.split("\n")
+        start_index = lines.index(start_line)
+        end_index = lines.index(end_line)
+        freq_lines = lines[start_index + 1 : end_index]
+
+        for line in freq_lines:
+            if line.strip():  # check if line is not empty
+                key, value = line.strip().split(" = ")
+                frequencies[key] = float(value)
+    # TODO calculate frequencies by the dimension
+    else:
+        return [(1 / dimension)] * dimension
+
+    return frequencies
+
+
+def parse_rate_and_frequencies_and_create_model_files(
     path, number_rates, dimension, model="GTR"
 ):
     """
     Note: Slowly my function
-    Parse the rate parameter and state frequencies from the IQ-TREE log file.    
+    Parse the rate parameter and state frequencies from the IQ-TREE log file.
     """
     model_final = parse_rate_parameters(path + ".iqtree", dimension, model=model)
 
     with open(path + ".iqtree", "r") as f:
-        # FIX: Use split instead of character position, too delicate otherwise
+        log_content = f.read()
 
-        found = 0
-
-        number_lines = 0
-
-        frequencyString = ""
-
-        for line in f:
-            if "State frequencies:" in line:
-                found = 1
-            if found and number_lines < dimension + 2:
-                if "equal frequencies" in line:
-                    frequencyString = "0.25\n" * dimension
-                    break
-
-                if number_lines > 1:
-                    frequencyString += line[10:]
-
-                number_lines += 1
-
-        separated = frequencyString.splitlines()
-
-        frequencyFinal = "FU{"
-
-        frequencyFinal += separated[0]
-
-        for words in separated[1:]:
-            frequencyFinal += "," + words
-
-        frequencyFinal += "}"
-        modelAndFrequency = model_final + "+" + frequencyFinal
-
-    state_frequencies_vector = []
-
-    # Convert string to float
-    for state_frequency in separated:
-        state_frequencies_vector.append(float(state_frequency))
+    state_frequencies = parse_state_frequencies(log_content, dimension=dimension)
+    concatenated_rates = " ".join(str(value) for value in state_frequencies.values())
+    frequency_command_line_token = f"+FU{{{concatenated_rates}}}"
+    model_and_frequency = model_final + frequency_command_line_token
 
     path_folder = remove_filename(path)
-
     if number_rates == 1:
         f1 = open(path_folder + "model.txt", "w")
-        f1.write(modelAndFrequency)
+        f1.write(model_and_frequency)
     else:
         for i in range(number_rates):
             f1 = open(
                 path_folder + "subsequences/subseq" + str(i + 1) + "/model.txt", "w"
             )
-            f1.write(modelAndFrequency)
+            f1.write(model_and_frequency)
 
-    return state_frequencies_vector
+    return state_frequencies.values()
 
 
 def remove_filename(path):
@@ -106,6 +96,8 @@ def remove_filename(path):
 
 
 """## INTERNAL NODES AND LEAVES"""
+
+
 def node_type(T):
     leaves = []
     for i in T.get_leaves():
@@ -1137,34 +1129,13 @@ def parse_matrices(n, path):
 
 
 def diagonalisation(n, path):
-    ratematrix = np.zeros((n, n))
-    phimatrix = np.zeros((n, n))
+    rate_matrix, phi_matrix = parse_matrices(n, path)
 
-    """ get the rate matrix Q and stationary distribution pi from .iqtree file"""
-    filne = path + ".iqtree"
-    with open(filne, "r+") as f:
-        lines = f.readlines()
-        for i in range(0, len(lines)):
-            line = lines[i]
-            if "Rate matrix Q:" in line:
-                for j in range(n):
-                    listEntries = lines[i + j + 2].split()
-                    for k in range(n):
-                        if "e" in listEntries[k + 1]:
-                            ratematrix[j, k] = "0"
-                        else:
-                            ratematrix[j, k] = listEntries[k + 1]
-            if "State frequencies: (empirical counts from alignment)" in line:
-                for j in range(n):
-                    entry = lines[i + j + 2].split()
-                    phimatrix[j, j] = entry[2]
-            elif "State frequencies: (equal frequencies)" in line:
-                for j in range(n):
-                    phimatrix[j, j] = 0.25
-    """ Then phimatrix := Diag(pi). Recall that matrix Q is reversible iff M:= phimatrix^1/2 x Q xphimatrix^{-1/2} is symmetric.
-      """
-    M = scipy.linalg.fractional_matrix_power(phimatrix, +1 / 2) @ ratematrix
-    M = M @ scipy.linalg.fractional_matrix_power(phimatrix, -1 / 2)
+    """ 
+        Then phi_matrix := Diag(pi). Recall that matrix Q is reversible iff M:= phi_matrix^1/2 x Q x phi_matrix^{-1/2} is symmetric.
+    """
+    M = scipy.linalg.fractional_matrix_power(phi_matrix, +1 / 2) @ rate_matrix
+    M = M @ scipy.linalg.fractional_matrix_power(phi_matrix, -1 / 2)
 
     """ diagonalisation of M"""
     lamb, w = np.linalg.eig(M)  # Compute the eigenvalues and right eigenvectors .
@@ -1190,8 +1161,8 @@ def diagonalisation(n, path):
 
     array_eigenvectors = []
 
-    v1 = scipy.linalg.fractional_matrix_power(phimatrix, -1 / 2) @ w[:, index[0]]
-    h1 = scipy.linalg.fractional_matrix_power(phimatrix, +1 / 2) @ w[:, index[0]]
+    v1 = scipy.linalg.fractional_matrix_power(phi_matrix, -1 / 2) @ w[:, index[0]]
+    h1 = scipy.linalg.fractional_matrix_power(phi_matrix, +1 / 2) @ w[:, index[0]]
 
     array_eigenvectors.append(v1)
 
@@ -1199,10 +1170,12 @@ def diagonalisation(n, path):
     if multiplicity > 1:
         for i in range(1, multiplicity):
             v1 = (
-                scipy.linalg.fractional_matrix_power(phimatrix, -1 / 2) @ w[:, index[i]]
+                scipy.linalg.fractional_matrix_power(phi_matrix, -1 / 2)
+                @ w[:, index[i]]
             )
             h1 = (
-                scipy.linalg.fractional_matrix_power(phimatrix, +1 / 2) @ w[:, index[i]]
+                scipy.linalg.fractional_matrix_power(phi_matrix, +1 / 2)
+                @ w[:, index[i]]
             )
             array_eigenvectors.append(v1)
 
@@ -1407,9 +1380,6 @@ def map_values_to_newick_regex(values_dict, newick_string):
         c_s = values["c_s"]
         p_value = values["p-value"]
         branch_status = values["status"]
-        print(
-            f"{node_name}[delta={delta}; c_s={c_s}; p_value={p_value}; branch_status={branch_status}]"
-        )
         newick_string = re.sub(
             rf"({node_name})",
             rf"\1[delta={delta}; c_s={c_s}; p_value={p_value}; branch_status={branch_status}]",
@@ -1458,7 +1428,7 @@ def saturation_test_cli(
     :param epsilon: float, default = 0.01
         A small positive number used as a tolerance in numerical calculations.
 
-    :param rawMemory: bool, default = True       
+    :param rawMemory: bool, default = True
     """
 
     results_list = []
@@ -1517,60 +1487,17 @@ def saturation_test_cli(
             [],
         )
 
-    state_frequencies_vect = (
-        parse_rate_and_frequencies_alternative_and_create_model_files(
-            pathDATA, number_rates, dimension, model
-        )
+    state_frequencies_vect = parse_rate_and_frequencies_and_create_model_files(
+        pathDATA, number_rates, dimension, model
     )
 
     """ get the eigenvector(s) of the dominate non-zero eigenvalue"""
     array_eigenvectors, multiplicity = diagonalisation(dimension, pathDATA)
-    script = ""
-    model_and_frequency = ""
-    path_new_folder = ""
 
-    """BASH SCRIPT BEFORE TEST"""
-    if number_rates > 1:
-        path_new_folder = pathFOLDER + "subsequences/subseq" + chosen_rate + "/clades/*"
-
-        with open(f"{pathFOLDER}subsequences/subseq{chosen_rate}/model.txt") as toModel:
-            model_and_frequency = toModel.readline().strip("\n")
-
-    else:
-        path_new_folder = pathFOLDER + "clades/*"
-        with open(pathFOLDER + "model.txt", "r") as toModel:
-            model_and_frequency = toModel.readline().strip("\n")
-
-    script = (
-        """
-        CURRENT_DIR=$(pwd)
-        for d in """
-        + path_new_folder
-        + """; do
-                    cd "$d"
-                    """
-        + pathIQTREE
-        + """ -s sequence.txt -te tree.txt -m \"'\""""
-        + model_and_frequency
-        + """\"'\" -asr -blfix -o FOO -pre output -redo -quiet
-            cd "$CURRENT_DIR"                    
-        done"""
-    )
-
-    print(script)
-
-    os.system("bash -c '%s'" % script)
-
-    """BASH SCRIPT BEFORE TEST
-        TODO: If we change the data structure before, the  main part would be here
-        SATURATION TEST FOR ALL BRANCHES
-    """
     run_iqtree_for_each_clade(pathFOLDER, number_rates, chosen_rate, pathIQTREE)
 
     U = 1.0 / float(min(state_frequencies_vect)) - 1
-
     K = dimension - 1
-
     number_standard_deviations = 2  # Confidence intervals of 98% (one sided)
 
     print(
@@ -1584,7 +1511,9 @@ def saturation_test_cli(
             file1 = pathFOLDER + "clades/Branch" + str(i) + "_clade1/output.state"
 
             with open(file1, "r+") as f1:
-                with open(pathFOLDER + "clades/Branch" + str(i) + "_clade1/memory.csv", "w") as writer:
+                with open(
+                    pathFOLDER + "clades/Branch" + str(i) + "_clade1/memory.csv", "w"
+                ) as writer:
                     lines = f1.readlines()
                     out = lines[8:-1]
                     for j in range(len(lines[8:])):
@@ -1642,7 +1571,7 @@ def saturation_test_cli(
                         "Branch",
                     )
                 )
-                
+
                 results_file.write("\n")
 
         else:  # if gamma model
@@ -1716,7 +1645,7 @@ def saturation_test_cli(
                 sep="\t",
                 engine="python",
             )
-            
+
             number_sites = len(df1["Site"].unique())
             number_nodes_1 = len(df1["Node"].unique())
             number_nodes_2 = len(df2["Node"].unique())
@@ -1922,8 +1851,6 @@ def saturation_test_cli(
     saturation_information_newick_string = map_values_to_newick(
         results_list, newick_string
     )
-
-    print(saturation_branches_dataframe)
 
     with open(
         f"{pathFOLDER}/resultsRate{chosen_rate}.satute.txt", "+a"
