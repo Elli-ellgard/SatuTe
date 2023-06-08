@@ -15,76 +15,115 @@ import re
 from pathlib import Path
 
 
+# Define a function to parse rate parameters from a file
 def parse_rate_parameters(file_path, dimension, model="GTR"):
+    # Open the file in read mode
     with open(file_path, "r") as f:
+        # Initialize variables
         found = 0
         number_lines = 0
         rates = []
+
+        # Loop through each line in the file
         for line in f:
+            # If we find the line that starts the rate parameters, set 'found' to true
             if "Rate parameter R:" in line:
                 found = 1
             if found and number_lines < dimension * (dimension - 1) // 2 + 1:
                 if number_lines > 1:
+                    # Split the line at the ':' character and append the second part (the rate)
+                    # to our list of rates, after stripping whitespace from its ends
                     line = line.split(":")
                     rates.append(line[1].strip())
+                # Increment the number of lines read
                 number_lines += 1
+
+        # Split the model string at the '+' character
         splitted_model = model.split("+")
-
+        # Remove duplicate rates and join them into a comma-separated string
         rates_list = ",".join(list(dict.fromkeys(rates)))
-        model_compound_token = f"{splitted_model[0]}{{{rates_list}}}"
-        return model_compound_token
 
+        # Format a new model string with the rates inside curly brackets
+        model_with_rates_token = f"{splitted_model[0]}{{{rates_list}}}"
 
+        # Return the new model string
+        return model_with_rates_token
+
+# Define a function to parse state frequencies from a log content
 def parse_state_frequencies(log_content, dimension=4):
+    # If the string "equal frequencies" is not in the log content, proceed to parse
     if "equal frequencies" not in log_content:
+        # Initialize an empty dictionary to hold the frequencies
         frequencies = {}
+        # Define the start and end markers for the section of the file we want to parse
         start_line = "State frequencies: (empirical counts from alignment)"
         end_line = "Rate matrix Q:"
+        # Split the log content into lines
         lines = log_content.split("\n")
+        # Find the indices of the start and end markers
         start_index = lines.index(start_line)
         end_index = lines.index(end_line)
+        # Get the lines in between the start and end markers
         freq_lines = lines[start_index + 1 : end_index]
 
+        # Loop through the lines we've extracted
         for line in freq_lines:
-            if line.strip():  # check if line is not empty
+            # If the line is not empty after removing leading/trailing whitespace
+            if line.strip():
+                # Split the line on " = " into a key and a value, and add them to the frequencies dictionary
                 key, value = line.strip().split(" = ")
-                frequencies[key] = float(value)
-    # TODO calculate frequencies by the dimension
+                frequencies[key] = float(value)  # convert value to float before storing
     else:
+        # If "equal frequencies" is in the log content, return a list of equal frequencies
         return [(1 / dimension)] * dimension
 
+    # Return the frequencies dictionary
     return frequencies
-
 
 def parse_rate_and_frequencies_and_create_model_files(
     path, number_rates, dimension, model="GTR"
 ):
     """
-    Note: Slowly my function
-    Parse the rate parameter and state frequencies from the IQ-TREE log file.
+    Parse the rate parameter and state frequencies from the IQ-TREE log file and
+    create model files based on these parameters.
     """
-    model_final = parse_rate_parameters(path + ".iqtree", dimension, model=model)
 
-    with open(path + ".iqtree", "r") as f:
+    def _write_model_file(path, content):
+        """Helper function to write model and frequency tokens into a file."""
+        with open(path, "w") as f:
+            f.write(content)
+
+    # Construct the model string with parsed rate parameters
+    log_file_path = f"{path}.iqtree"
+    model_final = parse_rate_parameters(log_file_path, dimension, model=model)
+
+    # Read the content of the log file
+    with open(log_file_path, "r") as f:
         log_content = f.read()
 
+    # Parse state frequencies from the log content
     state_frequencies = parse_state_frequencies(log_content, dimension=dimension)
-    concatenated_rates = " ".join(str(value) for value in state_frequencies.values())
-    frequency_command_line_token = f"+FU{{{concatenated_rates}}}"
-    model_and_frequency = model_final + frequency_command_line_token
 
-    path_folder = remove_filename(path)
+    # Create a string of state frequencies separated by a space
+    concatenated_rates = " ".join(map(str, state_frequencies.values()))
+
+    # Construct command line tokens for model and frequency
+    model_and_frequency = f"{model_final}+FU{{{concatenated_rates}}}"
+
+    # Get the directory of the path
+    path_folder = os.path.dirname(path)
+
+    # Write the model and frequency tokens into 'model.txt' files
     if number_rates == 1:
-        f1 = open(path_folder + "model.txt", "w")
-        f1.write(model_and_frequency)
+        _write_model_file(os.path.join(path_folder, "model.txt"), model_and_frequency)
     else:
-        for i in range(number_rates):
-            f1 = open(
-                path_folder + "subsequences/subseq" + str(i + 1) + "/model.txt", "w"
+        for i in range(1, number_rates + 1):
+            subsequence_folder = os.path.join(path_folder, "subsequences", f"subseq{i}")
+            _write_model_file(
+                os.path.join(subsequence_folder, "model.txt"), model_and_frequency
             )
-            f1.write(model_and_frequency)
 
-    return state_frequencies.values()
+    return state_frequencies.values(), model_and_frequency
 
 
 def remove_filename(path):
@@ -518,6 +557,80 @@ def clades(T, t, newickformat, internal_nodes, leaves):
         clades2.append(clade2)
 
     return clades1, clades2
+
+
+def run_iqtree_for_each_clade(pathFOLDER, number_rates, chosen_rate, iqtree_path):
+    """Prepares necessary information and runs the IQ-TREE."""
+    model_and_frequency = ""
+    path_new_folder = ""
+
+    # Condition to define path and model
+    if number_rates > 1:
+        path_new_folder = os.path.join(
+            pathFOLDER, "subsequences", f"subseq{chosen_rate}", "clades"
+        )
+        model_and_frequency_file = os.path.join(
+            pathFOLDER, "subsequences", f"subseq{chosen_rate}", "model.txt"
+        )
+    else:
+        path_new_folder = os.path.join(pathFOLDER, "clades")
+        model_and_frequency_file = os.path.join(pathFOLDER, "model.txt")
+
+    # Check if model and frequency file exists
+    if not os.path.isfile(model_and_frequency_file):
+        raise FileNotFoundError(
+            f"The model and frequency file '{model_and_frequency_file}' does not exist."
+        )
+
+    # Read model and frequency
+    with open(model_and_frequency_file, "r") as toModel:
+        model_and_frequency = toModel.readline().strip()
+
+    # Check if path_new_folder exists and is a directory
+    if not os.path.isdir(path_new_folder):
+        raise NotADirectoryError(
+            f"The path '{path_new_folder}' does not exist or is not a directory."
+        )
+
+    # Iterate over each clade directory
+    for clade_dir in Path(path_new_folder).iterdir():
+        if clade_dir.is_dir():
+            # Command to be executed for each clade
+            cmd = [
+                iqtree_path,
+                "-s",
+                "sequence.txt",
+                "-te",
+                "tree.txt",
+                "-m",
+                model_and_frequency,
+                "-asr",
+                "-blfix",
+                "-o",
+                "FOO",
+                "-pre",
+                "output",
+                "-redo",
+                "-quiet",
+            ]
+
+            # Check if sequence and tree files exist in the clade directory
+            if not os.path.isfile(
+                os.path.join(clade_dir, "sequence.txt")
+            ) or not os.path.isfile(os.path.join(clade_dir, "tree.txt")):
+                raise FileNotFoundError(
+                    "Either sequence.txt or tree.txt file does not exist in directory: "
+                    + str(clade_dir)
+                )
+
+            # Run the command
+            result = subprocess.run(cmd, cwd=clade_dir)
+
+            # Check if the command was successful
+            if result.returncode != 0:
+                raise RuntimeError(
+                    f"The command '{' '.join(cmd)}' failed with return code: {result.returncode}"
+                )
 
 
 """## DIVIDING SEQUENCE FILE INTO SUBFILES DEPENDING ON WHICH RATE IS MOST PROBABLE"""
@@ -1269,80 +1382,6 @@ def guess_msa_file_format(file_path):
     return None
 
 
-def run_iqtree_for_each_clade(pathFOLDER, number_rates, chosen_rate, iqtree_path):
-    """Prepares necessary information and runs the IQ-TREE."""
-    model_and_frequency = ""
-    path_new_folder = ""
-
-    # Condition to define path and model
-    if number_rates > 1:
-        path_new_folder = os.path.join(
-            pathFOLDER, "subsequences", f"subseq{chosen_rate}", "clades"
-        )
-        model_and_frequency_file = os.path.join(
-            pathFOLDER, "subsequences", f"subseq{chosen_rate}", "model.txt"
-        )
-    else:
-        path_new_folder = os.path.join(pathFOLDER, "clades")
-        model_and_frequency_file = os.path.join(pathFOLDER, "model.txt")
-
-    # Check if model and frequency file exists
-    if not os.path.isfile(model_and_frequency_file):
-        raise FileNotFoundError(
-            f"The model and frequency file '{model_and_frequency_file}' does not exist."
-        )
-
-    # Read model and frequency
-    with open(model_and_frequency_file, "r") as toModel:
-        model_and_frequency = toModel.readline().strip()
-
-    # Check if path_new_folder exists and is a directory
-    if not os.path.isdir(path_new_folder):
-        raise NotADirectoryError(
-            f"The path '{path_new_folder}' does not exist or is not a directory."
-        )
-
-    # Iterate over each clade directory
-    for clade_dir in Path(path_new_folder).iterdir():
-        if clade_dir.is_dir():
-            # Command to be executed for each clade
-            cmd = [
-                iqtree_path,
-                "-s",
-                "sequence.txt",
-                "-te",
-                "tree.txt",
-                "-m",
-                model_and_frequency,
-                "-asr",
-                "-blfix",
-                "-o",
-                "FOO",
-                "-pre",
-                "output",
-                "-redo",
-                "-quiet",
-            ]
-
-            # Check if sequence and tree files exist in the clade directory
-            if not os.path.isfile(
-                os.path.join(clade_dir, "sequence.txt")
-            ) or not os.path.isfile(os.path.join(clade_dir, "tree.txt")):
-                raise FileNotFoundError(
-                    "Either sequence.txt or tree.txt file does not exist in directory: "
-                    + str(clade_dir)
-                )
-
-            # Run the command
-            result = subprocess.run(cmd, cwd=clade_dir)
-
-            # Check if the command was successful
-            if result.returncode != 0:
-                raise RuntimeError(
-                    f"The command '{' '.join(cmd)}' failed with return code: {result.returncode}"
-                )
-
-
 def map_values_to_newick(value_rows, newick_string):
     # Parsing the file of values into a dictionary
     values_dict = {}
@@ -1388,6 +1427,61 @@ def map_values_to_newick_regex(values_dict, newick_string):
 
     return newick_string
 
+import pandas as pd
+
+def write_results_and_newick_tree(results_list, newick_string, path_folder, chosen_rate, c_sTwoSequence, T):
+    """
+    This function writes the saturation branches data to a file and then appends the saturation information
+    newick string to the same file.
+
+    :param results_list: List of results data to be written to file.
+    :param newick_string: Newick formatted string representing the tree.
+    :param path_folder: Path to the folder where results will be saved.
+    :param chosen_rate: Chosen rate parameter to be included in the filename.
+    :param c_sTwoSequence: Saturation coherence between two sequences.
+    :param T: ETE Tree instance.
+    """
+
+    # Convert the results_list into a pandas dataframe
+    saturation_branches_dataframe = pd.DataFrame(results_list)
+
+    # Save the dataframe as a tab-separated CSV file
+    saturation_branches_dataframe.to_csv(
+        f"{path_folder}/resultsRate{chosen_rate}.satute.txt",
+        header=True,
+        index=None,
+        sep="\t",
+        mode="a",
+    )
+
+    # Generate a newick string with saturation information
+    saturation_information_newick_string = map_values_to_newick(
+        results_list, newick_string
+    )
+
+    # Open the results file in append mode
+    with open(
+        f"{path_folder}/resultsRate{chosen_rate}.satute.txt", "a"
+    ) as satute_result_file:
+
+        # Write additional information to the file
+        satute_result_file.write(
+            "\n\nThe T2T status uses as threshold the saturation coherence between two sequences, which is  {:6.4f}".format(
+                c_sTwoSequence
+            )
+        )
+
+        satute_result_file.write(
+            "\n\nFor better reference, this is the reconstructed tree topology :\n\n"
+        )
+
+        # Write the ascii representation of the tree to the file
+        satute_result_file.write(
+            T.copy("newick").get_ascii(attributes=["name", "label", "distance"])
+        )
+
+        # Write the saturation information newick string to the file
+        satute_result_file.write(f"\n\n{saturation_information_newick_string}")
 
 # -------------  CODE REFACTORED BY ENES BERK ZEKI SAKALLI --------------- #
 def saturation_test_cli(
@@ -1487,7 +1581,7 @@ def saturation_test_cli(
             [],
         )
 
-    state_frequencies_vect = parse_rate_and_frequencies_and_create_model_files(
+    state_frequencies_vect, model_and_frequency = parse_rate_and_frequencies_and_create_model_files(
         pathDATA, number_rates, dimension, model
     )
 
@@ -1837,36 +1931,7 @@ def saturation_test_cli(
         "\n\nThe T2T status uses as threshold the saturation coherence between two sequences, which is ",
         "{:.4f}".format(c_sTwoSequence),
     )
-
-    saturation_branches_dataframe = pd.DataFrame(results_list)
-
-    saturation_branches_dataframe.to_csv(
-        f"{pathFOLDER}/resultsRate{chosen_rate}.satute.txt",
-        header=True,
-        index=None,
-        sep="\t",
-        mode="a",
-    )
-
-    saturation_information_newick_string = map_values_to_newick(
-        results_list, newick_string
-    )
-
-    with open(
-        f"{pathFOLDER}/resultsRate{chosen_rate}.satute.txt", "+a"
-    ) as satute_result_file:
-        satute_result_file.write(
-            "\n\nThe T2T status uses as threshold the saturation coherence between two sequences, which is  {:6.4f}".format(
-                c_sTwoSequence
-            )
-        )
-
-        satute_result_file.write(
-            "\n\nFor better reference, this is the reconstructed tree topology :\n\n"
-        )
-
-        satute_result_file.write(
-            T.copy("newick").get_ascii(attributes=["name", "label", "distance"])
-        )
-
-        satute_result_file.write(f"\n\n{saturation_information_newick_string}")
+    
+    # TODO New Function but it has to be tested and checked
+    # Write results to file and append saturation information to newick string
+    write_results_and_newick_tree(results_list=results_list,newick_string=newick_string,path_folder=pathFOLDER,chosen_rate=chosen_rate,c_sTwoSequence=c_sTwoSequence,T=T)
