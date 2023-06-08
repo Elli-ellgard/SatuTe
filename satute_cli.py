@@ -17,6 +17,21 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+class InputArgumentsError(Exception):
+    """
+    Exception raised for errors in the input arguments.
+
+    Attributes:
+        message -- explanation of the error
+    """
+
+    def __init__(
+        self,
+        message="Both 'msa' and 'dir' input arguments are defined. Please decide between 'msa' or 'dir' input.",
+    ):
+        self.message = message
+        super().__init__(self.message)
+
 
 class InvalidDirectoryError(Exception):
     """Exception raised when the input directory does not exist."""
@@ -216,29 +231,6 @@ class Satute:
                 number_rates = parse_rate_from_model(self.input_args.model)
         # =========  End of Number Rate Handling =========
 
-        # =========  IF Tree File  =========
-        if self.input_args.dir:
-            # CHECK IF Tree File IS DEFINED
-            tree_file_path = self.find_file({".treefile", ".nex", ".nwk"})
-            # CHECK IF NOT SEE IF IQ Tree File IS DEFINED
-            iqtree_file_path = self.find_file({".iqtree"})
-
-            # FIND Tree is file and get Newick String
-            if tree_file_path is not None:
-                newick_string = self.get_newick_string(tree_file_path)
-            else:
-                newick_string = self.get_newick_string_from_iq_tree_file(
-                    iqtree_file_path
-                )
-        # =========  IF parameter -tree TREE IS DEFINED =========
-        elif self.input_args.tree:
-            # CHECK IF Tree File IS DEFINED
-            tree_file_path = self.input_args.tree
-            # GET Newick String
-            newick_string = self.get_newick_string(tree_file_path)
-        # ======== End Tree File Handling =========
-        logger.info(f"Run Initial IQ-Tree with options {arguments_dict['option']}")
-
         extra_arguments = arguments_dict.get("model_arguments", []) + [
             "--quiet",
             "--redo",
@@ -260,11 +252,20 @@ class Satute:
             arguments=arguments_dict["arguments"], extra_arguments=extra_arguments
         )
 
+        # ======== Tree File Handling =========
+        newick_string = self.get_newick_string_from_args()
+        # ======== End Tree File Handling =========
+
         logger.info(f"Run Saturation Test with Model {self.input_args.model}")
         logger.info(f"Run Saturation Test with {number_rates} rate categories")
+        logger.info(f"Run Initial IQ-Tree with options {arguments_dict['option']}")
+        logger.info(
+            f"Initial Arguments for IQ-Tree: \n {' '.join(arguments_dict['arguments'])}"
+        )
 
         for i in range(number_rates):
             logger.info(f"Here comes the {i+1} th fastest evolving region: ")
+
             saturation_test_cli(
                 str(arguments_dict["msa_file"]),
                 newick_string,
@@ -279,8 +280,6 @@ class Satute:
                 self.input_args.model,
             )
 
-        # End of the code, which should be here
-        logger.info(f"Arguments: {arguments_dict}")
         # Writing log file
         self.write_log(arguments_dict["msa_file"])
 
@@ -314,6 +313,9 @@ class Satute:
         # Define the acceptable file types for sequence alignments and trees
         msa_file_types = {".fasta", ".nex", ".phy"}
         tree_file_types = {".treefile", ".nex", ".nwk"}
+
+        if self.input_args.msa and self.input_args.dir:
+            raise InputArgumentsError()
 
         # Convert input paths to Path objects for easier handling
         if self.input_args.dir:
@@ -352,7 +354,6 @@ class Satute:
 
             # Check if a tree file was found
             if tree_file:
-                print(f"{tree_file.suffix} file {tree_file} exists")
                 argument_option["option"] = "msa + tree"
                 argument_option["arguments"].extend(["-te", str(tree_file)])
 
@@ -459,6 +460,24 @@ class Satute:
             )
 
         return newick_string
+
+    def get_newick_string_from_args(self):
+        """
+        Get the newick string from the provided input arguments.
+
+        Returns:
+            newick_string (str): The newick string from the provided file.
+        """
+        # If directory is provided, check for tree file and iqtree file
+        if self.input_args.dir:
+            return self.get_newick_string(
+                self.find_file({".treefile", ".nex", ".nwk"})
+            ) or self.get_newick_string_from_iq_tree_file(self.find_file({".iqtree"}))
+
+        # If tree argument is provided, get newick string directly
+        elif self.input_args.tree:
+            tree_file_path = self.input_args.tree
+            return self.get_newick_string(tree_file_path)
 
 
 if __name__ == "__main__":

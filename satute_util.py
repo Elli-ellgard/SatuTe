@@ -80,6 +80,7 @@ def parse_state_frequencies(log_content, dimension=4):
     # Return the frequencies dictionary
     return frequencies
 
+
 def parse_rate_and_frequencies_and_create_model_files(
     path, number_rates, dimension, model="GTR"
 ):
@@ -135,8 +136,6 @@ def remove_filename(path):
 
 
 """## INTERNAL NODES AND LEAVES"""
-
-
 def node_type(T):
     leaves = []
     for i in T.get_leaves():
@@ -189,11 +188,11 @@ def modify_seqfile(path, leaves, option):
 """## COMPUTING BRANCHES LENGTHS """
 
 
-def branches_lengths(T):
+def branch_lengths(T):
     vector_branches = []
     vector_distances = []
-
     internal_nodes = []
+
     for node in T.traverse("levelorder"):
         if (node not in T.get_leaves()) and (node in T.get_tree_root()):
             internal_nodes.append(node.name)
@@ -222,7 +221,9 @@ def branches_lengths(T):
 
 def number_nodes_sites(path):
     filne = path + ".state"
+
     pathFolder = remove_filename(path)
+
     with open(filne, "r+") as f:
         with open(pathFolder + "memory.csv", "w") as writer:
             lines = f.readlines()
@@ -231,9 +232,9 @@ def number_nodes_sites(path):
                 writer.write(lines[i + 8])
 
     df = pd.read_csv(pathFolder + "memory.csv", sep="\t", engine="python")
-    file = open(path + ".iqtree", "rt")
 
     nodes_number = len(df["Node"].unique())
+
     nucleotides_sites = len(df["Site"].unique())
 
     return nodes_number, nucleotides_sites
@@ -312,8 +313,6 @@ def memory(path):
 
 
 """## SEPARATING CLADES"""
-
-
 def clades(T, t, newickformat, internal_nodes, leaves):
     root = T.get_tree_root()
 
@@ -1427,9 +1426,13 @@ def map_values_to_newick_regex(values_dict, newick_string):
 
     return newick_string
 
+
 import pandas as pd
 
-def write_results_and_newick_tree(results_list, newick_string, path_folder, chosen_rate, c_sTwoSequence, T):
+
+def write_results_and_newick_tree(
+    results_list, newick_string, path_folder, chosen_rate, c_sTwoSequence, T
+):
     """
     This function writes the saturation branches data to a file and then appends the saturation information
     newick string to the same file.
@@ -1463,7 +1466,6 @@ def write_results_and_newick_tree(results_list, newick_string, path_folder, chos
     with open(
         f"{path_folder}/resultsRate{chosen_rate}.satute.txt", "a"
     ) as satute_result_file:
-
         # Write additional information to the file
         satute_result_file.write(
             "\n\nThe T2T status uses as threshold the saturation coherence between two sequences, which is  {:6.4f}".format(
@@ -1482,6 +1484,7 @@ def write_results_and_newick_tree(results_list, newick_string, path_folder, chos
 
         # Write the saturation information newick string to the file
         satute_result_file.write(f"\n\n{saturation_information_newick_string}")
+
 
 # -------------  CODE REFACTORED BY ENES BERK ZEKI SAKALLI --------------- #
 def saturation_test_cli(
@@ -1537,7 +1540,8 @@ def saturation_test_cli(
     t, T = convert_newick_to_satute_ete3_format(newick_string, newickformat)
 
     leaves, internal_nodes = node_type(T)
-    vector_branches, vector_distances = branches_lengths(T)
+
+    vector_branches, vector_distances = branch_lengths(T)
 
     # """get sequences from msa (in phylip format or fasta format) save them into new INPUTMSA.txt file """
     modify_seqfile(pathDATA, leaves, option)
@@ -1581,7 +1585,10 @@ def saturation_test_cli(
             [],
         )
 
-    state_frequencies_vect, model_and_frequency = parse_rate_and_frequencies_and_create_model_files(
+    (
+        state_frequencies_vect,
+        model_and_frequency,
+    ) = parse_rate_and_frequencies_and_create_model_files(
         pathDATA, number_rates, dimension, model
     )
 
@@ -1669,6 +1676,7 @@ def saturation_test_cli(
                 results_file.write("\n")
 
         else:  # if gamma model
+
             file1 = (
                 pathFOLDER
                 + "subsequences/subseq"
@@ -1745,11 +1753,15 @@ def saturation_test_cli(
             number_nodes_2 = len(df2["Node"].unique())
 
             if i == 0:
+
                 T = Tree(t, format=newickformat)
+
                 results_file = open(
                     pathFOLDER + "/resultsRate" + chosen_rate + ".txt", "w"
                 )  # To store test results.  We open file in first iteration (branch).
+
                 results_file.write("\n")
+
                 results_file.write(
                     "{:6s}\t{:6s}\t{:6s}\t{:6s}\t{:14s}\t{:14s}\t{:100s}\n".format(
                         "Order",
@@ -1761,9 +1773,11 @@ def saturation_test_cli(
                         "Branch",
                     )
                 )
+
                 results_file.write("\n")
 
         estimation_dt = np.sqrt(U * min(K, U / 4) / number_sites)
+
         if not rawMemory:
             upper_ci = number_standard_deviations * estimation_dt
         else:
@@ -1899,7 +1913,6 @@ def saturation_test_cli(
                 "vector_branches": vector_branches[i],
             }
         )
-
         results_file.write(
             "{:6d}\t{:6.4f}\t{:6.4f}\t{:6.10f}\t{:14s}\t{:14s}\t{:100s}".format(
                 i + 1,
@@ -1911,8 +1924,19 @@ def saturation_test_cli(
                 vector_branches[i],
             )
         )
-
         results_file.write("\n\n")
+
+        print(
+            "{:6d}\t{:6.4f}\t{:6.4f}\t{:6.10f}\t{:14s}\t{:14s}\t{:100s}".format(
+                i + 1,
+                delta,
+                c_s,
+                p_value,
+                result_test,
+                result_test_tip2tip,
+                vector_branches[i],
+            )
+        )
 
     results_file.write(
         "\n\nThe T2T status uses as threshold the saturation coherence between two sequences, which is  {:6.4f}".format(
@@ -1931,7 +1955,14 @@ def saturation_test_cli(
         "\n\nThe T2T status uses as threshold the saturation coherence between two sequences, which is ",
         "{:.4f}".format(c_sTwoSequence),
     )
-    
+
     # TODO New Function but it has to be tested and checked
     # Write results to file and append saturation information to newick string
-    write_results_and_newick_tree(results_list=results_list,newick_string=newick_string,path_folder=pathFOLDER,chosen_rate=chosen_rate,c_sTwoSequence=c_sTwoSequence,T=T)
+    write_results_and_newick_tree(
+        results_list=results_list,
+        newick_string=newick_string,
+        path_folder=pathFOLDER,
+        chosen_rate=chosen_rate,
+        c_sTwoSequence=c_sTwoSequence,
+        T=T,
+    )
