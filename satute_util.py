@@ -1551,6 +1551,13 @@ def saturation_test_cli(
     else:
         rates = 1
 
+    """ For each branch, we need  the prosterior probabilities at each node  and the right eigenvectors of the rate matrix Q
+        to calculate  the test-statistic of the  branch saturation test. 
+        Therefore for each branch, we remove the considered branch such that we  split our tree into  two subtree.
+        For each subtree (here called clade) we run IQ-TREE which outputs us all posterior distribtution, we only need the posterior 
+        distribution at the root of each subtree.
+        The whole process will be repeated for each rate category given a +Gamma model.
+    """
     clades1, clades2 = clades(T, t, newickformat, internal_nodes, leaves)
     save_clades(pathDATA, number_rates, clades1, clades2, newickformat, rates)
 
@@ -1587,7 +1594,7 @@ def saturation_test_cli(
         )
     )
 
-    """ get the eigenvector(s) of the dominate non-zero eigenvalue"""
+    """ get the right eigenvector(s) of the dominate non-zero eigenvalue"""
     array_eigenvectors, multiplicity = diagonalisation(dimension, pathDATA)
     script = ""
     model_and_frequency = ""
@@ -1809,7 +1816,7 @@ def saturation_test_cli(
                     )
                 )
                 results_file.write("\n")
-
+        """ Calculation of the  test statistic """
         """TODO: not necessary?  
         arrays below convert into float"""
         estimation_dt = np.sqrt(U * min(K, U / 4) / number_sites)
@@ -1818,15 +1825,15 @@ def saturation_test_cli(
         else:
             upper_ci = float(0)
 
-        if multiplicity == 1:  # if D=1
+        if multiplicity == 1:  # if multiplicity of eigenvalue lambda_1 is 1
             v1 = array_eigenvectors[0]
 
             a = (
                 []
-            )  # vector to store all products v1*rootsitesposteriorprobabilitiescladeA
+            )  # vector to store all scalar  products  <v_1,r_L> (v_1 = corresponding eigenvector to lamdda_1, r_L =root posterior distribution of the left subtree)
             b = (
                 []
-            )  # vector to store all products v1*rootsitesposteriorprobabilitiescladeB
+            )  # vector to store all scalar  products  <v_1,r_R> (v_1 = corresponding eigenvector to lamdda_1, r_R=root posterior distribution of the right subtree)
 
             for k in range(
                 number_sites * (number_nodes_1 - 1), number_sites * number_nodes_1
@@ -1838,11 +1845,21 @@ def saturation_test_cli(
             ):
                 b.append(v1 @ np.asarray(df2.iloc[k, 3:7]))
 
+            """ computing the dominant sample coherence called delta = sample mean of the coefficent C_{1}
+                For a given pattern C_{i,pattern} = <v_1,r_L> <v_1,r_R> 
+                null hypothesis of the test: expected value of C_1 equals zero
+                this hypothesis = assumption of independent evolution of the subtrees
+            """
             delta = (
                 np.asarray(a) @ np.asarray(b) / number_sites
-            )  # computing the dominant sample coherence
+            )  
             # print(np.multiply(a, b))
 
+            """ estimation of the variance of the coefficent C_{1}
+                under independent evolution of the subtrees:   Var(C_1)= E[<v_1,r_L>^2]*E[<v_1,r_R>^2]
+                M_a is the esatimator of E[<v_1,r_L>^2]
+                M_b is the esatimator of E[<v_1,r_L>^2]
+            """
             if i < len(internal_nodes):
                 M_a = np.asarray(a) @ np.asarray(a) / number_sites + upper_ci
                 """
@@ -1855,7 +1872,11 @@ def saturation_test_cli(
 
             M_b = np.asarray(b) @ np.asarray(b) / number_sites + upper_ci
             M_b = min(1, M_b)
-            variance = M_a * M_b / np.sqrt(number_sites)
+
+            """ for large enough sample size, sample mean of C_1 is normal disributed with mean=0 and variance Var(C_1)/(sample size)
+                sample size = number of sites
+            """
+            variance = M_a * M_b / number_sites
             c_s = (
                 z_alpha * np.sqrt(variance) 
             )  # computing the saturation coherence
@@ -1865,10 +1886,13 @@ def saturation_test_cli(
             )  # computing the saturation coherence between two sequences
             
             p_value = st.norm.sf(abs(delta/np.sqrt(variance)))
-        else:
+        else:  # if multiplicity of eigenvalue lambda_1 greater than 1
             c_sTwoSequence = (
                 multiplicity * z_alpha / np.sqrt(number_sites)
             )  # computing the saturation coherence between two sequences
+
+             """  estimating dominant sample coherence and its variance
+             """
             delta = 0
 
             for j in range(multiplicity):
@@ -1889,6 +1913,7 @@ def saturation_test_cli(
 
                 delta += np.asarray(a) @ np.asarray(b)
 
+             """ computing the dominant sample coherence called delta = sample mean of the coefficent C_{1}"""
             delta = delta / number_sites
 
             variance = 0
@@ -1981,7 +2006,7 @@ def saturation_test_cli(
     )
     #results_file.close()
 
-    # Use the function
+    # Use the functionS
     results_file = f"{pathFOLDER}/resultsRate{chosen_rate}.txt"
     print(t)
     print(map_values_to_newick(results_file, newick_string))
