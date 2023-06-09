@@ -22,9 +22,11 @@ from rich import print
 from rich.console import Console
 from rich.text import Text
 
+
 def print_ascii_art(ascii_art):
     console = Console()
     console.print(Text(ascii_art, style="bold green"))
+
 
 # Now you can call the function with your ASCII art
 ASCII_ART = """
@@ -61,11 +63,13 @@ GJ7~~~~~~~~~~!77?YPB&@@@@#&&!B@@Y~~~~~7G@@@@?~~~~~~~!7B#&@@@BJ7?JJJYY5#P55!~P@J~
 ~~~~~~~~P@&?~~~~~~~~^^~?G@#577J5BBBP7~~~~~~~J5@@@&GY?7!~!!7JB@B?~~!?J?7~~~~~~~~~
 ~~~~~~~~~5#&GY7!!!!7?5#@@@BBPGPY?!~~~~~~~~~~~~??G&&@@@&&&&&@BBJ?Y55J7!5J~~~~~~~~
 ~~~~~~~~~~!JG#&###&&@@&&5PJ7!~~~~~~~~~~~~~~~~~~~!!!PY5BYG5?J~!??7!~~~7J?~~~~~~~~
-777!~~^^^~~~~!7JJ5P?P?!7~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~7!~~~~~~~~~
-???7!!~~~~~~~~~^^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-JJJJJJ??7!!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-5J?JJJJJ?77!!!!777!!!!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-P5Y55555YYJJ??JJJJJ?77!!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+=================================================================================
+        I will break your tree into parts check if they are saturated
+=================================================================================
 """
 
 
@@ -252,7 +256,6 @@ class Satute:
                 f.write("\n".join(log_lines))
 
     def run(self):
-
         print_ascii_art(ASCII_ART)
 
         """Main entry point for running the Satute command-line tool."""
@@ -293,7 +296,7 @@ class Satute:
         extra_arguments = arguments_dict.get("model_arguments", []) + [
             "--quiet",
             "--redo",
-            "-T AUTO"
+            "-T AUTO",
         ]
 
         # Validate and append ufboot and boot parameters to extra_arguments
@@ -517,11 +520,11 @@ class Satute:
         """
         # If directory is provided, check for tree file and iqtree file
         return self.get_newick_string(
-                self.find_file({".treefile"})
-            ) or self.get_newick_string_from_iq_tree_file(self.find_file({".iqtree"}))
+            self.find_file({".treefile"})
+        ) or self.get_newick_string_from_iq_tree_file(self.find_file({".iqtree"}))
 
         # If tree argument is provided, get newick string directly
-  
+
     def validate_and_append_boot_arguments(self):
         """Validates the ufboot and boot parameters and appends them to extra_arguments if valid.
 
