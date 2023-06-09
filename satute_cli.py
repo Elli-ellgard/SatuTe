@@ -74,7 +74,16 @@ def parse_substitution_model(file_path):
 class Satute:
     """Class representing Satute command-line tool for wrapping up functions of IQ-TREE."""
 
-    def __init__(self, iqtree=None, input_dir=None, model=None, nr="None", output_prefix = None, ufboot = None, boot = None):
+    def __init__(
+        self,
+        iqtree=None,
+        input_dir=None,
+        model=None,
+        nr="None",
+        output_prefix=None,
+        ufboot=None,
+        boot=None,
+    ):
         self.iqtree = iqtree
         self.input_dir = None
         self.tree = None
@@ -142,6 +151,14 @@ class Satute:
                 "default": self.boot,
                 "metavar": "<num>",
             },
+            {
+                "flag": "-seed",
+                "help": "Random number seed",
+                "type": int,
+                "default": 1234,
+                "metavar": "<num>",
+            },
+
         ]
 
     def parse_input(self):
@@ -176,8 +193,12 @@ class Satute:
     def run(self):
         """Main entry point for running the Satute command-line tool."""
         # Parsing input arguments and constructing IQ-TREE command-line arguments
+
         self.parse_input()
+
         arguments_dict = self.construct_arguments()
+
+    
 
         # Running IQ-TREE with constructed arguments
         # If no model specified in input arguments, extract best model from log file
@@ -196,6 +217,8 @@ class Satute:
             # Update model in input arguments and re-construct arguments
             self.input_args.model = substitution_model
             arguments_dict = self.construct_arguments()
+
+        
 
         # =========  Number Rate Handling =========
         number_rates = 1
@@ -247,9 +270,14 @@ class Satute:
                     return ValueError("boot must be >= 100")
                 extra_arguments.append(f"--boot {self.input_args.boot}")
 
-        self.run_iqtree_with_arguments(
-            arguments=arguments_dict["arguments"], extra_arguments=extra_arguments
-        )
+        # TODO: Check if that makes sense  
+        # Check if the IQ-TREE state file exists and we have to rerun IQ-TREE
+        # state_file = self.find_file({".state"})
+        # site_probability_file = self.find_file({".siteprob"})
+        # if state_file is not None or site_probability_file is not None:
+        #     self.run_iqtree_with_arguments(
+        #         arguments=arguments_dict["arguments"], extra_arguments=extra_arguments
+        #     )
 
         logger.info(f"Run Saturation Test with Model {self.input_args.model}")
         logger.info(f"Run Saturation Test with {number_rates} rate categories")
@@ -358,12 +386,14 @@ class Satute:
                 argument_option["option"] = "msa + tree"
                 argument_option["arguments"].extend(["-te", str(self.input_args.tree)])
 
+        
+
         # If a model was specified in the input arguments, add it to the argument options
         if self.input_args.model:
             argument_option["option"] += " + model"
             argument_option["model_arguments"] = ["-m", self.input_args.model]
             # If the model includes a Gamma distribution, add the corresponding argument
-            if "+G" in self.input_args.model:
+            if "+G" in self.input_args.model or "+R" in self.input_args.model:
                 argument_option["model_arguments"].extend(["-wspr"])
         # Return the constructed argument options
         return argument_option
@@ -449,20 +479,19 @@ class Satute:
             )
 
         return newick_string
-    
+
     def print_args(self):
         print("")
-        print("="*10)
+        print("=" * 10)
         print(self.input_args)
-        print("="*10)
+        print("=" * 10)
         print("")
-
 
 
 if __name__ == "__main__":
     # Instantiate the Satute class with your desired arguments
     iqtree_path = "iqtree"
-    input_directory = None 
+    input_directory = None
     output_prefix = None
     model = None
     num_rate_categories = None
@@ -470,7 +499,7 @@ if __name__ == "__main__":
     boot_replicates = None
 
     satute = Satute(
-        iqtree= iqtree_path,
+        iqtree=iqtree_path,
         input_dir=input_directory,
         model=model,
         nr=num_rate_categories,
@@ -478,7 +507,7 @@ if __name__ == "__main__":
         ufboot=ufboot_replicates,
         boot=boot_replicates,
     )
-    
+
     # Run the tool
     satute.run()
-    #satute.print_args()
+    # satute.print_args()

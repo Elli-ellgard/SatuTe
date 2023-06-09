@@ -662,6 +662,11 @@ def save_clades(path, number_rates, clades1, clades2, newickformat, rates):
                 pathFolder + "clades/Branch" + str(i) + "_clade2/", exist_ok=True
             )
 
+            f"(FOO:1((A:1,B:1):1,C:1));"
+
+            # f"FOO:0.00000000010,({newickformat.remove(";")});"
+
+
             clades1[i] = (
                 "(FOO:0.00000000010,"
                 + clades1[i][0 : clades1[i].rfind(")")]
@@ -714,6 +719,8 @@ def save_clades(path, number_rates, clades1, clades2, newickformat, rates):
                     node.dist = rates[j] * node.dist
                 c = C1.write(format=newickformat)
                 cl1 = c[0:-1] + r.name + ";"
+
+                # modify_fulltree(path, T, rates, newickformat):
 
                 C2 = Tree(cl2, format=newickformat)
                 r = C2.get_tree_root()
@@ -790,6 +797,8 @@ def sequences_clades(
     internal_nodes,
     numbersitesperrate,
 ):
+    
+    
     pathFolder = remove_filename(path)
 
     if number_rates == 1:
@@ -1109,6 +1118,8 @@ def compare_arrays(array1, array2):
         print("The arrays are not identical. 😞")
 
 
+# rename function to parse capital Q
+# TODO: Can be computed by state frequencies and rate parameters
 def parse_matrices(n, path):
     """Parse the rate matrix Q and stationary distribution pi from .iqtree file."""
     rate_matrix = np.zeros((n, n))
@@ -1429,7 +1440,7 @@ def saturation_test_cli(
     z_alpha=2.33,
     newickformat=1,
     epsilon=0.01,
-    rawMemory=True,
+   #rawMemory=True,
     model="GTR",
 ):
     """
@@ -1548,25 +1559,25 @@ def saturation_test_cli(
             model_and_frequency = toModel.readline().strip("\n")
 
 
-    script = (
-        """
-        CURRENT_DIR=$(pwd)
-        for d in """
-        + path_new_folder
-        + """; do
-                    cd "$d"
-                    """
-        + pathIQTREE
-        + """ -s sequence.txt -te tree.txt -m \"'\""""
-        + model_and_frequency
-        + """\"'\" -asr -blfix -o FOO -pre output -redo -quiet
-            cd "$CURRENT_DIR"                    
-        done"""
-    )
+    # script = (
+    #     """
+    #     CURRENT_DIR=$(pwd)
+    #     for d in """
+    #     + path_new_folder
+    #     + """; do
+    #                 cd "$d"
+    #                 """
+    #     + pathIQTREE
+    #     + """ -s sequence.txt -te tree.txt -m \"'\""""
+    #     + model_and_frequency
+    #     + """\"'\" -asr -blfix -o FOO -pre output -redo -quiet
+    #         cd "$CURRENT_DIR"                    
+    #     done"""
+    # )
+    # print(script)
+    # os.system("bash -c '%s'" % script)
 
-    print(script)
-
-    os.system("bash -c '%s'" % script)
+    run_iqtree_for_each_clade(pathFOLDER, number_rates, chosen_rate, pathIQTREE)
 
     """
     TODO: If we change the data structure before, the  main part would be here
@@ -1752,13 +1763,6 @@ def saturation_test_cli(
                 )
                 results_file.write("\n")
         """ Calculation of the  test statistic """
-        """TODO: not necessary?  
-        arrays below convert into float"""
-        estimation_dt = np.sqrt(U * min(K, U / 4) / number_sites)
-        if not rawMemory:
-            upper_ci = number_standard_deviations * estimation_dt
-        else:
-            upper_ci = float(0)
 
         if multiplicity == 1:  # if multiplicity of eigenvalue lambda_1 is 1
             v1 = array_eigenvectors[0]
@@ -1796,7 +1800,7 @@ def saturation_test_cli(
                 M_b is the esatimator of E[<v_1,r_L>^2]
             """
             if i < len(internal_nodes):
-                M_a = np.asarray(a) @ np.asarray(a) / number_sites + upper_ci
+                M_a = np.asarray(a) @ np.asarray(a) / number_sites 
                 """
                 only conversion into float?
                 M_a = float(np.asarray(a) @ np.asarray(a)) / float(number_sites) #+ upper_ci
@@ -1805,7 +1809,7 @@ def saturation_test_cli(
             else:  # if clade A is a single leaf
                 M_a = 1
 
-            M_b = np.asarray(b) @ np.asarray(b) / number_sites + upper_ci
+            M_b = np.asarray(b) @ np.asarray(b) / number_sites
             M_b = min(1, M_b)
 
             """ for large enough sample size, sample mean of C_1 is normal disributed with mean=0 and variance Var(C_1)/(sample size)
@@ -1874,10 +1878,10 @@ def saturation_test_cli(
 
                     # variance = np.asarray(a)@np.asarray(b)
                     variance += max(
-                        np.asarray(a - upper_ci) @ np.asarray(b - upper_ci),
-                        np.asarray(a + upper_ci) @ np.asarray(b + upper_ci),
-                        np.asarray(a + upper_ci) @ np.asarray(b - upper_ci),
-                        np.asarray(a - upper_ci) @ np.asarray(b + upper_ci),
+                        np.asarray(a ) @ np.asarray(b ),
+                        np.asarray(a ) @ np.asarray(b),
+                        np.asarray(a ) @ np.asarray(b ),
+                        np.asarray(a ) @ np.asarray(b),
                     )
 
             variance = variance / (number_sites * number_sites)
