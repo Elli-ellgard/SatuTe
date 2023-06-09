@@ -18,6 +18,6 @@ def delete_folder(folder_path):
 
 if __name__ == "__main__":
     directory = "./test/octo-kraken-msa-test/"
-    keep_files = ["example.phy", "example.phy.treefile"]
+    keep_files = ["example.phy", "example.phy.treefile", "example.phy.tree"]
     remove_all_except(directory, keep_files)
     # delete_folder("./test/octo-kraken-msa-test/clades")

@@ -18,6 +18,57 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
+from rich import print
+from rich.console import Console
+from rich.text import Text
+
+def print_ascii_art(ascii_art):
+    console = Console()
+    console.print(Text(ascii_art, style="bold green"))
+
+# Now you can call the function with your ASCII art
+ASCSII_ART = """
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!!!!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!?YGB#&&&##GPJ7~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~7P#@@@@@@@@@@@@@&BJ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~!P@@@@@@@@@@@@@@@@@@@B?~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~!#@@@@@@@@@@@@@@@@@@@@@&?~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~5@@@@@@@@@@@@@@@@@@@@@@@G~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~7!5JJ57J7~~~~~~~~~~~5@@@@@@@@@@@@@@@@@@@@@@@G~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~?5&&@####&&#P7~~~~~~~~!&@@@@@@@@@@@@@@@@@@@@@&7~~~~~!YPBBG#YJ~~~~~~~~~~~~~~~
+~~~5&@BJJPGP57?P@&5!~~~~~~~?&@&&&@@@@@@@@@@@&&&@#7~~~~~Y&&BP5PG&@BP!~~~~~~~~~~~~
+~!G@@Y~J&P77YY^~7B@G!~~~~~~~J&&&#B&@@@@@@@&B#&&&Y~~~~~J@#7~~~~~!J#@&?7?YJJ!~~~~~
+~5@@Y^!&5^~77!~~~!#@J~~~~~~~G@@@@@P&@@@@@@G#@@@@B~~~~~J@5^~~~~~~~~5@&@&BB&#P!~~~
+!B@#!~~B5^~~~~~~~~5@Y~~~~~~~?#@@@#GB@@@@@&GB&@@B?~~~~~!#&?~~~~~~!JB@@@&7~!5@B~~~
+7&@#~~~7GY77~~~~~^P@Y~~~~~~~~~7P&&#B@@@@@#G@#P7~~~~~~~~7G&GY??JP#&PYB@@Y~~~B@Y~~
+!#@&?~~~~Y#5YJJ??J&#7~~~~~~~~~~~#@#&@@@@@@B@@?^~~~~~~~~~~7Y5PPPY?!~^G@&J~~~G@G~~
+~5@@&?~~~!GJ77?YP#G7~~~~~~~~~~^J&@@@@@@@@@@@@G~~~~~~~~~~~~~~~~~~~~~!#@&Y~~~B@G~~
+~~P@@@G?!~~7JYYYJ7~~~~~~~~~~~!5@@@@@@@@@@@@@@@P~~~~~~~~~~~~~~~~~~~~G@@#!~~7&@G~~
+~~!?#&@@&GY7!~~^^^~~~~~~~~!JP&@@@@@@@@@@@@@@@@@BJ!~~~~~~~~~~~~~~~7G@@@?~~!B@&?~~
+~~~~!!G#&@@@&#GP5YYJJYYPG#&@@@@@@@@@@@@@@@@@@@@@@#PY7!~~~~~~~~!?P&@@#?~~7B@&5~~~
+~~~~~~~~7P5#@&@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@&BGP555PG#@@@&Y~~7P&@#Y~~~~
+~~~~~~~~~~~!?!YBPP#BB#BBPY5&@@@@@@@&@@@@@@@@@@@@@@@@@@@@@@@@@@@@@PJJP#@@#G?~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~7JB@@@@@@#?!P@@@@@@GP&@@@@@@G55GBBBG#@@@@&@@#&YY?~!~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~!&@@@@@@@B!~~!#@@@@@Y^?B&@@@@@BJ~^~~~~?77J7?7~!!YGBBBP7~~
+~~~~~~~~~~~~~~~~~~~~~~7B@@@@@@@@P~~~~G@@@@@B~~~!G@@@@@@#Y!~~~~~~~~~~~7#P7!~7B#7~
+~~~~~~~~~~~~~~~~~~~~7B&@@@@&Y#@@&!~~~!&@@@@&!~~~!?7P&&@@@#57~~~~~~~!~5&~~57^?@5~
+GJ7~~~~~~~~~~!77?YPB&@@@@#&&!B@@Y~~~~~7G@@@@?~~~~~~~!7B#&@@@BJ7?JJJYY5#P55!~P@J~
+#@&#G5J?7!75B&&@@@@@@#B#?~J@Y&@#7~~~~~^7B@@@P~~~~~~~~~~!7PP#@@&#Y!~~~~~!!~!G@5~~
+7J7G&G@@&&@@@@&&GGP?J!~~^7#BB@&B7~~~~~75#&@@@?~~~~~~~~~~~~~!?J&@##5?777?YP&G?~~~
+~~~~!~??#@@BPGGGYJ?777?JPG5B@@G~~~~~7P&BJ!B@@&Y~~~~~~~~~~~~~~~#@?7JPPGGGPY?~~~~~
+~~~~~~~7&@#~~~!!7?YYYYY?7J#@&J!~~!JB&GJ~~~75@@@BJ!~~~~~~~~~~~J@&!~~^~~~~~~~~~~~~
+~~~~~~~~P@&?~~~~~~~~^^~?G@#577J5BBBP7~~~~~~~J5@@@&GY?7!~!!7JB@B?~~!?J?7~~~~~~~~~
+~~~~~~~~~5#&GY7!!!!7?5#@@@BBPGPY?!~~~~~~~~~~~~??G&&@@@&&&&&@BBJ?Y55J7!5J~~~~~~~~
+~~~~~~~~~~!JG#&###&&@@&&5PJ7!~~~~~~~~~~~~~~~~~~~!!!PY5BYG5?J~!??7!~~~7J?~~~~~~~~
+777!~~^^^~~~~!7JJ5P?P?!7~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~7!~~~~~~~~~
+???7!!~~~~~~~~~^^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+JJJJJJ??7!!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+5J?JJJJJ?77!!!!777!!!!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+P5Y55555YYJJ??JJJJJ?77!!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+"""
+
+
 class InputArgumentsError(Exception):
     """
     Exception raised for errors in the input arguments.
@@ -102,6 +153,8 @@ class Satute:
     ):
         self.iqtree = iqtree
         self.input_dir = None
+        self.tree = None
+        self.msa = None
         self.model = model
         self.nr = nr
         self.output_prefix = output_prefix
@@ -122,13 +175,13 @@ class Satute:
             {
                 "flag": "-tree",
                 "help": "Path to input tree file",
-                "default": self.input_dir,
+                "default": self.tree,
                 "metavar": "<file_name>",
             },
             {
                 "flag": "-msa",
                 "help": "Path to MSA",
-                "default": self.input_dir,
+                "default": self.msa,
                 "metavar": "<file_name>",
             },
             {
@@ -199,9 +252,14 @@ class Satute:
                 f.write("\n".join(log_lines))
 
     def run(self):
+
+        print_ascii_art(ASCSII_ART)
+
         """Main entry point for running the Satute command-line tool."""
         # Parsing input arguments and constructing IQ-TREE command-line arguments
+
         self.parse_input()
+
         arguments_dict = self.construct_arguments()
 
         # Running IQ-TREE with constructed arguments
@@ -218,7 +276,6 @@ class Satute:
             logger.info(
                 f"Running a second time with the best model: {substitution_model}"
             )
-
             # Update model in input arguments and re-construct arguments
             self.input_args.model = substitution_model
             arguments_dict = self.construct_arguments()
@@ -236,6 +293,7 @@ class Satute:
         extra_arguments = arguments_dict.get("model_arguments", []) + [
             "--quiet",
             "--redo",
+            "-T AUTO"
         ]
 
         # Validate and append ufboot and boot parameters to extra_arguments
@@ -307,13 +365,9 @@ class Satute:
         msa_file_types = {".fasta", ".nex", ".phy"}
         tree_file_types = {".treefile", ".nex", ".nwk"}
 
-        if self.input_args.msa and self.input_args.dir:
-            raise InputArgumentsError()
-
         # Convert input paths to Path objects for easier handling
         if self.input_args.dir:
             self.input_args.dir = Path(self.input_args.dir)
-            self.active_directory = self.input_args.dir
 
         if self.input_args.iqtree:
             self.input_args.iqtree = Path(self.input_args.iqtree)
@@ -367,7 +421,7 @@ class Satute:
             argument_option["option"] += " + model"
             argument_option["model_arguments"] = ["-m", self.input_args.model]
             # If the model includes a Gamma distribution, add the corresponding argument
-            if "+G" in self.input_args.model:
+            if "+G" in self.input_args.model or "+R" in self.input_args.model:
                 argument_option["model_arguments"].extend(["-wspr"])
         # Return the constructed argument options
         return argument_option
@@ -462,16 +516,12 @@ class Satute:
             newick_string (str): The newick string from the provided file.
         """
         # If directory is provided, check for tree file and iqtree file
-        if self.input_args.dir:
-            return self.get_newick_string(
-                self.find_file({".treefile", ".nex", ".nwk"})
+        return self.get_newick_string(
+                self.find_file({".treefile"})
             ) or self.get_newick_string_from_iq_tree_file(self.find_file({".iqtree"}))
 
         # If tree argument is provided, get newick string directly
-        elif self.input_args.tree:
-            tree_file_path = self.input_args.tree
-            return self.get_newick_string(tree_file_path)
-
+  
     def validate_and_append_boot_arguments(self):
         """Validates the ufboot and boot parameters and appends them to extra_arguments if valid.
 

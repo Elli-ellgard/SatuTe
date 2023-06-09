@@ -1,9 +1,7 @@
 import numpy as np
 import regex as re
 import pandas as pd
-import ete3
 from ete3 import Tree
-import csv
 import os
 import scipy
 import scipy.linalg
@@ -13,118 +11,13 @@ from pathlib import Path
 import os
 import re
 from pathlib import Path
+from rich import print
 
-
-# Define a function to parse rate parameters from a file
-def parse_rate_parameters(file_path, dimension, model="GTR"):
-    # Open the file in read mode
-    with open(file_path, "r") as f:
-        # Initialize variables
-        found = 0
-        number_lines = 0
-        rates = []
-
-        # Loop through each line in the file
-        for line in f:
-            # If we find the line that starts the rate parameters, set 'found' to true
-            if "Rate parameter R:" in line:
-                found = 1
-            if found and number_lines < dimension * (dimension - 1) // 2 + 1:
-                if number_lines > 1:
-                    # Split the line at the ':' character and append the second part (the rate)
-                    # to our list of rates, after stripping whitespace from its ends
-                    line = line.split(":")
-                    rates.append(line[1].strip())
-                # Increment the number of lines read
-                number_lines += 1
-
-        # Split the model string at the '+' character
-        splitted_model = model.split("+")
-        # Remove duplicate rates and join them into a comma-separated string
-        rates_list = ",".join(list(dict.fromkeys(rates)))
-
-        # Format a new model string with the rates inside curly brackets
-        model_with_rates_token = f"{splitted_model[0]}{{{rates_list}}}"
-
-        # Return the new model string
-        return model_with_rates_token
-
-# Define a function to parse state frequencies from a log content
-def parse_state_frequencies(log_content, dimension=4):
-    # If the string "equal frequencies" is not in the log content, proceed to parse
-    if "equal frequencies" not in log_content:
-        # Initialize an empty dictionary to hold the frequencies
-        frequencies = {}
-        # Define the start and end markers for the section of the file we want to parse
-        start_line = "State frequencies: (empirical counts from alignment)"
-        end_line = "Rate matrix Q:"
-        # Split the log content into lines
-        lines = log_content.split("\n")
-        # Find the indices of the start and end markers
-        start_index = lines.index(start_line)
-        end_index = lines.index(end_line)
-        # Get the lines in between the start and end markers
-        freq_lines = lines[start_index + 1 : end_index]
-
-        # Loop through the lines we've extracted
-        for line in freq_lines:
-            # If the line is not empty after removing leading/trailing whitespace
-            if line.strip():
-                # Split the line on " = " into a key and a value, and add them to the frequencies dictionary
-                key, value = line.strip().split(" = ")
-                frequencies[key] = float(value)  # convert value to float before storing
-    else:
-        # If "equal frequencies" is in the log content, return a list of equal frequencies
-        return [(1 / dimension)] * dimension
-
-    # Return the frequencies dictionary
-    return frequencies
-
-
-def parse_rate_and_frequencies_and_create_model_files(
-    path, number_rates, dimension, model="GTR"
-):
-    """
-    Parse the rate parameter and state frequencies from the IQ-TREE log file and
-    create model files based on these parameters.
-    """
-
-    def _write_model_file(path, content):
-        """Helper function to write model and frequency tokens into a file."""
-        with open(path, "w") as f:
-            f.write(content)
-
-    # Construct the model string with parsed rate parameters
-    log_file_path = f"{path}.iqtree"
-    model_final = parse_rate_parameters(log_file_path, dimension, model=model)
-
-    # Read the content of the log file
-    with open(log_file_path, "r") as f:
-        log_content = f.read()
-
-    # Parse state frequencies from the log content
-    state_frequencies = parse_state_frequencies(log_content, dimension=dimension)
-
-    # Create a string of state frequencies separated by a space
-    concatenated_rates = " ".join(map(str, state_frequencies.values()))
-
-    # Construct command line tokens for model and frequency
-    model_and_frequency = f"{model_final}+FU{{{concatenated_rates}}}"
-
-    # Get the directory of the path
-    path_folder = os.path.dirname(path)
-
-    # Write the model and frequency tokens into 'model.txt' files
-    if number_rates == 1:
-        _write_model_file(os.path.join(path_folder, "model.txt"), model_and_frequency)
-    else:
-        for i in range(1, number_rates + 1):
-            subsequence_folder = os.path.join(path_folder, "subsequences", f"subseq{i}")
-            _write_model_file(
-                os.path.join(subsequence_folder, "model.txt"), model_and_frequency
-            )
-
-    return state_frequencies.values(), model_and_frequency
+from satute_repository import (
+    parse_rate_and_frequencies_and_create_model_files,
+    parse_rate_matrices,
+    parse_output_state_frequencies,
+)
 
 
 def remove_filename(path):
@@ -136,6 +29,8 @@ def remove_filename(path):
 
 
 """## INTERNAL NODES AND LEAVES"""
+
+
 def node_type(T):
     leaves = []
     for i in T.get_leaves():
@@ -220,100 +115,19 @@ def branch_lengths(T):
 
 
 def number_nodes_sites(path):
-    filne = path + ".state"
-
-    pathFolder = remove_filename(path)
-
-    with open(filne, "r+") as f:
-        with open(pathFolder + "memory.csv", "w") as writer:
-            lines = f.readlines()
-            out = lines[8:-1]
-            for i in range(len(lines[8:-1])):
-                writer.write(lines[i + 8])
-
-    df = pd.read_csv(pathFolder + "memory.csv", sep="\t", engine="python")
-
-    nodes_number = len(df["Node"].unique())
-
-    nucleotides_sites = len(df["Site"].unique())
-
+    full_posterior_probabilities_file = f"{path}.state"
+    tree_posterior_probabilities_table = parse_output_state_frequencies(
+        full_posterior_probabilities_file
+    )
+    nodes_number = len(tree_posterior_probabilities_table["Node"].unique())
+    nucleotides_sites = len(tree_posterior_probabilities_table["Site"].unique())
     return nodes_number, nucleotides_sites
 
 
-"""## MEMORY VECTOR"""
-
-
-def memory(path):
-    filne = path + ".state"
-    pathFolder = remove_filename(path)
-    with open(filne, "r+") as f:
-        with open(pathFolder + "memory.csv", "w") as writer:
-            lines = f.readlines()
-            out = lines[8:-1]
-            for i in range(len(lines[8:-1])):
-                writer.write(lines[i + 8])
-
-    df = pd.read_csv(pathFolder + "memory.csv", sep="\t", engine="python")
-    file = open(pathFolder + ".iqtree", "rt")
-
-    nodes_order = df["Node"].unique()
-    nodes_number = len(df["Node"].unique())
-    nucleotides_sites = len(df["Site"].unique())
-
-    vector_pi = []  # vector of stationary state nucleotide frequencies
-    data = file.readlines()
-    for line in data:
-        if "pi(A)" in line:
-            vector_pi.append(float(line[10:-1]))
-        if "pi(C)" in line:
-            vector_pi.append(float(line[10:-1]))
-        if "pi(G)" in line:
-            vector_pi.append(float(line[10:-1]))
-        if "pi(T)" in line:
-            vector_pi.append(float(line[10:-1]))
-
-    matrix_norm = []  # matrix to store the norm of each node
-    matrix_memory = []  # matrix to store the memory of each node
-
-    for i in range(int(nodes_number)):
-        norm_vect = (
-            []
-        )  # vector (of length=nucleotides_sites) to store for each site in node: {sum(1 to 4 nucleotides)[state(i)^2/stationary_dist(i)]-1}
-
-        for j in range(int(nucleotides_sites)):
-            index = i * int(nucleotides_sites) + j - 1
-
-            suma = 0
-            for k in range(4):  # sum in all nucleotides of the current site
-                suma += df.iloc[index, k + 3] * df.iloc[index, k + 3] / vector_pi[k]
-
-            norm_vect.append(suma - 1)  # adding sum-1 to vector
-
-        suma1 = 0
-        suma2 = 0
-        for (
-            j
-        ) in (
-            norm_vect
-        ):  # summing all elements in vector -> we get 1 number per node, which is the sum of all numbers of the sites
-            suma2 += np.sqrt(j)
-
-        matrix_memory.append(
-            suma1 / nucleotides_sites
-        )  # dividing sum by total number of nucleotides
-        matrix_norm.append(suma2 / nucleotides_sites)
-
-    matrix_memory = np.array(matrix_memory)
-    matrix_norm = np.array(matrix_norm)
-
-    minimum_memory = nodes_order[np.where(matrix_memory == matrix_memory.min())]
-    print("Node with minimum memory: ", minimum_memory[0])
-
-    return minimum_memory
-
-
 """## SEPARATING CLADES"""
-def clades(T, t, newickformat, internal_nodes, leaves):
+
+
+def clades(T, t, newick_format, internal_nodes, leaves):
     root = T.get_tree_root()
 
     parent_nodes = []
@@ -389,7 +203,7 @@ def clades(T, t, newickformat, internal_nodes, leaves):
                             auxiliar_parent.append(r)
                         else:
                             node = T.search_nodes(name=children[k].name)[0]
-                            node = node.write(format=newickformat)
+                            node = node.write(format=newick_format)
                             node = node.replace(";", "")
                             auxiliar.append(node)
                             auxiliar_parent.append(r)
@@ -498,7 +312,7 @@ def clades(T, t, newickformat, internal_nodes, leaves):
                             auxiliar_parent.append(r)
                         else:
                             node = T.search_nodes(name=children[k].name)[0]
-                            node = node.write(format=newickformat)
+                            node = node.write(format=newick_format)
                             node = node.replace(";", "")
                             auxiliar.append(node)
                             auxiliar_parent.append(r)
@@ -746,7 +560,7 @@ def save_rates(path, number_rates):
 """## MODIFY BRANCHES LENGTHS (if it corresponds), ADD FOO AND SAVE CLADES"""
 
 
-def save_clades(path, number_rates, clades1, clades2, newickformat, rates):
+def save_clades(path, number_rates, clades1, clades2, newick_format, rates):
     pathFolder = remove_filename(path)
     if number_rates == 1:
         for i in range(len(clades1)):
@@ -803,18 +617,18 @@ def save_clades(path, number_rates, clades1, clades2, newickformat, rates):
                     exist_ok=True,
                 )
 
-                C1 = Tree(cl1, format=newickformat)
+                C1 = Tree(cl1, format=newick_format)
                 r = C1.get_tree_root()
                 for node in C1.traverse("levelorder"):
                     node.dist = rates[j] * node.dist
-                c = C1.write(format=newickformat)
+                c = C1.write(format=newick_format)
                 cl1 = c[0:-1] + r.name + ";"
 
-                C2 = Tree(cl2, format=newickformat)
+                C2 = Tree(cl2, format=newick_format)
                 r = C2.get_tree_root()
                 for node in C2.traverse("levelorder"):
                     node.dist = rates[j] * node.dist
-                c = C2.write(format=newickformat)
+                c = C2.write(format=newick_format)
                 cl2 = c[0:-1] + r.name + ";"
 
                 cl1 = (
@@ -858,12 +672,12 @@ def save_clades(path, number_rates, clades1, clades2, newickformat, rates):
 """## MODIFYING BRANCHES LENGTHS IN FULL TREES"""
 
 
-def modify_fulltree(path, T, rates, newickformat):
+def modify_fulltree(path, T, rates, newick_format):
     for j in range(rates):
         r = T.get_tree_root()
         for node in T.traverse("levelorder"):
             node.dist = rates[j] * node.dist
-        t = T.write(format=newickformat)
+        t = T.write(format=newick_format)
         t = t[0:-1] + r.name + ";"
 
         f = open(path + "subsequences/subseq" + str(j + 1) + "/tree.txt", "w")
@@ -881,7 +695,7 @@ def sequences_clades(
     clades1,
     clades2,
     option,
-    newickformat,
+    newick_format,
     internal_nodes,
     numbersitesperrate,
 ):
@@ -892,7 +706,7 @@ def sequences_clades(
             filesequence = path + ".txt"
 
             for i in range(len(clades1)):
-                C1 = Tree(clades1[i], format=newickformat)
+                C1 = Tree(clades1[i], format=newick_format)
 
                 f1 = open(
                     pathFolder + "clades/Branch" + str(i) + "_clade1/sequence.txt", "w"
@@ -928,7 +742,7 @@ def sequences_clades(
                 )
 
             for i in range(len(clades2)):
-                C2 = Tree(clades2[i], format=newickformat)
+                C2 = Tree(clades2[i], format=newick_format)
 
                 f2 = open(
                     pathFolder + "clades/Branch" + str(i) + "_clade2/sequence.txt", "w"
@@ -957,7 +771,7 @@ def sequences_clades(
             filesequence = path + ".txt"
 
             for i in range(len(clades1)):
-                C1 = Tree(clades1[i], format=newickformat)
+                C1 = Tree(clades1[i], format=newick_format)
 
                 f1 = open(
                     pathFolder + "clades/Branch" + str(i) + "_clade1/sequence.txt", "w"
@@ -999,7 +813,7 @@ def sequences_clades(
                 f1.write(">FOO\n" + "N" * (nucleotides_sites - 1) + "A")
 
             for i in range(len(clades2)):
-                C2 = Tree(clades2[i], format=newickformat)
+                C2 = Tree(clades2[i], format=newick_format)
 
                 f2 = open(
                     pathFolder + "clades/Branch" + str(i) + "_clade2/sequence.txt", "w"
@@ -1035,7 +849,7 @@ def sequences_clades(
                 )
 
                 for i in range(len(clades1)):
-                    C1 = Tree(clades1[i], format=newickformat)
+                    C1 = Tree(clades1[i], format=newick_format)
 
                     f1 = open(
                         pathFolder
@@ -1075,7 +889,7 @@ def sequences_clades(
                     f1.write("FOO  " + "N" * (numbersitesperrate[r] - 1) + "A")
 
                 for i in range(len(clades2)):
-                    C2 = Tree(clades2[i], format=newickformat)
+                    C2 = Tree(clades2[i], format=newick_format)
 
                     f2 = open(
                         pathFolder
@@ -1111,7 +925,7 @@ def sequences_clades(
                 )
 
                 for i in range(len(clades1)):
-                    C1 = Tree(clades1[i], format=newickformat)
+                    C1 = Tree(clades1[i], format=newick_format)
 
                     f1 = open(
                         pathFolder
@@ -1161,7 +975,7 @@ def sequences_clades(
                     f1.write(">FOO\n" + "N" * (numbersitesperrate[r] - 1) + "A")
 
                 for i in range(len(clades2)):
-                    C2 = Tree(clades2[i], format=newickformat)
+                    C2 = Tree(clades2[i], format=newick_format)
 
                     f2 = open(
                         pathFolder
@@ -1205,43 +1019,8 @@ def compare_arrays(array1, array2):
         print("The arrays are not identical. 😞")
 
 
-def parse_matrices(n, path):
-    """Parse the rate matrix Q and stationary distribution pi from .iqtree file."""
-    rate_matrix = np.zeros((n, n))
-    phi_matrix = np.zeros((n, n))
-    filename = f"{path}.iqtree"
-
-    # Check if file exists
-    if not os.path.isfile(filename):
-        raise FileNotFoundError(f"The file '{filename}' does not exist.")
-
-    with open(filename, "r") as file:
-        lines = file.readlines()
-        for idx, line in enumerate(lines):
-            if "Rate matrix Q:" in line:
-                try:
-                    for j in range(n):
-                        entries = lines[idx + j + 2].split()[1:]
-                        for k in range(n):
-                            rate_matrix[j, k] = (
-                                0 if "e" in entries[k] else float(entries[k])
-                            )
-                except (IndexError, ValueError):
-                    raise Exception("Error while parsing rate matrix.")
-            elif "State frequencies: (empirical counts from alignment)" in line:
-                try:
-                    for j in range(n):
-                        phi_matrix[j, j] = float(lines[idx + j + 2].split()[2])
-                except (IndexError, ValueError):
-                    raise Exception("Error while parsing empirical state frequencies.")
-            elif "State frequencies: (equal frequencies)" in line:
-                np.fill_diagonal(phi_matrix, 0.25)
-
-    return rate_matrix, phi_matrix
-
-
 def diagonalisation(n, path):
-    rate_matrix, phi_matrix = parse_matrices(n, path)
+    rate_matrix, phi_matrix = parse_rate_matrices(n, path)
 
     """ 
         Then phi_matrix := Diag(pi). Recall that matrix Q is reversible iff M:= phi_matrix^1/2 x Q x phi_matrix^{-1/2} is symmetric.
@@ -1297,8 +1076,8 @@ def diagonalisation(n, path):
 """ Read newick string from convert to ete3 satute format """
 
 
-def convert_newick_to_satute_ete3_format(t, newickformat):
-    T = Tree(t, format=newickformat)
+def convert_newick_to_satute_ete3_format(t, newick_format):
+    T = Tree(t, format=newick_format)
 
     for node in T.traverse("levelorder"):
         l = len(node.name)
@@ -1306,7 +1085,7 @@ def convert_newick_to_satute_ete3_format(t, newickformat):
             if t[i : i + l] == str(node.name) and (t[i + l] == ";" or t[i + l] == ":"):
                 t = t[: i + l] + "*" + t[i + l :]
 
-    T = Tree(t, format=newickformat)
+    T = Tree(t, format=newick_format)
 
     root = T.get_tree_root()
     root_children = root.get_children()
@@ -1354,7 +1133,7 @@ def convert_newick_to_satute_ete3_format(t, newickformat):
         if t[i : i + 2] == ",)":
             t = t.replace(t[i : i + 2], ")")
 
-    T = Tree(t, format=newickformat)
+    T = Tree(t, format=newick_format)
 
     return t, T
 
@@ -1379,52 +1158,6 @@ def guess_msa_file_format(file_path):
         return 1  ##'PHYLIP'
 
     return None
-
-
-def map_values_to_newick(value_rows, newick_string):
-    # Parsing the file of values into a dictionary
-    values_dict = {}
-
-    """
-     {
-                "index": i + 1,
-                "delta": delta,
-                "c_s": c_s,
-                "p_value": p_value,
-                "result_test": result_test,
-                "result_test_tip2tip": result_test_tip2tip,
-                "vector_branches": vector_branches[i],
-    }
-    """
-    for row in value_rows:
-        node_one, node_two = row["vector_branches"].split("-")
-        node_two = node_two.split("*")[0]  # remove trailing '*'
-        values_dict[node_two] = {
-            "delta": row["delta"],
-            "c_s": row["c_s"],
-            "p-value": row["p_value"],
-            "result_test": row["result_test"],
-            "status": row["result_test_tip2tip"],
-        }
-
-    saturised_newick_string = map_values_to_newick_regex(values_dict, newick_string)
-
-    return saturised_newick_string
-
-
-def map_values_to_newick_regex(values_dict, newick_string):
-    for node_name, values in values_dict.items():
-        delta = values["delta"]
-        c_s = values["c_s"]
-        p_value = values["p-value"]
-        branch_status = values["status"]
-        newick_string = re.sub(
-            rf"({node_name})",
-            rf"\1[delta={delta}; c_s={c_s}; p_value={p_value}; branch_status={branch_status}]",
-            newick_string,
-        )
-
-    return newick_string
 
 
 import pandas as pd
@@ -1495,7 +1228,7 @@ def saturation_test_cli(
     number_rates=4,
     chosen_rate=str(4),
     z_alpha=2.33,
-    newickformat=1,
+    newick_format=1,
     epsilon=0.01,
     rawMemory=True,
     model="GTR",
@@ -1519,7 +1252,7 @@ def saturation_test_cli(
     :param z_alpha: float, default = 2.33
         The critical value for the test statistic under the null hypothesis. It depends on the chosen significance level of the test.
 
-    :param newickformat: int, default = 1
+    :param newick_format: int, default = 1
         The format of the output tree file. The default format (1) is the standard Newick format.
 
     :param epsilon: float, default = 0.01
@@ -1537,13 +1270,13 @@ def saturation_test_cli(
     pathFOLDER = remove_filename(str(pathDATA))
 
     """ data structure for phylogenetic tree"""
-    t, T = convert_newick_to_satute_ete3_format(newick_string, newickformat)
+    t, T = convert_newick_to_satute_ete3_format(newick_string, newick_format)
 
     leaves, internal_nodes = node_type(T)
 
     vector_branches, vector_distances = branch_lengths(T)
-
     # """get sequences from msa (in phylip format or fasta format) save them into new INPUTMSA.txt file """
+
     modify_seqfile(pathDATA, leaves, option)
 
     # """" no idea, where I need this, copy .state to memory.csv"""
@@ -1555,8 +1288,9 @@ def saturation_test_cli(
     else:
         rates = 1
 
-    clades1, clades2 = clades(T, t, newickformat, internal_nodes, leaves)
-    save_clades(pathDATA, number_rates, clades1, clades2, newickformat, rates)
+    clades1, clades2 = clades(T, t, newick_format, internal_nodes, leaves)
+
+    save_clades(pathDATA, number_rates, clades1, clades2, newick_format, rates)
 
     if number_rates > 1:
         sequences_clades(
@@ -1567,7 +1301,7 @@ def saturation_test_cli(
             clades1,
             clades2,
             option,
-            newickformat,
+            newick_format,
             internal_nodes,
             numbersitesperrate,
         )
@@ -1580,7 +1314,7 @@ def saturation_test_cli(
             clades1,
             clades2,
             option,
-            newickformat,
+            newick_format,
             internal_nodes,
             [],
         )
@@ -1609,50 +1343,26 @@ def saturation_test_cli(
 
     for i in range(0, len(internal_nodes) + len(leaves)):
         if number_rates == 1:  # if not gamma model
-            file1 = pathFOLDER + "clades/Branch" + str(i) + "_clade1/output.state"
-
-            with open(file1, "r+") as f1:
-                with open(
-                    pathFOLDER + "clades/Branch" + str(i) + "_clade1/memory.csv", "w"
-                ) as writer:
-                    lines = f1.readlines()
-                    out = lines[8:-1]
-                    for j in range(len(lines[8:])):
-                        writer.write(lines[j + 8])
-
-            file2 = pathFOLDER + "clades/Branch" + str(i) + "_clade2/output.state"
-
-            with open(file2, "r+") as f2:
-                with open(
-                    pathFOLDER + "clades/Branch" + str(i) + "_clade2/memory.csv", "w"
-                ) as writer:
-                    lines = f2.readlines()
-                    out = lines[8:-1]
-                    for j in range(len(lines[8:])):
-                        writer.write(lines[j + 8])
-
-            """ get the posterior probabilities of the left subtree"""
-            df1 = pd.read_csv(
-                pathFOLDER + "clades/Branch" + str(i) + "_clade1/memory.csv",
-                sep="\t",
-                engine="python",
+            """
+            get the posterior probabilities of the left subtree
+            """
+            posterior_probabilities_left_subtree = parse_output_state_frequencies(
+                f"{pathFOLDER}clades/Branch{str(i)}_clade1/output.state"
             )
 
-            """get the posterior probabilities of the right subtree"""
-            df2 = pd.read_csv(
-                pathFOLDER + "clades/Branch" + str(i) + "_clade2/memory.csv",
-                sep="\t",
-                engine="python",
+            """
+                get the posterior probabilities of the right subtree
+            """
+            posterior_probabilities_right_subtree = parse_output_state_frequencies(
+                f"{pathFOLDER}clades/Branch{str(i)}_clade2/output.state"
             )
 
-            number_sites = len(df1["Site"].unique())
-
-            number_nodes_1 = len(df1["Node"].unique())
-
-            number_nodes_2 = len(df2["Node"].unique())
+            number_sites = len(posterior_probabilities_left_subtree["Site"].unique())
+            number_nodes_1 = len(posterior_probabilities_left_subtree["Node"].unique())
+            number_nodes_2 = len(posterior_probabilities_right_subtree["Node"].unique())
 
             if i == 0:
-                T = Tree(t, format=newickformat)
+                T = Tree(t, format=newick_format)
 
                 results_file = open(
                     pathFOLDER + "/resultsRate" + chosen_rate + ".txt", "w"
@@ -1676,85 +1386,20 @@ def saturation_test_cli(
                 results_file.write("\n")
 
         else:  # if gamma model
-
-            file1 = (
-                pathFOLDER
-                + "subsequences/subseq"
-                + chosen_rate
-                + "/clades/Branch"
-                + str(i)
-                + "_clade1/output.state"
+            posterior_probabilities_left_subtree = parse_output_state_frequencies(
+                f"{pathFOLDER}/subsequences/subseq{chosen_rate}/clades/Branch{i}_clade1/output.state"
             )
 
-            with open(file1, "r+") as f1:
-                with open(
-                    pathFOLDER
-                    + "subsequences/subseq"
-                    + chosen_rate
-                    + "/clades/Branch"
-                    + str(i)
-                    + "_clade1/memory.csv",
-                    "w",
-                ) as writer:
-                    lines = f1.readlines()
-                    out = lines[8:-1]
-                    for j in range(len(lines[8:])):
-                        writer.write(lines[j + 8])
-
-            file2 = (
-                pathFOLDER
-                + "subsequences/subseq"
-                + chosen_rate
-                + "/clades/Branch"
-                + str(i)
-                + "_clade2/output.state"
-            )
-            with open(file2, "r+") as f2:
-                with open(
-                    pathFOLDER
-                    + "subsequences/subseq"
-                    + chosen_rate
-                    + "/clades/Branch"
-                    + str(i)
-                    + "_clade2/memory.csv",
-                    "w",
-                ) as writer:
-                    lines = f2.readlines()
-                    out = lines[8:-1]
-                    for j in range(len(lines[8:])):
-                        writer.write(lines[j + 8])
-
-            """ get the posterior probabilities of the left subtree"""
-            df1 = pd.read_csv(
-                pathFOLDER
-                + "subsequences/subseq"
-                + chosen_rate
-                + "/clades/Branch"
-                + str(i)
-                + "_clade1/memory.csv",
-                sep="\t",
-                engine="python",
+            posterior_probabilities_right_subtree = parse_output_state_frequencies(
+                f"{pathFOLDER}/subsequences/subseq{chosen_rate}/clades/Branch{i}_clade2/output.state"
             )
 
-            """ get the posterior probabilities of the right subtree"""
-            df2 = pd.read_csv(
-                pathFOLDER
-                + "subsequences/subseq"
-                + chosen_rate
-                + "/clades/Branch"
-                + str(i)
-                + "_clade2/memory.csv",
-                sep="\t",
-                engine="python",
-            )
-
-            number_sites = len(df1["Site"].unique())
-            number_nodes_1 = len(df1["Node"].unique())
-            number_nodes_2 = len(df2["Node"].unique())
+            number_sites = len(posterior_probabilities_left_subtree["Site"].unique())
+            number_nodes_1 = len(posterior_probabilities_left_subtree["Node"].unique())
+            number_nodes_2 = len(posterior_probabilities_right_subtree["Node"].unique())
 
             if i == 0:
-
-                T = Tree(t, format=newickformat)
+                T = Tree(t, format=newick_format)
 
                 results_file = open(
                     pathFOLDER + "/resultsRate" + chosen_rate + ".txt", "w"
@@ -1796,17 +1441,20 @@ def saturation_test_cli(
             for k in range(
                 number_sites * (number_nodes_1 - 1), number_sites * number_nodes_1
             ):
-                a.append(v1 @ np.asarray(df1.iloc[k, 3:7]))
+                a.append(
+                    v1 @ np.asarray(posterior_probabilities_left_subtree.iloc[k, 3:7])
+                )
 
             for k in range(
                 number_sites * (number_nodes_2 - 1), number_sites * number_nodes_2
             ):
-                b.append(v1 @ np.asarray(df2.iloc[k, 3:7]))
+                b.append(
+                    v1 @ np.asarray(posterior_probabilities_right_subtree.iloc[k, 3:7])
+                )
 
-            delta = (
-                np.asarray(a) @ np.asarray(b) / number_sites
-            )  # computing the dominant sample coherence
-            # print(np.multiply(a, b))
+            delta = np.asarray(a) @ np.asarray(b) / number_sites
+            # computing the dominant sample coherence
+
             if i < len(internal_nodes):
                 M_a = np.asarray(a) @ np.asarray(a) / number_sites + upper_ci
                 M_a = min(1, M_a)
@@ -1838,12 +1486,18 @@ def saturation_test_cli(
                 for k in range(
                     number_sites * (number_nodes_1 - 1), number_sites * number_nodes_1
                 ):
-                    a.append(v1 @ np.asarray(df1.iloc[k, 3:7]))
+                    a.append(
+                        v1
+                        @ np.asarray(posterior_probabilities_left_subtree.iloc[k, 3:7])
+                    )
 
                 for k in range(
                     number_sites * (number_nodes_2 - 1), number_sites * number_nodes_2
                 ):
-                    b.append(v1 @ np.asarray(df2.iloc[k, 3:7]))
+                    b.append(
+                        v1
+                        @ np.asarray(posterior_probabilities_right_subtree.iloc[k, 3:7])
+                    )
 
                 delta += np.asarray(a) @ np.asarray(b)
 
@@ -1863,13 +1517,23 @@ def saturation_test_cli(
                         number_sites * (number_nodes_1 - 1),
                         number_sites * number_nodes_1,
                     ):
-                        a.append(v_j @ np.asarray(df1.iloc[l, 3:7]))
+                        a.append(
+                            v_j
+                            @ np.asarray(
+                                posterior_probabilities_left_subtree.iloc[l, 3:7]
+                            )
+                        )
 
                     for l in range(
                         number_sites * (number_nodes_2 - 1),
                         number_sites * number_nodes_2,
                     ):
-                        b.append(v_k @ np.asarray(df2.iloc[l, 3:7]))
+                        b.append(
+                            v_k
+                            @ np.asarray(
+                                posterior_probabilities_right_subtree.iloc[l, 3:7]
+                            )
+                        )
 
                     # variance = np.asarray(a)@np.asarray(b)
                     variance += max(
@@ -1966,3 +1630,50 @@ def saturation_test_cli(
         c_sTwoSequence=c_sTwoSequence,
         T=T,
     )
+
+
+# ========= Mapping Code to Newick String ===========
+def map_values_to_newick(value_rows, newick_string):
+    # Parsing the file of values into a dictionary
+    values_dict = {}
+
+    """
+     {
+                "index": i + 1,
+                "delta": delta,
+                "c_s": c_s,
+                "p_value": p_value,
+                "result_test": result_test,
+                "result_test_tip2tip": result_test_tip2tip,
+                "vector_branches": vector_branches[i],
+    }
+    """
+    for row in value_rows:
+        node_one, node_two = row["vector_branches"].split("-")
+        node_two = node_two.split("*")[0]  # remove trailing '*'
+        values_dict[node_two] = {
+            "delta": row["delta"],
+            "c_s": row["c_s"],
+            "p-value": row["p_value"],
+            "result_test": row["result_test"],
+            "status": row["result_test_tip2tip"],
+        }
+
+    saturised_newick_string = map_values_to_newick_regex(values_dict, newick_string)
+
+    return saturised_newick_string
+
+
+def map_values_to_newick_regex(values_dict, newick_string):
+    for node_name, values in values_dict.items():
+        delta = values["delta"]
+        c_s = values["c_s"]
+        p_value = values["p-value"]
+        branch_status = values["status"]
+        newick_string = re.sub(
+            rf"({node_name})",
+            rf"\1[delta={delta}; c_s={c_s}; p_value={p_value}; branch_status={branch_status}]",
+            newick_string,
+        )
+
+    return newick_string
