@@ -27,7 +27,7 @@ def print_ascii_art(ascii_art):
     console.print(Text(ascii_art, style="bold green"))
 
 # Now you can call the function with your ASCII art
-ASCSII_ART = """
+ASCII_ART = """
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!!!!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!?YGB#&&&##GPJ7~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -253,7 +253,7 @@ class Satute:
 
     def run(self):
 
-        print_ascii_art(ASCSII_ART)
+        print_ascii_art(ASCII_ART)
 
         """Main entry point for running the Satute command-line tool."""
         # Parsing input arguments and constructing IQ-TREE command-line arguments
