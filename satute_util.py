@@ -1437,7 +1437,6 @@ def saturation_test_cli(
     z_alpha=2.33,
     newickformat=1,
     epsilon=0.01,
-   #rawMemory=True,
     model="GTR",
 ):
     """
@@ -1464,9 +1463,6 @@ def saturation_test_cli(
 
     :param epsilon: float, default = 0.01
         A small positive number used as a tolerance in numerical calculations.
-
-    :param rawMemory: bool, default = True
-        If True, the function will store raw data in memory. This may speed up the calculations but requires more memory.
 
     """
 

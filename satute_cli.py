@@ -293,7 +293,6 @@ class Satute:
                 2.33,
                 1,
                 0.01,
-                #True,
                 self.input_args.model,
             )
 
