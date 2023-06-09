@@ -17,6 +17,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+
 class InputArgumentsError(Exception):
     """
     Exception raised for errors in the input arguments.
@@ -217,6 +218,7 @@ class Satute:
             logger.info(
                 f"Running a second time with the best model: {substitution_model}"
             )
+
             # Update model in input arguments and re-construct arguments
             self.input_args.model = substitution_model
             arguments_dict = self.construct_arguments()
@@ -236,17 +238,8 @@ class Satute:
             "--redo",
         ]
 
-        if self.input_args.ufboot and self.input_args.boot:
-            return ValueError("Cannot run both ufboot and boot at the same time")
-        else:
-            if self.input_args.ufboot:
-                if self.input_args.ufboot < 1000:
-                    return ValueError("ufboot must be >= 1000")
-                extra_arguments.append(f"--ufboot {self.input_args.ufboot}")
-            if self.input_args.boot:
-                if self.input_args.boot < 100:
-                    return ValueError("boot must be >= 100")
-                extra_arguments.append(f"--boot {self.input_args.boot}")
+        # Validate and append ufboot and boot parameters to extra_arguments
+        extra_arguments = extra_arguments + self.validate_and_append_boot_arguments()
 
         self.run_iqtree_with_arguments(
             arguments=arguments_dict["arguments"], extra_arguments=extra_arguments
@@ -478,6 +471,36 @@ class Satute:
         elif self.input_args.tree:
             tree_file_path = self.input_args.tree
             return self.get_newick_string(tree_file_path)
+
+    def validate_and_append_boot_arguments(self):
+        """Validates the ufboot and boot parameters and appends them to extra_arguments if valid.
+
+        Raises:
+            ValueError: If both ufboot and boot parameters are defined, or if values are less than expected.
+        """
+        extra_arguments = []  # initialize an empty list for extra_arguments
+
+        # Check if both ufboot and boot parameters are defined
+        if self.input_args.ufboot and self.input_args.boot:
+            # If both parameters are defined, raise a ValueError
+            raise ValueError("Cannot run both ufboot and boot at the same time")
+        else:
+            # If only ufboot is defined, further check if its value is >= 1000
+            if self.input_args.ufboot:
+                if self.input_args.ufboot < 1000:
+                    # If the value is less than 1000, raise a ValueError
+                    raise ValueError("ufboot must be >= 1000")
+                # If the value is correct, append it to the list of extra_arguments
+                extra_arguments.append(f"--ufboot {self.input_args.ufboot}")
+            # If only boot is defined, further check if its value is >= 100
+            if self.input_args.boot:
+                if self.input_args.boot < 100:
+                    # If the value is less than 100, raise a ValueError
+                    raise ValueError("boot must be >= 100")
+                # If the value is correct, append it to the list of extra_arguments
+                extra_arguments.append(f"--boot {self.input_args.boot}")
+
+        return extra_arguments  # return the list of extra_arguments
 
 
 if __name__ == "__main__":
