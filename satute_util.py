@@ -662,10 +662,8 @@ def save_clades(path, number_rates, clades1, clades2, newickformat, rates):
                 pathFolder + "clades/Branch" + str(i) + "_clade2/", exist_ok=True
             )
 
-            f"(FOO:1((A:1,B:1):1,C:1));"
-
+            #f"(FOO:1((A:1,B:1):1,C:1));"
             # f"FOO:0.00000000010,({newickformat.remove(";")});"
-
 
             clades1[i] = (
                 "(FOO:0.00000000010,"
@@ -1584,13 +1582,6 @@ def saturation_test_cli(
     
     SATURATION TEST FOR ALL BRANCHES
     """
-
-    U = 1.0 / float(min(state_frequencies_vect)) - 1
-
-    K = dimension - 1
-
-    number_standard_deviations = 2  # Confidence intervals of 98% (one sided)
-
     print(
         "{:6s}\t{:6s}\t{:6s}\t{:6s}\t{:14s}\t{:14s}\t{:100s}".format(
             "Order", 
@@ -1801,10 +1792,6 @@ def saturation_test_cli(
             """
             if i < len(internal_nodes):
                 M_a = np.asarray(a) @ np.asarray(a) / number_sites 
-                """
-                only conversion into float?
-                M_a = float(np.asarray(a) @ np.asarray(a)) / float(number_sites) #+ upper_ci
-                """
                 M_a = min(1, M_a)
             else:  # if clade A is a single leaf
                 M_a = 1
@@ -1942,7 +1929,7 @@ def saturation_test_cli(
     results_file.write(
         T.copy("newick").get_ascii(attributes=["name", "label", "distance"])
     )
-    #results_file.close()
+    results_file.close()
 
     # Use the functionS
     results_file = f"{pathFOLDER}/resultsRate{chosen_rate}.txt"
