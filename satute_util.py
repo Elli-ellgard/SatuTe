@@ -644,6 +644,7 @@ def save_rates(path, number_rates):
                 else:
                     for j in range(number_rates):
                         rates.append(float(lines[i + j + 1][12:20]))
+    print(rates)           
 
     return rates
 
@@ -1502,6 +1503,9 @@ def saturation_test_cli(
         distribution at the root of each subtree.
         The whole process will be repeated for each rate category given a +Gamma model.
     """
+    print("*"*12)
+    print(number_rates)
+    print(rates)
     clades1, clades2 = clades(T, t, newickformat, internal_nodes, leaves)
     save_clades(pathDATA, number_rates, clades1, clades2, newickformat, rates)
 

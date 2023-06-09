@@ -151,14 +151,13 @@ class Satute:
                 "default": self.boot,
                 "metavar": "<num>",
             },
-            {
-                "flag": "-seed",
-                "help": "Random number seed",
-                "type": int,
-                "default": 1234,
-                "metavar": "<num>",
-            },
-
+            #{
+            #    "flag": "-seed",
+            #    "help": "Random number seed",
+            #    "type": int,
+            #    "default": 1234,
+            #    "metavar": "<num>",
+            #},
         ]
 
     def parse_input(self):
@@ -272,12 +271,12 @@ class Satute:
 
         # TODO: Check if that makes sense  
         # Check if the IQ-TREE state file exists and we have to rerun IQ-TREE
-        # state_file = self.find_file({".state"})
-        # site_probability_file = self.find_file({".siteprob"})
-        # if state_file is not None or site_probability_file is not None:
-        #     self.run_iqtree_with_arguments(
-        #         arguments=arguments_dict["arguments"], extra_arguments=extra_arguments
-        #     )
+        state_file = self.find_file({".state"})
+        site_probability_file = self.find_file({".siteprob"})
+        if state_file is None: # or  a site_probability_file is not None:
+             self.run_iqtree_with_arguments(
+                 arguments=arguments_dict["arguments"], extra_arguments=extra_arguments
+             )
 
         logger.info(f"Run Saturation Test with Model {self.input_args.model}")
         logger.info(f"Run Saturation Test with {number_rates} rate categories")
@@ -294,7 +293,7 @@ class Satute:
                 2.33,
                 1,
                 0.01,
-                True,
+                #True,
                 self.input_args.model,
             )
 
