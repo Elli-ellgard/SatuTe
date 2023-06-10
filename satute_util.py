@@ -19,6 +19,8 @@ from satute_repository import (
     parse_output_state_frequencies,
 )
 
+from satute_test_statistic import calculate_test_statistic
+
 
 def remove_filename(path):
     parts = path.split("/")
@@ -1380,6 +1382,15 @@ def saturation_test_cli(
             )
         
         """ calculation of the test-statistic"""
+
+        calculate_test_statistic(
+            multiplicity,
+            array_eigenvectors,
+            posterior_probabilities_left_subtree,
+            posterior_probabilities_right_subtree,
+            dimension,
+            0.01,
+        )
 
         number_sites = len(posterior_probabilities_left_subtree["Site"].unique())
         number_nodes_1 = len(posterior_probabilities_left_subtree["Node"].unique())
