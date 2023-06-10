@@ -19,6 +19,8 @@ from satute_repository import (
     parse_output_state_frequencies,
 )
 
+from satute_test_statistic import calculate_test_statistic
+
 
 def remove_filename(path):
     parts = path.split("/")
@@ -1019,57 +1021,53 @@ def compare_arrays(array1, array2):
         print("The arrays are not identical. 😞")
 
 
-def diagonalisation(n, path):
-    rate_matrix, phi_matrix = parse_rate_matrices(n, path)
+"""## SPECTRAL DECOMPOSITION OF THE RATE MATRIX"""
+
+def spectral_decomposition(n, path):
+    rate_matrix, psi_matrix = parse_rate_matrices(n, path)
 
     """ 
-        Then phi_matrix := Diag(pi). Recall that matrix Q is reversible iff M:= phi_matrix^1/2 x Q x phi_matrix^{-1/2} is symmetric.
+        Then psi_matrix := Diag(pi). Recall that matrix Q is reversible iff M:= psi_matrix^1/2 x Q x psi_matrix^{-1/2} is symmetric.
+        For a real symmetric matrix M, its eigenvectors can be chosen to be an orthonormal basis of R^n 
     """
-    M = scipy.linalg.fractional_matrix_power(phi_matrix, +1 / 2) @ rate_matrix
-    M = M @ scipy.linalg.fractional_matrix_power(phi_matrix, -1 / 2)
+    M = scipy.linalg.fractional_matrix_power(psi_matrix, +1 / 2) @ rate_matrix
+    M = M @ scipy.linalg.fractional_matrix_power(psi_matrix, -1 / 2)
 
-    """ diagonalisation of M"""
-    lamb, w = np.linalg.eig(M)  # Compute the eigenvalues and right eigenvectors .
+    """ eigendecomposition of matrix M"""
+    lamb, w = np.linalg.eig(M)  # Compute the eigenvalues and eigenvectors.
     idx = lamb.argsort()[::-1]  # Order from large to small.
-    lamb = lamb[idx]
-    w = w[:, idx]
+    lamb = lamb[idx] # Order the eigenvalues (large to small).
+    w = w[:, idx] # Order the eigenvectors according to the eigenvalues"""
 
+    # the first one should be the eigenvalue 0 in lamb, why are we doing the following?
     lamb_nozero = []  # list of eigenvalues without 0
     for i in lamb:
         if i > 0.00999 or i < -0.00999:
             lamb_nozero.append(i)
-
+        
+    max_lambda = max(lamb_nozero)  # dominant non-zero eigenvalue 
+    # get the indices of the dominant non-zero eigenvalue in lamb taking numerical inaccuracies into account and identical values
     index = []
-    max_lambda = max(lamb_nozero)  # dominant non-zero eigenvalue
-    index.append((lamb.tolist()).index(max_lambda))
+    for i in range(len(lamb)):
+        lambda_it = lamb[i]
+        if abs(lambda_it - max_lambda) < 0.01:
+            index.append(i)
 
-    lamb_nozero.remove(max_lambda)
-    while len(lamb_nozero) > 0:
-        max_lambda_it = max(lamb_nozero)
-        if abs(max_lambda_it - max_lambda) < 0.01:
-            index.append((lamb.tolist()).index(max_lambda_it))
-        lamb_nozero.remove(max_lambda_it)
-
-    array_eigenvectors = []
-
-    v1 = scipy.linalg.fractional_matrix_power(phi_matrix, -1 / 2) @ w[:, index[0]]
-    h1 = scipy.linalg.fractional_matrix_power(phi_matrix, +1 / 2) @ w[:, index[0]]
-
-    array_eigenvectors.append(v1)
-
-    multiplicity = len(index)
-    if multiplicity > 1:
-        for i in range(1, multiplicity):
-            v1 = (
-                scipy.linalg.fractional_matrix_power(phi_matrix, -1 / 2)
-                @ w[:, index[i]]
+    multiplicity = len(index) # multiplicity of the dominant non-zero eigenvalue
+    array_eigenvectors = [] # list of right eigenvectors for the dominant non-zero eigenvalue
+    for i in range(multiplicity):
+        # calculate the right eigenvectors for the dominant non-zero eigenvalue
+        v1 = (
+            scipy.linalg.fractional_matrix_power(psi_matrix, -1 / 2)
+            @ w[:, index[i]]
             )
-            h1 = (
-                scipy.linalg.fractional_matrix_power(phi_matrix, +1 / 2)
-                @ w[:, index[i]]
-            )
-            array_eigenvectors.append(v1)
-
+        array_eigenvectors.append(v1)
+        """# calculate the left eigenvectors for the dominant non-zero eigenvalue
+        h1 = (
+            scipy.linalg.fractional_matrix_power(psi_matrix, +1 / 2)
+            @ w[:, index[i]]
+            ) """
+        
     return array_eigenvectors, multiplicity
 
 
@@ -1219,7 +1217,7 @@ def write_results_and_newick_tree(
         satute_result_file.write(f"\n\n{saturation_information_newick_string}")
 
 
-# -------------  CODE REFACTORED BY ENES BERK ZEKI SAKALLI --------------- #
+""" # MAIN FUNCTION FOR THE SATURATION TEST """
 def saturation_test_cli(
     pathDATA,
     newick_string,
@@ -1227,10 +1225,9 @@ def saturation_test_cli(
     dimension=4,
     number_rates=4,
     chosen_rate=str(4),
-    z_alpha=2.33,
+    alpha=0.01,
     newick_format=1,
     epsilon=0.01,
-    rawMemory=True,
     model="GTR",
 ):
     """
@@ -1249,8 +1246,8 @@ def saturation_test_cli(
     :param chosen_rate: str, default = '4'
         The rate category to be used for the analysis. The rates are numbered starting from 1.
 
-    :param z_alpha: float, default = 2.33
-        The critical value for the test statistic under the null hypothesis. It depends on the chosen significance level of the test.
+    :param alpha: float, default = 0.01
+        The significance level of the test.
 
     :param newick_format: int, default = 1
         The format of the output tree file. The default format (1) is the standard Newick format.
@@ -1258,7 +1255,6 @@ def saturation_test_cli(
     :param epsilon: float, default = 0.01
         A small positive number used as a tolerance in numerical calculations.
 
-    :param rawMemory: bool, default = True
     """
 
     results_list = []
@@ -1275,6 +1271,7 @@ def saturation_test_cli(
     leaves, internal_nodes = node_type(T)
 
     vector_branches, vector_distances = branch_lengths(T)
+
     # """get sequences from msa (in phylip format or fasta format) save them into new INPUTMSA.txt file """
 
     modify_seqfile(pathDATA, leaves, option)
@@ -1326,14 +1323,11 @@ def saturation_test_cli(
         pathDATA, number_rates, dimension, model
     )
 
-    """ get the eigenvector(s) of the dominate non-zero eigenvalue"""
-    array_eigenvectors, multiplicity = diagonalisation(dimension, pathDATA)
+    """ get the right eigenvector(s) of the dominate non-zero eigenvalue"""
+    array_eigenvectors, multiplicity = spectral_decomposition(dimension, pathDATA)
 
+    """ calculate the posterior probabilities using IQ-TREE, see .state files"""
     run_iqtree_for_each_clade(pathFOLDER, number_rates, chosen_rate, pathIQTREE)
-
-    U = 1.0 / float(min(state_frequencies_vect)) - 1
-    K = dimension - 1
-    number_standard_deviations = 2  # Confidence intervals of 98% (one sided)
 
     print(
         "{:6s}\t{:6s}\t{:6s}\t{:6s}\t{:14s}\t{:14s}\t{:100s}".format(
@@ -1341,92 +1335,69 @@ def saturation_test_cli(
         )
     )
 
+    """ Calculations of the saturation test for each branch"""
     for i in range(0, len(internal_nodes) + len(leaves)):
+       
+        """ preparation for results file """
+        if i == 0:
+            T = Tree(t, format=newick_format)
+
+            results_file = open(
+                pathFOLDER + "/resultsRate" + chosen_rate + ".txt", "w"
+            ) # To store test results. We open file in first iteration (branch).
+
+            results_file.write("\n")
+            results_file.write(
+                "{:6s}\t{:6s}\t{:6s}\t{:6s}\t{:14s}\t{:14s}\t{:100s}".format(
+                    "Order",
+                    "delta",
+                    "c_s",
+                    "p-value",
+                    "Branch status ",
+                    "T2T status",
+                    "Branch",
+                )
+            )
+            results_file.write("\n")
+
+        """ get the posterior probabilities """
         if number_rates == 1:  # if not gamma model
-            """
-            get the posterior probabilities of the left subtree
-            """
+            # read the posterior probabilities of the left subtree from .state file
             posterior_probabilities_left_subtree = parse_output_state_frequencies(
                 f"{pathFOLDER}clades/Branch{str(i)}_clade1/output.state"
             )
-
-            """
-                get the posterior probabilities of the right subtree
-            """
+            # read the posterior probabilities of the right subtree from .state file
             posterior_probabilities_right_subtree = parse_output_state_frequencies(
                 f"{pathFOLDER}clades/Branch{str(i)}_clade2/output.state"
             )
 
-            number_sites = len(posterior_probabilities_left_subtree["Site"].unique())
-            number_nodes_1 = len(posterior_probabilities_left_subtree["Node"].unique())
-            number_nodes_2 = len(posterior_probabilities_right_subtree["Node"].unique())
-
-            if i == 0:
-                T = Tree(t, format=newick_format)
-
-                results_file = open(
-                    pathFOLDER + "/resultsRate" + chosen_rate + ".txt", "w"
-                )
-
-                # To store test results. We open file in first iteration (branch).
-                results_file.write("\n")
-
-                results_file.write(
-                    "{:6s}\t{:6s}\t{:6s}\t{:6s}\t{:14s}\t{:14s}\t{:100s}".format(
-                        "Order",
-                        "delta",
-                        "c_s",
-                        "p-value",
-                        "Branch status ",
-                        "T2T status",
-                        "Branch",
-                    )
-                )
-
-                results_file.write("\n")
-
         else:  # if gamma model
+            # read the posterior probabilities of the left subtree from .state file
             posterior_probabilities_left_subtree = parse_output_state_frequencies(
                 f"{pathFOLDER}/subsequences/subseq{chosen_rate}/clades/Branch{i}_clade1/output.state"
             )
-
+            # read the posterior probabilities of the right subtree from .state file
             posterior_probabilities_right_subtree = parse_output_state_frequencies(
                 f"{pathFOLDER}/subsequences/subseq{chosen_rate}/clades/Branch{i}_clade2/output.state"
             )
+        
+        """ calculation of the test-statistic"""
+        #if i < len(internal_nodes):
+        #    branch_type = "internal"
 
-            number_sites = len(posterior_probabilities_left_subtree["Site"].unique())
-            number_nodes_1 = len(posterior_probabilities_left_subtree["Node"].unique())
-            number_nodes_2 = len(posterior_probabilities_right_subtree["Node"].unique())
-
-            if i == 0:
-                T = Tree(t, format=newick_format)
-
-                results_file = open(
-                    pathFOLDER + "/resultsRate" + chosen_rate + ".txt", "w"
-                )  # To store test results.  We open file in first iteration (branch).
-
-                results_file.write("\n")
-
-                results_file.write(
-                    "{:6s}\t{:6s}\t{:6s}\t{:6s}\t{:14s}\t{:14s}\t{:100s}\n".format(
-                        "Order",
-                        "delta",
-                        "c_s",
-                        "p-value",
-                        "Branch status",
-                        "T2T status",
-                        "Branch",
-                    )
-                )
-
-                results_file.write("\n")
-
-        estimation_dt = np.sqrt(U * min(K, U / 4) / number_sites)
-
-        if not rawMemory:
-            upper_ci = number_standard_deviations * estimation_dt
-        else:
-            upper_ci = float(0)
+        # calculate_test_statistic(
+        #     multiplicity,
+        #     array_eigenvectors,
+        #     posterior_probabilities_left_subtree,
+        #     posterior_probabilities_right_subtree,
+        #     dimension,
+        #     branch_type,
+        #     alpha,
+        # )
+        z_alpha = st.norm.ppf(1-alpha)
+        number_sites = len(posterior_probabilities_left_subtree["Site"].unique())
+        number_nodes_1 = len(posterior_probabilities_left_subtree["Node"].unique())
+        number_nodes_2 = len(posterior_probabilities_right_subtree["Node"].unique())
 
         if multiplicity == 1:  # if D=1
             v1 = array_eigenvectors[0]
@@ -1456,12 +1427,12 @@ def saturation_test_cli(
             # computing the dominant sample coherence
 
             if i < len(internal_nodes):
-                M_a = np.asarray(a) @ np.asarray(a) / number_sites + upper_ci
+                M_a = np.asarray(a) @ np.asarray(a) / number_sites 
                 M_a = min(1, M_a)
             else:  # if clade A is a single leaf
                 M_a = 1
 
-            M_b = np.asarray(b) @ np.asarray(b) / number_sites + upper_ci
+            M_b = np.asarray(b) @ np.asarray(b) / number_sites
             M_b = min(1, M_b)
             variance = M_a * M_b / np.sqrt(number_sites)
             c_s = z_alpha * np.sqrt(variance)  # computing the saturation coherence
@@ -1537,10 +1508,10 @@ def saturation_test_cli(
 
                     # variance = np.asarray(a)@np.asarray(b)
                     variance += max(
-                        np.asarray(a - upper_ci) @ np.asarray(b - upper_ci),
-                        np.asarray(a + upper_ci) @ np.asarray(b + upper_ci),
-                        np.asarray(a + upper_ci) @ np.asarray(b - upper_ci),
-                        np.asarray(a - upper_ci) @ np.asarray(b + upper_ci),
+                        np.asarray(a) @ np.asarray(b),
+                        np.asarray(a) @ np.asarray(b),
+                        np.asarray(a) @ np.asarray(b),
+                        np.asarray(a) @ np.asarray(b),
                     )
 
             variance = variance / (number_sites * number_sites)

@@ -43,9 +43,9 @@ def parse_output_state_frequencies(file_path):
 # Define a function to parse state frequencies from a log content
 def parse_state_frequencies(log_content, dimension=4):
     # If the string "equal frequencies" is not in the log content, proceed to parse
+    # Initialize an empty dictionary to hold the frequencies
+    frequencies = {}
     if "equal frequencies" not in log_content:
-        # Initialize an empty dictionary to hold the frequencies
-        frequencies = {}
         # Define the start and end markers for the section of the file we want to parse
         start_line = "State frequencies: (empirical counts from alignment)"
         end_line = "Rate matrix Q:"
@@ -65,9 +65,11 @@ def parse_state_frequencies(log_content, dimension=4):
                 key, value = line.strip().split(" = ")
                 frequencies[key] = float(value)  # convert value to float before storing
     else:
-        # If "equal frequencies" is in the log content, return a list of equal frequencies
-        return [(1 / dimension)] * dimension
-
+        # If "equal frequencies" is in the log content, return a pseudo dictionary with equal frequencies
+        for i in range(dimension):
+            key = "key_"+ str(i)
+            frequencies[key] = 1 / dimension
+        
     # Return the frequencies dictionary
     return frequencies
 
@@ -124,14 +126,14 @@ def parse_rate_and_frequencies_and_create_model_files(
     # Construct the model string with parsed rate parameters
     log_file_path = f"{path}.iqtree"
     model_final = parse_rate_parameters(log_file_path, dimension, model=model)
-
+    
     # Read the content of the log file
     with open(log_file_path, "r") as f:
         log_content = f.read()
 
     # Parse state frequencies from the log content
     state_frequencies = parse_state_frequencies(log_content, dimension=dimension)
-
+   
     # Create a string of state frequencies separated by a space
     concatenated_rates = " ".join(map(str, state_frequencies.values()))
 
