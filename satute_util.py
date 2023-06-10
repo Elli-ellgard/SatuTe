@@ -1035,7 +1035,7 @@ def spectral_decomposition(n, path):
     lamb, w = np.linalg.eig(M)  # Compute the eigenvalues and eigenvectors.
     idx = lamb.argsort()[::-1]  # Order from large to small.
     lamb = lamb[idx] # Order the eigenvalues (large to small).
-    w = w[:, idx] # Order the eigenvectors according to the eigenvalues
+    w = w[:, idx] # Order the eigenvectors according to the eigenvalues"""
 
     # the first one should be the eigenvalue 0 in lamb, why are we doing the following?
     lamb_nozero = []  # list of eigenvalues without 0
@@ -1269,6 +1269,7 @@ def saturation_test_cli(
     leaves, internal_nodes = node_type(T)
 
     vector_branches, vector_distances = branch_lengths(T)
+
     # """get sequences from msa (in phylip format or fasta format) save them into new INPUTMSA.txt file """
 
     modify_seqfile(pathDATA, leaves, option)
@@ -1323,6 +1324,7 @@ def saturation_test_cli(
     """ get the right eigenvector(s) of the dominate non-zero eigenvalue"""
     array_eigenvectors, multiplicity = spectral_decomposition(dimension, pathDATA)
 
+    """ calculate the posterior probabilities using IQ-TREE, see .state files"""
     run_iqtree_for_each_clade(pathFOLDER, number_rates, chosen_rate, pathIQTREE)
 
     print(
@@ -1331,85 +1333,57 @@ def saturation_test_cli(
         )
     )
 
+    """ Calculations of the saturation test for each branch"""
     for i in range(0, len(internal_nodes) + len(leaves)):
+       
+        """ preparation for results file """
+        if i == 0:
+            T = Tree(t, format=newick_format)
+
+            results_file = open(
+                pathFOLDER + "/resultsRate" + chosen_rate + ".txt", "w"
+            ) # To store test results. We open file in first iteration (branch).
+
+            results_file.write("\n")
+            results_file.write(
+                "{:6s}\t{:6s}\t{:6s}\t{:6s}\t{:14s}\t{:14s}\t{:100s}".format(
+                    "Order",
+                    "delta",
+                    "c_s",
+                    "p-value",
+                    "Branch status ",
+                    "T2T status",
+                    "Branch",
+                )
+            )
+            results_file.write("\n")
+
+        """ get the posterior probabilities """
         if number_rates == 1:  # if not gamma model
-            """
-            get the posterior probabilities of the left subtree
-            """
+            # read the posterior probabilities of the left subtree from .state file
             posterior_probabilities_left_subtree = parse_output_state_frequencies(
                 f"{pathFOLDER}clades/Branch{str(i)}_clade1/output.state"
             )
-
-            """
-                get the posterior probabilities of the right subtree
-            """
+            # read the posterior probabilities of the right subtree from .state file
             posterior_probabilities_right_subtree = parse_output_state_frequencies(
                 f"{pathFOLDER}clades/Branch{str(i)}_clade2/output.state"
             )
 
-            number_sites = len(posterior_probabilities_left_subtree["Site"].unique())
-            number_nodes_1 = len(posterior_probabilities_left_subtree["Node"].unique())
-            number_nodes_2 = len(posterior_probabilities_right_subtree["Node"].unique())
-
-            if i == 0:
-                T = Tree(t, format=newick_format)
-
-                results_file = open(
-                    pathFOLDER + "/resultsRate" + chosen_rate + ".txt", "w"
-                )
-
-                # To store test results. We open file in first iteration (branch).
-                results_file.write("\n")
-
-                results_file.write(
-                    "{:6s}\t{:6s}\t{:6s}\t{:6s}\t{:14s}\t{:14s}\t{:100s}".format(
-                        "Order",
-                        "delta",
-                        "c_s",
-                        "p-value",
-                        "Branch status ",
-                        "T2T status",
-                        "Branch",
-                    )
-                )
-
-                results_file.write("\n")
-
         else:  # if gamma model
+            # read the posterior probabilities of the left subtree from .state file
             posterior_probabilities_left_subtree = parse_output_state_frequencies(
                 f"{pathFOLDER}/subsequences/subseq{chosen_rate}/clades/Branch{i}_clade1/output.state"
             )
-
+            # read the posterior probabilities of the right subtree from .state file
             posterior_probabilities_right_subtree = parse_output_state_frequencies(
                 f"{pathFOLDER}/subsequences/subseq{chosen_rate}/clades/Branch{i}_clade2/output.state"
             )
+        
+        """ calculation of the test-statistic"""
 
-            number_sites = len(posterior_probabilities_left_subtree["Site"].unique())
-            number_nodes_1 = len(posterior_probabilities_left_subtree["Node"].unique())
-            number_nodes_2 = len(posterior_probabilities_right_subtree["Node"].unique())
-
-            if i == 0:
-                T = Tree(t, format=newick_format)
-
-                results_file = open(
-                    pathFOLDER + "/resultsRate" + chosen_rate + ".txt", "w"
-                )  # To store test results.  We open file in first iteration (branch).
-
-                results_file.write("\n")
-
-                results_file.write(
-                    "{:6s}\t{:6s}\t{:6s}\t{:6s}\t{:14s}\t{:14s}\t{:100s}\n".format(
-                        "Order",
-                        "delta",
-                        "c_s",
-                        "p-value",
-                        "Branch status",
-                        "T2T status",
-                        "Branch",
-                    )
-                )
-
-                results_file.write("\n")
+        number_sites = len(posterior_probabilities_left_subtree["Site"].unique())
+        number_nodes_1 = len(posterior_probabilities_left_subtree["Node"].unique())
+        number_nodes_2 = len(posterior_probabilities_right_subtree["Node"].unique())
 
         if multiplicity == 1:  # if D=1
             v1 = array_eigenvectors[0]
