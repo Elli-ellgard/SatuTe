@@ -1019,57 +1019,53 @@ def compare_arrays(array1, array2):
         print("The arrays are not identical. 😞")
 
 
-def diagonalisation(n, path):
-    rate_matrix, phi_matrix = parse_rate_matrices(n, path)
+"""## SPECTRAL DECOMPOSITION OF THE RATE MATRIX"""
+
+def spectral_decomposition(n, path):
+    rate_matrix, psi_matrix = parse_rate_matrices(n, path)
 
     """ 
-        Then phi_matrix := Diag(pi). Recall that matrix Q is reversible iff M:= phi_matrix^1/2 x Q x phi_matrix^{-1/2} is symmetric.
+        Then psi_matrix := Diag(pi). Recall that matrix Q is reversible iff M:= psi_matrix^1/2 x Q x psi_matrix^{-1/2} is symmetric.
+        For a real symmetric matrix M, its eigenvectors can be chosen to be an orthonormal basis of R^n 
     """
-    M = scipy.linalg.fractional_matrix_power(phi_matrix, +1 / 2) @ rate_matrix
-    M = M @ scipy.linalg.fractional_matrix_power(phi_matrix, -1 / 2)
+    M = scipy.linalg.fractional_matrix_power(psi_matrix, +1 / 2) @ rate_matrix
+    M = M @ scipy.linalg.fractional_matrix_power(psi_matrix, -1 / 2)
 
-    """ diagonalisation of M"""
-    lamb, w = np.linalg.eig(M)  # Compute the eigenvalues and right eigenvectors .
+    """ eigendecomposition of matrix M"""
+    lamb, w = np.linalg.eig(M)  # Compute the eigenvalues and eigenvectors.
     idx = lamb.argsort()[::-1]  # Order from large to small.
-    lamb = lamb[idx]
-    w = w[:, idx]
+    lamb = lamb[idx] # Order the eigenvalues (large to small).
+    w = w[:, idx] # Order the eigenvectors according to the eigenvalues
 
+    # the first one should be the eigenvalue 0 in lamb, why are we doing the following?
     lamb_nozero = []  # list of eigenvalues without 0
     for i in lamb:
         if i > 0.00999 or i < -0.00999:
             lamb_nozero.append(i)
-
+        
+    max_lambda = max(lamb_nozero)  # dominant non-zero eigenvalue 
+    # get the indices of the dominant non-zero eigenvalue in lamb taking numerical inaccuracies into account and identical values
     index = []
-    max_lambda = max(lamb_nozero)  # dominant non-zero eigenvalue
-    index.append((lamb.tolist()).index(max_lambda))
+    for i in range(len(lamb)):
+        lambda_it = lamb[i]
+        if abs(lambda_it - max_lambda) < 0.01:
+            index.append(i)
 
-    lamb_nozero.remove(max_lambda)
-    while len(lamb_nozero) > 0:
-        max_lambda_it = max(lamb_nozero)
-        if abs(max_lambda_it - max_lambda) < 0.01:
-            index.append((lamb.tolist()).index(max_lambda_it))
-        lamb_nozero.remove(max_lambda_it)
-
-    array_eigenvectors = []
-
-    v1 = scipy.linalg.fractional_matrix_power(phi_matrix, -1 / 2) @ w[:, index[0]]
-    h1 = scipy.linalg.fractional_matrix_power(phi_matrix, +1 / 2) @ w[:, index[0]]
-
-    array_eigenvectors.append(v1)
-
-    multiplicity = len(index)
-    if multiplicity > 1:
-        for i in range(1, multiplicity):
-            v1 = (
-                scipy.linalg.fractional_matrix_power(phi_matrix, -1 / 2)
-                @ w[:, index[i]]
+    multiplicity = len(index) # multiplicity of the dominant non-zero eigenvalue
+    array_eigenvectors = [] # list of right eigenvectors for the dominant non-zero eigenvalue
+    for i in range(multiplicity):
+        # calculate the right eigenvectors for the dominant non-zero eigenvalue
+        v1 = (
+            scipy.linalg.fractional_matrix_power(psi_matrix, -1 / 2)
+            @ w[:, index[i]]
             )
-            h1 = (
-                scipy.linalg.fractional_matrix_power(phi_matrix, +1 / 2)
-                @ w[:, index[i]]
-            )
-            array_eigenvectors.append(v1)
-
+        array_eigenvectors.append(v1)
+        """# calculate the left eigenvectors for the dominant non-zero eigenvalue
+        h1 = (
+            scipy.linalg.fractional_matrix_power(psi_matrix, +1 / 2)
+            @ w[:, index[i]]
+            ) """
+        
     return array_eigenvectors, multiplicity
 
 
@@ -1324,8 +1320,8 @@ def saturation_test_cli(
         pathDATA, number_rates, dimension, model
     )
 
-    """ get the eigenvector(s) of the dominate non-zero eigenvalue"""
-    array_eigenvectors, multiplicity = diagonalisation(dimension, pathDATA)
+    """ get the right eigenvector(s) of the dominate non-zero eigenvalue"""
+    array_eigenvectors, multiplicity = spectral_decomposition(dimension, pathDATA)
 
     run_iqtree_for_each_clade(pathFOLDER, number_rates, chosen_rate, pathIQTREE)
 
@@ -1524,10 +1520,10 @@ def saturation_test_cli(
 
                     # variance = np.asarray(a)@np.asarray(b)
                     variance += max(
-                        np.asarray(a - upper_ci) @ np.asarray(b - upper_ci),
-                        np.asarray(a + upper_ci) @ np.asarray(b + upper_ci),
-                        np.asarray(a + upper_ci) @ np.asarray(b - upper_ci),
-                        np.asarray(a - upper_ci) @ np.asarray(b + upper_ci),
+                        np.asarray(a) @ np.asarray(b),
+                        np.asarray(a) @ np.asarray(b),
+                        np.asarray(a) @ np.asarray(b),
+                        np.asarray(a) @ np.asarray(b),
                     )
 
             variance = variance / (number_sites * number_sites)
