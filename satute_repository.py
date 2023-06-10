@@ -126,16 +126,14 @@ def parse_rate_and_frequencies_and_create_model_files(
     # Construct the model string with parsed rate parameters
     log_file_path = f"{path}.iqtree"
     model_final = parse_rate_parameters(log_file_path, dimension, model=model)
-    print(model_final)
-
+    
     # Read the content of the log file
     with open(log_file_path, "r") as f:
         log_content = f.read()
 
     # Parse state frequencies from the log content
     state_frequencies = parse_state_frequencies(log_content, dimension=dimension)
-    print(state_frequencies)
-
+   
     # Create a string of state frequencies separated by a space
     concatenated_rates = " ".join(map(str, state_frequencies.values()))
 
