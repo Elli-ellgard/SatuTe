@@ -1230,7 +1230,6 @@ def saturation_test_cli(
     z_alpha=2.33,
     newick_format=1,
     epsilon=0.01,
-    rawMemory=True,
     model="GTR",
 ):
     """
@@ -1258,7 +1257,6 @@ def saturation_test_cli(
     :param epsilon: float, default = 0.01
         A small positive number used as a tolerance in numerical calculations.
 
-    :param rawMemory: bool, default = True
     """
 
     results_list = []
@@ -1330,10 +1328,6 @@ def saturation_test_cli(
     array_eigenvectors, multiplicity = diagonalisation(dimension, pathDATA)
 
     run_iqtree_for_each_clade(pathFOLDER, number_rates, chosen_rate, pathIQTREE)
-
-    U = 1.0 / float(min(state_frequencies_vect)) - 1
-    K = dimension - 1
-    number_standard_deviations = 2  # Confidence intervals of 98% (one sided)
 
     print(
         "{:6s}\t{:6s}\t{:6s}\t{:6s}\t{:14s}\t{:14s}\t{:100s}".format(
@@ -1421,13 +1415,6 @@ def saturation_test_cli(
 
                 results_file.write("\n")
 
-        estimation_dt = np.sqrt(U * min(K, U / 4) / number_sites)
-
-        if not rawMemory:
-            upper_ci = number_standard_deviations * estimation_dt
-        else:
-            upper_ci = float(0)
-
         if multiplicity == 1:  # if D=1
             v1 = array_eigenvectors[0]
 
@@ -1456,12 +1443,12 @@ def saturation_test_cli(
             # computing the dominant sample coherence
 
             if i < len(internal_nodes):
-                M_a = np.asarray(a) @ np.asarray(a) / number_sites + upper_ci
+                M_a = np.asarray(a) @ np.asarray(a) / number_sites 
                 M_a = min(1, M_a)
             else:  # if clade A is a single leaf
                 M_a = 1
 
-            M_b = np.asarray(b) @ np.asarray(b) / number_sites + upper_ci
+            M_b = np.asarray(b) @ np.asarray(b) / number_sites
             M_b = min(1, M_b)
             variance = M_a * M_b / np.sqrt(number_sites)
             c_s = z_alpha * np.sqrt(variance)  # computing the saturation coherence
