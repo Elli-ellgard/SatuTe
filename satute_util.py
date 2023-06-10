@@ -1382,16 +1382,19 @@ def saturation_test_cli(
             )
         
         """ calculation of the test-statistic"""
+        #if i < len(internal_nodes):
+        #    branch_type = "internal"
 
-        calculate_test_statistic(
-            multiplicity,
-            array_eigenvectors,
-            posterior_probabilities_left_subtree,
-            posterior_probabilities_right_subtree,
-            dimension,
-            0.01,
-        )
-
+        # calculate_test_statistic(
+        #     multiplicity,
+        #     array_eigenvectors,
+        #     posterior_probabilities_left_subtree,
+        #     posterior_probabilities_right_subtree,
+        #     dimension,
+        #     branch_type,
+        #     0.01,
+        # )
+        z_alpha = st.norm.ppf(1-0.01)
         number_sites = len(posterior_probabilities_left_subtree["Site"].unique())
         number_nodes_1 = len(posterior_probabilities_left_subtree["Node"].unique())
         number_nodes_2 = len(posterior_probabilities_right_subtree["Node"].unique())
