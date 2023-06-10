@@ -166,6 +166,7 @@ class Satute:
         self.boot = boot
         self.input_args = []
         self.input_args_dict = {}
+        self.alpha = 0.01
 
         # Define the program header and command-line arguments
         self.header = f"{'=' * 100}\n\nSatute - asymptotic test for branch saturation\n\n{'=' * 100}\nAuthor:\nCitation:\n{'=' * 100}\n\n"
@@ -220,6 +221,13 @@ class Satute:
                 "help": "Replicates for bootstrap + ML tree + consensus tree",
                 "type": int,
                 "default": self.boot,
+                "metavar": "<num>",
+            },
+            {
+                "flag": "-alpha",
+                "help": "significance level of the test",
+                "type": float,
+                "default": self.alpha,
                 "metavar": "<num>",
             },
         ]
@@ -327,7 +335,7 @@ class Satute:
                 4,
                 number_rates,
                 str(number_rates - i),
-                2.33,
+                self.input_args.alpha,
                 1,
                 0.01,
                 self.input_args.model,
@@ -564,6 +572,7 @@ if __name__ == "__main__":
     num_rate_categories = None
     ufboot_replicates = None
     boot_replicates = None
+    alpha = None
 
     satute = Satute(
         iqtree=iqtree_path,

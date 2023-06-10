@@ -1217,7 +1217,7 @@ def write_results_and_newick_tree(
         satute_result_file.write(f"\n\n{saturation_information_newick_string}")
 
 
-# -------------  CODE REFACTORED BY ENES BERK ZEKI SAKALLI --------------- #
+""" # MAIN FUNCTION FOR THE SATURATION TEST """
 def saturation_test_cli(
     pathDATA,
     newick_string,
@@ -1225,7 +1225,7 @@ def saturation_test_cli(
     dimension=4,
     number_rates=4,
     chosen_rate=str(4),
-    z_alpha=2.33,
+    alpha=0.01,
     newick_format=1,
     epsilon=0.01,
     model="GTR",
@@ -1246,8 +1246,8 @@ def saturation_test_cli(
     :param chosen_rate: str, default = '4'
         The rate category to be used for the analysis. The rates are numbered starting from 1.
 
-    :param z_alpha: float, default = 2.33
-        The critical value for the test statistic under the null hypothesis. It depends on the chosen significance level of the test.
+    :param alpha: float, default = 0.01
+        The significance level of the test.
 
     :param newick_format: int, default = 1
         The format of the output tree file. The default format (1) is the standard Newick format.
@@ -1392,9 +1392,9 @@ def saturation_test_cli(
         #     posterior_probabilities_right_subtree,
         #     dimension,
         #     branch_type,
-        #     0.01,
+        #     alpha,
         # )
-        z_alpha = st.norm.ppf(1-0.01)
+        z_alpha = st.norm.ppf(1-alpha)
         number_sites = len(posterior_probabilities_left_subtree["Site"].unique())
         number_nodes_1 = len(posterior_probabilities_left_subtree["Node"].unique())
         number_nodes_2 = len(posterior_probabilities_right_subtree["Node"].unique())
