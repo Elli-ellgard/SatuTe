@@ -49,10 +49,6 @@ print(squared)  # Output: [ 1  4  9 16 25]
 print(sum_of_numbers)  # Output: 15
 ```
 
-## R Library for Data Visualization
-
-I highly recommend exploring the R Library at [github.com/tylermorganwall/rayshader](https://github.com/tylermorganwall/rayshader). This resource offers a remarkable opportunity to delve into an impressive data visualization tool that holds great potential for diverse applications.
-
 ## Pandas DataFrame
 
 A Pandas DataFrame is a two-dimensional labeled data structure in Python used for data manipulation and analysis. It provides tabular data representation with rows and columns, similar to a spreadsheet or SQL table. It offers functions for filtering, sorting, joining, grouping, and aggregating data, making it popular for data analysis tasks.
