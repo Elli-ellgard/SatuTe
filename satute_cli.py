@@ -304,7 +304,7 @@ class Satute:
         extra_arguments = arguments_dict.get("model_arguments", []) + [
             "--quiet",
             "--redo",
-            "-T AUTO",
+            # "-T AUTO",
         ]
 
         # Validate and append ufboot and boot parameters to extra_arguments

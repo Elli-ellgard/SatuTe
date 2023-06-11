@@ -374,7 +374,7 @@ def clades(T, t, newick_format, internal_nodes, leaves):
     return clades1, clades2
 
 
-def run_iqtree_for_each_clade(pathFOLDER, number_rates, chosen_rate, iqtree_path):
+def run_iqtree_for_each_clade(path_folder, number_rates, chosen_rate, iqtree_path):
     """Prepares necessary information and runs the IQ-TREE."""
     model_and_frequency = ""
     path_new_folder = ""
@@ -385,11 +385,11 @@ def run_iqtree_for_each_clade(pathFOLDER, number_rates, chosen_rate, iqtree_path
             pathFOLDER, "subsequences", f"subseq{chosen_rate}", "clades"
         )
         model_and_frequency_file = os.path.join(
-            pathFOLDER, "subsequences", f"subseq{chosen_rate}", "model.txt"
+            path_folder, "subsequences", f"subseq{chosen_rate}", "model.txt"
         )
     else:
-        path_new_folder = os.path.join(pathFOLDER, "clades")
-        model_and_frequency_file = os.path.join(pathFOLDER, "model.txt")
+        path_new_folder = os.path.join(path_folder, "clades")
+        model_and_frequency_file = os.path.join(path_folder, "model.txt")
 
     # Check if model and frequency file exists
     if not os.path.isfile(model_and_frequency_file):
@@ -446,6 +446,107 @@ def run_iqtree_for_each_clade(pathFOLDER, number_rates, chosen_rate, iqtree_path
                 raise RuntimeError(
                     f"The command '{' '.join(cmd)}' failed with return code: {result.returncode}"
                 )
+
+
+import os
+from multiprocessing import Pool
+from functools import partial
+
+def execute_iqtree(sub_dir, iqtree_path, model_and_frequency):
+    # Command to be executed for each clade
+    cmd = [
+        iqtree_path,
+        "-s",
+        "sequence.txt",
+        "-te",
+        "tree.txt",
+        "-m",
+        model_and_frequency,
+        "-asr",
+        "-blfix",
+        "-o",
+        "FOO",
+        "-pre",
+        "output",
+        "-redo",
+        "-quiet",
+    ]
+
+    # Check if sequence and tree files exist in the subdirectory
+    if not os.path.isfile(os.path.join(sub_dir, "sequence.txt")) or not os.path.isfile(
+        os.path.join(sub_dir, "tree.txt")
+    ):
+        raise FileNotFoundError(
+            f"Either sequence.txt or tree.txt file does not exist in directory: {sub_dir}"
+        )
+
+    # Run the IQ-TREE command
+    result = subprocess.run(cmd, cwd=sub_dir)
+
+    # Check if the command was successful
+    if result.returncode != 0:
+        raise RuntimeError(
+            f"The command '{' '.join(cmd)}' failed with return code: {result.returncode}"
+        )
+
+def run_iqtree_for_each_clade_parallel(path_folder, number_rates, chosen_rate, iqtree_path):
+    """
+    Run IQ-TREE for each clade directory in parallel.
+
+    Args:
+        path_folder (str): Root folder path.
+        number_rates (int): Number of rates.
+        chosen_rate (int): Chosen rate.
+        iqtree_path (str): Path to the IQ-TREE executable.
+
+    Raises:
+        FileNotFoundError: If model and frequency file does not exist.
+        NotADirectoryError: If the clade directory does not exist or is not a directory.
+        FileNotFoundError: If sequence.txt or tree.txt file does not exist in the clade directory.
+        RuntimeError: If IQ-TREE command fails.
+
+    """
+    model_and_frequency = ""
+    clade_dir = ""
+
+    # Determine path and model based on number of rates
+    if number_rates > 1:
+        clade_dir = os.path.join(
+            path_folder, "subsequences", f"subseq{chosen_rate}", "clades"
+        )
+        model_and_frequency_file = os.path.join(
+            path_folder, "subsequences", f"subseq{chosen_rate}", "model.txt"
+        )
+    else:
+        clade_dir = os.path.join(path_folder, "clades")
+        model_and_frequency_file = os.path.join(path_folder, "model.txt")
+
+    # Check if model and frequency file exists
+    if not os.path.isfile(model_and_frequency_file):
+        raise FileNotFoundError(
+            f"The model and frequency file '{model_and_frequency_file}' does not exist."
+        )
+
+    # Read model and frequency
+    with open(model_and_frequency_file, "r") as toModel:
+        model_and_frequency = toModel.readline().strip()
+
+    # Check if clade directory exists and is a directory
+    if not os.path.isdir(clade_dir):
+        raise NotADirectoryError(
+            f"The clade directory '{clade_dir}' does not exist or is not a directory."
+        )
+
+    # Create a list of clade directories
+    clade_dirs = [sub_dir for sub_dir in Path(clade_dir).iterdir() if sub_dir.is_dir()]
+
+    # Create a partial function with fixed arguments for execute_iqtree
+    execute_iqtree_partial = partial(execute_iqtree, iqtree_path=iqtree_path, model_and_frequency=model_and_frequency)
+
+    # Create a multiprocessing pool and map the execute_iqtree_partial function to clade_dirs
+    with Pool() as pool:
+        pool.map(execute_iqtree_partial, clade_dirs)
+
 
 
 """## DIVIDING SEQUENCE FILE INTO SUBFILES DEPENDING ON WHICH RATE IS MOST PROBABLE"""
@@ -1188,6 +1289,8 @@ def write_results_and_newick_tree(
         mode="a",
     )
 
+
+
     # Generate a newick string with saturation information
     saturation_information_newick_string = map_values_to_newick(
         results_list, newick_string
@@ -1213,8 +1316,10 @@ def write_results_and_newick_tree(
             T.copy("newick").get_ascii(attributes=["name", "label", "distance"])
         )
 
+        # Tree without saturation values            
+        satute_result_file.write(f"\n\n Tree with saturation values: {newick_string}")
         # Write the saturation information newick string to the file
-        satute_result_file.write(f"\n\n{saturation_information_newick_string}")
+        satute_result_file.write(f"\n\n Tree with saturation values: {saturation_information_newick_string}")
 
 
 """ # MAIN FUNCTION FOR THE SATURATION TEST """
@@ -1327,7 +1432,7 @@ def saturation_test_cli(
     array_eigenvectors, multiplicity = spectral_decomposition(dimension, pathDATA)
 
     """ calculate the posterior probabilities using IQ-TREE, see .state files"""
-    run_iqtree_for_each_clade(pathFOLDER, number_rates, chosen_rate, pathIQTREE)
+    run_iqtree_for_each_clade_parallel(pathFOLDER, number_rates, chosen_rate, pathIQTREE)
 
     print(
         "{:6s}\t{:6s}\t{:6s}\t{:6s}\t{:14s}\t{:14s}\t{:100s}".format(
