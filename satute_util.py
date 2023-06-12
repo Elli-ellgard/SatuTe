@@ -19,7 +19,7 @@ from satute_repository import (
     parse_output_state_frequencies,
 )
 
-from satute_test_statistic import calculate_test_statistic, old_calculation
+from satute_test_statistic import calculate_test_statistic
 
 
 def remove_filename(path):
