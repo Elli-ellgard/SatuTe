@@ -29,25 +29,14 @@ def calculate_sample_variance(
 ):
     variance = 0
 
-    if multiplicity == 1:
+    for i in range(multiplicity):
+        for j in range(multiplicity):
             if branch_type == "internal":
-                M_left = np.asarray(factors_left_subtree[0]) @ np.asarray(factors_left_subtree[0]) / number_sites 
-                M_left = min(1, M_left)
-            else:  # if clade A is a single leaf
-                M_left = 1
-
-            M_right = np.asarray(factors_right_subtree[0]) @ np.asarray(factors_right_subtree[0]) / number_sites
-            M_right = min(1, M_right)
-            variance = M_left * M_right
-        
-    else:
-        for i in range(multiplicity):
-            for j in range(multiplicity):
-                    M_left = np.asarray(factors_left_subtree[i])@np.asarray(factors_left_subtree[i])/number_sites
-                    M_left = min(1, M_left)
-                    M_right = np.asarray(factors_right_subtree[j])@np.asarray(factors_right_subtree[j])/number_sites
-                    M_right = min(1, M_right)
-                    variance += M_right * M_left
+                M_left = np.asarray(factors_left_subtree[i])@np.asarray(factors_left_subtree[i])/number_sites
+            else: 
+                M_left = multiplicity
+            M_right = np.asarray(factors_right_subtree[j])@np.asarray(factors_right_subtree[j])/number_sites
+            variance += M_right * M_left
     return variance
 
 def calculate_alternative_variance(
@@ -117,7 +106,6 @@ def calculate_test_statistic(
         factors_right_subtree,
         number_sites
     )
-    print(delta)
 
     """ calculation of the sample variance """
     variance = calculate_sample_variance(
@@ -127,7 +115,7 @@ def calculate_test_statistic(
         number_sites,
         branch_type,
     )
-    variance = variance / np.sqrt(number_sites)
+    variance = variance / number_sites
     if variance < 0:
         print(
             "VARIANCE ESTIMATION IS NEGATIVE - CONSIDER INCREASING THE NUMBER OF STANDARD DEVIATIONS (number_standard_deviations) (CONFIDENCE INTERVAL)"
@@ -137,7 +125,6 @@ def calculate_test_statistic(
     else:
         # computing the saturation coherence / critical value
         c_s = z_alpha * np.sqrt(variance)
-        print(c_s)
         # computing the  p-value
         p_value = st.norm.sf(abs(delta / np.sqrt(variance)))
 
@@ -154,6 +141,6 @@ def calculate_test_statistic(
     if c_sTwoSequence > delta:
         result_test_tip2tip = "SatuT2T"
     else:
-            result_test_tip2tip = "InfoT2T"
+        result_test_tip2tip = "InfoT2T"
 
-    #return delta, c_s, p_value, result_test, result_test_tip2tip 
+    return delta, c_s, c_sTwoSequence, p_value, result_test, result_test_tip2tip 
