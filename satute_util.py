@@ -1490,7 +1490,7 @@ def saturation_test_cli(
         if i < len(internal_nodes):
             branch_type = "internal"
 
-        delta, c_s, p_value, result_test, result_test_tip2tip = calculate_test_statistic(
+        delta, c_s,c_sTwoSequence, p_value, result_test, result_test_tip2tip = calculate_test_statistic(
             multiplicity,
             array_eigenvectors,
             posterior_probabilities_left_subtree,
@@ -1512,7 +1512,7 @@ def saturation_test_cli(
             )
         )
         
-        delta, c_s, p_value, result_test, result_test_tip2tip = old_calculation(
+        delta, c_s, c_sTwoSequence, p_value, result_test, result_test_tip2tip = old_calculation(
             multiplicity,
             array_eigenvectors,
             posterior_probabilities_left_subtree,

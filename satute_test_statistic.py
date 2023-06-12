@@ -156,7 +156,7 @@ def calculate_test_statistic(
     else:
             result_test_tip2tip = "InfoT2T"
 
-    return delta, c_s, p_value, result_test, result_test_tip2tip 
+    return delta, c_s, c_sTwoSequence, p_value, result_test, result_test_tip2tip 
 
 def old_calculation(
     multiplicity,
@@ -307,4 +307,4 @@ def old_calculation(
         result_test_tip2tip = "SatuT2T"
     else:
         result_test_tip2tip = "InfoT2T"
-    return delta, c_s, p_value, result_test, result_test_tip2tip
+    return delta, c_s, c_sTwoSequence, p_value, result_test, result_test_tip2tip
