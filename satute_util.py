@@ -1512,28 +1512,6 @@ def saturation_test_cli(
             )
         )
         
-        delta, c_s, c_sTwoSequence, p_value, result_test, result_test_tip2tip = old_calculation(
-            multiplicity,
-            array_eigenvectors,
-            posterior_probabilities_left_subtree,
-            posterior_probabilities_right_subtree,
-            dimension,
-            branch_type,
-            alpha,
-        )
-
-        #   "Order", "delta", "c_s", "p-value", "Branch status", "T2T status", "Branch"
-        results_list.append(
-            {
-                "index": i + 1,
-                "delta": delta,
-                "c_s": c_s,
-                "p_value": p_value,
-                "result_test": result_test,
-                "result_test_tip2tip": result_test_tip2tip,
-                "vector_branches": vector_branches[i],
-            }
-        )
         results_file.write(
             "{:6d}\t{:6.4f}\t{:6.4f}\t{:6.10f}\t{:14s}\t{:14s}\t{:100s}".format(
                 i + 1,
