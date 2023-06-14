@@ -1,6 +1,6 @@
 ## Dictionaries
 
-In the context of the Statute Test Software, it is essential to grasp several key concepts. Among these, dictionaries play a significant role. A valuable resource for understanding dictionaries in Python is available at [realpython.com/python-dicts](https://realpython.com/python-dicts/). Realpython not only provides practical explanations of Python concepts but also offers insightful tutorials on specific cases.
+In the context of the Satute Software, it is essential to grasp several key concepts. Among these, dictionaries play a significant role. A valuable resource for understanding dictionaries in Python is available at [realpython.com/python-dicts](https://realpython.com/python-dicts/). Realpython not only provides practical explanations of Python concepts but also offers insightful tutorials on specific cases.
 
 Here's an example of creating and accessing a dictionary in Python:
 
