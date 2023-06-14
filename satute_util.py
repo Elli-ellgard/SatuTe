@@ -653,7 +653,6 @@ def save_rates(path, number_rates):
                 else:
                     for j in range(number_rates):
                         rates.append(float(lines[i + j + 1][12:20]))
-
     return rates
 
 
@@ -670,6 +669,9 @@ def save_clades(path, number_rates, clades1, clades2, newick_format, rates):
             os.makedirs(
                 pathFolder + "clades/Branch" + str(i) + "_clade2/", exist_ok=True
             )
+
+            #f"(FOO:1((A:1,B:1):1,C:1));"
+            # f"FOO:0.00000000010,({newickformat.remove(";")});"
 
             clades1[i] = (
                 "(FOO:0.00000000010,"
@@ -799,6 +801,8 @@ def sequences_clades(
     internal_nodes,
     numbersitesperrate,
 ):
+    
+    
     pathFolder = remove_filename(path)
 
     if number_rates == 1:

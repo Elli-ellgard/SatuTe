@@ -287,6 +287,8 @@ class Satute:
 
         arguments_dict = self.construct_arguments()
 
+    
+
         # Running IQ-TREE with constructed arguments
         # If no model specified in input arguments, extract best model from log file
         if not self.input_args.model:
@@ -304,6 +306,8 @@ class Satute:
             # Update model in input arguments and re-construct arguments
             self.input_args.model = substitution_model
             arguments_dict = self.construct_arguments()
+
+        
 
         # =========  Number Rate Handling =========
         number_rates = 1
@@ -324,9 +328,14 @@ class Satute:
         # Validate and append ufboot and boot parameters to extra_arguments
         extra_arguments = extra_arguments + self.validate_and_append_boot_arguments()
 
-        self.run_iqtree_with_arguments(
-            arguments=arguments_dict["arguments"], extra_arguments=extra_arguments
-        )
+        # TODO: Check if that makes sense  
+        # Check if the IQ-TREE state file exists and we have to rerun IQ-TREE
+        state_file = self.find_file({".state"})
+        site_probability_file = self.find_file({".siteprob"})
+        if state_file is None: # or  a site_probability_file is not None:
+             self.run_iqtree_with_arguments(
+                 arguments=arguments_dict["arguments"], extra_arguments=extra_arguments
+             )
 
         # ======== Tree File Handling =========
         newick_string = self.get_newick_string_from_args()
@@ -450,6 +459,8 @@ class Satute:
             if self.input_args.tree:
                 argument_option["option"] = "msa + tree"
                 argument_option["arguments"].extend(["-te", str(self.input_args.tree)])
+
+        
 
         # If a model was specified in the input arguments, add it to the argument options
         if self.input_args.model:
@@ -593,7 +604,6 @@ class Satute:
         print(self.input_args)
         print("=" * 10)
         print("")
-
 
 
 if __name__ == "__main__":
