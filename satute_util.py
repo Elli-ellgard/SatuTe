@@ -18,6 +18,20 @@ from satute_repository import (
 
 from satute_test_statistic import calculate_test_statistic
 
+class InputArgumentsError(Exception):
+    """
+    Exception raised for errors in the input arguments.
+
+    Attributes:
+        message -- explanation of the error
+    """
+
+    def __init__(
+        self,
+        message="Both 'msa' and 'dir' input arguments are defined. Please decide between 'msa' or 'dir' input.",
+    ):
+        self.message = message
+        super().__init__(self.message)
 
 def remove_filename(path):
     parts = path.split("/")
@@ -1254,14 +1268,10 @@ def guess_msa_file_format(file_path):
         return 1  ##'PHYLIP'
     
     # FASTA files typically start with a '>' character
-    if first_line.startswith(">"):
+    elif first_line.startswith(">"):
         return 2  #'FASTA'
-
-
-
-    return None
-
-
+    else:
+        raise InputArgumentsError("Wrong msa file format!")
 
 
 

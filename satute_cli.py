@@ -608,7 +608,7 @@ class Satute:
 
 if __name__ == "__main__":
     # Instantiate the Satute class with your desired arguments
-    iqtree_path = "iqtree"
+    iqtree_path = "iqtree2"
     input_directory = None
     output_prefix = None
     model = None

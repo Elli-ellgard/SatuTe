@@ -28,7 +28,7 @@ This command will start a saturation test on the data in the `test/octo-kraken-t
 
 or
 ```bash
-python satute.py -tree /path/to/mytree.nwk -msa /path/to/myalignment.fasta -iqtree /path/to/iqtree
+python satute_cli.py -tree /path/to/mytree.nwk -msa /path/to/myalignment.fasta -iqtree /path/to/iqtree
 ```
 
 This command will run the `satute.py` script with the following input:
