@@ -102,12 +102,24 @@ class NoAlignmentFileError(Exception):
 
 
 def parse_rate_from_model(model):
+
     try:
-        # Find the index of '+G' in the model string
+        # Find the index of '+G' and '+R' in the model string
         plus_g_index = model.index("+G")
+        plus_r_index = model.index("+R")
+
+        if plus_g_index != -1 and plus_r_index != -1:
+            raise ValueError("Cannot use +G and +R")
+        
+        if plus_g_index != -1: 
+            rate_start_index = plus_g_index + 2
+        elif plus_r_index != -1:
+            rate_start_index = plus_r_index + 2
+        else:
+            raise ValueError("No rate information in the model")
 
         # Extract the substring after '+G'
-        number = model[plus_g_index + 2 :]
+        number = model[rate_start_index:]
 
         # Parse the extracted substring as an integer
         rate = int(number)
@@ -271,6 +283,8 @@ class Satute:
 
         self.parse_input()
 
+        self.print_args()
+
         arguments_dict = self.construct_arguments()
 
         # Running IQ-TREE with constructed arguments
@@ -325,8 +339,10 @@ class Satute:
             f"Initial Arguments for IQ-Tree: \n {' '.join(arguments_dict['arguments'])}"
         )
 
+        self.print_args()
+
         for i in range(number_rates):
-            logger.info(f"Here comes the {i+1} th fastest evolving region: ")
+            logger.info(f"Here comes the {number_rates - i} th fastest evolving region: ")
 
             saturation_test_cli(
                 str(arguments_dict["msa_file"]),
@@ -378,7 +394,8 @@ class Satute:
         # Convert input paths to Path objects for easier handling
         if self.input_args.dir:
             self.input_args.dir = Path(self.input_args.dir)
-
+            self.active_directory = self.input_args.dir
+ 
         if self.input_args.iqtree:
             self.input_args.iqtree = Path(self.input_args.iqtree)
 
@@ -395,6 +412,14 @@ class Satute:
             if not self.input_args.dir.is_dir():
                 raise InvalidDirectoryError("Input directory does not exist")
 
+            if not os.listdir(self.input_args.dir):
+                raise InvalidDirectoryError("Input directory is empty")
+
+            # try:
+            #     self.active_directory.iterdir()
+            # except: 
+            #     raise InvalidDirectoryError("Input directory is empty")
+                        
             # Find the tree and sequence alignment files in the directory
             tree_file = self.find_file(tree_file_types)
             msa_file = self.find_file(msa_file_types)
@@ -561,6 +586,14 @@ class Satute:
                 extra_arguments.append(f"--boot {self.input_args.boot}")
 
         return extra_arguments  # return the list of extra_arguments
+
+    def print_args(self):
+        print("")
+        print("=" * 10)
+        print(self.input_args)
+        print("=" * 10)
+        print("")
+
 
 
 if __name__ == "__main__":

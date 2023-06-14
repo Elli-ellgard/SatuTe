@@ -11,9 +11,32 @@ echo "-----------------------------------"
 echo ""
 
 echo "-----------------------------------"
-echo "TEST 1: empty directory"
+echo "TEST 1a: no existing directory"
+echo""
+    DIR=$path/test/bla
+    #DIR=./test/bla
+    if [ -d "$DIR" ]
+    then
+        if [ "$(ls -A $DIR)" ]; then
+             echo "Take action $DIR is not Empty"
+             rm -r $DIR/*
+        else
+            echo "$DIR is Empty"
+	fi
+    else
+        echo "Directory $DIR not found."
+    fi
+    
+    python3 satute_cli.py  -iqtree $iqtree_path -dir $DIR
+
+echo "-----------------------------------"
+echo ""
+
+echo "-----------------------------------"
+echo "TEST 1b: empty directory"
 echo""
     DIR=$path/test/case_empty
+    #DIR=./test/case_empty
     if [ -d "$DIR" ]
     then
         if [ "$(ls -A $DIR)" ]; then
@@ -46,7 +69,6 @@ echo ""
 echo "-----------------------------------"
 echo ""
 
-exit
 
 echo "-----------------------------------"
 echo "TEST 2b: only phylip alignment file"
@@ -54,7 +76,7 @@ echo "using relative path for the input directory"
 echo ""
     echo ""
     DIR=./test/case_phylip
-    python3 satute_cli.py  -iqtree $iqtree_path -dir $DIR
+    python3 satute_cli.py  -iqtree $iqtree_path -dir $DIR -model GTR+R8
     mv $DIR/example.phy $path
     rm -r $DIR
     mkdir $DIR
@@ -65,7 +87,7 @@ echo ""
 echo "-----------------------------------"
 echo ""
 
-
+exit
 echo "-----------------------------------"
 echo  "TEST 3: directory with complete iqtree output"
 echo ""
