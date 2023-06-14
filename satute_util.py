@@ -1303,7 +1303,7 @@ def guess_msa_file_format(file_path):
 
     # FASTA files typically start with a '>' character
     if first_line.startswith(">"):
-        return 0  #'FASTA'
+        return 2  #'FASTA'
 
     # PHYLIP files typically start with two integers (number of species and number of characters)
     line_parts = first_line.split()
