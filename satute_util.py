@@ -382,7 +382,7 @@ def run_iqtree_for_each_clade(path_folder, number_rates, chosen_rate, iqtree_pat
     # Condition to define path and model
     if number_rates > 1:
         path_new_folder = os.path.join(
-            pathFOLDER, "subsequences", f"subseq{chosen_rate}", "clades"
+            path_folder, "subsequences", f"subseq{chosen_rate}", "clades"
         )
         model_and_frequency_file = os.path.join(
             path_folder, "subsequences", f"subseq{chosen_rate}", "model.txt"
@@ -1247,14 +1247,16 @@ def guess_msa_file_format(file_path):
     with open(file_path, "r") as file:
         first_line = file.readline().strip()
 
-    # FASTA files typically start with a '>' character
-    if first_line.startswith(">"):
-        return 2  #'FASTA'
-
     # PHYLIP files typically start with two integers (number of species and number of characters)
     line_parts = first_line.split()
     if len(line_parts) == 2 and line_parts[0].isdigit() and line_parts[1].isdigit():
         return 1  ##'PHYLIP'
+    
+    # FASTA files typically start with a '>' character
+    if first_line.startswith(">"):
+        return 2  #'FASTA'
+
+
 
     return None
 
@@ -1432,7 +1434,8 @@ def saturation_test_cli(
     array_eigenvectors, multiplicity = spectral_decomposition(dimension, pathDATA)
 
     """ calculate the posterior probabilities using IQ-TREE, see .state files"""
-    run_iqtree_for_each_clade_parallel(pathFOLDER, number_rates, chosen_rate, pathIQTREE)
+    #run_iqtree_for_each_clade_parallel(pathFOLDER, number_rates, chosen_rate, pathIQTREE)
+    run_iqtree_for_each_clade(pathFOLDER, number_rates, chosen_rate, pathIQTREE)
 
     print(
         "{:6s}\t{:6s}\t{:6s}\t{:6s}\t{:14s}\t{:14s}\t{:100s}".format(
