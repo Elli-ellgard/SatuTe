@@ -11,11 +11,11 @@ iqtree=/home/elgert/IQ-TREE/iqtree-2.2.2.4-Linux/bin/iqtree2
 DIR=./Clemens/example_1
 msa=ENSG00000087460_GNAS.fasta
 
-DIR=./Clemens/example_2
-msa=sim-JC+G-alpha1.2-taxa64-len1000bp-bla0.01-blb0.2-blc0.1-rep01.phy
+#DIR=./Clemens/example_2
+#msa=sim-JC+G-alpha1.2-taxa64-len1000bp-bla0.01-blb0.2-blc0.1-rep01.phy
 
-DIR=./Clemens/example_3
-msa=sim-JC+G-AC1-AG1-AT1-CG1-CT1-GT1-alpha1.2-taxa64-len1000bp-bla0.01-blb0.8-blc0.2-rep01.fasta
+#DIR=./Clemens/example_3
+#msa=sim-JC+G-AC1-AG1-AT1-CG1-CT1-GT1-alpha1.2-taxa64-len1000bp-bla0.01-blb0.8-blc0.2-rep01.fasta
 
 PDIR=$(dirname $DIR)
 if [ -e $DIR/${msa}.iqtree ]; then
