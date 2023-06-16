@@ -115,7 +115,7 @@ def parse_rate_from_model(model):
     elif plus_r_index != -1:
         rate_start_index = plus_r_index + 2
     else: 
-        return 1
+        return 1 # default number_rates = 1 if no +G or +R model 
     
     try:
         # Extract the substring after '+G'
