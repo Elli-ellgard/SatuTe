@@ -103,21 +103,21 @@ class NoAlignmentFileError(Exception):
 
 def parse_rate_from_model(model):
 
-    try:
-        # Find the index of '+G' and '+R' in the model string
-        plus_g_index = model.index("+G")
-        plus_r_index = model.index("+R")
+    # Find the index of '+G' and '+R' in the model string
+    plus_g_index = model.find("+G")
+    plus_r_index = model.find("+R")
 
-        if plus_g_index != -1 and plus_r_index != -1:
-            raise ValueError("Cannot use +G and +R")
+    if plus_g_index != -1 and plus_r_index != -1:
+        raise ValueError("Cannot use +G and +R")
         
-        if plus_g_index != -1: 
-            rate_start_index = plus_g_index + 2
-        elif plus_r_index != -1:
-            rate_start_index = plus_r_index + 2
-        else:
-            raise ValueError("No rate information in the model")
-
+    if plus_g_index != -1: 
+        rate_start_index = plus_g_index + 2
+    elif plus_r_index != -1:
+        rate_start_index = plus_r_index + 2
+    else: 
+        return 1 # default number_rates = 1 if no +G or +R model 
+    
+    try:
         # Extract the substring after '+G'
         number = model[rate_start_index:]
 
@@ -282,12 +282,7 @@ class Satute:
         # Parsing input arguments and constructing IQ-TREE command-line arguments
 
         self.parse_input()
-
-        self.print_args()
-
         arguments_dict = self.construct_arguments()
-
-    
 
         # Running IQ-TREE with constructed arguments
         # If no model specified in input arguments, extract best model from log file
@@ -307,7 +302,6 @@ class Satute:
             self.input_args.model = substitution_model
             arguments_dict = self.construct_arguments()
 
-        
 
         # =========  Number Rate Handling =========
         number_rates = 1
@@ -328,11 +322,12 @@ class Satute:
         # Validate and append ufboot and boot parameters to extra_arguments
         extra_arguments = extra_arguments + self.validate_and_append_boot_arguments()
 
-        # TODO: Check if that makes sense  
-        # Check if the IQ-TREE state file exists and we have to rerun IQ-TREE
+        # Check if the IQ-TREE state file exists and 
+        # check in the case of a +G or +R model if the IQ-Tree siteprob file exists
+        # if necessary  we have to rerun IQ-TREE
         state_file = self.find_file({".state"})
         site_probability_file = self.find_file({".siteprob"})
-        if state_file is None: # or  a site_probability_file is not None:
+        if state_file is None or (number_rates > 1 and site_probability_file is None): 
              self.run_iqtree_with_arguments(
                  arguments=arguments_dict["arguments"], extra_arguments=extra_arguments
              )
@@ -348,10 +343,8 @@ class Satute:
             f"Initial Arguments for IQ-Tree: \n {' '.join(arguments_dict['arguments'])}"
         )
 
-        self.print_args()
-
         for i in range(number_rates):
-            logger.info(f"Here comes the {number_rates - i} th fastest evolving region: ")
+            logger.info(f"Here comes the {i + 1} th fastest evolving region: ")
 
             saturation_test_cli(
                 str(arguments_dict["msa_file"]),
