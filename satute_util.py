@@ -1374,7 +1374,6 @@ def saturation_test_cli(
         A small positive number used as a tolerance in numerical calculations.
 
     """
-
     results_list = []
 
     """Check type if the alignment is Phylip or fasta format"""
