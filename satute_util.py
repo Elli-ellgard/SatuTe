@@ -15,31 +15,15 @@ from satute_repository import (
     parse_rate_matrices,
     parse_output_state_frequencies,
 )
-
 from satute_test_statistic import calculate_test_statistic
-
-class InputArgumentsError(Exception):
-    """
-    Exception raised for errors in the input arguments.
-
-    Attributes:
-        message -- explanation of the error
-    """
-
-    def __init__(
-        self,
-        message="Both 'msa' and 'dir' input arguments are defined. Please decide between 'msa' or 'dir' input.",
-    ):
-        self.message = message
-        super().__init__(self.message)
+from satute_exception import InputArgumentsError
 
 def remove_filename(path):
     parts = path.split("/")
-    nameFILE = parts[-1]
+    nameFILE = parts[-2]
     parts.pop()
     pathFOLDER = "/".join(parts) + "/"  # Path where the we create folders
     return pathFOLDER
-
 
 """## INTERNAL NODES AND LEAVES"""
 
@@ -1191,7 +1175,10 @@ def spectral_decomposition(n, path):
 
 
 def convert_newick_to_satute_ete3_format(t, newick_format):
+    print(newick_format)
     T = Tree(t, format=newick_format)
+    print(t)
+    print(T.write())
 
     for node in T.traverse("levelorder"):
         l = len(node.name)
@@ -1459,6 +1446,7 @@ def saturation_test_cli(
         """ preparation for results file """
         if i == 0:
             T = Tree(t, format=newick_format)
+            print(T.write())
 
             results_file = open(
                 pathFOLDER + "/resultsRate" + chosen_rate + ".txt", "w"
