@@ -1445,7 +1445,6 @@ def saturation_test_cli(
         """ preparation for results file """
         if i == 0:
             T = Tree(t, format=newick_format)
-            print(T.write())
 
             results_file = open(
                 pathFOLDER + "/resultsRate" + chosen_rate + ".txt", "w"
