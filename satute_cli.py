@@ -403,7 +403,6 @@ class Satute:
             iqtree_file = self.find_file({".iqtree"})
             if iqtree_file:
                 substitution_model = parse_substitution_model(iqtree_file)
-                print(substitution_model)
                 self.input_args.model = substitution_model
                         
             # Find the tree and sequence alignment files in the directory
@@ -446,7 +445,7 @@ class Satute:
             # If the model includes a Gamma distribution, add the corresponding argument
             if "+G" in self.input_args.model or "+R" in self.input_args.model:
                 argument_option["model_arguments"].extend(["-wspr"])
-        print()
+        
         # Return the constructed argument options
         return argument_option
 
