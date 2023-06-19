@@ -1177,7 +1177,7 @@ def spectral_decomposition(n, path):
 def convert_newick_to_satute_ete3_format(t, newick_format):
     #print(newick_format)
     T = Tree(t, format=newick_format)
-   i# print(t)
+    # print(t)
     #print(T.write())
 
     for node in T.traverse("levelorder"):
