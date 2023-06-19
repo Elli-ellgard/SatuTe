@@ -15,31 +15,15 @@ from satute_repository import (
     parse_rate_matrices,
     parse_output_state_frequencies,
 )
-
 from satute_test_statistic import calculate_test_statistic
-
-class InputArgumentsError(Exception):
-    """
-    Exception raised for errors in the input arguments.
-
-    Attributes:
-        message -- explanation of the error
-    """
-
-    def __init__(
-        self,
-        message="Both 'msa' and 'dir' input arguments are defined. Please decide between 'msa' or 'dir' input.",
-    ):
-        self.message = message
-        super().__init__(self.message)
+from satute_exception import InputArgumentsError
 
 def remove_filename(path):
     parts = path.split("/")
-    nameFILE = parts[-1]
+    nameFILE = parts[-2]
     parts.pop()
     pathFOLDER = "/".join(parts) + "/"  # Path where the we create folders
     return pathFOLDER
-
 
 """## INTERNAL NODES AND LEAVES"""
 
@@ -1191,7 +1175,10 @@ def spectral_decomposition(n, path):
 
 
 def convert_newick_to_satute_ete3_format(t, newick_format):
+    #print(newick_format)
     T = Tree(t, format=newick_format)
+   i# print(t)
+    #print(T.write())
 
     for node in T.traverse("levelorder"):
         l = len(node.name)
@@ -1266,12 +1253,11 @@ def guess_msa_file_format(file_path):
     line_parts = first_line.split()
     if len(line_parts) == 2 and line_parts[0].isdigit() and line_parts[1].isdigit():
         return 1  ##'PHYLIP'
-    
     # FASTA files typically start with a '>' character
     elif first_line.startswith(">"):
         return 2  #'FASTA'
-    else:
-        raise InputArgumentsError("Wrong msa file format!")
+    #else:
+    #    raise InputArgumentsError("Wrong msa file format!")
 
 
 
@@ -1295,7 +1281,7 @@ def write_results_and_newick_tree(
 
     # Save the dataframe as a tab-separated CSV file
     saturation_branches_dataframe.to_csv(
-        f"{path_folder}/resultsRate{chosen_rate}.satute.txt",
+        f"{path_folder}/resultsRate{chosen_rate}.satute.csv",
         header=True,
         index=None,
         sep="\t",
@@ -1311,7 +1297,7 @@ def write_results_and_newick_tree(
 
     # Open the results file in append mode
     with open(
-        f"{path_folder}/resultsRate{chosen_rate}.satute.txt", "a"
+        f"{path_folder}/resultsRate{chosen_rate}.satute.csv", "a"
     ) as satute_result_file:
         # Write additional information to the file
         satute_result_file.write(
@@ -1459,6 +1445,7 @@ def saturation_test_cli(
         """ preparation for results file """
         if i == 0:
             T = Tree(t, format=newick_format)
+            print(T.write())
 
             results_file = open(
                 pathFOLDER + "/resultsRate" + chosen_rate + ".txt", "w"

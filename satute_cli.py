@@ -21,7 +21,11 @@ logger = logging.getLogger(__name__)
 from rich import print
 from rich.console import Console
 from rich.text import Text
-
+from satute_exception import (
+    InputArgumentsError,
+    InvalidDirectoryError,
+    NoAlignmentFileError
+)
 
 def print_ascii_art(ascii_art):
     console = Console()
@@ -71,35 +75,6 @@ GJ7~~~~~~~~~~!77?YPB&@@@@#&&!B@@Y~~~~~7G@@@@?~~~~~~~!7B#&@@@BJ7?JJJYY5#P55!~P@J~
         I will break your tree into parts check if they are saturated
 =================================================================================
 """
-
-
-class InputArgumentsError(Exception):
-    """
-    Exception raised for errors in the input arguments.
-
-    Attributes:
-        message -- explanation of the error
-    """
-
-    def __init__(
-        self,
-        message="Both 'msa' and 'dir' input arguments are defined. Please decide between 'msa' or 'dir' input.",
-    ):
-        self.message = message
-        super().__init__(self.message)
-
-
-class InvalidDirectoryError(Exception):
-    """Exception raised when the input directory does not exist."""
-
-    pass
-
-
-class NoAlignmentFileError(Exception):
-    """Exception raised when no multiple sequence alignment file is found."""
-
-    pass
-
 
 def parse_rate_from_model(model):
 
@@ -301,13 +276,20 @@ class Satute:
             # Update model in input arguments and re-construct arguments
             self.input_args.model = substitution_model
             arguments_dict = self.construct_arguments()
-
+        
 
         # =========  Number Rate Handling =========
         number_rates = 1
         # If no number of rate categories specified in input arguments, extract it from the model
         if self.input_args.nr:
-            number_rates = self.input_args.nr
+            if self.input_args.model:
+                number_rates_model = parse_rate_from_model(self.input_args.model)
+                if self.input_args.nr == number_rates_model:
+                    number_rates =self.input_args.nr
+                else:
+                    raise InputArgumentsError("Input number of rates is unequal to number of rates of the model!")   
+            else:
+                number_rates = self.input_args.nr
         else:
             if self.input_args.model:
                 number_rates = parse_rate_from_model(self.input_args.model)
@@ -391,7 +373,7 @@ class Satute:
         """
         # Define the acceptable file types for sequence alignments and trees
         msa_file_types = {".fasta", ".nex", ".phy"}
-        tree_file_types = {".treefile", ".nex", ".nwk"}
+        tree_file_types = {".treefile", ".nex", ".nwk", ".tree"}
 
         # Convert input paths to Path objects for easier handling
         if self.input_args.dir:
@@ -416,11 +398,12 @@ class Satute:
 
             if not os.listdir(self.input_args.dir):
                 raise InvalidDirectoryError("Input directory is empty")
-
-            # try:
-            #     self.active_directory.iterdir()
-            # except: 
-            #     raise InvalidDirectoryError("Input directory is empty")
+            
+            # Find iqtree file and extract model
+            iqtree_file = self.find_file({".iqtree"})
+            if iqtree_file:
+                substitution_model = parse_substitution_model(iqtree_file)
+                self.input_args.model = substitution_model
                         
             # Find the tree and sequence alignment files in the directory
             tree_file = self.find_file(tree_file_types)
@@ -462,6 +445,7 @@ class Satute:
             # If the model includes a Gamma distribution, add the corresponding argument
             if "+G" in self.input_args.model or "+R" in self.input_args.model:
                 argument_option["model_arguments"].extend(["-wspr"])
+        
         # Return the constructed argument options
         return argument_option
 
