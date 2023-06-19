@@ -1282,7 +1282,7 @@ def write_results_and_newick_tree(
 
     # Save the dataframe as a tab-separated CSV file
     saturation_branches_dataframe.to_csv(
-        f"{path_folder}/resultsRate{chosen_rate}.satute.txt",
+        f"{path_folder}/resultsRate{chosen_rate}.satute.csv",
         header=True,
         index=None,
         sep="\t",
@@ -1298,7 +1298,7 @@ def write_results_and_newick_tree(
 
     # Open the results file in append mode
     with open(
-        f"{path_folder}/resultsRate{chosen_rate}.satute.txt", "a"
+        f"{path_folder}/resultsRate{chosen_rate}.satute.csv", "a"
     ) as satute_result_file:
         # Write additional information to the file
         satute_result_file.write(
