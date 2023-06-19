@@ -25,15 +25,15 @@ visualTree=$fscripts/script-visualize-satute-tree.R
 iqtree2=/home/elgert/IQ-TREE/iqtree-2.2.2.4-Linux/bin/iqtree2
 #------------------------------------------------------
 
-file=$(basename $input_dir/*.phy)
-name=$(echo ${file%.phy})
+file=$(basename $input_dir/*.{phy,fasta})
+name=$(echo ${file%.{phy,fasta}})
 if [ -f $input_dir/${name}_resultsRate1.nwk ]
 then
 	rm -r  $input_dir/*.nwk $input_dir/*table $input_dir/*.nex $input_dir/*.pdf
 fi
 
 number_rates=0
-for res in $input_dir/resultsRate*
+for res in $input_dir/resultsRate*.txt
 do
 	number_rates=$(expr $number_rates + 1)
 done
@@ -44,7 +44,7 @@ echo "Consider $treefile for $input_dir"
 echo "---------------------------"
 echo ""
 
-for res_file in $input_dir/resultsRate*
+for res_file in $input_dir/resultsRate*.txt
 do
 	rate=$(basename ${res_file%.txt})
 	echo "------------------------------------------------"

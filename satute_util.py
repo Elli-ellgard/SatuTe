@@ -1253,12 +1253,11 @@ def guess_msa_file_format(file_path):
     line_parts = first_line.split()
     if len(line_parts) == 2 and line_parts[0].isdigit() and line_parts[1].isdigit():
         return 1  ##'PHYLIP'
-    
     # FASTA files typically start with a '>' character
     elif first_line.startswith(">"):
         return 2  #'FASTA'
-    else:
-        raise InputArgumentsError("Wrong msa file format!")
+    #else:
+    #    raise InputArgumentsError("Wrong msa file format!")
 
 
 
