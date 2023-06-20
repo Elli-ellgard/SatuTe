@@ -6,6 +6,7 @@ from Bio.Align import MultipleSeqAlignment
 import numpy as np
 from Bio.SeqRecord import SeqRecord
 from Bio.Seq import Seq
+import shutil
 
 
 def name_nodes_by_level_order(tree):
@@ -36,15 +37,52 @@ def get_opposite_subtree(tree, subtree):
     return tree_copy
 
 
-def generate_subtree_pairs(subtrees, t):
+def get_leaves(tree):
+    leaves = []
+    for leaf in tree:
+        if leaf.is_leaf():
+            leaves.append(leaf.name)
+    return leaves
+
+
+def filter_alignment_by_ids(alignment, ids):
+    """
+    Filter a MultipleSeqAlignment object to include only sequences with specific IDs.
+
+    Parameters:
+    alignment (MultipleSeqAlignment): The alignment to filter.
+    ids (list of str): The IDs of the sequences to include.
+
+    Returns:
+    MultipleSeqAlignment: The filtered alignment.
+    """
+
+    # Filter the alignment
+    filtered_alignment = MultipleSeqAlignment(
+        [record for record in alignment if record.id in ids]
+    )
+
+    return filtered_alignment
+
+
+def generate_subtree_and_msa_pairs(subtrees, t, alignment):
     subtree_pairs = []
     for subtree in subtrees:
         subtree_copy = t.search_nodes(name=subtree.name)[0]
         opposite_subtree = get_opposite_subtree(t, subtree_copy)
 
-        subtree_pairs.append(
-            (subtree.write(format=1), opposite_subtree.write(format=1))
-        )
+        subtree_copy_leaves = get_leaves(subtree_copy)
+        opposite_subtree_leaves = get_leaves(opposite_subtree)
+
+        subtree_pair_entry = {
+            "trees": (subtree.write(format=1), opposite_subtree.write(format=1)),
+            "msa": (
+                filter_alignment_by_ids(alignment, subtree_copy_leaves),
+                filter_alignment_by_ids(alignment, opposite_subtree_leaves),
+            ),
+        }
+
+        subtree_pairs.append(subtree_pair_entry)
 
     return subtree_pairs
 
@@ -54,8 +92,8 @@ def write_subtree_pairs(generated_subtree_pairs, path_prefix="./"):
         os.makedirs(f"{path_prefix}clades/Branch{i}_clade1/", exist_ok=True)
         os.makedirs(f"{path_prefix}clades/Branch{i}_clade2/", exist_ok=True)
 
-        first_subtree = generated_subtree_pairs[i][0]
-        second_subtree = generated_subtree_pairs[i][1]
+        first_subtree = generated_subtree_pairs[i]["trees"][0]
+        second_subtree = generated_subtree_pairs[i]["trees"][1]
 
         first_clade_writer = open(
             f"{path_prefix}clades/Branch{i}_clade1/subtree.treefile", "w"
@@ -121,34 +159,31 @@ def guess_alignment_format(file_name):
         return "Unknown"
 
 
-def generate_and_write_subtree_pairs(number_rates, t, file_name):
-    # Iterate from 0 to number_rates (inclusive)
-    for i in range(number_rates + 1):
-        # If this is the first iteration
-        if i == 0:
-            try:
-                # Call function to get all subtrees from t, assuming the function is defined elsewhere
-                subtrees = get_all_subtrees(t)
-                # Discard the first subtree, assuming we don't need it
-                subtrees = subtrees[1:]
-                # Generate subtree pairs, assuming the function is defined elsewhere
-                generated_subtree_pairs = generate_subtree_pairs(subtrees, t)
-                # Write subtree pairs to files, assuming the function is defined elsewhere
-                write_subtree_pairs(generated_subtree_pairs, f"./{file_name}/")
-            except Exception as e:
-                print(f"Error occurred during the first iteration: {e}")
-        # For the rest of the iterations
-        else:
-            try:
-                # Make a new directory for this subsequence, if it doesn't exist yet
-                os.makedirs(f"./{file_name}/subsequence{i}/", exist_ok=True)
-                # Write subtree pairs to files in the new directory
-                write_subtree_pairs(
-                    generated_subtree_pairs,
-                    path_prefix=f"./{file_name}/subsequence{i}/",
-                )
-            except Exception as e:
-                print(f"Error occurred during iteration {i}: {e}")
+def generate_write_subtree_pairs_and_msa(number_rates, t, file_name, msa_file_name):
+    # Call function to get all subtrees from t, assuming the function is defined elsewhere
+    subtrees = get_all_subtrees(t)
+    # Discard the first subtree, assuming we don't need it
+    subtrees = subtrees[1:]
+    # Generate subtree pairs, assuming the function is defined elsewhere
+    alignment = read_alignment_file(msa_file_name)
+    generated_subtree_pairs = generate_subtree_and_msa_pairs(subtrees, t, alignment)
+
+    # Write subtree pairs to files, assuming the function is defined elsewhere
+    if number_rates is None:
+        try:
+            write_subtree_pairs(generated_subtree_pairs, f"./subtree/{file_name}/")
+        except Exception as e:
+            print(f"Error occurred during the first iteration: {e}")
+    else:
+        # Iterate from 0 to number_rates (inclusive)
+        for i in range(1, number_rates + 1):
+            print(i, "iteration")
+            # If this is the first iteration
+            # Write subtree pairs to files in the new directory
+            write_subtree_pairs(
+                generated_subtree_pairs,
+                path_prefix=f"./{file_name}/subsequence{i}/",
+            )
 
 
 def get_column_names_with_prefix(dataframe, prefix):
@@ -160,8 +195,6 @@ def get_column_names_with_prefix(dataframe, prefix):
 
 
 def build_categories_by_subtables(dataframe):
-    subtables = []
-
     rate_category_dictionary = {}
 
     # Assuming you already have a dataframe called 'dataframe'
@@ -176,7 +209,7 @@ def build_categories_by_subtables(dataframe):
     for index, row in dataframe.iterrows():
         p_row = row.filter(like="p")
 
-        rate_category_dictionary[p_row.idxmax()].append(row["Site"])
+        rate_category_dictionary[p_row.idxmax()].append(int(row["Site"]) - 1)
 
     return rate_category_dictionary
 
@@ -201,6 +234,7 @@ def cut_alignment_columns(alignment, columns):
     # Convert the alignment to a NumPy array for easy column slicing
     alignment_array = np.array([list(rec) for rec in alignment], np.character)
     # Select the specified columns
+
     selected_columns = alignment_array[:, columns]
     selected_records = []
     for i, rec in enumerate(selected_columns):
@@ -208,6 +242,7 @@ def cut_alignment_columns(alignment, columns):
             SeqRecord(Seq(rec.tobytes().decode()), id=alignment[i].id)
         )
     selected_alignment = MultipleSeqAlignment(selected_records)
+
     return selected_alignment
 
 
@@ -231,27 +266,51 @@ def write_alignment(alignment, file_name, file_format):
     return num_alignments_written
 
 
+def delete_directory_contents(directory_path):
+    for root, dirs, files in os.walk(directory_path, topdown=False):
+        for file in files:
+            file_path = os.path.join(root, file)
+            os.remove(file_path)
+        for dir in dirs:
+            dir_path = os.path.join(root, dir)
+            shutil.rmtree(dir_path)
+
+
+def split_msa_into_rate_categories(site_probability, folder_path, msa_file_name):
+    sub_category = build_categories_by_subtables(site_probability)
+
+    alignment = read_alignment_file(msa_file_name)
+    per_category_alignment_dict = {}
+
+    for key, value in sub_category.items():
+        per_category_alignment_dict[key] = cut_alignment_columns(alignment, value)
+
+    for key, value in per_category_alignment_dict.items():
+        # Make a new directory for this subsequence, if it doesn't exist yet
+        os.makedirs(f"./{folder_path}/subsequence{key[1:]}/", exist_ok=True)
+
+        write_alignment(
+            value, f"./{folder_path}/subsequence{key[1:]}/rate.fasta", "fasta"
+        )
+
+
 ##############################################################################################################
-number_rates = 4
-file_format = guess_alignment_format("./test/octo-kraken-msa-test/example.phy")
-t = name_nodes_by_level_order(
-    parse_newick_file("./test/octo-kraken-msa-test/example.phy.treefile")
-)
-file_name = "test_cladding_and_subsequence"
+delete_directory_contents("./test_cladding_and_subsequence")
+
+# read site probabilities as dataframe
 site_probability = parse_file_to_dataframe(
     "./test/octo-kraken-msa-test/example.phy.siteprob"
 )
-# Call the function
-generate_and_write_subtree_pairs(number_rates, t, file_name)
-# Assuming you already have a dataframe called 'dataframe'
-# Call the split_dataframe_by_highest_value function to split the dataframe by highest values
-sub_category = build_categories_by_subtables(site_probability)
-alignment = read_alignment_file("./test/octo-kraken-msa-test/example.phy")
-per_category_alignment_dict = {}
-
-for key, value in sub_category.items():
-    per_category_alignment_dict[key] = cut_alignment_columns(alignment, value)
+number_rates = 4
+folder_path = "test_cladding_and_subsequence"
+msa_file_name = "./test/octo-kraken-msa-test/example.phy"
 
 
-for key, value in per_category_alignment_dict.items():
-    write_alignment(value, f"./{file_name}/subsequence{key[1:]}/rate.fast", "fasta")
+t = name_nodes_by_level_order(
+    parse_newick_file("./test/octo-kraken-msa-test/example.phy.treefile")
+)
+
+if number_rates is not None:
+    split_msa_into_rate_categories(site_probability, folder_path, msa_file_name)
+
+generate_write_subtree_pairs_and_msa(number_rates, t, folder_path, msa_file_name)
