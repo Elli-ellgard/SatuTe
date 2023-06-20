@@ -1,4 +1,4 @@
-iqtree=/home/elgert/IQ-TREE/iqtree-2.2.2.4-Linux/bin/iqtree2
+iqtree=iqtree
 #rm -r test/octo-kraken-msa-test/clades  
 #rm -r test/octo-kraken-msa-test/subsequences      
 #python3 remove_files_except.py -m  
@@ -30,7 +30,7 @@ if [ -d "$DIR/subsequences" ]; then
     rm -r $DIR/subsequences
 fi
 
-python3 satute_cli.py -iqtree $iqtree -dir $DIR -model JC+G4 
+python satute_cli.py -iqtree $iqtree -dir $DIR -model JC+G4 
 
 cd visualisation
 ./script-annotate-trees-from-satute.sh ../$DIR    
