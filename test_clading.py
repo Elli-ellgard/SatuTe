@@ -65,21 +65,14 @@ def filter_alignment_by_ids(alignment, ids):
     return filtered_alignment
 
 
-def generate_subtree_and_msa_pairs(subtrees, t, alignment):
+def generate_subtree_pair(subtrees, t):
     subtree_pairs = []
     for subtree in subtrees:
         subtree_copy = t.search_nodes(name=subtree.name)[0]
         opposite_subtree = get_opposite_subtree(t, subtree_copy)
 
-        subtree_copy_leaves = get_leaves(subtree_copy)
-        opposite_subtree_leaves = get_leaves(opposite_subtree)
-
         subtree_pair_entry = {
-            "trees": (subtree.write(format=1), opposite_subtree.write(format=1)),
-            "msa": (
-                filter_alignment_by_ids(alignment, subtree_copy_leaves),
-                filter_alignment_by_ids(alignment, opposite_subtree_leaves),
-            ),
+            "trees": (subtree_copy, opposite_subtree),
         }
 
         subtree_pairs.append(subtree_pair_entry)
@@ -87,13 +80,16 @@ def generate_subtree_and_msa_pairs(subtrees, t, alignment):
     return subtree_pairs
 
 
-def write_subtree_pairs(generated_subtree_pairs, path_prefix="./"):
-    for i in range(len(generated_subtree_pairs)):
+def write_subtree_and_sub_alignments(
+    generated_subtree_pairs, alignment, path_prefix="./"
+):
+    for i, subtree_pair in enumerate(generated_subtree_pairs):
+
         os.makedirs(f"{path_prefix}clades/Branch{i}_clade1/", exist_ok=True)
         os.makedirs(f"{path_prefix}clades/Branch{i}_clade2/", exist_ok=True)
 
-        first_subtree = generated_subtree_pairs[i]["trees"][0]
-        second_subtree = generated_subtree_pairs[i]["trees"][1]
+        first_subtree = subtree_pair["trees"][0]
+        second_subtree = subtree_pair["trees"][1]
 
         first_clade_writer = open(
             f"{path_prefix}clades/Branch{i}_clade1/subtree.treefile", "w"
@@ -102,8 +98,19 @@ def write_subtree_pairs(generated_subtree_pairs, path_prefix="./"):
             f"{path_prefix}clades/Branch{i}_clade2/subtree.treefile", "w"
         )
 
-        first_clade_writer.write(first_subtree)
-        second_clade_writer.write(second_subtree)
+        first_subtree_leaves = get_leaves(first_subtree)
+        second_subtree_leaves = get_leaves(second_subtree)
+
+        first_sub_alignment = filter_alignment_by_ids(alignment, first_subtree_leaves)
+        second_sub_alignment = filter_alignment_by_ids(alignment, second_subtree_leaves)
+
+        first_clade_writer.write(first_subtree.write(format=1))
+        second_clade_writer.write(second_subtree.write(format=1))
+
+        # Write the alignment to the file
+        num_alignments_written = AlignIO.write(first_sub_alignment, f"{path_prefix}clades/Branch{i}_clade1/subtree.fasta", "fasta")
+        num_alignments_written = AlignIO.write(second_sub_alignment, f"{path_prefix}clades/Branch{i}_clade2/subtree.fasta", "fasta")
+
 
         first_clade_writer.close()
         second_clade_writer.close()
@@ -159,30 +166,39 @@ def guess_alignment_format(file_name):
         return "Unknown"
 
 
-def generate_write_subtree_pairs_and_msa(number_rates, t, file_name, msa_file_name):
+def generate_write_subtree_pairs_and_msa(number_rates, t, file_path, msa_file_name):
     # Call function to get all subtrees from t, assuming the function is defined elsewhere
     subtrees = get_all_subtrees(t)
     # Discard the first subtree, assuming we don't need it
     subtrees = subtrees[1:]
     # Generate subtree pairs, assuming the function is defined elsewhere
-    alignment = read_alignment_file(msa_file_name)
-    generated_subtree_pairs = generate_subtree_and_msa_pairs(subtrees, t, alignment)
+    generated_subtree_pairs = generate_subtree_pair(subtrees, t)
+
 
     # Write subtree pairs to files, assuming the function is defined elsewhere
-    if number_rates is None:
+    if number_rates == 1:
         try:
-            write_subtree_pairs(generated_subtree_pairs, f"./subtree/{file_name}/")
+
+            alignment = read_alignment_file(msa_file_name)
+    
+            write_subtree_and_sub_alignments(
+                generated_subtree_pairs,alignment, f"./{file_path}/"
+            )
+
         except Exception as e:
             print(f"Error occurred during the first iteration: {e}")
     else:
         # Iterate from 0 to number_rates (inclusive)
         for i in range(1, number_rates + 1):
-            print(i, "iteration")
+
+            # Scale tree by rate factor of category
             # If this is the first iteration
             # Write subtree pairs to files in the new directory
-            write_subtree_pairs(
+            sub_alignment = read_alignment_file(f"./{file_path}/subsequence{i}/rate.fasta")
+            write_subtree_and_sub_alignments(
                 generated_subtree_pairs,
-                path_prefix=f"./{file_name}/subsequence{i}/",
+                sub_alignment,
+                path_prefix=f"./{file_path}/subsequence{i}/",
             )
 
 
@@ -305,12 +321,11 @@ number_rates = 4
 folder_path = "test_cladding_and_subsequence"
 msa_file_name = "./test/octo-kraken-msa-test/example.phy"
 
-
 t = name_nodes_by_level_order(
     parse_newick_file("./test/octo-kraken-msa-test/example.phy.treefile")
 )
 
-if number_rates is not None:
+if number_rates != 1:
     split_msa_into_rate_categories(site_probability, folder_path, msa_file_name)
 
 generate_write_subtree_pairs_and_msa(number_rates, t, folder_path, msa_file_name)
