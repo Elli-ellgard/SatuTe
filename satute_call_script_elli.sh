@@ -16,8 +16,8 @@ msa=ENSG00000087460_GNAS.fasta
 DIR=./Clemens/example_3
 msa=sim-JC+G-AC1-AG1-AT1-CG1-CT1-GT1-alpha1.2-taxa64-len1000bp-bla0.01-blb0.8-blc0.2-rep01.fasta
 
-#DIR=./Clemens/example_4
-#msa=example.fasta
+DIR=./Clemens/example_4
+msa=example.txt
 
 #DIR=./Clemens/example_sym_1
 #msa=ENSG00000119574_ZBTB45.fasta
