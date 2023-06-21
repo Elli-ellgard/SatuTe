@@ -1177,8 +1177,8 @@ def spectral_decomposition(n, path):
 def convert_newick_to_satute_ete3_format(t, newick_format):
     #print(newick_format)
     T = Tree(t, format=newick_format)
-    # print(t)
-    #print(T.write())
+    #print(t)
+    #print(T.write(format=newick_format))
 
     for node in T.traverse("levelorder"):
         l = len(node.name)
@@ -1499,18 +1499,6 @@ def saturation_test_cli(
             alpha,
         )
 
-        print(
-            "{:6d}\t{:6.4f}\t{:6.4f}\t{:6.10f}\t{:14s}\t{:14s}\t{:100s}".format(
-                i + 1,
-                delta,
-                c_s,
-                p_value,
-                result_test,
-                result_test_tip2tip,
-                vector_branches[i],
-            )
-        )
-        
         results_file.write(
             "{:6d}\t{:6.4f}\t{:6.4f}\t{:6.10f}\t{:14s}\t{:14s}\t{:100s}".format(
                 i + 1,
