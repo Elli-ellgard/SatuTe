@@ -372,7 +372,7 @@ class Satute:
             A dictionary with keys 'option', 'msa_file', and 'arguments' that represents the argument options for the process.
         """
         # Define the acceptable file types for sequence alignments and trees
-        msa_file_types = {".fasta", ".nex", ".phy"}
+        msa_file_types = {".fasta", ".nex", ".phy", ".txt"}
         tree_file_types = {".treefile", ".nex", ".nwk", ".tree"}
 
         # Convert input paths to Path objects for easier handling
