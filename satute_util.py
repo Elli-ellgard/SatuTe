@@ -1234,6 +1234,7 @@ def convert_newick_to_satute_ete3_format(t, newick_format):
         if t[i : i + 2] == ",)":
             t = t.replace(t[i : i + 2], ")")
 
+    t+=";"
     T = Tree(t, format=newick_format)
 
     return t, T
