@@ -59,8 +59,8 @@ pair_2<-gsub(" ", "", pair_2, fixed = TRUE)
 res_satute$node_1<-pair_1
 res_satute$node_2<-pair_2
 
-info_satute <- res_satute[, c("delta","c_s", "p_value","Branch status", "node_2")]
-colnames(info_satute)<-c("delta","c_s", "p_value", "Branch_status", "label")
+info_satute <- res_satute[, c("delta","c_s", "p_value","Branch status", "T2T status", "node_2")]
+colnames(info_satute)<-c("delta","c_s", "p_value", "Branch_status", "T2T_status", "label")
 
 table2<-ttable%>% left_join(info_satute, by='label')
 tree2<-as.treedata(table2);
