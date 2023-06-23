@@ -571,9 +571,43 @@ def subsequences(T, path, epsilon, number_rates, option):
             site_rate.append(0)
         else:
             site_rate.append(probs.index(max_value) + 1)
+
     numbersitesperrate = []
+    number_unassigned_sites = site_rate.count(0)
+
     for j in range(number_rates):
         numbersitesperrate.append(site_rate.count(j + 1))
+
+    assert(sum(numbersitesperrate)+number_unassigned_sites == length)
+
+    file_with_list_category = open(
+        pathFolder + "category_assigment_per_site.txt","w"
+    )
+
+    file_with_list_category.write("{}\n\n{}\n\n".format(
+                                  "Number of sites of the original alignment: ",
+                                  length
+                                  ))
+
+    file_with_list_category.write("{}\n{}\n{}\n\n".format(
+                                  "The following list has an entry per rate category.",
+                                  "It indicates how many sites are assigned to each category.",
+                                  "The first entry is the slowest-evolving rate."
+                                  ))
+    file_with_list_category.write(str(numbersitesperrate))
+    file_with_list_category.write("\n\n{}{}{}\n\n{}".format(
+                                "Number of sites not assigned to any category using threshold ",
+                                epsilon,
+                                ":",
+                                number_unassigned_sites))
+
+    file_with_list_category.write("\n\n{}\n{}\n{}{}\n\n".format(
+                                  "The following list has an entry per alignment site.",
+                                  "A \"1\" indicates that the site was assigned to the slowest-evolving rate category.",
+                                  "A \"0\" indicates that all posterior probabilities were too similar to assign a category using threshold ", str(epsilon)
+                                    )
+                                    )
+    file_with_list_category.write(str(site_rate))
 
     if option == 1:
         for i in range(number_rates):
