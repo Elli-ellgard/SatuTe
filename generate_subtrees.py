@@ -7,6 +7,75 @@ import numpy as np
 from Bio.SeqRecord import SeqRecord
 from Bio.Seq import Seq
 import shutil
+from pathlib import Path
+import subprocess
+
+def run_iqtree_for_each_clade(path_folder, number_rates, chosen_rate, iqtree_path):
+    """Prepares necessary information and runs the IQ-TREE."""
+    model_and_frequency = ""
+    path_new_folder = ""
+
+    # Condition to define path and model
+    if number_rates > 1:
+
+        path_new_folder = os.path.join(
+            path_folder, f"subsequence{chosen_rate}", "subtrees"
+        )
+
+        model_and_frequency_file = os.path.join(
+            path_folder, f"subsequence{chosen_rate}", "model.txt"
+        )
+
+    else:
+        path_new_folder = os.path.join(path_folder, "subtrees")
+        model_and_frequency_file = os.path.join(path_folder, "model.txt")
+
+    # Check if model and frequency file exists
+    if not os.path.isfile(model_and_frequency_file):
+        raise FileNotFoundError(
+            f"The model and frequency file '{model_and_frequency_file}' does not exist."
+        )
+
+    # Read model and frequency
+    with open(model_and_frequency_file, "r") as toModel:
+        model_and_frequency = toModel.readline().strip()
+
+    # Check if path_new_folder exists and is a directory
+    if not os.path.isdir(path_new_folder):
+        raise NotADirectoryError(
+            f"The path '{path_new_folder}' does not exist or is not a directory."
+        )
+
+    # Iterate over each clade directory
+    for clade_dir in Path(path_new_folder).iterdir():
+        if clade_dir.is_dir():
+            # Command to be executed for each clade
+            cmd = [
+                iqtree_path,
+                "-s",
+                "sequence.txt",
+                "-te",
+                "tree.txt",
+                "-m",
+                model_and_frequency,
+                "-asr",
+                "-blfix",
+                "-o",
+                "FOO",
+                "-pre",
+                "output",
+                "-redo",
+                "-quiet",
+            ]
+
+            # Run the command
+            result = subprocess.run(cmd, cwd=clade_dir)
+
+            # Check if the command was successful
+            if result.returncode != 0:
+                raise RuntimeError(
+                    f"The command '{' '.join(cmd)}' failed with return code: {result.returncode}"
+                )
 
 
 def name_nodes_by_level_order(tree):
@@ -80,46 +149,86 @@ def generate_subtree_pair(subtrees, t):
     return subtree_pairs
 
 
+def generate_output_state_file_for_external_branch(alignment, file_path):
+    with open(f"{file_path}output.state", "w") as state_file_writer:
+        header = "Node\tSite\tState\tp_A\tp_C\tp_G\tp_T"
+        state_file_writer.write(header)
+        for record in alignment:
+            sequence = record.seq
+            for character in sequence:
+                row = {"A": 0, "C": 0, "G": 0, "T": 0}
+                row[character] = 1
+                values = "\t".join(str(row[value]) for value in ["A", "C", "G", "T"])
+                state_file_writer.write(f"\nNode1\t{character}\t{values}")
+
+
 def write_subtree_and_sub_alignments(
     generated_subtree_pairs, alignment, path_prefix="./"
 ):
     for i, subtree_pair in enumerate(generated_subtree_pairs):
-
-        os.makedirs(f"{path_prefix}clades/Branch{i}_clade1/", exist_ok=True)
-        os.makedirs(f"{path_prefix}clades/Branch{i}_clade2/", exist_ok=True)
-
         first_subtree = subtree_pair["trees"][0]
         second_subtree = subtree_pair["trees"][1]
 
-        first_clade_writer = open(
-            f"{path_prefix}clades/Branch{i}_clade1/subtree.treefile", "w"
-        )
-        second_clade_writer = open(
-            f"{path_prefix}clades/Branch{i}_clade2/subtree.treefile", "w"
-        )
-
         first_subtree_leaves = get_leaves(first_subtree)
-        second_subtree_leaves = get_leaves(second_subtree)
-
         first_sub_alignment = filter_alignment_by_ids(alignment, first_subtree_leaves)
+
+        second_subtree_leaves = get_leaves(second_subtree)
         second_sub_alignment = filter_alignment_by_ids(alignment, second_subtree_leaves)
 
-        first_clade_writer.write(first_subtree.write(format=1))
-        second_clade_writer.write(second_subtree.write(format=1))
+        if len(first_subtree.get_descendants()) + 1 == 1:
+            first_subtree_dir = (
+                f"{path_prefix}subtrees/external_branch_{i}_subtree_one/"
+            )
+        else:
+            first_subtree_dir = (
+                f"{path_prefix}subtrees/internal_branch_{i}_subtree_one/"
+            )
 
-        # Write the alignment to the file
-        num_alignments_written = AlignIO.write(first_sub_alignment, f"{path_prefix}clades/Branch{i}_clade1/subtree.fasta", "fasta")
-        num_alignments_written = AlignIO.write(second_sub_alignment, f"{path_prefix}clades/Branch{i}_clade2/subtree.fasta", "fasta")
+        os.makedirs(first_subtree_dir, exist_ok=True)
 
+        # Write the first subtree
+        subtree_writer = open(f"{first_subtree_dir}subtree.treefile", "w")
+        subtree_writer.write(first_subtree.write(format=1))
+        subtree_writer.close()
 
-        first_clade_writer.close()
-        second_clade_writer.close()
+        # Write the alignment for the first subtree
+        AlignIO.write(first_sub_alignment, f"{first_subtree_dir}subtree.fasta", "fasta")
+
+        if len(second_subtree.get_descendants()) + 1 == 1:
+            second_subtree_dir = (
+                f"{path_prefix}subtrees/external_branch_{i}_subtree_two/"
+            )
+        else:
+            second_subtree_dir = (
+                f"{path_prefix}subtrees/internal_branch_{i}_subtree_two/"
+            )
+
+        os.makedirs(second_subtree_dir, exist_ok=True)
+
+        # Write the second subtree
+        subtree_writer = open(f"{second_subtree_dir}subtree.treefile", "w")
+        subtree_writer.write(second_subtree.write(format=1))
+        subtree_writer.close()
+
+        # Write the alignment for the second subtree
+        AlignIO.write(
+            second_sub_alignment, f"{second_subtree_dir}subtree.fasta", "fasta"
+        )
+
+        if len(first_subtree.get_descendants()) + 1 == 1:
+            generate_output_state_file_for_external_branch(
+                first_sub_alignment, first_subtree_dir
+            )
+
+        if len(second_subtree.get_descendants()) + 1 == 1:
+            generate_output_state_file_for_external_branch(
+                second_sub_alignment, second_subtree_dir
+            )
 
 
 def parse_file_to_dataframe(file_path):
     try:
         # Read the file into a dataframe
-        print(file_path)
         df = pd.read_csv(file_path, delimiter="\t")
 
         return df
@@ -166,35 +275,61 @@ def guess_alignment_format(file_name):
         return "Unknown"
 
 
-def generate_write_subtree_pairs_and_msa(number_rates, t, file_path, msa_file_name):
-    # Call function to get all subtrees from t, assuming the function is defined elsewhere
-    subtrees = get_all_subtrees(t)
-    # Discard the first subtree, assuming we don't need it
-    subtrees = subtrees[1:]
-    # Generate subtree pairs, assuming the function is defined elsewhere
-    generated_subtree_pairs = generate_subtree_pair(subtrees, t)
+def rescale_branch_lengths(tree, rescale_factor):
+    """
+    Rescales the branch lengths of a phylogenetic tree by a given factor.
+
+    Args:
+        tree (ete3.Tree): The input phylogenetic tree object.
+        rescale_factor (float): Scaling factor for the branch lengths.
+
+    Returns:
+        ete3.Tree: The phylogenetic tree object with rescaled branch lengths.
+    """
+    # Iterate over tree nodes and rescale branch lengths
+    for node in tree.traverse():
+        if node.up:
+            node.dist *= rescale_factor
+
+    # Return the tree with rescaled branch lengths
+    return tree
 
 
+def generate_write_subtree_pairs_and_msa(
+    number_rates, t, file_path, msa_file_name, category_rate
+):
     # Write subtree pairs to files, assuming the function is defined elsewhere
     if number_rates == 1:
         try:
-
+            # Call function to get all subtrees from t, assuming the function is defined elsewhere
+            subtrees = get_all_subtrees(t)
+            # Discard the first subtree, assuming we don't need it
+            subtrees = subtrees[1:]
+            # Generate subtree pairs, assuming the function is defined elsewhere
+            generated_subtree_pairs = generate_subtree_pair(subtrees, t)
             alignment = read_alignment_file(msa_file_name)
-    
             write_subtree_and_sub_alignments(
-                generated_subtree_pairs,alignment, f"./{file_path}/"
+                generated_subtree_pairs, alignment, f"./{file_path}/"
             )
-
         except Exception as e:
             print(f"Error occurred during the first iteration: {e}")
     else:
         # Iterate from 0 to number_rates (inclusive)
         for i in range(1, number_rates + 1):
-
-            # Scale tree by rate factor of category
-            # If this is the first iteration
+            rate = category_rate[i - 1]["Relative_rate"]
+            # Rescale the branch lengths
+            rescaled_tree = rescale_branch_lengths(t, rate)
             # Write subtree pairs to files in the new directory
-            sub_alignment = read_alignment_file(f"./{file_path}/subsequence{i}/rate.fasta")
+            # Call function to get all subtrees from t, assuming the function is defined elsewhere
+            subtrees = get_all_subtrees(rescaled_tree)
+            # Discard the first subtree, assuming we don't need it
+            subtrees = subtrees[1:]
+            # Generate subtree pairs, assuming the function is defined elsewhere
+            generated_subtree_pairs = generate_subtree_pair(subtrees, rescaled_tree)
+
+            sub_alignment = read_alignment_file(
+                f"./{file_path}/subsequence{i}/rate.fasta"
+            )
             write_subtree_and_sub_alignments(
                 generated_subtree_pairs,
                 sub_alignment,
@@ -202,27 +337,27 @@ def generate_write_subtree_pairs_and_msa(number_rates, t, file_path, msa_file_na
             )
 
 
-def get_column_names_with_prefix(dataframe, prefix):
+def get_column_names_with_prefix(data_frame, prefix):
     # Filter the columns using the specified prefix
-    columns_with_prefix = dataframe.columns[
-        dataframe.columns.str.startswith(prefix)
+    columns_with_prefix = data_frame.columns[
+        data_frame.columns.str.startswith(prefix)
     ].tolist()
     return columns_with_prefix
 
 
-def build_categories_by_subtables(dataframe):
+def build_categories_by_sub_tables(data_frame):
     rate_category_dictionary = {}
 
     # Assuming you already have a dataframe called 'dataframe'
     # Call the get_columns_with_prefix function to retrieve columns with a specific prefix
     prefix = "p"  # Specify the desired prefix
 
-    columns_with_prefix = get_column_names_with_prefix(dataframe, prefix)
+    columns_with_prefix = get_column_names_with_prefix(data_frame, prefix)
 
     # Create dictionaries using column names with the specified prefix as names
     rate_category_dictionary = {column: [] for column in columns_with_prefix}
 
-    for index, row in dataframe.iterrows():
+    for index, row in data_frame.iterrows():
         p_row = row.filter(like="p")
 
         rate_category_dictionary[p_row.idxmax()].append(int(row["Site"]) - 1)
@@ -293,8 +428,7 @@ def delete_directory_contents(directory_path):
 
 
 def split_msa_into_rate_categories(site_probability, folder_path, msa_file_name):
-    sub_category = build_categories_by_subtables(site_probability)
-
+    sub_category = build_categories_by_sub_tables(site_probability)
     alignment = read_alignment_file(msa_file_name)
     per_category_alignment_dict = {}
 
@@ -308,6 +442,47 @@ def split_msa_into_rate_categories(site_probability, folder_path, msa_file_name)
         write_alignment(
             value, f"./{folder_path}/subsequence{key[1:]}/rate.fasta", "fasta"
         )
+
+
+def parse_table(log_file):
+    f = open(log_file, "r")
+    lines = f.readlines()
+    f.close()
+    table_data = []
+
+    # Find the start and end indices of the table
+    start_index = -1
+    end_index = -1
+
+    for i, line in enumerate(lines):
+        if line.strip().startswith("Category"):
+            start_index = i + 1
+        elif line.strip().startswith("MAXIMUM LIKELIHOOD TREE"):
+            end_index = i
+            break
+
+    if start_index == -1 or end_index == -1:
+        raise ValueError("Table not found in the log file.")
+
+    # Parse the table rows
+    table_lines = lines[start_index + 1 : end_index - 2]
+
+    for line in table_lines:
+        line = line.strip()
+        if line:
+            row = line.split()
+            category = row[0]
+            relative_rate = float(row[1])
+            proportion = float(row[2])
+            table_data.append(
+                {
+                    "Category": category,
+                    "Relative_rate": relative_rate,
+                    "Proportion": proportion,
+                }
+            )
+
+    return table_data
 
 
 ##############################################################################################################
@@ -325,7 +500,11 @@ t = name_nodes_by_level_order(
     parse_newick_file("./test/octo-kraken-msa-test/example.phy.treefile")
 )
 
+category_rate = parse_table("./test/octo-kraken-msa-test/example.phy.iqtree")
+
 if number_rates != 1:
     split_msa_into_rate_categories(site_probability, folder_path, msa_file_name)
 
-generate_write_subtree_pairs_and_msa(number_rates, t, folder_path, msa_file_name)
+generate_write_subtree_pairs_and_msa(
+    number_rates, t, folder_path, msa_file_name, category_rate
+)
