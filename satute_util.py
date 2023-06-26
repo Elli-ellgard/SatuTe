@@ -571,9 +571,43 @@ def subsequences(T, path, epsilon, number_rates, option):
             site_rate.append(0)
         else:
             site_rate.append(probs.index(max_value) + 1)
+
     numbersitesperrate = []
+    number_unassigned_sites = site_rate.count(0)
+
     for j in range(number_rates):
         numbersitesperrate.append(site_rate.count(j + 1))
+
+    assert(sum(numbersitesperrate)+number_unassigned_sites == length)
+
+    file_with_list_category = open(
+        pathFolder + "category_assigment_per_site.txt","w"
+    )
+
+    file_with_list_category.write("{}\n\n{}\n\n".format(
+                                  "Number of sites of the original alignment: ",
+                                  length
+                                  ))
+
+    file_with_list_category.write("{}\n{}\n{}\n\n".format(
+                                  "The following list has an entry per rate category.",
+                                  "It indicates how many sites are assigned to each category.",
+                                  "The first entry is the slowest-evolving rate."
+                                  ))
+    file_with_list_category.write(str(numbersitesperrate))
+    file_with_list_category.write("\n\n{}{}{}\n\n{}".format(
+                                "Number of sites not assigned to any category using threshold ",
+                                epsilon,
+                                ":",
+                                number_unassigned_sites))
+
+    file_with_list_category.write("\n\n{}\n{}\n{}{}\n\n".format(
+                                  "The following list has an entry per alignment site.",
+                                  "A \"1\" indicates that the site was assigned to the slowest-evolving rate category.",
+                                  "A \"0\" indicates that all posterior probabilities were too similar to assign a category using threshold ", str(epsilon)
+                                    )
+                                    )
+    file_with_list_category.write(str(site_rate))
 
     if option == 1:
         for i in range(number_rates):
@@ -1349,7 +1383,7 @@ def saturation_test_cli(
         The number of rate categories to use in the analysis.
 
     :param chosen_rate: str, default = '4'
-        The rate category to be used for the analysis. The rates are numbered starting from 1.
+        The rate category to be used for the analysis. The slowest evolving rate is 1.
 
     :param alpha: float, default = 0.01
         The significance level of the test.
@@ -1386,8 +1420,14 @@ def saturation_test_cli(
     if number_rates > 1:
         numbersitesperrate = subsequences(T, pathDATA, epsilon, number_rates, option)
         rates = save_rates(pathDATA, number_rates)
+        if numbersitesperrate[int(chosen_rate)-1] == 0:
+            #TODO: This should be printed to a log file
+            print("No site was assigned to the ", number_rates - int(chosen_rate) +1 , "th fastest evolving region.")
+            return
     else:
         rates = 1
+
+
 
     clades1, clades2 = clades(T, t, newick_format, internal_nodes, leaves)
 
