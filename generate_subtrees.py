@@ -62,7 +62,7 @@ def run_iqtree_for_each_clade(
                     "Either sequence.txt or tree.txt file does not exist in directory: "
                     + str(clade_dir)
                 )
-            
+
             print(clade_dir)
 
             # Run the command
@@ -176,6 +176,9 @@ def write_subtree_and_sub_alignments(
             first_subtree_dir = (
                 f"{path_prefix}subtrees/external_branch_{i}_subtree_one/"
             )
+
+        elif len(first_subtree.get_descendants()) + 1 == 3:
+            first_subtree_dir = f"{path_prefix}subtrees/cherry_{i}_subtree_one/"
         else:
             first_subtree_dir = (
                 f"{path_prefix}subtrees/internal_branch_{i}_subtree_one/"
@@ -195,6 +198,11 @@ def write_subtree_and_sub_alignments(
             second_subtree_dir = (
                 f"{path_prefix}subtrees/external_branch_{i}_subtree_two/"
             )
+
+        elif len(second_subtree.get_descendants()) + 1 == 2:
+            
+            second_subtree_dir = f"{path_prefix}subtrees/cherry_{i}_subtree_two/"
+
         else:
             second_subtree_dir = (
                 f"{path_prefix}subtrees/internal_branch_{i}_subtree_two/"
@@ -327,6 +335,7 @@ def generate_write_subtree_pairs_and_msa(
             sub_alignment = read_alignment_file(
                 f"./{file_path}/subsequence{i}/rate.fasta"
             )
+
             write_subtree_and_sub_alignments(
                 generated_subtree_pairs,
                 sub_alignment,
