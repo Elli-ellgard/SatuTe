@@ -10,54 +10,40 @@ import shutil
 from pathlib import Path
 import subprocess
 
-def run_iqtree_for_each_clade(path_folder, number_rates, chosen_rate, iqtree_path):
+
+def run_iqtree_for_each_clade(
+    path_folder, number_rates, chosen_rate, iqtree_path, model
+):
     """Prepares necessary information and runs the IQ-TREE."""
-    model_and_frequency = ""
     path_new_folder = ""
 
     # Condition to define path and model
     if number_rates > 1:
-
         path_new_folder = os.path.join(
             path_folder, f"subsequence{chosen_rate}", "subtrees"
         )
 
-        model_and_frequency_file = os.path.join(
-            path_folder, f"subsequence{chosen_rate}", "model.txt"
-        )
-
     else:
         path_new_folder = os.path.join(path_folder, "subtrees")
-        model_and_frequency_file = os.path.join(path_folder, "model.txt")
-
-    # Check if model and frequency file exists
-    if not os.path.isfile(model_and_frequency_file):
-        raise FileNotFoundError(
-            f"The model and frequency file '{model_and_frequency_file}' does not exist."
-        )
 
     # Read model and frequency
-    with open(model_and_frequency_file, "r") as toModel:
-        model_and_frequency = toModel.readline().strip()
-
     # Check if path_new_folder exists and is a directory
-    if not os.path.isdir(path_new_folder):
-        raise NotADirectoryError(
-            f"The path '{path_new_folder}' does not exist or is not a directory."
-        )
+    # if not os.path.isdir(path_new_folder):
+    #    raise NotADirectoryError(
+    #        f"The path '{path_new_folder}' does not exist or is not a directory."
+    #    )
 
     # Iterate over each clade directory
     for clade_dir in Path(path_new_folder).iterdir():
-        if clade_dir.is_dir():
-            # Command to be executed for each clade
+        if clade_dir.is_dir() and "external" not in str(clade_dir):
             cmd = [
                 iqtree_path,
                 "-s",
-                "sequence.txt",
+                "subtree.fasta",
                 "-te",
-                "tree.txt",
+                "subtree.tree",
                 "-m",
-                model_and_frequency,
+                model,
                 "-asr",
                 "-blfix",
                 "-o",
@@ -68,14 +54,25 @@ def run_iqtree_for_each_clade(path_folder, number_rates, chosen_rate, iqtree_pat
                 "-quiet",
             ]
 
+            # Check if sequence and tree files exist in the clade directory
+            if not os.path.isfile(
+                os.path.join(clade_dir, "subtree.treefile")
+            ) or not os.path.isfile(os.path.join(clade_dir, "subtree.treefile")):
+                raise FileNotFoundError(
+                    "Either sequence.txt or tree.txt file does not exist in directory: "
+                    + str(clade_dir)
+                )
+            
+            print(clade_dir)
+
             # Run the command
-            result = subprocess.run(cmd, cwd=clade_dir)
+            # result = subprocess.run(cmd, cwd=clade_dir)
 
             # Check if the command was successful
-            if result.returncode != 0:
-                raise RuntimeError(
-                    f"The command '{' '.join(cmd)}' failed with return code: {result.returncode}"
-                )
+            # if result.returncode != 0:
+            #    raise RuntimeError(
+            #        f"The command '{' '.join(cmd)}' failed with return code: {result.returncode}"
+            #    )
 
 
 def name_nodes_by_level_order(tree):
@@ -487,24 +484,27 @@ def parse_table(log_file):
 
 ##############################################################################################################
 delete_directory_contents("./test_cladding_and_subsequence")
-
-# read site probabilities as dataframe
+number_rates = 4
 site_probability = parse_file_to_dataframe(
     "./test/octo-kraken-msa-test/example.phy.siteprob"
 )
-number_rates = 4
 folder_path = "test_cladding_and_subsequence"
 msa_file_name = "./test/octo-kraken-msa-test/example.phy"
-
 t = name_nodes_by_level_order(
     parse_newick_file("./test/octo-kraken-msa-test/example.phy.treefile")
 )
-
 category_rate = parse_table("./test/octo-kraken-msa-test/example.phy.iqtree")
-
 if number_rates != 1:
     split_msa_into_rate_categories(site_probability, folder_path, msa_file_name)
 
 generate_write_subtree_pairs_and_msa(
     number_rates, t, folder_path, msa_file_name, category_rate
+)
+
+run_iqtree_for_each_clade(
+    "./test_cladding_and_subsequence",
+    4,
+    1,
+    "iqtree",
+    "GTR{3.9907,5.5183,4.1388,0.4498,16.8174}+FU{0.3547 0.2282 0.1919 0.2252}",
 )
