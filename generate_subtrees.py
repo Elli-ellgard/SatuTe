@@ -146,6 +146,29 @@ def generate_subtree_pair(subtrees, t):
 
     return subtree_pairs
 
+def generate_output_state_file_for_cherry(alignment, file_path, state_frequencies):
+    with open(f"{file_path}output.state", "w") as state_file_writer:
+        header = "Node\tSite\tState\tp_A\tp_C\tp_G\tp_T"
+        state_file_writer.write(header)
+        for record in alignment:
+            sequence = record.seq
+
+            """index = 0
+            for character in sequence:
+                index += 1
+                row = {"A": float(0), "C": float(0), "G": float(0), "T": float(0)}
+                if character == '-':
+                    state_freq = list(state_frequencies.values())
+                    row["A"] = state_freq[0]
+                    row["C"] = state_freq[1]
+                    row["G"] = state_freq[2]
+                    row["T"] = state_freq[3]
+                else: 
+                    row[character] = 1
+                values = "\t".join(str(row[value]) for value in ["A", "C", "G", "T"])
+                state_file_writer.write(f"\nNode1\t{index}\t{character}\t{values}")"""
+
+
 
 def generate_output_state_file_for_external_branch(alignment, file_path,state_frequencies):
     with open(f"{file_path}output.state", "w") as state_file_writer:
@@ -153,7 +176,9 @@ def generate_output_state_file_for_external_branch(alignment, file_path,state_fr
         state_file_writer.write(header)
         for record in alignment:
             sequence = record.seq
+            index = 0
             for character in sequence:
+                index += 1
                 row = {"A": 0, "C": 0, "G": 0, "T": 0}
                 if character == '-':
                     state_freq = list(state_frequencies.values())
@@ -163,8 +188,8 @@ def generate_output_state_file_for_external_branch(alignment, file_path,state_fr
                     row["T"] = state_freq[3]
                 else: 
                     row[character] = 1
-                    values = "\t".join(str(row[value]) for value in ["A", "C", "G", "T"])
-                    state_file_writer.write(f"\nNode1\t{character}\t{values}")
+                values = "\t".join("{:.5f}".format(row[value]) for value in ["A", "C", "G", "T"])
+                state_file_writer.write(f"\nNode1\t{index}\t{character}\t{values}")
 
 
 def write_subtree_and_sub_alignments(
@@ -230,6 +255,10 @@ def write_subtree_and_sub_alignments(
 
         if len(first_subtree.get_descendants()) + 1 == 1:
             generate_output_state_file_for_external_branch(
+                first_sub_alignment, first_subtree_dir, state_frequencies
+            )
+        elif len(first_subtree.get_descendants()) + 1 == 2:
+            generate_output_state_file_for_cherry(
                 first_sub_alignment, first_subtree_dir, state_frequencies
             )
 
