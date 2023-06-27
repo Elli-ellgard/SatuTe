@@ -174,14 +174,14 @@ def write_subtree_and_sub_alignments(
 
         if len(first_subtree.get_descendants()) + 1 == 1:
             first_subtree_dir = (
-                f"{path_prefix}subtrees/external_branch_{i}_subtree_one/"
+                f"{path_prefix}subtrees/branch_{i}_subtree_one_leaf/"
             )
 
         elif len(first_subtree.get_descendants()) + 1 == 3:
-            first_subtree_dir = f"{path_prefix}subtrees/cherry_{i}_subtree_one/"
+            first_subtree_dir = f"{path_prefix}subtrees/branch_{i}_subtree_one_cherry/"
         else:
             first_subtree_dir = (
-                f"{path_prefix}subtrees/internal_branch_{i}_subtree_one/"
+                f"{path_prefix}subtrees/branch_{i}_subtree_one/"
             )
 
         os.makedirs(first_subtree_dir, exist_ok=True)
@@ -196,16 +196,16 @@ def write_subtree_and_sub_alignments(
 
         if len(second_subtree.get_descendants()) + 1 == 1:
             second_subtree_dir = (
-                f"{path_prefix}subtrees/external_branch_{i}_subtree_two/"
+                f"{path_prefix}subtrees/branch_{i}_subtree_two_leaf/"
             )
 
         elif len(second_subtree.get_descendants()) + 1 == 2:
             
-            second_subtree_dir = f"{path_prefix}subtrees/cherry_{i}_subtree_two/"
+            second_subtree_dir = f"{path_prefix}subtrees/branch_{i}_subtree_two_cherry/"
 
         else:
             second_subtree_dir = (
-                f"{path_prefix}subtrees/internal_branch_{i}_subtree_two/"
+                f"{path_prefix}subtrees/branch_{i}_subtree_two/"
             )
 
         os.makedirs(second_subtree_dir, exist_ok=True)
@@ -471,7 +471,7 @@ def parse_table(log_file):
         raise ValueError("Table not found in the log file.")
 
     # Parse the table rows
-    table_lines = lines[start_index + 1 : end_index - 2]
+    table_lines = lines[start_index : end_index - 2]
 
     for line in table_lines:
         line = line.strip()
@@ -480,14 +480,14 @@ def parse_table(log_file):
             category = row[0]
             relative_rate = float(row[1])
             proportion = float(row[2])
-            table_data.append(
-                {
-                    "Category": category,
-                    "Relative_rate": relative_rate,
-                    "Proportion": proportion,
-                }
+            if category != '0':
+                table_data.append(
+                    {
+                        "Category": category,
+                        "Relative_rate": relative_rate,
+                        "Proportion": proportion,
+                    }
             )
-
     return table_data
 
 
@@ -495,14 +495,14 @@ def parse_table(log_file):
 delete_directory_contents("./test_cladding_and_subsequence")
 number_rates = 4
 site_probability = parse_file_to_dataframe(
-    "./test/octo-kraken-msa-test/example.phy.siteprob"
+    "./Clemens/example_4/example.txt.siteprob"
 )
 folder_path = "test_cladding_and_subsequence"
-msa_file_name = "./test/octo-kraken-msa-test/example.phy"
+msa_file_name = "./Clemens/example_4/example.txt"
 t = name_nodes_by_level_order(
-    parse_newick_file("./test/octo-kraken-msa-test/example.phy.treefile")
+    parse_newick_file("./Clemens/example_4/example.txt.treefile")
 )
-category_rate = parse_table("./test/octo-kraken-msa-test/example.phy.iqtree")
+category_rate = parse_table("./Clemens/example_4/example.txt.iqtree")
 if number_rates != 1:
     split_msa_into_rate_categories(site_probability, folder_path, msa_file_name)
 
