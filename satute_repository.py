@@ -41,7 +41,10 @@ def parse_output_state_frequencies(file_path):
     return df
 
 # Define a function to parse state frequencies from a log content
-def parse_state_frequencies(log_content, dimension=4):
+def parse_state_frequencies(log_file_path, dimension=4):
+    # Read the content of the log file
+    with open(log_file_path, "r") as f:
+        log_content = f.read()
     # If the string "equal frequencies" is not in the log content, proceed to parse
     # Initialize an empty dictionary to hold the frequencies
     frequencies = {}
@@ -127,12 +130,8 @@ def parse_rate_and_frequencies_and_create_model_files(
     log_file_path = f"{path}.iqtree"
     model_final = parse_rate_parameters(log_file_path, dimension, model=model)
     
-    # Read the content of the log file
-    with open(log_file_path, "r") as f:
-        log_content = f.read()
-
     # Parse state frequencies from the log content
-    state_frequencies = parse_state_frequencies(log_content, dimension=dimension)
+    state_frequencies = parse_state_frequencies(log_file_path, dimension=dimension)
    
     # Create a string of state frequencies separated by a space
     concatenated_rates = " ".join(map(str, state_frequencies.values()))

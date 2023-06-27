@@ -9,6 +9,7 @@ from Bio.Seq import Seq
 import shutil
 from pathlib import Path
 import subprocess
+from satute_repository import parse_state_frequencies
 
 
 def run_iqtree_for_each_clade(
@@ -146,7 +147,7 @@ def generate_subtree_pair(subtrees, t):
     return subtree_pairs
 
 
-def generate_output_state_file_for_external_branch(alignment, file_path):
+def generate_output_state_file_for_external_branch(alignment, file_path,state_frequencies):
     with open(f"{file_path}output.state", "w") as state_file_writer:
         header = "Node\tSite\tState\tp_A\tp_C\tp_G\tp_T"
         state_file_writer.write(header)
@@ -154,13 +155,20 @@ def generate_output_state_file_for_external_branch(alignment, file_path):
             sequence = record.seq
             for character in sequence:
                 row = {"A": 0, "C": 0, "G": 0, "T": 0}
-                row[character] = 1
-                values = "\t".join(str(row[value]) for value in ["A", "C", "G", "T"])
-                state_file_writer.write(f"\nNode1\t{character}\t{values}")
+                if character == '-':
+                    state_freq = list(state_frequencies.values())
+                    row["A"] = state_freq[0]
+                    row["C"] = state_freq[1]
+                    row["G"] = state_freq[2]
+                    row["T"] = state_freq[3]
+                else: 
+                    row[character] = 1
+                    values = "\t".join(str(row[value]) for value in ["A", "C", "G", "T"])
+                    state_file_writer.write(f"\nNode1\t{character}\t{values}")
 
 
 def write_subtree_and_sub_alignments(
-    generated_subtree_pairs, alignment, path_prefix="./"
+    generated_subtree_pairs, alignment, state_frequencies, path_prefix="./"
 ):
     for i, subtree_pair in enumerate(generated_subtree_pairs):
         first_subtree = subtree_pair["trees"][0]
@@ -222,12 +230,12 @@ def write_subtree_and_sub_alignments(
 
         if len(first_subtree.get_descendants()) + 1 == 1:
             generate_output_state_file_for_external_branch(
-                first_sub_alignment, first_subtree_dir
+                first_sub_alignment, first_subtree_dir, state_frequencies
             )
 
         if len(second_subtree.get_descendants()) + 1 == 1:
             generate_output_state_file_for_external_branch(
-                second_sub_alignment, second_subtree_dir
+                second_sub_alignment, second_subtree_dir, state_frequencies
             )
 
 
@@ -301,7 +309,7 @@ def rescale_branch_lengths(tree, rescale_factor):
 
 
 def generate_write_subtree_pairs_and_msa(
-    number_rates, t, file_path, msa_file_name, category_rate
+    number_rates, t, file_path, msa_file_name, category_rate, state_frequencies
 ):
     # Write subtree pairs to files, assuming the function is defined elsewhere
     if number_rates == 1:
@@ -314,7 +322,10 @@ def generate_write_subtree_pairs_and_msa(
             generated_subtree_pairs = generate_subtree_pair(subtrees, t)
             alignment = read_alignment_file(msa_file_name)
             write_subtree_and_sub_alignments(
-                generated_subtree_pairs, alignment, f"./{file_path}/"
+                generated_subtree_pairs, 
+                alignment, 
+                state_frequencies,
+                f"./{file_path}/", 
             )
         except Exception as e:
             print(f"Error occurred during the first iteration: {e}")
@@ -339,6 +350,7 @@ def generate_write_subtree_pairs_and_msa(
             write_subtree_and_sub_alignments(
                 generated_subtree_pairs,
                 sub_alignment,
+                state_frequencies,
                 path_prefix=f"./{file_path}/subsequence{i}/",
             )
 
@@ -494,6 +506,7 @@ def parse_table(log_file):
 ##############################################################################################################
 delete_directory_contents("./test_cladding_and_subsequence")
 number_rates = 4
+dimension = 4
 site_probability = parse_file_to_dataframe(
     "./Clemens/example_4/example.txt.siteprob"
 )
@@ -503,11 +516,13 @@ t = name_nodes_by_level_order(
     parse_newick_file("./Clemens/example_4/example.txt.treefile")
 )
 category_rate = parse_table("./Clemens/example_4/example.txt.iqtree")
+# Parse state frequencies from the log content
+state_frequencies = parse_state_frequencies("./Clemens/example_4/example.txt.iqtree", dimension=dimension)
 if number_rates != 1:
     split_msa_into_rate_categories(site_probability, folder_path, msa_file_name)
 
 generate_write_subtree_pairs_and_msa(
-    number_rates, t, folder_path, msa_file_name, category_rate
+    number_rates, t, folder_path, msa_file_name, category_rate, state_frequencies
 )
 
 run_iqtree_for_each_clade(
