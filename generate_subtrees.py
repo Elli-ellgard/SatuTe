@@ -776,3 +776,17 @@ run_iqtree_for_each_clade_parallel(
     "iqtree",
     "GTR{3.9907,5.5183,4.1388,0.4498,16.8174}+FU{0.3547 0.2282 0.1919 0.2252}",
 )"""
+
+
+""""summary TODO:
+    - check if the transition matrix is a real transition matrix
+    - we should think about create a directory of the state_space at the beginning of the programm and use it for dimension stuff
+    - generalise the functions below for other dimension (now only dimension 4)
+    - the posterior distribution is not correct at the moment
+    
+    subtrees: 
+    - something is of with the iqtree-runs, it is not clear where the root for each subtree is (you see Node1 a lot)
+    - for unrooted trees on n taxa we have to consider 2n-3 branches
+    - distinction rooted and unrooted input trees (do you root the tree before using it?) 
+
+"""
