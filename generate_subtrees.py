@@ -9,7 +9,15 @@ from Bio.Seq import Seq
 import shutil
 from pathlib import Path
 import subprocess
-from satute_repository import parse_state_frequencies
+from scipy.sparse.linalg import expm
+from satute_repository import (
+    parse_state_frequencies,
+    parse_rate_matrices,
+)
+from satute_util import(
+    node_type,
+    branch_lengths,
+)
 
 
 def run_iqtree_for_each_clade(
@@ -146,30 +154,68 @@ def generate_subtree_pair(subtrees, t):
 
     return subtree_pairs
 
-def generate_output_state_file_for_cherry(alignment, file_path, state_frequencies):
+""" TODO: 
+    - check if the transition matrix is a real transition matrix
+    - we should think about create a directory of the state_space at the beginning of the programm and use it for dimension stuff
+    - generalise the functions below for other dimension (now only dimension 4)
+    - the posterior distribution is not correct at the moment
+"""
+
+
+
+# get tranistion martrix using matrix exponential
+def get_tansition_matrix(rate_matrix, branch_length):
+    return np.asmatrix(expm(rate_matrix * branch_length))
+
+# calculate for the parftial likelihoods the needed factors 
+def get_likelihood(transition_matrix, character, state_frequencies):
+    likelihood_factor = []
+    row = [0,0,0,0]
+    state_space = {"A": 0, "C": 1, "G": 2, "T": 3}
+    if character == '-':
+        row = list(state_frequencies.values())
+    else: 
+        row[state_space[character]] = 1
+    for i in range(len(state_space)):
+        component= (float)(np.array(transition_matrix[i])@np.array(row))
+        likelihood_factor.append(component)
+    return likelihood_factor
+
+def generate_output_state_file_for_cherry(alignment, file_path, state_frequencies, rate_matrix):
+    # get branch lengths
+    tree_file = f"{file_path}subtree.treefile"
+    T = parse_newick_file(tree_file)
+    leaves, internal_nodes = node_type(T)
+    vector_branches, vector_distances = branch_lengths(T)
+    
+    # get tansitions matrix with the time given as branch lengths
+    transition_matrices = []
+    idx = 0
+    for leaf in leaves:
+        transition_matrices.append(get_tansition_matrix(rate_matrix,vector_distances[idx]))
+        idx += 1
+   
+    # get the sequences of the leaves in the correct order
+        alignments = []
+        for leaf in leaves:
+            for record in alignment:
+                if record.id == leaf: 
+                    alignments.append(record.seq)
+
     with open(f"{file_path}output.state", "w") as state_file_writer:
         header = "Node\tSite\tState\tp_A\tp_C\tp_G\tp_T"
         state_file_writer.write(header)
-        for record in alignment:
-            sequence = record.seq
-
-            """index = 0
-            for character in sequence:
-                index += 1
-                row = {"A": float(0), "C": float(0), "G": float(0), "T": float(0)}
-                if character == '-':
-                    state_freq = list(state_frequencies.values())
-                    row["A"] = state_freq[0]
-                    row["C"] = state_freq[1]
-                    row["G"] = state_freq[2]
-                    row["T"] = state_freq[3]
-                else: 
-                    row[character] = 1
-                values = "\t".join(str(row[value]) for value in ["A", "C", "G", "T"])
-                state_file_writer.write(f"\nNode1\t{index}\t{character}\t{values}")"""
-
-
-
+        site_number = len(alignments[0])
+        for i in range(site_number):
+            likelihood_left = get_likelihood(transition_matrices[0], alignments[0][i], state_frequencies)
+            likelihood_right = get_likelihood(transition_matrices[1], alignments[1][i], state_frequencies)
+            # calculate the partial likelihood vector
+            likelihood = np.asarray(likelihood_left) * np.asarray(likelihood_right) 
+            # transform the partial likelihood vector into the posterior distribution
+            distribution = np.asarray(likelihood) * np.asarray(list(state_frequencies.values()))
+            values = "\t".join("{:.5f}".format(distribution[value]) for value in range(4))
+            state_file_writer.write(f"\nNode1\t{i + 1}\t{alignments[0][i]}\t{values}")
+          
 def generate_output_state_file_for_external_branch(alignment, file_path,state_frequencies):
     with open(f"{file_path}output.state", "w") as state_file_writer:
         header = "Node\tSite\tState\tp_A\tp_C\tp_G\tp_T"
@@ -193,7 +239,7 @@ def generate_output_state_file_for_external_branch(alignment, file_path,state_fr
 
 
 def write_subtree_and_sub_alignments(
-    generated_subtree_pairs, alignment, state_frequencies, path_prefix="./"
+    generated_subtree_pairs, alignment, state_frequencies, rate_matrix, path_prefix="./"
 ):
     for i, subtree_pair in enumerate(generated_subtree_pairs):
         first_subtree = subtree_pair["trees"][0]
@@ -211,7 +257,9 @@ def write_subtree_and_sub_alignments(
             )
 
         elif len(first_subtree.get_descendants()) + 1 == 3:
-            first_subtree_dir = f"{path_prefix}subtrees/branch_{i}_subtree_one_cherry/"
+            first_subtree_dir = (
+                f"{path_prefix}subtrees/branch_{i}_subtree_one_cherry/"
+            )
         else:
             first_subtree_dir = (
                 f"{path_prefix}subtrees/branch_{i}_subtree_one/"
@@ -232,9 +280,11 @@ def write_subtree_and_sub_alignments(
                 f"{path_prefix}subtrees/branch_{i}_subtree_two_leaf/"
             )
 
-        elif len(second_subtree.get_descendants()) + 1 == 2:
+        elif len(second_subtree.get_descendants()) + 1 == 3:
             
-            second_subtree_dir = f"{path_prefix}subtrees/branch_{i}_subtree_two_cherry/"
+            second_subtree_dir = (
+                f"{path_prefix}subtrees/branch_{i}_subtree_two_cherry/"
+            )
 
         else:
             second_subtree_dir = (
@@ -255,16 +305,20 @@ def write_subtree_and_sub_alignments(
 
         if len(first_subtree.get_descendants()) + 1 == 1:
             generate_output_state_file_for_external_branch(
-                first_sub_alignment, first_subtree_dir, state_frequencies
+                first_sub_alignment, first_subtree_dir, state_frequencies,
             )
-        elif len(first_subtree.get_descendants()) + 1 == 2:
+        elif len(first_subtree.get_descendants()) + 1 == 3:
             generate_output_state_file_for_cherry(
-                first_sub_alignment, first_subtree_dir, state_frequencies
+                first_sub_alignment, first_subtree_dir, state_frequencies, rate_matrix,
             )
 
         if len(second_subtree.get_descendants()) + 1 == 1:
             generate_output_state_file_for_external_branch(
-                second_sub_alignment, second_subtree_dir, state_frequencies
+                second_sub_alignment, second_subtree_dir, state_frequencies,
+            )
+        elif len(second_subtree.get_descendants()) + 1 == 3:
+            generate_output_state_file_for_cherry(
+                second_sub_alignment, second_subtree_dir, state_frequencies, rate_matrix,
             )
 
 
@@ -338,15 +392,17 @@ def rescale_branch_lengths(tree, rescale_factor):
 
 
 def generate_write_subtree_pairs_and_msa(
-    number_rates, t, file_path, msa_file_name, category_rate, state_frequencies
+    number_rates, t, file_path, msa_file_name, category_rate, state_frequencies, rate_matrix
 ):
     # Write subtree pairs to files, assuming the function is defined elsewhere
     if number_rates == 1:
         try:
             # Call function to get all subtrees from t, assuming the function is defined elsewhere
             subtrees = get_all_subtrees(t)
-            # Discard the first subtree, assuming we don't need it
-            subtrees = subtrees[1:]
+
+            ## Discard the first subtree, assuming we don't need it
+            #subtrees = subtrees[1:]
+
             # Generate subtree pairs, assuming the function is defined elsewhere
             generated_subtree_pairs = generate_subtree_pair(subtrees, t)
             alignment = read_alignment_file(msa_file_name)
@@ -354,6 +410,7 @@ def generate_write_subtree_pairs_and_msa(
                 generated_subtree_pairs, 
                 alignment, 
                 state_frequencies,
+                rate_matrix,
                 f"./{file_path}/", 
             )
         except Exception as e:
@@ -367,8 +424,12 @@ def generate_write_subtree_pairs_and_msa(
             # Write subtree pairs to files in the new directory
             # Call function to get all subtrees from t, assuming the function is defined elsewhere
             subtrees = get_all_subtrees(rescaled_tree)
+
             # Discard the first subtree, assuming we don't need it
-            subtrees = subtrees[1:]
+            # subtrees = subtrees[1:]
+            #for tree in subtrees:
+            #    print(tree.write())
+
             # Generate subtree pairs, assuming the function is defined elsewhere
             generated_subtree_pairs = generate_subtree_pair(subtrees, rescaled_tree)
 
@@ -380,6 +441,7 @@ def generate_write_subtree_pairs_and_msa(
                 generated_subtree_pairs,
                 sub_alignment,
                 state_frequencies,
+                rate_matrix,
                 path_prefix=f"./{file_path}/subsequence{i}/",
             )
 
@@ -547,11 +609,12 @@ t = name_nodes_by_level_order(
 category_rate = parse_table("./Clemens/example_4/example.txt.iqtree")
 # Parse state frequencies from the log content
 state_frequencies = parse_state_frequencies("./Clemens/example_4/example.txt.iqtree", dimension=dimension)
+(rate_matrix, phi_matrix) = parse_rate_matrices(dimension, "./Clemens/example_4/example.txt")
 if number_rates != 1:
     split_msa_into_rate_categories(site_probability, folder_path, msa_file_name)
 
 generate_write_subtree_pairs_and_msa(
-    number_rates, t, folder_path, msa_file_name, category_rate, state_frequencies
+    number_rates, t, folder_path, msa_file_name, category_rate, state_frequencies, rate_matrix
 )
 
 run_iqtree_for_each_clade(
