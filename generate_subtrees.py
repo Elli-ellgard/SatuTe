@@ -9,10 +9,13 @@ from Bio.Seq import Seq
 import shutil
 from pathlib import Path
 import subprocess
+from multiprocessing import Pool
+from functools import partial
 from scipy.sparse.linalg import expm
 from satute_repository import (
     parse_state_frequencies,
     parse_rate_matrices,
+    parse_rate_parameters,
 )
 from satute_util import(
     node_type,
@@ -594,6 +597,141 @@ def parse_table(log_file):
     return table_data
 
 
+def execute_iqtree(sub_dir, iqtree_path, model_and_frequency):
+    # Command to be executed for each clade
+    cmd = [
+        iqtree_path,
+        "-s",
+        "subtree.fasta",
+        "-te",
+        "subtree.treefile",
+        "-m",
+        model_and_frequency,
+        "-asr",
+        "-blfix",
+        "-pre",
+        "output",
+        "-redo",
+        "-quiet",
+    ]
+
+    # Check if sequence and tree files exist in the subdirectory
+    if not os.path.isfile(os.path.join(sub_dir, "subtree.fasta")) or not os.path.isfile(
+        os.path.join(sub_dir, "subtree.treefile")
+    ):
+        raise FileNotFoundError(
+            f"Either sequence.txt or tree.txt file does not exist in directory: {sub_dir}"
+        )
+
+    # Run the IQ-TREE command
+    result = subprocess.run(cmd, cwd=sub_dir)
+
+    # Check if the command was successful
+    if result.returncode != 0:
+        raise RuntimeError(
+            f"The command '{' '.join(cmd)}' failed with return code: {result.returncode}"
+        )
+
+def run_iqtree_for_each_clade_parallel(path_folder, number_rates, chosen_rate, iqtree_path):
+    """
+    Run IQ-TREE for each clade directory in parallel.
+
+    Args:
+        path_folder (str): Root folder path.
+        number_rates (int): Number of rates.
+        chosen_rate (int): Chosen rate.
+        iqtree_path (str): Path to the IQ-TREE executable.
+
+    Raises:
+        FileNotFoundError: If model and frequency file does not exist.
+        NotADirectoryError: If the clade directory does not exist or is not a directory.
+        FileNotFoundError: If sequence.txt or tree.txt file does not exist in the clade directory.
+        RuntimeError: If IQ-TREE command fails.
+
+    """
+    model_and_frequency = ""
+    clade_dir = ""
+
+    # Determine path and model based on number of rates
+    if number_rates > 1:
+        subtrees_dir = os.path.join(
+            path_folder, f"subsequence{chosen_rate}", "subtrees"
+        )
+        model_and_frequency_file = os.path.join(
+            path_folder, f"subsequence{chosen_rate}", "model.txt"
+        )
+    else:
+        subtrees_dir = os.path.join(path_folder, "subtrees")
+        model_and_frequency_file = os.path.join(path_folder, "model.txt")
+
+    # Check if model and frequency file exists
+    if not os.path.isfile(model_and_frequency_file):
+        raise FileNotFoundError(
+            f"The model and frequency file '{model_and_frequency_file}' does not exist."
+        )
+
+    # Read model and frequency
+    with open(model_and_frequency_file, "r") as toModel:
+        model_and_frequency = toModel.readline().strip()
+
+    # Check if clade directory exists and is a directory
+    if not os.path.isdir(subtrees_dir):
+        raise NotADirectoryError(
+            f"The clade directory '{clade_dir}' does not exist or is not a directory."
+        )
+
+    # Create a list of subtree directories for internal branches
+    subtrees_dirs = [sub_dir for sub_dir in Path(subtrees_dir).iterdir() if sub_dir.is_dir() and not os.path.isfile(os.path.join(sub_dir, "output.state"))]
+
+    # Create a partial function with fixed arguments for execute_iqtree
+    execute_iqtree_partial = partial(execute_iqtree, iqtree_path=iqtree_path, model_and_frequency=model_and_frequency)
+
+    # Create a multiprocessing pool and map the execute_iqtree_partial function to clade_dirs
+    with Pool() as pool:
+        pool.map(execute_iqtree_partial, subtrees_dirs)
+
+
+def parse_rate_and_frequencies_and_create_model_files(
+    path, number_rates, dimension, model="GTR"
+):
+    """
+    Parse the rate parameter and state frequencies from the IQ-TREE log file and
+    create model files based on these parameters.
+    """
+
+    def _write_model_file(path, content):
+        """Helper function to write model and frequency tokens into a file."""
+        with open(path, "w") as f:
+            f.write(content)
+
+    # Construct the model string with parsed rate parameters
+    log_file_path = f"{path}.iqtree"
+    model_final = parse_rate_parameters(log_file_path, dimension, model=model)
+    
+    # Parse state frequencies from the log content
+    state_frequencies = parse_state_frequencies(log_file_path, dimension=dimension)
+   
+    # Create a string of state frequencies separated by a space
+    concatenated_rates = " ".join(map(str, state_frequencies.values()))
+
+    # Construct command line tokens for model and frequency
+    model_and_frequency = f"{model_final}+FU{{{concatenated_rates}}}"
+
+    # Get the directory of the path
+    path_folder = os.path.dirname(path)
+
+    # Write the model and frequency tokens into 'model.txt' files
+    if number_rates == 1:
+        _write_model_file(os.path.join(path_folder, "model.txt"), model_and_frequency)
+    else:
+        for i in range(1, number_rates + 1):
+            subsequence_folder = os.path.join(path_folder, f"subsequence{i}")
+            _write_model_file(
+                os.path.join(subsequence_folder, "model.txt"), model_and_frequency
+            )
+
+    return state_frequencies.values(), model_and_frequency
+
 ##############################################################################################################
 delete_directory_contents("./test_cladding_and_subsequence")
 number_rates = 4
@@ -608,6 +746,7 @@ t = name_nodes_by_level_order(
 )
 category_rate = parse_table("./Clemens/example_4/example.txt.iqtree")
 # Parse state frequencies from the log content
+#state_frequencies = parse_rate_and_frequencies_and_create_model_files("./test_cladding_and_subsequence", number_rates, dimension, model="JC")
 state_frequencies = parse_state_frequencies("./Clemens/example_4/example.txt.iqtree", dimension=dimension)
 (rate_matrix, phi_matrix) = parse_rate_matrices(dimension, "./Clemens/example_4/example.txt")
 if number_rates != 1:
@@ -617,10 +756,23 @@ generate_write_subtree_pairs_and_msa(
     number_rates, t, folder_path, msa_file_name, category_rate, state_frequencies, rate_matrix
 )
 
-run_iqtree_for_each_clade(
+import shutil
+
+src_path = r"./Clemens/example_4/model.txt"
+dst_path = r"./test_cladding_and_subsequence/subsequence1/model.txt"
+shutil.copy(src_path, dst_path)
+
+run_iqtree_for_each_clade_parallel(
+    "./test_cladding_and_subsequence", 
+    4,
+    1,
+    "iqtree2",
+)
+
+"""run_iqtree_for_each_clade(
     "./test_cladding_and_subsequence",
     4,
     1,
     "iqtree",
     "GTR{3.9907,5.5183,4.1388,0.4498,16.8174}+FU{0.3547 0.2282 0.1919 0.2252}",
-)
+)"""
