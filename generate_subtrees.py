@@ -17,7 +17,7 @@ from satute_repository import (
     parse_rate_matrices,
     parse_rate_parameters,
 )
-from satute_util import(
+from satute_util import (
     node_type,
     branch_lengths,
 )
@@ -157,52 +157,56 @@ def generate_subtree_pair(subtrees, t):
 
     return subtree_pairs
 
+
 """ TODO: 
     - check if the transition matrix is a real transition matrix
-    - we should think about create a directory of the state_space at the beginning of the programm and use it for dimension stuff
-    - generalise the functions below for other dimension (now only dimension 4)
+    - we should think about create a directory of the state_space at the beginning of the program and use it for dimension stuff
+    - generalizes the functions below for other dimension (now only dimension 4)
     - the posterior distribution is not correct at the moment
 """
 
 
+# get transition matrix using matrix exponential
+def get_transition_matrix(rate_matrix, branch_length):
+    return expm(rate_matrix * branch_length)
 
-# get tranistion martrix using matrix exponential
-def get_tansition_matrix(rate_matrix, branch_length):
-    return np.asmatrix(expm(rate_matrix * branch_length))
 
-# calculate for the parftial likelihoods the needed factors 
-def get_likelihood(transition_matrix, character, state_frequencies):
-    likelihood_factor = []
-    row = [0,0,0,0]
+# calculate for the partial likelihoods the needed factors
+def get_likelihood(transition_matrix, state, state_frequencies):
+    likelihood_factors = []
+    row = [0, 0, 0, 0]
     state_space = {"A": 0, "C": 1, "G": 2, "T": 3}
-    if character == '-':
+    if state == "-":
         row = list(state_frequencies.values())
-    else: 
-        row[state_space[character]] = 1
+    else:
+        row[state_space[state]] = 1
     for i in range(len(state_space)):
-        component= (float)(np.array(transition_matrix[i])@np.array(row))
-        likelihood_factor.append(component)
-    return likelihood_factor
+        component = (float)(np.array(transition_matrix[i]) @ np.array(row))
+        likelihood_factors.append(component)
+    return likelihood_factors
 
-def generate_output_state_file_for_cherry(alignment, file_path, state_frequencies, rate_matrix):
+
+def generate_output_state_file_for_cherry(
+    alignment, file_path, state_frequencies, rate_matrix
+):
     # get branch lengths
     tree_file = f"{file_path}subtree.treefile"
     T = parse_newick_file(tree_file)
     leaves, internal_nodes = node_type(T)
     vector_branches, vector_distances = branch_lengths(T)
-    
-    # get tansitions matrix with the time given as branch lengths
+
+    # get transitions matrix with the time given as branch lengths
     transition_matrices = []
-    idx = 0
-    for leaf in leaves:
-        transition_matrices.append(get_tansition_matrix(rate_matrix,vector_distances[idx]))
-        idx += 1
-   
-    # get the sequences of the leaves in the correct order
+    for idx in range(len(leaves)):
+        transition_matrices.append(
+            get_transition_matrix(rate_matrix, vector_distances[idx])
+        )
+
+        # get the sequences of the leaves in the correct order
         alignments = []
         for leaf in leaves:
             for record in alignment:
-                if record.id == leaf: 
+                if record.id == leaf:
                     alignments.append(record.seq)
 
     with open(f"{file_path}output.state", "w") as state_file_writer:
@@ -210,16 +214,33 @@ def generate_output_state_file_for_cherry(alignment, file_path, state_frequencie
         state_file_writer.write(header)
         site_number = len(alignments[0])
         for i in range(site_number):
-            likelihood_left = get_likelihood(transition_matrices[0], alignments[0][i], state_frequencies)
-            likelihood_right = get_likelihood(transition_matrices[1], alignments[1][i], state_frequencies)
+            likelihood_left = get_likelihood(
+                transition_matrices[0], alignments[0][i], state_frequencies
+            )
+            likelihood_right = get_likelihood(
+                transition_matrices[1], alignments[1][i], state_frequencies
+            )
             # calculate the partial likelihood vector
-            likelihood = np.asarray(likelihood_left) * np.asarray(likelihood_right) 
+            likelihood = np.asarray(likelihood_left) * np.asarray(likelihood_right)
+
+            scale_factor =  np.asarray(likelihood) * np.asarray(
+                list(state_frequencies.values())
+            )
+
             # transform the partial likelihood vector into the posterior distribution
-            distribution = np.asarray(likelihood) * np.asarray(list(state_frequencies.values()))
-            values = "\t".join("{:.5f}".format(distribution[value]) for value in range(4))
+            distribution = np.asarray(likelihood) * np.asarray(
+                list(state_frequencies.values())
+            ) / scale_factor
+
+            values = "\t".join(
+                "{:.5f}".format(distribution[value]) for value in range(4)
+            )
             state_file_writer.write(f"\nNode1\t{i + 1}\t{alignments[0][i]}\t{values}")
-          
-def generate_output_state_file_for_external_branch(alignment, file_path,state_frequencies):
+
+
+def generate_output_state_file_for_external_branch(
+    alignment, file_path, state_frequencies
+):
     with open(f"{file_path}output.state", "w") as state_file_writer:
         header = "Node\tSite\tState\tp_A\tp_C\tp_G\tp_T"
         state_file_writer.write(header)
@@ -229,15 +250,17 @@ def generate_output_state_file_for_external_branch(alignment, file_path,state_fr
             for character in sequence:
                 index += 1
                 row = {"A": 0, "C": 0, "G": 0, "T": 0}
-                if character == '-':
+                if character == "-":
                     state_freq = list(state_frequencies.values())
                     row["A"] = state_freq[0]
                     row["C"] = state_freq[1]
                     row["G"] = state_freq[2]
                     row["T"] = state_freq[3]
-                else: 
+                else:
                     row[character] = 1
-                values = "\t".join("{:.5f}".format(row[value]) for value in ["A", "C", "G", "T"])
+                values = "\t".join(
+                    "{:.5f}".format(row[value]) for value in ["A", "C", "G", "T"]
+                )
                 state_file_writer.write(f"\nNode1\t{index}\t{character}\t{values}")
 
 
@@ -255,18 +278,12 @@ def write_subtree_and_sub_alignments(
         second_sub_alignment = filter_alignment_by_ids(alignment, second_subtree_leaves)
 
         if len(first_subtree.get_descendants()) + 1 == 1:
-            first_subtree_dir = (
-                f"{path_prefix}subtrees/branch_{i}_subtree_one_leaf/"
-            )
+            first_subtree_dir = f"{path_prefix}subtrees/branch_{i}_subtree_one_leaf/"
 
         elif len(first_subtree.get_descendants()) + 1 == 3:
-            first_subtree_dir = (
-                f"{path_prefix}subtrees/branch_{i}_subtree_one_cherry/"
-            )
+            first_subtree_dir = f"{path_prefix}subtrees/branch_{i}_subtree_one_cherry/"
         else:
-            first_subtree_dir = (
-                f"{path_prefix}subtrees/branch_{i}_subtree_one/"
-            )
+            first_subtree_dir = f"{path_prefix}subtrees/branch_{i}_subtree_one/"
 
         os.makedirs(first_subtree_dir, exist_ok=True)
 
@@ -279,20 +296,13 @@ def write_subtree_and_sub_alignments(
         AlignIO.write(first_sub_alignment, f"{first_subtree_dir}subtree.fasta", "fasta")
 
         if len(second_subtree.get_descendants()) + 1 == 1:
-            second_subtree_dir = (
-                f"{path_prefix}subtrees/branch_{i}_subtree_two_leaf/"
-            )
+            second_subtree_dir = f"{path_prefix}subtrees/branch_{i}_subtree_two_leaf/"
 
         elif len(second_subtree.get_descendants()) + 1 == 3:
-            
-            second_subtree_dir = (
-                f"{path_prefix}subtrees/branch_{i}_subtree_two_cherry/"
-            )
+            second_subtree_dir = f"{path_prefix}subtrees/branch_{i}_subtree_two_cherry/"
 
         else:
-            second_subtree_dir = (
-                f"{path_prefix}subtrees/branch_{i}_subtree_two/"
-            )
+            second_subtree_dir = f"{path_prefix}subtrees/branch_{i}_subtree_two/"
 
         os.makedirs(second_subtree_dir, exist_ok=True)
 
@@ -308,20 +318,30 @@ def write_subtree_and_sub_alignments(
 
         if len(first_subtree.get_descendants()) + 1 == 1:
             generate_output_state_file_for_external_branch(
-                first_sub_alignment, first_subtree_dir, state_frequencies,
+                first_sub_alignment,
+                first_subtree_dir,
+                state_frequencies,
             )
         elif len(first_subtree.get_descendants()) + 1 == 3:
             generate_output_state_file_for_cherry(
-                first_sub_alignment, first_subtree_dir, state_frequencies, rate_matrix,
+                first_sub_alignment,
+                first_subtree_dir,
+                state_frequencies,
+                rate_matrix,
             )
 
         if len(second_subtree.get_descendants()) + 1 == 1:
             generate_output_state_file_for_external_branch(
-                second_sub_alignment, second_subtree_dir, state_frequencies,
+                second_sub_alignment,
+                second_subtree_dir,
+                state_frequencies,
             )
         elif len(second_subtree.get_descendants()) + 1 == 3:
             generate_output_state_file_for_cherry(
-                second_sub_alignment, second_subtree_dir, state_frequencies, rate_matrix,
+                second_sub_alignment,
+                second_subtree_dir,
+                state_frequencies,
+                rate_matrix,
             )
 
 
@@ -395,7 +415,13 @@ def rescale_branch_lengths(tree, rescale_factor):
 
 
 def generate_write_subtree_pairs_and_msa(
-    number_rates, t, file_path, msa_file_name, category_rate, state_frequencies, rate_matrix
+    number_rates,
+    t,
+    file_path,
+    msa_file_name,
+    category_rate,
+    state_frequencies,
+    rate_matrix,
 ):
     # Write subtree pairs to files, assuming the function is defined elsewhere
     if number_rates == 1:
@@ -404,17 +430,17 @@ def generate_write_subtree_pairs_and_msa(
             subtrees = get_all_subtrees(t)
 
             ## Discard the first subtree, assuming we don't need it
-            #subtrees = subtrees[1:]
+            # subtrees = subtrees[1:]
 
             # Generate subtree pairs, assuming the function is defined elsewhere
             generated_subtree_pairs = generate_subtree_pair(subtrees, t)
             alignment = read_alignment_file(msa_file_name)
             write_subtree_and_sub_alignments(
-                generated_subtree_pairs, 
-                alignment, 
+                generated_subtree_pairs,
+                alignment,
                 state_frequencies,
                 rate_matrix,
-                f"./{file_path}/", 
+                f"./{file_path}/",
             )
         except Exception as e:
             print(f"Error occurred during the first iteration: {e}")
@@ -430,7 +456,7 @@ def generate_write_subtree_pairs_and_msa(
 
             # Discard the first subtree, assuming we don't need it
             # subtrees = subtrees[1:]
-            #for tree in subtrees:
+            # for tree in subtrees:
             #    print(tree.write())
 
             # Generate subtree pairs, assuming the function is defined elsewhere
@@ -586,14 +612,14 @@ def parse_table(log_file):
             category = row[0]
             relative_rate = float(row[1])
             proportion = float(row[2])
-            if category != '0':
+            if category != "0":
                 table_data.append(
                     {
                         "Category": category,
                         "Relative_rate": relative_rate,
                         "Proportion": proportion,
                     }
-            )
+                )
     return table_data
 
 
@@ -632,7 +658,10 @@ def execute_iqtree(sub_dir, iqtree_path, model_and_frequency):
             f"The command '{' '.join(cmd)}' failed with return code: {result.returncode}"
         )
 
-def run_iqtree_for_each_clade_parallel(path_folder, number_rates, chosen_rate, iqtree_path):
+
+def run_iqtree_for_each_clade_parallel(
+    path_folder, number_rates, chosen_rate, iqtree_path
+):
     """
     Run IQ-TREE for each clade directory in parallel.
 
@@ -681,10 +710,17 @@ def run_iqtree_for_each_clade_parallel(path_folder, number_rates, chosen_rate, i
         )
 
     # Create a list of subtree directories for internal branches
-    subtrees_dirs = [sub_dir for sub_dir in Path(subtrees_dir).iterdir() if sub_dir.is_dir() and not os.path.isfile(os.path.join(sub_dir, "output.state"))]
+    subtrees_dirs = [
+        sub_dir
+        for sub_dir in Path(subtrees_dir).iterdir()
+        if sub_dir.is_dir()
+        and not os.path.isfile(os.path.join(sub_dir, "output.state"))
+    ]
 
     # Create a partial function with fixed arguments for execute_iqtree
-    execute_iqtree_partial = partial(execute_iqtree, iqtree_path=iqtree_path, model_and_frequency=model_and_frequency)
+    execute_iqtree_partial = partial(
+        execute_iqtree, iqtree_path=iqtree_path, model_and_frequency=model_and_frequency
+    )
 
     # Create a multiprocessing pool and map the execute_iqtree_partial function to clade_dirs
     with Pool() as pool:
@@ -707,10 +743,10 @@ def parse_rate_and_frequencies_and_create_model_files(
     # Construct the model string with parsed rate parameters
     log_file_path = f"{path}.iqtree"
     model_final = parse_rate_parameters(log_file_path, dimension, model=model)
-    
+
     # Parse state frequencies from the log content
     state_frequencies = parse_state_frequencies(log_file_path, dimension=dimension)
-   
+
     # Create a string of state frequencies separated by a space
     concatenated_rates = " ".join(map(str, state_frequencies.values()))
 
@@ -732,13 +768,12 @@ def parse_rate_and_frequencies_and_create_model_files(
 
     return state_frequencies.values(), model_and_frequency
 
+
 ##############################################################################################################
 delete_directory_contents("./test_cladding_and_subsequence")
 number_rates = 4
 dimension = 4
-site_probability = parse_file_to_dataframe(
-    "./Clemens/example_4/example.txt.siteprob"
-)
+site_probability = parse_file_to_dataframe("./Clemens/example_4/example.txt.siteprob")
 folder_path = "test_cladding_and_subsequence"
 msa_file_name = "./Clemens/example_4/example.txt"
 t = name_nodes_by_level_order(
@@ -746,14 +781,24 @@ t = name_nodes_by_level_order(
 )
 category_rate = parse_table("./Clemens/example_4/example.txt.iqtree")
 # Parse state frequencies from the log content
-#state_frequencies = parse_rate_and_frequencies_and_create_model_files("./test_cladding_and_subsequence", number_rates, dimension, model="JC")
-state_frequencies = parse_state_frequencies("./Clemens/example_4/example.txt.iqtree", dimension=dimension)
-(rate_matrix, phi_matrix) = parse_rate_matrices(dimension, "./Clemens/example_4/example.txt")
+# state_frequencies = parse_rate_and_frequencies_and_create_model_files("./test_cladding_and_subsequence", number_rates, dimension, model="JC")
+state_frequencies = parse_state_frequencies(
+    "./Clemens/example_4/example.txt.iqtree", dimension=dimension
+)
+(rate_matrix, phi_matrix) = parse_rate_matrices(
+    dimension, "./Clemens/example_4/example.txt"
+)
 if number_rates != 1:
     split_msa_into_rate_categories(site_probability, folder_path, msa_file_name)
 
 generate_write_subtree_pairs_and_msa(
-    number_rates, t, folder_path, msa_file_name, category_rate, state_frequencies, rate_matrix
+    number_rates,
+    t,
+    folder_path,
+    msa_file_name,
+    category_rate,
+    state_frequencies,
+    rate_matrix,
 )
 
 import shutil
@@ -763,7 +808,7 @@ dst_path = r"./test_cladding_and_subsequence/subsequence1/model.txt"
 shutil.copy(src_path, dst_path)
 
 run_iqtree_for_each_clade_parallel(
-    "./test_cladding_and_subsequence", 
+    "./test_cladding_and_subsequence",
     4,
     1,
     "iqtree2",
