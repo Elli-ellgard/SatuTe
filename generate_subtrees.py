@@ -12,6 +12,7 @@ import subprocess
 from multiprocessing import Pool
 from functools import partial
 from scipy.sparse.linalg import expm
+from satute_util import spectral_decomposition
 from satute_repository import (
     parse_state_frequencies,
     parse_rate_matrices,
@@ -21,6 +22,38 @@ from satute_util import (
     node_type,
     branch_lengths,
 )
+import shutil
+import glob
+from satute_util import calculate_test_statistic, write_results_and_newick_tree
+from satute_repository import parse_output_state_frequencies
+
+
+import logging
+
+
+def initialize_logger(log_file):
+    # Create a logger instance
+    logger = logging.getLogger("my_logger")
+    logger.setLevel(logging.DEBUG)
+
+    # Create a file handler and set its level to DEBUG
+    file_handler = logging.FileHandler(log_file)
+    file_handler.setLevel(logging.DEBUG)
+
+    # Create a console handler and set its level to INFO
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(logging.INFO)
+
+    # Create a formatter and set it for the handlers
+    formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+    file_handler.setFormatter(formatter)
+    console_handler.setFormatter(formatter)
+
+    # Add the handlers to the logger
+    logger.addHandler(file_handler)
+    logger.addHandler(console_handler)
+
+    return logger
 
 
 def run_iqtree_for_each_clade(
@@ -187,13 +220,12 @@ def get_likelihood(transition_matrix, state, state_frequencies):
 
 
 def generate_output_state_file_for_cherry(
-    alignment, file_path, state_frequencies, rate_matrix
+    alignment, tree, file_path, state_frequencies, rate_matrix
 ):
     # get branch lengths
-    tree_file = f"{file_path}subtree.treefile"
-    T = parse_newick_file(tree_file)
-    leaves, internal_nodes = node_type(T)
-    vector_branches, vector_distances = branch_lengths(T)
+    leaves = get_leaves(tree)
+
+    vector_branches, vector_distances = branch_lengths(tree)
 
     # get transitions matrix with the time given as branch lengths
     transition_matrices = []
@@ -222,19 +254,15 @@ def generate_output_state_file_for_cherry(
             )
             # calculate the partial likelihood vector
             likelihood = np.asarray(likelihood_left) * np.asarray(likelihood_right)
-            print(likelihood)
-            scale_factor = np.asarray(likelihood)@ np.asarray(
+            scale_factor = np.asarray(likelihood) @ np.asarray(
                 list(state_frequencies.values())
             )
-            print(scale_factor)
             # transform the partial likelihood vector into the posterior distribution
             distribution = (
                 np.asarray(likelihood)
                 * np.asarray(list(state_frequencies.values()))
                 / scale_factor
             )
-            print(distribution)
-            print("="*10)
             values = "\t".join(
                 "{:.5f}".format(distribution[value]) for value in range(4)
             )
@@ -328,6 +356,7 @@ def write_subtree_and_sub_alignments(
         elif len(first_subtree.get_descendants()) + 1 == 3:
             generate_output_state_file_for_cherry(
                 first_sub_alignment,
+                first_subtree,
                 first_subtree_dir,
                 state_frequencies,
                 rate_matrix,
@@ -341,14 +370,15 @@ def write_subtree_and_sub_alignments(
             )
         elif len(second_subtree.get_descendants()) + 1 == 3:
             generate_output_state_file_for_cherry(
-                second_sub_alignment,
-                second_subtree_dir,
+                first_sub_alignment,
+                first_subtree,
+                first_subtree_dir,
                 state_frequencies,
                 rate_matrix,
             )
 
 
-def parse_file_to_dataframe(file_path):
+def parse_file_to_data_frame(file_path):
     try:
         # Read the file into a dataframe
         df = pd.read_csv(file_path, delimiter="\t")
@@ -456,11 +486,6 @@ def generate_write_subtree_pairs_and_msa(
             # Write subtree pairs to files in the new directory
             # Call function to get all subtrees from t, assuming the function is defined elsewhere
             subtrees = get_all_subtrees(rescaled_tree)
-
-            # Discard the first subtree, assuming we don't need it
-            # subtrees = subtrees[1:]
-            # for tree in subtrees:
-            #    print(tree.write())
 
             # Generate subtree pairs, assuming the function is defined elsewhere
             generated_subtree_pairs = generate_subtree_pair(subtrees, rescaled_tree)
@@ -585,7 +610,7 @@ def split_msa_into_rate_categories(site_probability, folder_path, msa_file_name)
         )
 
 
-def parse_table(log_file):
+def parse_category_rates(log_file):
     f = open(log_file, "r")
     lines = f.readlines()
     f.close()
@@ -598,7 +623,9 @@ def parse_table(log_file):
     for i, line in enumerate(lines):
         if line.strip().startswith("Category"):
             start_index = i + 1
-        elif line.strip().startswith("MAXIMUM LIKELIHOOD TREE"):
+        elif line.strip().startswith(
+            "Relative rates are computed as MEAN of the portion of the Gamma distribution falling in the category."
+        ):
             end_index = i
             break
 
@@ -606,7 +633,7 @@ def parse_table(log_file):
         raise ValueError("Table not found in the log file.")
 
     # Parse the table rows
-    table_lines = lines[start_index : end_index - 2]
+    table_lines = lines[start_index:end_index]
 
     for line in table_lines:
         line = line.strip()
@@ -623,6 +650,7 @@ def parse_table(log_file):
                         "Proportion": proportion,
                     }
                 )
+    print(table_data)
     return table_data
 
 
@@ -662,8 +690,8 @@ def execute_iqtree(sub_dir, iqtree_path, model_and_frequency):
         )
 
 
-def run_iqtree_for_each_clade_parallel(
-    path_folder, number_rates, chosen_rate, iqtree_path
+def run_iqtree_for_each_subtree_parallel(
+    path_folder, number_rates, chosen_rate, iqtree_path, model_and_frequency=""
 ):
     """
     Run IQ-TREE for each clade directory in parallel.
@@ -681,35 +709,22 @@ def run_iqtree_for_each_clade_parallel(
         RuntimeError: If IQ-TREE command fails.
 
     """
-    model_and_frequency = ""
-    clade_dir = ""
+
+    subtrees_dir = ""
 
     # Determine path and model based on number of rates
     if number_rates > 1:
         subtrees_dir = os.path.join(
             path_folder, f"subsequence{chosen_rate}", "subtrees"
         )
-        model_and_frequency_file = os.path.join(
-            path_folder, f"subsequence{chosen_rate}", "model.txt"
-        )
+
     else:
         subtrees_dir = os.path.join(path_folder, "subtrees")
-        model_and_frequency_file = os.path.join(path_folder, "model.txt")
-
-    # Check if model and frequency file exists
-    if not os.path.isfile(model_and_frequency_file):
-        raise FileNotFoundError(
-            f"The model and frequency file '{model_and_frequency_file}' does not exist."
-        )
-
-    # Read model and frequency
-    with open(model_and_frequency_file, "r") as toModel:
-        model_and_frequency = toModel.readline().strip()
 
     # Check if clade directory exists and is a directory
     if not os.path.isdir(subtrees_dir):
         raise NotADirectoryError(
-            f"The clade directory '{clade_dir}' does not exist or is not a directory."
+            f"The subtrees directory '{subtrees_dir}' does not exist or is not a directory."
         )
 
     # Create a list of subtree directories for internal branches
@@ -731,20 +746,10 @@ def run_iqtree_for_each_clade_parallel(
 
 
 def parse_rate_and_frequencies_and_create_model_files(
-    path, number_rates, dimension, model="GTR"
+    input_path, dimension, model="GTR"
 ):
-    """
-    Parse the rate parameter and state frequencies from the IQ-TREE log file and
-    create model files based on these parameters.
-    """
-
-    def _write_model_file(path, content):
-        """Helper function to write model and frequency tokens into a file."""
-        with open(path, "w") as f:
-            f.write(content)
-
     # Construct the model string with parsed rate parameters
-    log_file_path = f"{path}.iqtree"
+    log_file_path = f"{input_path}.iqtree"
     model_final = parse_rate_parameters(log_file_path, dimension, model=model)
 
     # Parse state frequencies from the log content
@@ -756,73 +761,275 @@ def parse_rate_and_frequencies_and_create_model_files(
     # Construct command line tokens for model and frequency
     model_and_frequency = f"{model_final}+FU{{{concatenated_rates}}}"
 
-    # Get the directory of the path
-    path_folder = os.path.dirname(path)
-
-    # Write the model and frequency tokens into 'model.txt' files
-    if number_rates == 1:
-        _write_model_file(os.path.join(path_folder, "model.txt"), model_and_frequency)
-    else:
-        for i in range(1, number_rates + 1):
-            subsequence_folder = os.path.join(path_folder, f"subsequence{i}")
-            _write_model_file(
-                os.path.join(subsequence_folder, "model.txt"), model_and_frequency
-            )
-
     return state_frequencies.values(), model_and_frequency
 
 
+def fetch_subdirectories(directory, prefix):
+    pattern = os.path.join(directory, prefix + "*")
+    subdirectories = glob.glob(pattern)
+    return subdirectories
+
+
 ##############################################################################################################
-delete_directory_contents("./test_cladding_and_subsequence")
-folder="./Clemens/toy_example_GTR+G4/"
-example=folder + "toy_example_ntaxa_7_run_1-alignment.phy"
+def build_tree_test_space(number_rates, msa_file_name, target_directory, dimension=4):
+    site_probability = parse_file_to_data_frame(f"{msa_file_name}.siteprob")
+    t = name_nodes_by_level_order(parse_newick_file(f"{msa_file_name}.treefile"))
 
-number_rates = 4
-dimension = 4
-site_probability = parse_file_to_dataframe(
-    example + ".siteprob"
-)
-folder_path = "test_cladding_and_subsequence"
-msa_file_name = example
-t = name_nodes_by_level_order(
-    parse_newick_file(example + ".treefile")
-)
-category_rate = parse_table(example + ".iqtree")
-# Parse state frequencies from the log content
-#state_frequencies = parse_rate_and_frequencies_and_create_model_files("./test_cladding_and_subsequence", number_rates, dimension, model="JC")
-state_frequencies = parse_state_frequencies(example +".iqtree", dimension=dimension)
-(rate_matrix, phi_matrix) = parse_rate_matrices(dimension, example)
-if number_rates != 1:
-    split_msa_into_rate_categories(site_probability, folder_path, msa_file_name)
+    category_rate = ""
+    state_frequencies = parse_state_frequencies(
+        f"{msa_file_name}.iqtree", dimension=dimension
+    )
 
-generate_write_subtree_pairs_and_msa(
-    number_rates, t, folder_path, msa_file_name, category_rate, state_frequencies, rate_matrix
-)
+    (rate_matrix, phi_matrix) = parse_rate_matrices(dimension, msa_file_name)
 
-import shutil
+    if number_rates != 1:
+        split_msa_into_rate_categories(
+            site_probability, target_directory, msa_file_name
+        )
 
-src_path = folder+"/subsequences/subseq1/model.txt"
-dst_path = r"./test_cladding_and_subsequence/subsequence1/model.txt"
-shutil.copy(src_path, dst_path)
+        category_rate = parse_category_rates(f"{msa_file_name}.iqtree")
 
-run_iqtree_for_each_clade_parallel(
-    "./test_cladding_and_subsequence", 
-    4,
-    1,
-    "iqtree2",
-)
+    generate_write_subtree_pairs_and_msa(
+        number_rates,
+        t,
+        target_directory,
+        msa_file_name,
+        category_rate,
+        state_frequencies,
+        rate_matrix,
+    )
 
-"""run_iqtree_for_each_clade(
+
+def run_saturation_test_for_branches_and_categories(
+    input_directory,
+    target_directory,
+    number_rates,
+    t,
+    dimension,
+    alpha=0.01,
+):
+    internal_branch_count = len(t.get_descendants())
+
+    """ get the right eigenvector(s) of the dominate non-zero eigenvalue"""
+    array_eigenvectors, multiplicity = spectral_decomposition(
+        dimension, input_directory
+    )
+
+    vector_branches, vector_distances = branch_lengths(t)
+
+    results_list = {}
+    if number_rates != 1:
+        for rate in range(1, number_rates + 1, 1):
+            results_list[rate] = []
+
+            for branch_index in range(0, internal_branch_count):
+                subtree_directories = fetch_subdirectories(
+                    f"{target_directory}/subsequence{rate}/subtrees",
+                    f"branch_{branch_index}",
+                )
+
+                # read the posterior probabilities of the left subtree from .state file
+                posterior_probabilities_left_subtree = parse_output_state_frequencies(
+                    f"{subtree_directories[0]}/output.state"
+                )
+                # read the posterior probabilities of the right subtree from .state file
+                posterior_probabilities_right_subtree = parse_output_state_frequencies(
+                    f"{subtree_directories[1]}/output.state"
+                )
+
+                results = run_saturation_test_for_branch(
+                    multiplicity,
+                    array_eigenvectors,
+                    "internal",
+                    dimension,
+                    alpha,
+                    posterior_probabilities_left_subtree,
+                    posterior_probabilities_right_subtree,
+                )
+
+                results["vector_branches"] = vector_branches[branch_index]
+                results_list[rate].append(results)
+
+            print(f"Results for rate {rate}")
+
+            write_results_and_newick_tree(
+                results_list[rate],
+                t.write(format=1),
+                target_directory,
+                rate,
+                results_list[rate][0]["c_s_two_sequence"],
+                t,
+            )
+
+    else:
+        results_list[number_rates] = []
+        for branch_index in range(0, internal_branch_count):
+            subtree_directories = fetch_subdirectories(
+                f"{target_directory}/subtrees",
+                f"branch_{branch_index}",
+            )
+
+            # read the posterior probabilities of the left subtree from .state file
+            posterior_probabilities_left_subtree = parse_output_state_frequencies(
+                f"{subtree_directories[0]}/output.state"
+            )
+            # # read the posterior probabilities of the right subtree from .state file
+            posterior_probabilities_right_subtree = parse_output_state_frequencies(
+                f"{subtree_directories[1]}/output.state"
+            )
+
+            results = run_saturation_test_for_branch(
+                multiplicity,
+                array_eigenvectors,
+                "internal",
+                dimension,
+                alpha,
+                posterior_probabilities_left_subtree,
+                posterior_probabilities_right_subtree,
+            )
+
+            results_list[number_rates].append(results)
+
+            write_results_and_newick_tree(
+                results_list[number_rates],
+                t.write(format=1),
+                target_directory,
+                1,
+                results_list[number_rates][0]["c_s_two_sequence"],
+                t,
+            )
+
+
+def run_saturation_test_for_branch(
+    multiplicity,
+    array_eigenvectors,
+    branch_type,
+    dimension,
+    alpha,
+    posterior_probabilities_left_subtree,
+    posterior_probabilities_right_subtree,
+):
+    (
+        delta,
+        c_s,
+        c_s_two_sequence,
+        p_value,
+        result_test,
+        result_test_tip2tip,
+    ) = calculate_test_statistic(
+        multiplicity,
+        array_eigenvectors,
+        posterior_probabilities_left_subtree,
+        posterior_probabilities_right_subtree,
+        dimension,
+        branch_type,
+        alpha,
+    )
+
+    return {
+        "delta": delta,
+        "c_s": c_s,
+        "c_s_two_sequence": c_s_two_sequence,
+        "p_value": p_value,
+        "result_test": result_test,
+        "result_test_tip2tip": result_test_tip2tip,
+    }
+
+
+if __name__ == "__main__":
+    # Create a variable called input_directory_file and set it equal to the path to the input data file
+    input_directory_file = "./test/octo-kraken-msa-test/example.phy"
+    # Create a variable called target_directory_path and set it equal to the path to the target directory
+    target_directory_path = "./test_cladding_without_gamma"
+    # Create a variable called number_rates and set it equal to the number of rates you want to test
+    number_rates = 1
+    model = "GTR"
+
+    # Delete the contents of the target_directory_path directory
+    delete_directory_contents(target_directory_path)
+
+    (
+        state_frequencies,
+        model_and_frequency,
+    ) = parse_rate_and_frequencies_and_create_model_files(
+        input_path=input_directory_file,
+        dimension=4,
+        model=model,
+    )
+
+    # Build the tree test space
+    build_tree_test_space(
+        number_rates=1,
+        msa_file_name=input_directory_file,
+        target_directory=target_directory_path,
+    )
+
+    # For each rate, run IQ-TREE for each clade in parallel
+    for i in range(1, number_rates + 1, 1):
+        run_iqtree_for_each_subtree_parallel(
+            target_directory_path, number_rates, i, "iqtree"
+        )
+
+    # Run the saturation test
+    run_saturation_test_for_branches_and_categories(
+        input_directory="./test/octo-kraken-msa-test/example.phy",
+        target_directory=target_directory_path,
+        dimension=4,
+        number_rates=number_rates,
+        t=parse_newick_file("./test/octo-kraken-msa-test/example.phy.treefile"),
+    )
+
+
+# TODO
+# folder = "./Clemens/toy_example_GTR+G4/"
+# example = folder + "toy_example_ntaxa_7_run_1-alignment.phy"
+# number_rates = 4
+# dimension = 4
+# site_probability = parse_file_to_dataframe(example + ".siteprob")
+# folder_path = "test_cladding_and_subsequence"
+# msa_file_name = example
+# t = name_nodes_by_level_order(parse_newick_file(example + ".treefile"))
+# category_rate = parse_table(example + ".iqtree")
+# # Parse state frequencies from the log content
+# # state_frequencies = parse_rate_and_frequencies_and_create_model_files("./test_cladding_and_subsequence", number_rates, dimension, model="JC")
+# state_frequencies = parse_state_frequencies(example + ".iqtree", dimension=dimension)
+# (rate_matrix, phi_matrix) = parse_rate_matrices(dimension, example)
+# if number_rates != 1:
+#     split_msa_into_rate_categories(site_probability, folder_path, msa_file_name)
+# src_path = folder + "/subsequences/subseq1/model.txt"
+# dst_path = r"./test_cladding_and_subsequence/subsequence1/model.txt"
+# shutil.copy(src_path, dst_path)
+# generate_write_subtree_pairs_and_msa(
+#     number_rates,
+#     t,
+#     folder_path,
+#     msa_file_name,
+#     category_rate,
+#     state_frequencies,
+#     rate_matrix,
+# )
+#
+# run_iqtree_for_each_clade_parallel(
+#
+#     "./test_cladding_and_subsequence",
+#
+#     4,
+#
+#     1,
+#
+#     "iqtree2",
+#
+# )
+
+"""
+run_iqtree_for_each_clade(
     "./test_cladding_and_subsequence",
     4,
     1,
     "iqtree",
     "GTR{3.9907,5.5183,4.1388,0.4498,16.8174}+FU{0.3547 0.2282 0.1919 0.2252}",
-)"""
-
-
-
-
+)
+"""
 """"summary TODO:
     - check if the transition matrix is a real transition matrix
     - we should think about create a directory of the state_space at the beginning of the programm and use it for dimension stuff

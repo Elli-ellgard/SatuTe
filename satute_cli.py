@@ -3,12 +3,18 @@ import sys
 import argparse
 import os
 import logging
-import subprocess
 from pathlib import Path
 import re
 import subprocess
 import os
 from satute_util import saturation_test_cli
+from generate_subtrees import (
+    parse_rate_and_frequencies_and_create_model_files,
+    build_tree_test_space,
+    run_iqtree_for_each_subtree_parallel,
+    run_saturation_test_for_branches_and_categories,
+)
+from ete3 import Tree
 
 
 # Configure the logging settings (optional)
@@ -24,8 +30,9 @@ from rich.text import Text
 from satute_exception import (
     InputArgumentsError,
     InvalidDirectoryError,
-    NoAlignmentFileError
+    NoAlignmentFileError,
 )
+
 
 def print_ascii_art(ascii_art):
     console = Console()
@@ -76,22 +83,22 @@ GJ7~~~~~~~~~~!77?YPB&@@@@#&&!B@@Y~~~~~7G@@@@?~~~~~~~!7B#&@@@BJ7?JJJYY5#P55!~P@J~
 =================================================================================
 """
 
-def parse_rate_from_model(model):
 
+def parse_rate_from_model(model):
     # Find the index of '+G' and '+R' in the model string
     plus_g_index = model.find("+G")
     plus_r_index = model.find("+R")
 
     if plus_g_index != -1 and plus_r_index != -1:
         raise ValueError("Cannot use +G and +R")
-        
-    if plus_g_index != -1: 
+
+    if plus_g_index != -1:
         rate_start_index = plus_g_index + 2
     elif plus_r_index != -1:
         rate_start_index = plus_r_index + 2
-    else: 
-        return 1 # default number_rates = 1 if no +G or +R model 
-    
+    else:
+        return 1  # default number_rates = 1 if no +G or +R model
+
     try:
         # Extract the substring after '+G'
         number = model[rate_start_index:]
@@ -261,14 +268,20 @@ class Satute:
 
         # Running IQ-TREE with constructed arguments
         # If no model specified in input arguments, extract best model from log file
+
+        print(arguments_dict)
+
         if not self.input_args.model:
+
             self.run_iqtree_with_arguments(
                 arguments_dict["arguments"], ["-m", "TESTONLY", "--redo", "--quiet"]
             )
+
             substitution_model = parse_substitution_model(
                 str(arguments_dict["msa_file"]) + ".iqtree"
             )
 
+           
             logger.info(f"Best model: {substitution_model}")
             logger.info(
                 f"Running a second time with the best model: {substitution_model}"
@@ -276,7 +289,6 @@ class Satute:
             # Update model in input arguments and re-construct arguments
             self.input_args.model = substitution_model
             arguments_dict = self.construct_arguments()
-        
 
         # =========  Number Rate Handling =========
         number_rates = 1
@@ -285,9 +297,11 @@ class Satute:
             if self.input_args.model:
                 number_rates_model = parse_rate_from_model(self.input_args.model)
                 if self.input_args.nr == number_rates_model:
-                    number_rates =self.input_args.nr
+                    number_rates = self.input_args.nr
                 else:
-                    raise InputArgumentsError("Input number of rates is unequal to number of rates of the model!")   
+                    raise InputArgumentsError(
+                        "Input number of rates is unequal to number of rates of the model!"
+                    )
             else:
                 number_rates = self.input_args.nr
         else:
@@ -304,15 +318,15 @@ class Satute:
         # Validate and append ufboot and boot parameters to extra_arguments
         extra_arguments = extra_arguments + self.validate_and_append_boot_arguments()
 
-        # Check if the IQ-TREE state file exists and 
+        # Check if the IQ-TREE state file exists and
         # check in the case of a +G or +R model if the IQ-Tree siteprob file exists
         # if necessary  we have to rerun IQ-TREE
         state_file = self.find_file({".state"})
         site_probability_file = self.find_file({".siteprob"})
-        if state_file is None or (number_rates > 1 and site_probability_file is None): 
-             self.run_iqtree_with_arguments(
-                 arguments=arguments_dict["arguments"], extra_arguments=extra_arguments
-             )
+        if state_file is None or (number_rates > 1 and site_probability_file is None):
+            self.run_iqtree_with_arguments(
+                arguments=arguments_dict["arguments"], extra_arguments=extra_arguments
+            )
 
         # ======== Tree File Handling =========
         newick_string = self.get_newick_string_from_args()
@@ -325,21 +339,52 @@ class Satute:
             f"Initial Arguments for IQ-Tree: \n {' '.join(arguments_dict['arguments'])}"
         )
 
-        for i in range(number_rates):
-            logger.info(f"Here comes the {i + 1} th fastest evolving region: ")
+        (
+            state_frequencies,
+            model_and_frequency,
+        ) = parse_rate_and_frequencies_and_create_model_files(
+            input_path=f"{self.input_args.msa}",
+            dimension=4,
+            model=self.input_args.model,
+        )
 
-            saturation_test_cli(
-                str(arguments_dict["msa_file"]),
-                newick_string,
-                str(self.input_args.iqtree),
-                4,
-                number_rates,
-                str(number_rates - i),
-                self.input_args.alpha,
-                1,
-                0.01,
-                self.input_args.model,
+        # Build the tree test space
+        build_tree_test_space(
+            number_rates=number_rates,
+            msa_file_name=str(arguments_dict["msa_file"]),
+            target_directory=self.active_directory,
+        )
+
+        # For each rate, run IQ-TREE for each clade in parallel
+        for i in range(1, number_rates + 1, 1):
+            run_iqtree_for_each_subtree_parallel(
+                self.active_directory, number_rates, i, "iqtree"
             )
+
+
+        # Run the saturation test
+        run_saturation_test_for_branches_and_categories(
+            input_directory=str(arguments_dict["msa_file"]),
+            target_directory=self.active_directory,
+            dimension=4,
+            number_rates=number_rates,
+            t=Tree(newick_string, format=1),
+        )
+
+        # for i in range(number_rates):
+        #     logger.info(f"Here comes the {i + 1} th fastest evolving region: ")
+        #     saturation_test_cli(
+        #         str(arguments_dict["msa_file"]),
+        #         newick_string,
+        #         str(self.input_args.iqtree),
+        #         4,
+        #         number_rates,
+        #         str(number_rates - i),
+        #         self.input_args.alpha,
+        #         1,
+        #         0.01,
+        #         self.input_args.model,
+        #     )
 
         # Writing log file
         self.write_log(arguments_dict["msa_file"])
@@ -379,7 +424,7 @@ class Satute:
         if self.input_args.dir:
             self.input_args.dir = Path(self.input_args.dir)
             self.active_directory = self.input_args.dir
- 
+
         if self.input_args.iqtree:
             self.input_args.iqtree = Path(self.input_args.iqtree)
 
@@ -398,13 +443,13 @@ class Satute:
 
             if not os.listdir(self.input_args.dir):
                 raise InvalidDirectoryError("Input directory is empty")
-            
+
             # Find iqtree file and extract model
             iqtree_file = self.find_file({".iqtree"})
             if iqtree_file:
                 substitution_model = parse_substitution_model(iqtree_file)
                 self.input_args.model = substitution_model
-                        
+
             # Find the tree and sequence alignment files in the directory
             tree_file = self.find_file(tree_file_types)
             msa_file = self.find_file(msa_file_types)
@@ -436,8 +481,6 @@ class Satute:
                 argument_option["option"] = "msa + tree"
                 argument_option["arguments"].extend(["-te", str(self.input_args.tree)])
 
-        
-
         # If a model was specified in the input arguments, add it to the argument options
         if self.input_args.model:
             argument_option["option"] += " + model"
@@ -445,8 +488,9 @@ class Satute:
             # If the model includes a Gamma distribution, add the corresponding argument
             if "+G" in self.input_args.model or "+R" in self.input_args.model:
                 argument_option["model_arguments"].extend(["-wspr"])
-        
+
         # Return the constructed argument options
+        
         return argument_option
 
     def find_file(self, suffixes):

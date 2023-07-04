@@ -18,12 +18,14 @@ from satute_repository import (
 from satute_test_statistic import calculate_test_statistic
 from satute_exception import InputArgumentsError
 
+
 def remove_filename(path):
     parts = path.split("/")
     nameFILE = parts[-2]
     parts.pop()
     pathFOLDER = "/".join(parts) + "/"  # Path where the we create folders
     return pathFOLDER
+
 
 """## INTERNAL NODES AND LEAVES"""
 
@@ -447,6 +449,7 @@ import os
 from multiprocessing import Pool
 from functools import partial
 
+
 def execute_iqtree(sub_dir, iqtree_path, model_and_frequency):
     # Command to be executed for each clade
     cmd = [
@@ -484,7 +487,10 @@ def execute_iqtree(sub_dir, iqtree_path, model_and_frequency):
             f"The command '{' '.join(cmd)}' failed with return code: {result.returncode}"
         )
 
-def run_iqtree_for_each_clade_parallel(path_folder, number_rates, chosen_rate, iqtree_path):
+
+def run_iqtree_for_each_clade_parallel(
+    path_folder, number_rates, chosen_rate, iqtree_path, mode
+):
     """
     Run IQ-TREE for each clade directory in parallel.
 
@@ -536,12 +542,13 @@ def run_iqtree_for_each_clade_parallel(path_folder, number_rates, chosen_rate, i
     clade_dirs = [sub_dir for sub_dir in Path(clade_dir).iterdir() if sub_dir.is_dir()]
 
     # Create a partial function with fixed arguments for execute_iqtree
-    execute_iqtree_partial = partial(execute_iqtree, iqtree_path=iqtree_path, model_and_frequency=model_and_frequency)
+    execute_iqtree_partial = partial(
+        execute_iqtree, iqtree_path=iqtree_path, model_and_frequency=model_and_frequency
+    )
 
     # Create a multiprocessing pool and map the execute_iqtree_partial function to clade_dirs
     with Pool() as pool:
         pool.map(execute_iqtree_partial, clade_dirs)
-
 
 
 """## DIVIDING SEQUENCE FILE INTO SUBFILES DEPENDING ON WHICH RATE IS MOST PROBABLE"""
@@ -578,35 +585,39 @@ def subsequences(T, path, epsilon, number_rates, option):
     for j in range(number_rates):
         numbersitesperrate.append(site_rate.count(j + 1))
 
-    assert(sum(numbersitesperrate)+number_unassigned_sites == length)
+    assert sum(numbersitesperrate) + number_unassigned_sites == length
 
-    file_with_list_category = open(
-        pathFolder + "category_assigment_per_site.txt","w"
+    file_with_list_category = open(pathFolder + "category_assigment_per_site.txt", "w")
+
+    file_with_list_category.write(
+        "{}\n\n{}\n\n".format("Number of sites of the original alignment: ", length)
     )
 
-    file_with_list_category.write("{}\n\n{}\n\n".format(
-                                  "Number of sites of the original alignment: ",
-                                  length
-                                  ))
-
-    file_with_list_category.write("{}\n{}\n{}\n\n".format(
-                                  "The following list has an entry per rate category.",
-                                  "It indicates how many sites are assigned to each category.",
-                                  "The first entry is the slowest-evolving rate."
-                                  ))
+    file_with_list_category.write(
+        "{}\n{}\n{}\n\n".format(
+            "The following list has an entry per rate category.",
+            "It indicates how many sites are assigned to each category.",
+            "The first entry is the slowest-evolving rate.",
+        )
+    )
     file_with_list_category.write(str(numbersitesperrate))
-    file_with_list_category.write("\n\n{}{}{}\n\n{}".format(
-                                "Number of sites not assigned to any category using threshold ",
-                                epsilon,
-                                ":",
-                                number_unassigned_sites))
+    file_with_list_category.write(
+        "\n\n{}{}{}\n\n{}".format(
+            "Number of sites not assigned to any category using threshold ",
+            epsilon,
+            ":",
+            number_unassigned_sites,
+        )
+    )
 
-    file_with_list_category.write("\n\n{}\n{}\n{}{}\n\n".format(
-                                  "The following list has an entry per alignment site.",
-                                  "A \"1\" indicates that the site was assigned to the slowest-evolving rate category.",
-                                  "A \"0\" indicates that all posterior probabilities were too similar to assign a category using threshold ", str(epsilon)
-                                    )
-                                    )
+    file_with_list_category.write(
+        "\n\n{}\n{}\n{}{}\n\n".format(
+            "The following list has an entry per alignment site.",
+            'A "1" indicates that the site was assigned to the slowest-evolving rate category.',
+            'A "0" indicates that all posterior probabilities were too similar to assign a category using threshold ',
+            str(epsilon),
+        )
+    )
     file_with_list_category.write(str(site_rate))
 
     if option == 1:
@@ -702,7 +713,7 @@ def save_clades(path, number_rates, clades1, clades2, newick_format, rates):
                 pathFolder + "clades/Branch" + str(i) + "_clade2/", exist_ok=True
             )
 
-            #f"(FOO:1((A:1,B:1):1,C:1));"
+            # f"(FOO:1((A:1,B:1):1,C:1));"
             # f"FOO:0.00000000010,({newickformat.remove(";")});"
 
             clades1[i] = (
@@ -833,8 +844,6 @@ def sequences_clades(
     internal_nodes,
     numbersitesperrate,
 ):
-    
-    
     pathFolder = remove_filename(path)
 
     if number_rates == 1:
@@ -1157,6 +1166,7 @@ def compare_arrays(array1, array2):
 
 """## SPECTRAL DECOMPOSITION OF THE RATE MATRIX"""
 
+
 def spectral_decomposition(n, path):
     rate_matrix, psi_matrix = parse_rate_matrices(n, path)
 
@@ -1170,16 +1180,16 @@ def spectral_decomposition(n, path):
     """ eigendecomposition of matrix M"""
     lamb, w = np.linalg.eig(M)  # Compute the eigenvalues and eigenvectors.
     idx = lamb.argsort()[::-1]  # Order from large to small.
-    lamb = lamb[idx] # Order the eigenvalues (large to small).
-    w = w[:, idx] # Order the eigenvectors according to the eigenvalues"""
+    lamb = lamb[idx]  # Order the eigenvalues (large to small).
+    w = w[:, idx]  # Order the eigenvectors according to the eigenvalues"""
 
     # the first one should be the eigenvalue 0 in lamb, why are we doing the following?
     lamb_nozero = []  # list of eigenvalues without 0
     for i in lamb:
         if i > 0.00999 or i < -0.00999:
             lamb_nozero.append(i)
-        
-    max_lambda = max(lamb_nozero)  # dominant non-zero eigenvalue 
+
+    max_lambda = max(lamb_nozero)  # dominant non-zero eigenvalue
     # get the indices of the dominant non-zero eigenvalue in lamb taking numerical inaccuracies into account and identical values
     index = []
     for i in range(len(lamb)):
@@ -1187,21 +1197,20 @@ def spectral_decomposition(n, path):
         if abs(lambda_it - max_lambda) < 0.01:
             index.append(i)
 
-    multiplicity = len(index) # multiplicity of the dominant non-zero eigenvalue
-    array_eigenvectors = [] # list of right eigenvectors for the dominant non-zero eigenvalue
+    multiplicity = len(index)  # multiplicity of the dominant non-zero eigenvalue
+    array_eigenvectors = (
+        []
+    )  # list of right eigenvectors for the dominant non-zero eigenvalue
     for i in range(multiplicity):
         # calculate the right eigenvectors for the dominant non-zero eigenvalue
-        v1 = (
-            scipy.linalg.fractional_matrix_power(psi_matrix, -1 / 2)
-            @ w[:, index[i]]
-            )
+        v1 = scipy.linalg.fractional_matrix_power(psi_matrix, -1 / 2) @ w[:, index[i]]
         array_eigenvectors.append(v1)
         """# calculate the left eigenvectors for the dominant non-zero eigenvalue
         h1 = (
             scipy.linalg.fractional_matrix_power(psi_matrix, +1 / 2)
             @ w[:, index[i]]
             ) """
-        
+
     return array_eigenvectors, multiplicity
 
 
@@ -1209,10 +1218,10 @@ def spectral_decomposition(n, path):
 
 
 def convert_newick_to_satute_ete3_format(t, newick_format):
-    #print(newick_format)
+    # print(newick_format)
     T = Tree(t, format=newick_format)
-    #print(t)
-    #print(T.write(format=newick_format))
+    # print(t)
+    # print(T.write(format=newick_format))
 
     for node in T.traverse("levelorder"):
         l = len(node.name)
@@ -1268,7 +1277,7 @@ def convert_newick_to_satute_ete3_format(t, newick_format):
         if t[i : i + 2] == ",)":
             t = t.replace(t[i : i + 2], ")")
 
-    t+=";"
+    t += ";"
     T = Tree(t, format=newick_format)
 
     return t, T
@@ -1291,9 +1300,8 @@ def guess_msa_file_format(file_path):
     # FASTA files typically start with a '>' character
     elif first_line.startswith(">"):
         return 2  #'FASTA'
-    #else:
+    # else:
     #    raise InputArgumentsError("Wrong msa file format!")
-
 
 
 def write_results_and_newick_tree(
@@ -1312,18 +1320,18 @@ def write_results_and_newick_tree(
     """
 
     # Convert the results_list into a pandas dataframe
-    saturation_branches_dataframe = pd.DataFrame(results_list)
+    saturation_branches_data_frame = pd.DataFrame(results_list)
+
+    print(saturation_branches_data_frame)
 
     # Save the dataframe as a tab-separated CSV file
-    saturation_branches_dataframe.to_csv(
+    saturation_branches_data_frame.to_csv(
         f"{path_folder}/resultsRate{chosen_rate}.satute.csv",
         header=True,
         index=None,
         sep="\t",
-        mode="a",
+        mode="w",
     )
-
-
 
     # Generate a newick string with saturation information
     saturation_information_newick_string = map_values_to_newick(
@@ -1350,13 +1358,15 @@ def write_results_and_newick_tree(
             T.copy("newick").get_ascii(attributes=["name", "label", "distance"])
         )
 
-        # Tree without saturation values            
+        # Tree without saturation values
         satute_result_file.write(f"\n\n Tree with saturation values: {newick_string}")
         # Write the saturation information newick string to the file
-        satute_result_file.write(f"\n\n Tree with saturation values: {saturation_information_newick_string}")
+        # satute_result_file.write(f"\n\n Tree with saturation values: {saturation_information_newick_string}")
 
 
 """ # MAIN FUNCTION FOR THE SATURATION TEST """
+
+
 def saturation_test_cli(
     pathDATA,
     newick_string,
@@ -1420,14 +1430,16 @@ def saturation_test_cli(
     if number_rates > 1:
         numbersitesperrate = subsequences(T, pathDATA, epsilon, number_rates, option)
         rates = save_rates(pathDATA, number_rates)
-        if numbersitesperrate[int(chosen_rate)-1] == 0:
-            #TODO: This should be printed to a log file
-            print("No site was assigned to the ", number_rates - int(chosen_rate) +1 , "th fastest evolving region.")
+        if numbersitesperrate[int(chosen_rate) - 1] == 0:
+            # TODO: This should be printed to a log file
+            print(
+                "No site was assigned to the ",
+                number_rates - int(chosen_rate) + 1,
+                "th fastest evolving region.",
+            )
             return
     else:
         rates = 1
-
-
 
     clades1, clades2 = clades(T, t, newick_format, internal_nodes, leaves)
 
@@ -1471,7 +1483,7 @@ def saturation_test_cli(
     array_eigenvectors, multiplicity = spectral_decomposition(dimension, pathDATA)
 
     """ calculate the posterior probabilities using IQ-TREE, see .state files"""
-    #run_iqtree_for_each_clade_parallel(pathFOLDER, number_rates, chosen_rate, pathIQTREE)
+    # run_iqtree_for_each_clade_parallel(pathFOLDER, number_rates, chosen_rate, pathIQTREE)
     run_iqtree_for_each_clade(pathFOLDER, number_rates, chosen_rate, pathIQTREE)
 
     print(
@@ -1482,14 +1494,13 @@ def saturation_test_cli(
 
     """ Calculations of the saturation test for each branch"""
     for i in range(0, len(internal_nodes) + len(leaves)):
-       
-        """ preparation for results file """
+        """preparation for results file"""
         if i == 0:
             T = Tree(t, format=newick_format)
 
             results_file = open(
                 pathFOLDER + "/resultsRate" + chosen_rate + ".txt", "w"
-            ) # To store test results. We open file in first iteration (branch).
+            )  # To store test results. We open file in first iteration (branch).
 
             results_file.write("\n")
             results_file.write(
@@ -1525,12 +1536,19 @@ def saturation_test_cli(
             posterior_probabilities_right_subtree = parse_output_state_frequencies(
                 f"{pathFOLDER}/subsequences/subseq{chosen_rate}/clades/Branch{i}_clade2/output.state"
             )
-        
+
         """ calculation of the test-statistic"""
         if i < len(internal_nodes):
             branch_type = "internal"
 
-        delta, c_s,c_sTwoSequence, p_value, result_test, result_test_tip2tip = calculate_test_statistic(
+        (
+            delta,
+            c_s,
+            c_sTwoSequence,
+            p_value,
+            result_test,
+            result_test_tip2tip,
+        ) = calculate_test_statistic(
             multiplicity,
             array_eigenvectors,
             posterior_probabilities_left_subtree,
@@ -1576,7 +1594,7 @@ def saturation_test_cli(
     results_file.write(
         T.copy("newick").get_ascii(attributes=["name", "label", "distance"])
     )
-    #results_file.close()
+    # results_file.close()
 
     print(
         "\n\nThe T2T status uses as threshold the saturation coherence between two sequences, which is ",
