@@ -272,7 +272,6 @@ class Satute:
         print(arguments_dict)
 
         if not self.input_args.model:
-
             self.run_iqtree_with_arguments(
                 arguments_dict["arguments"], ["-m", "TESTONLY", "--redo", "--quiet"]
             )
@@ -281,7 +280,6 @@ class Satute:
                 str(arguments_dict["msa_file"]) + ".iqtree"
             )
 
-           
             logger.info(f"Best model: {substitution_model}")
             logger.info(
                 f"Running a second time with the best model: {substitution_model}"
@@ -348,11 +346,20 @@ class Satute:
             model=self.input_args.model,
         )
 
+        logger.info(
+            f"Run with model and frequencies: \n {' '.join(model_and_frequency)}"
+        )
+        logger.info(f"Building tree test space with {number_rates} rate categories")
+
         # Build the tree test space
         build_tree_test_space(
             number_rates=number_rates,
             msa_file_name=str(arguments_dict["msa_file"]),
             target_directory=self.active_directory,
+        )
+
+        logger.info(
+            f"Run IQ-Tree for each subtree in parallel with {number_rates} rate categories"
         )
 
         # For each rate, run IQ-TREE for each clade in parallel
@@ -361,6 +368,13 @@ class Satute:
                 self.active_directory, number_rates, i, "iqtree"
             )
 
+        logger.info(
+            f"Run test for saturation for each branch and category with {number_rates} rate categories"
+        )
+
+        logger.info(
+            "Results will be written to the directory: " + self.active_directory.name
+        )
 
         # Run the saturation test
         run_saturation_test_for_branches_and_categories(
@@ -490,7 +504,7 @@ class Satute:
                 argument_option["model_arguments"].extend(["-wspr"])
 
         # Return the constructed argument options
-        
+
         return argument_option
 
     def find_file(self, suffixes):
