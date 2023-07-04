@@ -1,0 +1,4 @@
+3 4
+t2*        TTAA
+t3*        TTGC
+FOO  NNNA

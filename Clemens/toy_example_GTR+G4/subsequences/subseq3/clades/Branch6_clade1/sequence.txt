@@ -1,0 +1,4 @@
+3 4
+t5*        TACG
+copy_t5*        TACG
+FOO  NNNA

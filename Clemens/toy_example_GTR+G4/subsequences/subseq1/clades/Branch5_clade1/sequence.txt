@@ -1,0 +1,4 @@
+3 4
+t2*        TACA
+copy_t2*        TACA
+FOO  NNNA

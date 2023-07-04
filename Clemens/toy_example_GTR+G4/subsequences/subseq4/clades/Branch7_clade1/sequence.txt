@@ -1,0 +1,4 @@
+3 6
+t1*        AAT-TA
+copy_t1*        AAT-TA
+FOO  NNNNNA

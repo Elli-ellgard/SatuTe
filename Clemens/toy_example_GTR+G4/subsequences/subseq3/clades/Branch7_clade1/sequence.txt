@@ -1,0 +1,4 @@
+3 4
+t1*        ACCT
+copy_t1*        ACCT
+FOO  NNNA

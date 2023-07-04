@@ -1,0 +1,4 @@
+3 6
+t3*        ATGTGG
+copy_t3*        ATGTGG
+FOO  NNNNNA

@@ -1,0 +1,7 @@
+6 4
+t2*        TTAA
+t5*        TACG
+t6*        AACA
+t4*        ACAT
+t3*        TTGC
+FOO  NNNA

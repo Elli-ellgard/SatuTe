@@ -1,0 +1,4 @@
+3 4
+t1*        TACA
+t7*        AACA
+FOO  NNNA

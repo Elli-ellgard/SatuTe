@@ -1,0 +1,4 @@
+3 6
+t1*        TGCTTT
+t7*        TGCTTG
+FOO  NNNNNA

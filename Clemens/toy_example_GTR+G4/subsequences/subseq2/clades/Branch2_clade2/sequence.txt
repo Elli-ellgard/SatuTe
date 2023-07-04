@@ -1,0 +1,6 @@
+5 6
+t2*        AGGGGT
+t6*        ACGGGT
+t4*        CGTGGG
+t3*        ATGTGG
+FOO  NNNNNA

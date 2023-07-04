@@ -1,0 +1,4 @@
+3 6
+t1*        AAT-TA
+t7*        TCAGTT
+FOO  NNNNNA

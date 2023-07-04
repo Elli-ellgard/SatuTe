@@ -1,0 +1,4 @@
+3 6
+t5*        TCA-AT
+copy_t5*        TCA-AT
+FOO  NNNNNA

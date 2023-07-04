@@ -1,0 +1,44 @@
+
+Order 	delta 	c_s   	p-value	Branch status 	T2T status    	Branch                                                                                              
+     1	0.8490	0.9721	0.0210892661	Saturated     	SatuT2T       	Node1*-Node2*                                                                                       
+
+     2	0.3414	0.5666	0.0804800227	Saturated     	SatuT2T       	Node2*-Node3*                                                                                       
+
+     3	0.1624	0.9034	0.3378621591	Saturated     	SatuT2T       	Node3*-Node4*                                                                                       
+
+     4	0.0001	0.3024	0.4997658176	Saturated     	SatuT2T       	Node4*-Node5*                                                                                       
+
+     5	1.1186	1.0813	0.0080512452	Informative   	InfoT2T       	Node1*-t3*                                                                                          
+
+     6	0.7837	0.7831	0.0099582644	Informative   	SatuT2T       	Node1*-t2*                                                                                          
+
+     7	0.0796	0.7879	0.4071072089	Saturated     	SatuT2T       	Node2*-t6*                                                                                          
+
+     8	0.7276	0.7276	0.0099925295	Informative   	SatuT2T       	Node3*-t4*                                                                                          
+
+     9	0.9850	0.9410	0.0074408011	Informative   	InfoT2T       	Node4*-t5*                                                                                          
+
+    10	0.8849	0.9845	0.0182590182	Saturated     	SatuT2T       	Node5*-t1*                                                                                          
+
+    11	0.6235	0.9732	0.0680591245	Saturated     	SatuT2T       	Node5*-t7*                                                                                          
+
+
+
+The T2T status uses as threshold the saturation coherence between two sequences, which is  0.9497
+
+For better reference, this is the reconstructed tree topology :
+
+
+      /-t3*
+     |
+     |--t2*
+     |
+-Node1*                 /-t5*
+     |            /Node4*
+     |           |     |      /-t1*
+     |      /Node3*     \Node5*
+     |     |     |            \-t7*
+      \Node2*    |
+           |      \-t4*
+           |
+            \-t6*

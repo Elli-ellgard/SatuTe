@@ -1,0 +1,39 @@
+# Ancestral state reconstruction for all nodes in output.treefile
+# This file can be read in MS Excel or in R with command:
+#   tab=read.table('output.state',header=TRUE)
+# Columns are tab-separated with following meaning:
+#   Node:  Node name in the tree
+#   Site:  Alignment site ID
+#   State: Most likely state assignment
+#   p_X:   Posterior probability for state X (empirical Bayesian method)
+Node	Site	State	p_A	p_C	p_G	p_T
+Node1*	1	A	1.00000	0.00000	0.00000	0.00000
+Node1*	2	G	0.00000	0.00000	1.00000	0.00000
+Node1*	3	G	0.00000	0.00000	1.00000	0.00000
+Node1*	4	G	0.00000	0.00000	1.00000	0.00000
+Node1*	5	G	0.00000	0.00000	1.00000	0.00000
+Node1*	6	T	0.00000	0.00000	0.00000	1.00000
+Node2*	1	A	0.86328	0.12500	0.01087	0.00085
+Node2*	2	G	0.28207	0.12771	0.40838	0.18184
+Node2*	3	G	0.00853	0.00057	0.92150	0.06941
+Node2*	4	G	0.00239	0.00002	0.98713	0.01047
+Node2*	5	G	0.00353	0.00002	0.98912	0.00733
+Node2*	6	T	0.00026	0.00132	0.10779	0.89063
+Node3*	1	A	0.86327	0.12500	0.01087	0.00085
+Node3*	2	G	0.28207	0.12771	0.40838	0.18184
+Node3*	3	G	0.00853	0.00057	0.92150	0.06941
+Node3*	4	G	0.00239	0.00002	0.98712	0.01047
+Node3*	5	G	0.00353	0.00002	0.98912	0.00733
+Node3*	6	T	0.00026	0.00132	0.10779	0.89063
+Node4*	1	T	0.00569	0.04761	0.07716	0.86954
+Node4*	2	G	0.25919	0.07869	0.50037	0.16175
+Node4*	3	C	0.45054	0.48408	0.03451	0.03087
+Node4*	4	T	0.01197	0.02716	0.18662	0.77425
+Node4*	5	T	0.07734	0.06421	0.42065	0.43781
+Node4*	6	G	0.09355	0.00754	0.82200	0.07691
+Node1	1	T	0.00569	0.04761	0.07716	0.86954
+Node1	2	G	0.25919	0.07869	0.50037	0.16175
+Node1	3	C	0.45054	0.48408	0.03451	0.03087
+Node1	4	T	0.01197	0.02716	0.18662	0.77425
+Node1	5	T	0.07734	0.06421	0.42065	0.43781
+Node1	6	G	0.09355	0.00754	0.82200	0.07690

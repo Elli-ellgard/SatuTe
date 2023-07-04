@@ -1,0 +1,6 @@
+5 6
+t2*        CTTGCA
+t6*        GCGTAG
+t4*        GACAAC
+t3*        GTACTT
+FOO  NNNNNA

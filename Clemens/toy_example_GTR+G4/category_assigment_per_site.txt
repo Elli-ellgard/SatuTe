@@ -1,0 +1,19 @@
+Number of sites of the original alignment: 
+
+20
+
+The following list has an entry per rate category.
+It indicates how many sites are assigned to each category.
+The first entry is the slowest-evolving rate.
+
+[4, 6, 4, 6]
+
+Number of sites not assigned to any category using threshold 0.01:
+
+0
+
+The following list has an entry per alignment site.
+A "1" indicates that the site was assigned to the slowest-evolving rate category.
+A "0" indicates that all posterior probabilities were too similar to assign a category using threshold 0.01
+
+[4, 3, 2, 1, 1, 4, 2, 2, 2, 3, 3, 2, 3, 4, 4, 1, 1, 2, 4, 4]

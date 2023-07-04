@@ -1,0 +1,4 @@
+3 6
+t4*        GACAAC
+copy_t4*        GACAAC
+FOO  NNNNNA

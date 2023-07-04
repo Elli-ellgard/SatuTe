@@ -1,0 +1,25 @@
+
+
+
+The T2T status uses as threshold the saturation coherence between two sequences, which is  0.5202
+
+For better reference, this is the reconstructed tree topology :
+
+
+      /-t7*
+     |
+     |                  /-t3*
+     |            /Node4*
+     |      /Node3*     \-t5*
+-Node1*    |     |
+     |-Node2*     \-t6*
+     |     |
+     |      \-t1*
+     |
+     |      /-t4*
+      \Node5*
+            \-t2*
+
+ Tree with saturation values: (t7:0.0000029501,(((t3:1.1860038987,t5:0.3574240070)Node4:0.3519068150,t6:0.0000026009)Node3:0.9333701329,t1:0.0000020740)Node2:1.0874051066,(t4:1.7362743020,t2:3.4573102784)Node5:0.0372190293)Node1;
+
+ Tree with saturation values: (t7:0.0000029501,(((t3:1.1860038987,t5:0.3574240070)Node4:0.3519068150,t6:0.0000026009)Node3:0.9333701329,t1:0.0000020740)Node2:1.0874051066,(t4:1.7362743020,t2:3.4573102784)Node5:0.0372190293)Node1;

@@ -1,0 +1,4 @@
+3 4
+t7*        AACA
+copy_t7*        AACA
+FOO  NNNA

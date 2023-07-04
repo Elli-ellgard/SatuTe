@@ -1,0 +1,4 @@
+3 6
+t7*        TGCTTG
+copy_t7*        TGCTTG
+FOO  NNNNNA

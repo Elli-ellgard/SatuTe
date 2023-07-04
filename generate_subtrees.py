@@ -222,18 +222,19 @@ def generate_output_state_file_for_cherry(
             )
             # calculate the partial likelihood vector
             likelihood = np.asarray(likelihood_left) * np.asarray(likelihood_right)
-
-            scale_factor = np.asarray(likelihood) * np.asarray(
+            print(likelihood)
+            scale_factor = np.asarray(likelihood)@ np.asarray(
                 list(state_frequencies.values())
             )
-
+            print(scale_factor)
             # transform the partial likelihood vector into the posterior distribution
             distribution = (
                 np.asarray(likelihood)
                 * np.asarray(list(state_frequencies.values()))
                 / scale_factor
             )
-
+            print(distribution)
+            print("="*10)
             values = "\t".join(
                 "{:.5f}".format(distribution[value]) for value in range(4)
             )
@@ -773,44 +774,39 @@ def parse_rate_and_frequencies_and_create_model_files(
 
 ##############################################################################################################
 delete_directory_contents("./test_cladding_and_subsequence")
+folder="./Clemens/toy_example_GTR+G4/"
+example=folder + "toy_example_ntaxa_7_run_1-alignment.phy"
+
 number_rates = 4
 dimension = 4
-site_probability = parse_file_to_dataframe("./Clemens/example_4/example.txt.siteprob")
+site_probability = parse_file_to_dataframe(
+    example + ".siteprob"
+)
 folder_path = "test_cladding_and_subsequence"
-msa_file_name = "./Clemens/example_4/example.txt"
+msa_file_name = example
 t = name_nodes_by_level_order(
-    parse_newick_file("./Clemens/example_4/example.txt.treefile")
+    parse_newick_file(example + ".treefile")
 )
-category_rate = parse_table("./Clemens/example_4/example.txt.iqtree")
+category_rate = parse_table(example + ".iqtree")
 # Parse state frequencies from the log content
-# state_frequencies = parse_rate_and_frequencies_and_create_model_files("./test_cladding_and_subsequence", number_rates, dimension, model="JC")
-state_frequencies = parse_state_frequencies(
-    "./Clemens/example_4/example.txt.iqtree", dimension=dimension
-)
-(rate_matrix, phi_matrix) = parse_rate_matrices(
-    dimension, "./Clemens/example_4/example.txt"
-)
+#state_frequencies = parse_rate_and_frequencies_and_create_model_files("./test_cladding_and_subsequence", number_rates, dimension, model="JC")
+state_frequencies = parse_state_frequencies(example +".iqtree", dimension=dimension)
+(rate_matrix, phi_matrix) = parse_rate_matrices(dimension, example)
 if number_rates != 1:
     split_msa_into_rate_categories(site_probability, folder_path, msa_file_name)
 
 generate_write_subtree_pairs_and_msa(
-    number_rates,
-    t,
-    folder_path,
-    msa_file_name,
-    category_rate,
-    state_frequencies,
-    rate_matrix,
+    number_rates, t, folder_path, msa_file_name, category_rate, state_frequencies, rate_matrix
 )
 
 import shutil
 
-src_path = r"./Clemens/example_4/model.txt"
+src_path = folder+"/subsequences/subseq1/model.txt"
 dst_path = r"./test_cladding_and_subsequence/subsequence1/model.txt"
 shutil.copy(src_path, dst_path)
 
 run_iqtree_for_each_clade_parallel(
-    "./test_cladding_and_subsequence",
+    "./test_cladding_and_subsequence", 
     4,
     1,
     "iqtree2",
@@ -823,6 +819,8 @@ run_iqtree_for_each_clade_parallel(
     "iqtree",
     "GTR{3.9907,5.5183,4.1388,0.4498,16.8174}+FU{0.3547 0.2282 0.1919 0.2252}",
 )"""
+
+
 
 
 """"summary TODO:
