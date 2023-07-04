@@ -223,14 +223,16 @@ def generate_output_state_file_for_cherry(
             # calculate the partial likelihood vector
             likelihood = np.asarray(likelihood_left) * np.asarray(likelihood_right)
 
-            scale_factor =  np.asarray(likelihood) * np.asarray(
+            scale_factor = np.asarray(likelihood) * np.asarray(
                 list(state_frequencies.values())
             )
 
             # transform the partial likelihood vector into the posterior distribution
-            distribution = np.asarray(likelihood) * np.asarray(
-                list(state_frequencies.values())
-            ) / scale_factor
+            distribution = (
+                np.asarray(likelihood)
+                * np.asarray(list(state_frequencies.values()))
+                / scale_factor
+            )
 
             values = "\t".join(
                 "{:.5f}".format(distribution[value]) for value in range(4)
