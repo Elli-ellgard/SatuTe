@@ -365,7 +365,7 @@ class Satute:
         # For each rate, run IQ-TREE for each clade in parallel
         for i in range(1, number_rates + 1, 1):
             run_iqtree_for_each_subtree_parallel(
-                self.active_directory, number_rates, i, self.iqtree
+                self.active_directory, number_rates, i, self.input_args.iqtree
             )
 
         logger.info(
@@ -694,7 +694,7 @@ def map_values_to_newick_regex(values_dict, newick_string):
 
 if __name__ == "__main__":
     # Instantiate the Satute class with your desired arguments
-    iqtree_path = "iqtree"
+    iqtree_path = "iqtree2"
     input_directory = None
     output_prefix = None
     model = None
