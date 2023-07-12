@@ -341,7 +341,7 @@ class Satute:
             state_frequencies,
             model_and_frequency,
         ) = parse_rate_and_frequencies_and_create_model_files(
-            input_path=f"{self.input_args.msa}",
+            input_path=arguments_dict["msa_file"],
             dimension=4,
             model=self.input_args.model,
         )
@@ -450,6 +450,7 @@ class Satute:
             self.input_args.tree = Path(self.input_args.tree)
 
         argument_option = {}
+
         if self.input_args.dir:
             # Check if the input directory exists
             if not self.input_args.dir.is_dir():
@@ -459,7 +460,10 @@ class Satute:
                 raise InvalidDirectoryError("Input directory is empty")
 
             # Find iqtree file and extract model
+            print("###############################################################")
             iqtree_file = self.find_file({".iqtree"})
+            print(iqtree_file)
+
             if iqtree_file:
                 substitution_model = parse_substitution_model(iqtree_file)
                 self.input_args.model = substitution_model
@@ -639,6 +643,53 @@ class Satute:
         print(self.input_args)
         print("=" * 10)
         print("")
+
+
+# ========= Mapping Code to Newick String ===========
+def map_values_to_newick(value_rows, newick_string):
+    # Parsing the file of values into a dictionary
+    values_dict = {}
+    """
+     {
+                "index": i + 1,
+                "delta": delta,
+                "c_s": c_s,
+                "p_value": p_value,
+                "result_test": result_test,
+                "result_test_tip2tip": result_test_tip2tip,
+                "vector_branches": vector_branches[i],
+    }
+    """
+    for row in value_rows:
+        node_one, node_two = row["vector_branches"].split("-")
+        print(node_one, node_two)
+        # node_two = node_two.split("*")[0]  # remove trailing '*'
+        # values_dict[node_two] = {
+        #     "delta": row["delta"],
+        #     "c_s": row["c_s"],
+        #     "p-value": row["p_value"],
+        #     "result_test": row["result_test"],
+        #     "status": row["result_test_tip2tip"],
+        # }
+
+    saturated_newick_string = map_values_to_newick_regex(values_dict, newick_string)
+
+    return saturated_newick_string
+
+
+def map_values_to_newick_regex(values_dict, newick_string):
+    for node_name, values in values_dict.items():
+        delta = values["delta"]
+        c_s = values["c_s"]
+        p_value = values["p-value"]
+        branch_status = values["status"]
+        newick_string = re.sub(
+            rf"({node_name})",
+            rf"\1[delta={delta}; c_s={c_s}; p_value={p_value}; branch_status={branch_status}]",
+            newick_string,
+        )
+
+    return newick_string
 
 
 if __name__ == "__main__":
