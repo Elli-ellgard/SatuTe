@@ -108,7 +108,6 @@ def run_iqtree_for_each_clade(
                     + str(clade_dir)
                 )
 
-
             # Run the command
             # result = subprocess.run(cmd, cwd=clade_dir)
 
@@ -223,7 +222,6 @@ def generate_output_state_file_for_cherry(
 ):
     # get branch lengths
     leaves = get_leaves(tree)
-
     vector_branches, vector_distances = branch_lengths(tree)
 
     # get transitions matrix with the time given as branch lengths
@@ -369,9 +367,9 @@ def write_subtree_and_sub_alignments(
             )
         elif len(second_subtree.get_descendants()) + 1 == 3:
             generate_output_state_file_for_cherry(
-                first_sub_alignment,
-                first_subtree,
-                first_subtree_dir,
+                second_sub_alignment,
+                second_subtree,
+                second_subtree_dir,
                 state_frequencies,
                 rate_matrix,
             )
@@ -675,7 +673,7 @@ def execute_iqtree(sub_dir, iqtree_path, model_and_frequency):
         for file in os.listdir(directory):
             if file not in ignore_list:
                 os.remove(os.path.join(directory, file))
-    
+
     # Check if sequence and tree files exist in the subdirectory
     if not os.path.isfile(os.path.join(sub_dir, "subtree.fasta")) or not os.path.isfile(
         os.path.join(sub_dir, "subtree.treefile")
