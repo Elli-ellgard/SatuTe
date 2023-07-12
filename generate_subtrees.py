@@ -594,9 +594,13 @@ def split_msa_into_rate_categories(site_probability, folder_path, msa_file_name)
     sub_category = build_categories_by_sub_tables(site_probability)
     alignment = read_alignment_file(msa_file_name)
     per_category_alignment_dict = {}
+    valid_category_rates = []
 
     for key, value in sub_category.items():
+        if len(value) > 0:
+            valid_category_rates = [int(key[1:])] + valid_category_rates
         per_category_alignment_dict[key] = cut_alignment_columns(alignment, value)
+
 
     for key, value in per_category_alignment_dict.items():
         # Make a new directory for this subsequence, if it doesn't exist yet
@@ -605,6 +609,8 @@ def split_msa_into_rate_categories(site_probability, folder_path, msa_file_name)
         write_alignment(
             value, f"./{folder_path}/subsequence{key[1:]}/rate.fasta", "fasta"
         )
+
+    return valid_category_rates
 
 
 def parse_category_rates(log_file):
@@ -785,8 +791,10 @@ def build_tree_test_space(number_rates, msa_file_name, target_directory, dimensi
 
     (rate_matrix, phi_matrix) = parse_rate_matrices(dimension, msa_file_name)
 
+    valid_category_rates = []
+
     if number_rates != 1:
-        split_msa_into_rate_categories(
+        valid_category_rates = split_msa_into_rate_categories(
             site_probability, target_directory, msa_file_name
         )
 
@@ -802,6 +810,8 @@ def build_tree_test_space(number_rates, msa_file_name, target_directory, dimensi
         rate_matrix,
     )
 
+    return valid_category_rates
+
 
 def run_saturation_test_for_branches_and_categories(
     input_directory,
@@ -810,6 +820,7 @@ def run_saturation_test_for_branches_and_categories(
     t,
     dimension,
     alpha=0.01,
+    valid_category_rates = [],
 ):
     internal_branch_count = len(t.get_descendants())
 
@@ -822,7 +833,7 @@ def run_saturation_test_for_branches_and_categories(
 
     results_list = {}
     if number_rates != 1:
-        for rate in range(1, number_rates + 1, 1):
+        for rate in valid_category_rates:
             results_list[rate] = []
 
             for branch_index in range(0, internal_branch_count):
@@ -961,14 +972,14 @@ if __name__ == "__main__":
     )
 
     # Build the tree test space
-    build_tree_test_space(
+    valid_category_rates = build_tree_test_space(
         number_rates=1,
         msa_file_name=input_directory_file,
         target_directory=target_directory_path,
     )
 
     # For each rate, run IQ-TREE for each clade in parallel
-    for i in range(1, number_rates + 1, 1):
+    for i in valid_category_rates(1, number_rates + 1, 1):
         run_iqtree_for_each_subtree_parallel(
             target_directory_path, number_rates, i, "iqtree"
         )

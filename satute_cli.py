@@ -269,7 +269,6 @@ class Satute:
         # Running IQ-TREE with constructed arguments
         # If no model specified in input arguments, extract best model from log file
 
-        print(arguments_dict)
 
         if not self.input_args.model:
             self.run_iqtree_with_arguments(
@@ -352,18 +351,20 @@ class Satute:
         logger.info(f"Building tree test space with {number_rates} rate categories")
 
         # Build the tree test space
-        build_tree_test_space(
+        valid_category_rates = build_tree_test_space(
             number_rates=number_rates,
             msa_file_name=str(arguments_dict["msa_file"]),
             target_directory=self.active_directory,
         )
+
+        logger.info(f"These are the valid {str(valid_category_rates)} rate categories")
 
         logger.info(
             f"Run IQ-Tree for each subtree in parallel with {number_rates} rate categories"
         )
 
         # For each rate, run IQ-TREE for each clade in parallel
-        for i in range(1, number_rates + 1, 1):
+        for i in valid_category_rates:
             run_iqtree_for_each_subtree_parallel(
                 self.active_directory, number_rates, i, self.input_args.iqtree
             )
@@ -371,7 +372,6 @@ class Satute:
         logger.info(
             f"Run test for saturation for each branch and category with {number_rates} rate categories"
         )
-
         logger.info(
             "Results will be written to the directory: " + self.active_directory.name
         )
@@ -383,6 +383,7 @@ class Satute:
             dimension=4,
             number_rates=number_rates,
             t=Tree(newick_string, format=1),
+            valid_category_rates=valid_category_rates,
         )
 
         # for i in range(number_rates):
@@ -460,9 +461,7 @@ class Satute:
                 raise InvalidDirectoryError("Input directory is empty")
 
             # Find iqtree file and extract model
-            print("###############################################################")
             iqtree_file = self.find_file({".iqtree"})
-            print(iqtree_file)
 
             if iqtree_file:
                 substitution_model = parse_substitution_model(iqtree_file)
