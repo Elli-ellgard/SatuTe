@@ -19,6 +19,12 @@ from satute_test_statistic import calculate_test_statistic
 from satute_exception import InputArgumentsError
 
 
+def remove_all_except(directory, ignore_list):
+    for file in os.listdir(directory):
+        if file not in ignore_list:
+            os.remove(os.path.join(directory, file))
+
+
 def remove_filename(path):
     parts = path.split("/")
     nameFILE = parts[-2]
@@ -468,6 +474,7 @@ def execute_iqtree(sub_dir, iqtree_path, model_and_frequency):
         "output",
         "-redo",
         "-quiet",
+        "| rm -f output.ckp.gz, output.iqtree, output.log, output.model.gz, output.treefile",
     ]
 
     # Check if sequence and tree files exist in the subdirectory
@@ -489,7 +496,7 @@ def execute_iqtree(sub_dir, iqtree_path, model_and_frequency):
 
 
 def run_iqtree_for_each_clade_parallel(
-    path_folder, number_rates, chosen_rate, iqtree_path, mode
+    path_folder, number_rates, chosen_rate, iqtree_path, model_and_frequency
 ):
     """
     Run IQ-TREE for each clade directory in parallel.
@@ -1334,9 +1341,9 @@ def write_results_and_newick_tree(
     )
 
     # Generate a newick string with saturation information
-    saturation_information_newick_string = map_values_to_newick(
-        results_list, newick_string
-    )
+    # saturation_information_newick_string = map_values_to_newick(
+    #    results_list, newick_string
+    # )
 
     # Open the results file in append mode
     with open(

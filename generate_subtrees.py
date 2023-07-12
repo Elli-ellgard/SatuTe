@@ -108,7 +108,6 @@ def run_iqtree_for_each_clade(
                     + str(clade_dir)
                 )
 
-            print(clade_dir)
 
             # Run the command
             # result = subprocess.run(cmd, cwd=clade_dir)
@@ -672,6 +671,11 @@ def execute_iqtree(sub_dir, iqtree_path, model_and_frequency):
         "-quiet",
     ]
 
+    def remove_all_except(directory, ignore_list):
+        for file in os.listdir(directory):
+            if file not in ignore_list:
+                os.remove(os.path.join(directory, file))
+    
     # Check if sequence and tree files exist in the subdirectory
     if not os.path.isfile(os.path.join(sub_dir, "subtree.fasta")) or not os.path.isfile(
         os.path.join(sub_dir, "subtree.treefile")
@@ -682,6 +686,7 @@ def execute_iqtree(sub_dir, iqtree_path, model_and_frequency):
 
     # Run the IQ-TREE command
     result = subprocess.run(cmd, cwd=sub_dir)
+    remove_all_except(sub_dir, ["subtree.fasta", "subtree.treefile", "output.state"])
 
     # Check if the command was successful
     if result.returncode != 0:
