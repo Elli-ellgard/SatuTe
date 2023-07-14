@@ -207,7 +207,7 @@ def get_likelihood(transition_matrix, state, state_frequencies):
     likelihood_factors = []
     row = [0, 0, 0, 0]
     state_space = {"A": 0, "C": 1, "G": 2, "T": 3}
-    if state == "-":
+    if state == "-" or state == "N":
         row = list(state_frequencies.values())
     else:
         row[state_space[state]] = 1
@@ -217,6 +217,7 @@ def get_likelihood(transition_matrix, state, state_frequencies):
     return likelihood_factors
 
 
+# calculate partial likeklihoods and generate output.state file for cherries
 def generate_output_state_file_for_cherry(
     alignment, tree, file_path, state_frequencies, rate_matrix
 ):
@@ -265,7 +266,7 @@ def generate_output_state_file_for_cherry(
             )
             state_file_writer.write(f"\nNode1\t{i + 1}\t{alignments[0][i]}\t{values}")
 
-
+# generate output.state file for leaves
 def generate_output_state_file_for_external_branch(
     alignment, file_path, state_frequencies
 ):
@@ -278,7 +279,7 @@ def generate_output_state_file_for_external_branch(
             for character in sequence:
                 index += 1
                 row = {"A": 0, "C": 0, "G": 0, "T": 0}
-                if character == "-":
+                if character == "-" or character == "N":
                     state_freq = list(state_frequencies.values())
                     row["A"] = state_freq[0]
                     row["C"] = state_freq[1]
@@ -822,7 +823,8 @@ def run_saturation_test_for_branches_and_categories(
     alpha=0.01,
     valid_category_rates = [],
 ):
-    internal_branch_count = len(t.get_descendants())
+    # number of branches
+    branch_count = len(t.get_descendants())
 
     """ get the right eigenvector(s) of the dominate non-zero eigenvalue"""
     array_eigenvectors, multiplicity = spectral_decomposition(
@@ -832,29 +834,47 @@ def run_saturation_test_for_branches_and_categories(
     vector_branches, vector_distances = branch_lengths(t)
 
     results_list = {}
+    # special case: +G or +R model
+    # test for branch saturation for each valid  rate category of the model
     if number_rates != 1:
         for rate in valid_category_rates:
             results_list[rate] = []
 
-            for branch_index in range(0, internal_branch_count):
+            for branch_index in range(0, branch_count):
                 subtree_directories = fetch_subdirectories(
                     f"{target_directory}/subsequence{rate}/subtrees",
                     f"branch_{branch_index}",
                 )
+                """ determine branch type (internal or external) and 
+                    set the subdirectory corresponding to the leaf as the left subtree
+                """
+                if subtree_directories[0].find("leaf") != -1:
+                    left_subtree_dir = subtree_directories[0]
+                    right_subtree_dir = subtree_directories[1]
+                    branch_type = "external"
+                elif subtree_directories[1].find("leaf") != -1:
+                    left_subtree_dir = subtree_directories[1]
+                    right_subtree_dir = subtree_directories[0]
+                    branch_type = "external"
+                else:
+                    left_subtree_dir = subtree_directories[0]
+                    right_subtree_dir = subtree_directories[1]
+                    branch_type = "internal"
 
                 # read the posterior probabilities of the left subtree from .state file
                 posterior_probabilities_left_subtree = parse_output_state_frequencies(
-                    f"{subtree_directories[0]}/output.state"
+                    f"{left_subtree_dir}/output.state"
                 )
                 # read the posterior probabilities of the right subtree from .state file
                 posterior_probabilities_right_subtree = parse_output_state_frequencies(
-                    f"{subtree_directories[1]}/output.state"
+                    f"{right_subtree_dir}/output.state"
                 )
 
+                # Calculation of the test for branch saturation
                 results = run_saturation_test_for_branch(
                     multiplicity,
                     array_eigenvectors,
-                    "internal",
+                    branch_type,
                     dimension,
                     alpha,
                     posterior_probabilities_left_subtree,
@@ -874,28 +894,45 @@ def run_saturation_test_for_branches_and_categories(
                 results_list[rate][0]["c_s_two_sequence"],
                 t,
             )
-
+    # model of evolution does not include +G and +R
     else:
         results_list[number_rates] = []
-        for branch_index in range(0, internal_branch_count):
+        for branch_index in range(0, branch_count):
             subtree_directories = fetch_subdirectories(
                 f"{target_directory}/subtrees",
                 f"branch_{branch_index}",
             )
 
+            """ determine branch type (internal or external) and 
+                set the subdirectory corresponding to the leaf as the left subtree
+            """
+            if subtree_directories[0].find("leaf") != -1:
+                left_subtree_dir = subtree_directories[0]
+                right_subtree_dir = subtree_directories[1]
+                branch_type = "external"
+            elif subtree_directories[1].find("leaf") != -1:
+                left_subtree_dir = subtree_directories[1]
+                right_subtree_dir = subtree_directories[0]
+                branch_type = "external"
+            else:
+                left_subtree_dir = subtree_directories[0]
+                right_subtree_dir = subtree_directories[1]
+                branch_type = "internal"
+            
             # read the posterior probabilities of the left subtree from .state file
             posterior_probabilities_left_subtree = parse_output_state_frequencies(
-                f"{subtree_directories[0]}/output.state"
+                f"{left_subtree_dir}/output.state"
             )
             # # read the posterior probabilities of the right subtree from .state file
             posterior_probabilities_right_subtree = parse_output_state_frequencies(
-                f"{subtree_directories[1]}/output.state"
+                f"{right_subtree_dir}/output.state"
             )
 
+            # Calculation of the  test for branch saturation 
             results = run_saturation_test_for_branch(
                 multiplicity,
                 array_eigenvectors,
-                "internal",
+                branch_type,
                 dimension,
                 alpha,
                 posterior_probabilities_left_subtree,

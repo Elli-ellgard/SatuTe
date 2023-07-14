@@ -376,7 +376,7 @@ class Satute:
             "Results will be written to the directory: " + self.active_directory.name
         )
 
-        # Run the saturation test
+        # Run the test for branch saturation
         run_saturation_test_for_branches_and_categories(
             input_directory=str(arguments_dict["msa_file"]),
             target_directory=self.active_directory,
