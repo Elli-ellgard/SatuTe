@@ -1,4 +1,4 @@
-iqtree=iqtree
+iqtree=iqtree2
 #rm -r test/octo-kraken-msa-test/clades  
 #rm -r test/octo-kraken-msa-test/subsequences      
 #python3 remove_files_except.py -m  
@@ -25,6 +25,12 @@ msa=example.txt
 #DIR=./Clemens/example_sym_2
 #msa=ENSG00000138316_ADAMTS14.fasta
 
+DIR=./Clemens/toy_example_GTR+G4
+msa=toy_example_ntaxa_7_run_1-alignment.phy
+
+#DIR=./Clemens/toy_example_JC
+#msa=toy_example_ntaxa_7_run_5-alignment.phy
+
 PDIR=$(dirname $DIR)
 if [ -e $DIR/${msa}.iqtree ]; then
     mv $DIR/$msa $PDIR
@@ -39,7 +45,7 @@ if [ -d "$DIR/subsequences" ]; then
     rm -r $DIR/subsequences
 fi
 
-python satute_cli.py -iqtree $iqtree -dir $DIR -model JC+G4 
+python3 satute_cli.py -iqtree $iqtree -dir $DIR -model JC+G4 
 
 #cd visualisation
 #./script-annotate-trees-from-satute.sh ../$DIR    
