@@ -16,8 +16,8 @@ msa=ENSG00000087460_GNAS.fasta
 DIR=./Clemens/example_3
 msa=sim-JC+G-AC1-AG1-AT1-CG1-CT1-GT1-alpha1.2-taxa64-len1000bp-bla0.01-blb0.8-blc0.2-rep01.fasta
 
-DIR=./Clemens/example_4
-msa=example.txt
+#DIR=./Clemens/example_4
+#msa=example.txt
 
 #DIR=./Clemens/example_sym_1
 #msa=ENSG00000119574_ZBTB45.fasta
@@ -25,8 +25,8 @@ msa=example.txt
 #DIR=./Clemens/example_sym_2
 #msa=ENSG00000138316_ADAMTS14.fasta
 
-DIR=./Clemens/toy_example_GTR+G4
-msa=toy_example_ntaxa_7_run_1-alignment.phy
+#DIR=./Clemens/toy_example_GTR+G4
+#msa=toy_example_ntaxa_7_run_1-alignment.phy
 
 #DIR=./Clemens/toy_example_JC
 #msa=toy_example_ntaxa_7_run_5-alignment.phy
@@ -45,7 +45,7 @@ if [ -d "$DIR/subsequences" ]; then
     rm -r $DIR/subsequences
 fi
 
-python3 satute_cli.py -iqtree $iqtree -dir $DIR -model JC+G4 
+python3 satute_cli.py -iqtree $iqtree -dir $DIR -alpha 0.05
 
 #cd visualisation
 #./script-annotate-trees-from-satute.sh ../$DIR    

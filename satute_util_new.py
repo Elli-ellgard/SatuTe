@@ -35,7 +35,11 @@ from satute_rate_categories_and_alignments import (
     parse_category_rates,    
 )
 
-from satute_test_statistic import calculate_test_statistic
+from satute_test_statistic import (
+    calculate_test_statistic,
+    calculate_likelihood_ratio_test,
+)
+
 
 import logging
 
@@ -364,6 +368,8 @@ def run_saturation_test_for_branches_and_categories(
                     alpha,
                     posterior_probabilities_left_subtree,
                     posterior_probabilities_right_subtree,
+                    vector_distances[branch_index],
+                    input_directory,
                 )
 
                 results["vector_branches"] = vector_branches[branch_index]
@@ -422,6 +428,8 @@ def run_saturation_test_for_branches_and_categories(
                 alpha,
                 posterior_probabilities_left_subtree,
                 posterior_probabilities_right_subtree,
+                vector_distances[branch_index],
+                input_directory,
             )
 
             results_list[number_rates].append(results)
@@ -502,6 +510,8 @@ def run_saturation_test_for_branch(
     alpha,
     posterior_probabilities_left_subtree,
     posterior_probabilities_right_subtree,
+    branch_length,
+    input_directory,
 ):
     (
         delta,
@@ -520,6 +530,19 @@ def run_saturation_test_for_branch(
         alpha,
     )
 
+    (
+        lr_test, 
+        result_lr_test
+    ) = calculate_likelihood_ratio_test(
+        input_directory,
+        branch_length,
+        posterior_probabilities_left_subtree,
+        posterior_probabilities_right_subtree,
+        dimension,
+        alpha,
+    )
+    
+    
     return {
         "delta": delta,
         "c_s": c_s,
@@ -527,5 +550,7 @@ def run_saturation_test_for_branch(
         "p_value": p_value,
         "result_test": result_test,
         "result_test_tip2tip": result_test_tip2tip,
+        "lr_test": lr_test,
+        "result_lr_test": result_lr_test,
     }
 

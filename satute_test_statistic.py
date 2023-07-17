@@ -1,6 +1,12 @@
 import scipy.stats as st
 import numpy as np
 import pandas as pd
+from satute_repository import (
+    parse_state_frequencies,
+    parse_rate_matrices,
+)
+from satute_calculate_likelihoods import get_transition_matrix
+
 
 """## CALCULATION OF THE SAMPLE COHERENCE """
 
@@ -54,7 +60,7 @@ def calculate_alternative_variance(
     variance = variance / number_sites
     return variance
 
-"""## CALCULATION OF THE TEST STATISTIC"""
+"""## CALCULATION OF THE TEST STATISTIC FOR BRANCH SATURATION"""
 
 def calculate_test_statistic(
     multiplicity,
@@ -144,3 +150,75 @@ def calculate_test_statistic(
         result_test_tip2tip = "InfoT2T"
 
     return delta, c_s, c_sTwoSequence, p_value, result_test, result_test_tip2tip 
+
+
+"""## CALCULATION OF THE TEST STATISTIC FOR LIKELIHOOD RATIO TEST"""
+
+def calculate_likelihood_ratio_test(
+        input_directory,
+        branch_length,
+        posterior_probabilities_left_subtree,
+        posterior_probabilities_right_subtree,
+        dimension,
+        alpha,
+):
+    
+    state_frequencies = parse_state_frequencies(
+        f"{input_directory}.iqtree", dimension=dimension
+    )
+    diag = np.linalg.inv(np.diag(list(state_frequencies.values())))
+    
+    (rate_matrix, phi_matrix) = parse_rate_matrices(dimension, input_directory)
+    transition_matrix = get_transition_matrix(rate_matrix, branch_length)
+    
+    number_sites = len(posterior_probabilities_left_subtree["Site"].unique())
+    number_nodes_1 = len(posterior_probabilities_left_subtree["Node"].unique())
+    number_nodes_2 = len(posterior_probabilities_right_subtree["Node"].unique())
+
+    """ Calculation of likelihood ratios per site"""
+    likelihood_ratios = []
+    # list of vectors
+    factors_left = ([]) # posterior distribution of left subtree times transition matrix
+    factors_right = ([]) # inverse diagonal matix of the stationary distribution times posterior distribution of right subtree
+
+    for k in range(
+        number_sites * (number_nodes_1 - 1), number_sites * number_nodes_1
+    ):
+        factors_left.append(
+            np.asarray(posterior_probabilities_left_subtree.iloc[k, 3:(3 + dimension)]) @ transition_matrix
+        )
+    for k in range(
+        number_sites * (number_nodes_2 - 1), number_sites * number_nodes_2
+    ):
+        factors_right.append(
+            diag @ np.asarray(posterior_probabilities_right_subtree.iloc[k, 3:(3 + dimension)]).transpose()
+        )
+
+    for k  in range(number_sites):
+        likelihood_ratios.append(np.dot(np.asarray(factors_left[k]), np.asarray(factors_right[k])))
+    test_statistic = 2 * np.sum(np.log(likelihood_ratios))
+
+    #critical value of the distribution for alpha = 0.05
+    critical_value = 2.71
+    if test_statistic > critical_value:
+        result_lr_test = "Informative"
+    else:
+        result_lr_test = "Saturated"
+    return test_statistic, result_lr_test
+
+
+
+
+
+
+    #for idx in range(len(posterior_probabilities_left_subtree)):
+    #    print(posterior_probabilities_left_subtree)
+
+    #     likelihood_ratios[idx] = (
+    #         (np.asarray(posterior_probabilities_left_subtree[idx]).transpose()) #@ transition_matrix) #*(diag @ np.asarray(posterior_probabilities_right_subtree[idx]))
+    #     )
+    # # test_statistic = np.prod(likelihood_ratios)
+    # print(test_statistic)
+
+    
+    
