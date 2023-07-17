@@ -206,19 +206,5 @@ def calculate_likelihood_ratio_test(
         result_lr_test = "Saturated"
     return test_statistic, result_lr_test
 
-
-
-
-
-
-    #for idx in range(len(posterior_probabilities_left_subtree)):
-    #    print(posterior_probabilities_left_subtree)
-
-    #     likelihood_ratios[idx] = (
-    #         (np.asarray(posterior_probabilities_left_subtree[idx]).transpose()) #@ transition_matrix) #*(diag @ np.asarray(posterior_probabilities_right_subtree[idx]))
-    #     )
-    # # test_statistic = np.prod(likelihood_ratios)
-    # print(test_statistic)
-
-    
+  
     
