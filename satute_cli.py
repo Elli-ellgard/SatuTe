@@ -42,44 +42,38 @@ def print_ascii_art(ascii_art):
 
 # Now you can call the function with your ASCII art
 ASCII_ART = """
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!!!!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!?YGB#&&&##GPJ7~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~7P#@@@@@@@@@@@@@&BJ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-~~~~~~~~~~~~~~~~~~~~~~~~~~~!P@@@@@@@@@@@@@@@@@@@B?~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-~~~~~~~~~~~~~~~~~~~~~~~~~~!#@@@@@@@@@@@@@@@@@@@@@&?~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-~~~~~~~~~~~~~~~~~~~~~~~~~~5@@@@@@@@@@@@@@@@@@@@@@@G~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-~~~~~~7!5JJ57J7~~~~~~~~~~~5@@@@@@@@@@@@@@@@@@@@@@@G~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-~~~~?5&&@####&&#P7~~~~~~~~!&@@@@@@@@@@@@@@@@@@@@@&7~~~~~!YPBBG#YJ~~~~~~~~~~~~~~~
-~~~5&@BJJPGP57?P@&5!~~~~~~~?&@&&&@@@@@@@@@@@&&&@#7~~~~~Y&&BP5PG&@BP!~~~~~~~~~~~~
-~!G@@Y~J&P77YY^~7B@G!~~~~~~~J&&&#B&@@@@@@@&B#&&&Y~~~~~J@#7~~~~~!J#@&?7?YJJ!~~~~~
-~5@@Y^!&5^~77!~~~!#@J~~~~~~~G@@@@@P&@@@@@@G#@@@@B~~~~~J@5^~~~~~~~~5@&@&BB&#P!~~~
-!B@#!~~B5^~~~~~~~~5@Y~~~~~~~?#@@@#GB@@@@@&GB&@@B?~~~~~!#&?~~~~~~!JB@@@&7~!5@B~~~
-7&@#~~~7GY77~~~~~^P@Y~~~~~~~~~7P&&#B@@@@@#G@#P7~~~~~~~~7G&GY??JP#&PYB@@Y~~~B@Y~~
-!#@&?~~~~Y#5YJJ??J&#7~~~~~~~~~~~#@#&@@@@@@B@@?^~~~~~~~~~~7Y5PPPY?!~^G@&J~~~G@G~~
-~5@@&?~~~!GJ77?YP#G7~~~~~~~~~~^J&@@@@@@@@@@@@G~~~~~~~~~~~~~~~~~~~~~!#@&Y~~~B@G~~
-~~P@@@G?!~~7JYYYJ7~~~~~~~~~~~!5@@@@@@@@@@@@@@@P~~~~~~~~~~~~~~~~~~~~G@@#!~~7&@G~~
-~~!?#&@@&GY7!~~^^^~~~~~~~~!JP&@@@@@@@@@@@@@@@@@BJ!~~~~~~~~~~~~~~~7G@@@?~~!B@&?~~
-~~~~!!G#&@@@&#GP5YYJJYYPG#&@@@@@@@@@@@@@@@@@@@@@@#PY7!~~~~~~~~!?P&@@#?~~7B@&5~~~
-~~~~~~~~7P5#@&@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@&BGP555PG#@@@&Y~~7P&@#Y~~~~
-~~~~~~~~~~~!?!YBPP#BB#BBPY5&@@@@@@@&@@@@@@@@@@@@@@@@@@@@@@@@@@@@@PJJP#@@#G?~~~~~
-~~~~~~~~~~~~~~~~~~~~~~~~7JB@@@@@@#?!P@@@@@@GP&@@@@@@G55GBBBG#@@@@&@@#&YY?~!~~~~~
-~~~~~~~~~~~~~~~~~~~~~~~!&@@@@@@@B!~~!#@@@@@Y^?B&@@@@@BJ~^~~~~?77J7?7~!!YGBBBP7~~
-~~~~~~~~~~~~~~~~~~~~~~7B@@@@@@@@P~~~~G@@@@@B~~~!G@@@@@@#Y!~~~~~~~~~~~7#P7!~7B#7~
-~~~~~~~~~~~~~~~~~~~~7B&@@@@&Y#@@&!~~~!&@@@@&!~~~!?7P&&@@@#57~~~~~~~!~5&~~57^?@5~
-GJ7~~~~~~~~~~!77?YPB&@@@@#&&!B@@Y~~~~~7G@@@@?~~~~~~~!7B#&@@@BJ7?JJJYY5#P55!~P@J~
-#@&#G5J?7!75B&&@@@@@@#B#?~J@Y&@#7~~~~~^7B@@@P~~~~~~~~~~!7PP#@@&#Y!~~~~~!!~!G@5~~
-7J7G&G@@&&@@@@&&GGP?J!~~^7#BB@&B7~~~~~75#&@@@?~~~~~~~~~~~~~!?J&@##5?777?YP&G?~~~
-~~~~!~??#@@BPGGGYJ?777?JPG5B@@G~~~~~7P&BJ!B@@&Y~~~~~~~~~~~~~~~#@?7JPPGGGPY?~~~~~
-~~~~~~~7&@#~~~!!7?YYYYY?7J#@&J!~~!JB&GJ~~~75@@@BJ!~~~~~~~~~~~J@&!~~^~~~~~~~~~~~~
-~~~~~~~~P@&?~~~~~~~~^^~?G@#577J5BBBP7~~~~~~~J5@@@&GY?7!~!!7JB@B?~~!?J?7~~~~~~~~~
-~~~~~~~~~5#&GY7!!!!7?5#@@@BBPGPY?!~~~~~~~~~~~~??G&&@@@&&&&&@BBJ?Y55J7!5J~~~~~~~~
-~~~~~~~~~~!JG#&###&&@@&&5PJ7!~~~~~~~~~~~~~~~~~~~!!!PY5BYG5?J~!??7!~~~7J?~~~~~~~~
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-=================================================================================
+%%%%%%%%%%%%%%%%/   &%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%(  %%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%        %%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%                                           &%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%   @@@@    @                     @.@   %%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%&   @   @,       @/       @   @@   &%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%% @@ @      @@@@    @@@(     @  @@#%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%    &(@,@@@      @%@      /@@@@.@    &%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%&    (@@@@@@@@@@    /     @@@@@@@@(*     %%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%      @@@@@@@@@@@@  @%  @@@@@@@@@@@@,@.   %%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%     %@@@@@@@@@@@   &@@   @@@@@@@@@@@&@     %%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%      @@@@@@@@@@ @   @   @ @@@@@@@@@ @      %%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%     @(@ @@@ @      @@     @ @@@,  @      %%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%  .       @@@. .@@@   ,@@    #@@@@@ @        @  %%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%    @ @@      @    @@@@  @@ @@@  .@        @@ @  ,  %%%%%%%%%%%%%
+%%%%%%%%%%%%%     @,  @ @ ( * @  @@@@@@@@@@@@@ @ @ @ @ @@ @@        &%%%%%%%%%%%
+%%%%%%%%%%%& & @ .   &%@@   @@@ @@@ @*  @ (#*@    @@@/   /.@@@  @  . ,%%%%%%%%%%
+%%%%%%%%%%   &   @  @@@@&@@@@@@@@@@@@@@@  (@@@@@%@@%@*&&,.&&@@    @ , %%%%%%%%%%
+%%%%%%%%%% # &   ( @&,@@ @ @&(@% & @.@@@@@ %@@ @ @@@@@&@ @@@ ,@  %& &  %%%%%%%%%
+%%%%%%%%%    @  @  .@@ @@ @& @ &.& @@ @/@# @ @@*/&&&*@ &*@&# @*     .  %%%%%%%%%
+%%%%%%%%%  * @    @@ @#&& &&* @ &%& .@@@@** @,% &@@ @&@&&&&@@@ @       %%%%%%%%%
+%%%%%%%%%  ./@,  (@@&%@/&&&/& @ #&& & &/%%%%&&%@ @ @ && && & @#@@      %%%%%%%%%
+%%%%%%%%%% @ @  &@@%& @@%@& %&&&.&% &% #%%&%,&& &&@&& &@&@@@*&&@@@/    %%%%%%%%%
+%%%%%%%%%%    @@@%#&@  &&%,&##%%%%%.,%.%%%&%.%%% &%%& &&&&  &&&(@@@    %%%%%%%%%
+%####%%%%%%    @%%%(%%&%% %%%%%%%(%%%%%%%%%%%%%%&&%%%%%%&/&%%&&& &&    %%%%%%%%%
+%%%%%%%%%%%   @&%&% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%&@# &     %%%%%%%%%
+%%%%%%%%%%%   .% &   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%  @ @    %%%%%%%%%
+%%%%%%%%%%%(.% %%% &&.%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% & @ @ #, %%%%%%%%%%
+%%%%%%%%%%%%(*# ##%/.  @ %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%  %%%%   @,& %%%%%%%%
+%%%%%%%%%%%( .(, (# *&## %@@&%@@%@%%%%%%%%%%%%%%@@@%@@@%&   %%%%%%   % %%%%%%%%%
+%%%%%%%%%%%( (**  .%  */@   *   @%%,  %%%%%%% @  @@@%  @@.  %%%%%%%%/ &%%%%%%%%%
+%%%%%%%%%%%%%(( .(.  .%%&   *   &%%%  %%%%%%  @ %  %%%%&   .%%%%%%%%%%% %%%%%%%%
+%%%%%%%%%%%%(#(,##*& %%%%&  %%  %%%%%%%%%%%%&&%&   &%%%%* &%%%%%%%%%%%%%%%%%%%%%
         I will break your tree into parts check if they are saturated
 =================================================================================
 """
@@ -279,31 +273,17 @@ class Satute:
                 str(arguments_dict["msa_file"]) + ".iqtree"
             )
 
-            logger.info(f"Best model: {substitution_model}")
             logger.info(
-                f"Running a second time with the best model: {substitution_model}"
+                f"""
+                        Best model: {substitution_model}
+                        Running a second time with the best model: {substitution_model}"""
             )
             # Update model in input arguments and re-construct arguments
             self.input_args.model = substitution_model
             arguments_dict = self.construct_arguments()
 
         # =========  Number Rate Handling =========
-        number_rates = 1
-        # If no number of rate categories specified in input arguments, extract it from the model
-        if self.input_args.nr:
-            if self.input_args.model:
-                number_rates_model = parse_rate_from_model(self.input_args.model)
-                if self.input_args.nr == number_rates_model:
-                    number_rates = self.input_args.nr
-                else:
-                    raise InputArgumentsError(
-                        "Input number of rates is unequal to number of rates of the model!"
-                    )
-            else:
-                number_rates = self.input_args.nr
-        else:
-            if self.input_args.model:
-                number_rates = parse_rate_from_model(self.input_args.model)
+        number_rates = self.handle_number_rates()
         # =========  End of Number Rate Handling =========
 
         extra_arguments = arguments_dict.get("model_arguments", []) + [
@@ -329,11 +309,14 @@ class Satute:
         newick_string = self.get_newick_string_from_args()
         # ======== End Tree File Handling =========
 
-        logger.info(f"Run Saturation Test with Model {self.input_args.model}")
-        logger.info(f"Run Saturation Test with {number_rates} rate categories")
-        logger.info(f"Run Initial IQ-Tree with options {arguments_dict['option']}")
         logger.info(
-            f"Initial Arguments for IQ-Tree: \n {' '.join(arguments_dict['arguments'])}"
+            f"""
+            Running tests and initial IQ-Tree with configurations:
+            Saturation Test Model: {self.input_args.model}
+            Number of rate categories: {number_rates}
+            Options for Initial IQ-Tree run: {arguments_dict['option']}
+            Initial Arguments for IQ-Tree: {' '.join(arguments_dict['arguments'])}
+            """
         )
 
         (
@@ -346,9 +329,11 @@ class Satute:
         )
 
         logger.info(
-            f"Run with model and frequencies: \n {' '.join(model_and_frequency)}"
+            f"""
+                Run with model and frequencies: \n {' '.join(model_and_frequency)}
+                Building tree test space with {number_rates} rate categories
+            """
         )
-        logger.info(f"Building tree test space with {number_rates} rate categories")
 
         # Build the structure for the subtrees and msas
         valid_category_rates = build_tree_test_space(
@@ -356,10 +341,12 @@ class Satute:
             msa_file_name=str(arguments_dict["msa_file"]),
             target_directory=self.active_directory,
         )
-        logger.info(f"These are the valid {str(valid_category_rates)} rate categories")
 
         logger.info(
-            f"Run IQ-Tree for each subtree in parallel with {number_rates} rate categories"
+            f"""
+                        These are the valid {str(valid_category_rates)} rate categories")
+                        Run IQ-Tree for each subtree in parallel with {number_rates} rate categories
+                    """
         )
 
         # TODO make or generate state_space and dimension
@@ -368,13 +355,11 @@ class Satute:
         state_space = rate_matrix.index.tolist()
         dimension = len(state_space)
         state_space = {id: index for index, id in enumerate(state_space)}
-
         rate_matrix, psi_matrix = parse_rate_matrices(
             dimension, str(arguments_dict["msa_file"])
         )
-
         logger.info(f"Rate Matrix: \n {rate_matrix}")
-        
+
         # For each rate, run IQ-TREE for the calculation of the posterior distributions in parallel
         for category_rate in valid_category_rates:
             run_calculation_partial_likelihood_for_directories(
@@ -385,7 +370,7 @@ class Satute:
                 dimension,
                 state_space,
             )
-
+            
         logger.info(
             f"Run test for saturation for each branch and category with {number_rates} rate categories\n Results will be written to the directory:{self.active_directory.name}"
         )
@@ -394,7 +379,7 @@ class Satute:
         run_saturation_test_for_branches_and_categories(
             input_directory=str(arguments_dict["msa_file"]),
             target_directory=self.active_directory,
-            dimension=4,
+            dimension=dimension,
             number_rates=number_rates,
             t=Tree(newick_string, format=1),
             valid_category_rates=valid_category_rates,
@@ -402,6 +387,25 @@ class Satute:
 
         # Writing log file
         self.write_log(arguments_dict["msa_file"])
+
+    def handle_number_rates(self):
+        number_rates = 1
+        if self.input_args.nr:
+            if self.input_args.model:
+                number_rates_model = parse_rate_from_model(self.input_args.model)
+                if self.input_args.nr == number_rates_model:
+                    number_rates = self.input_args.nr
+                else:
+                    raise ValueError(
+                        "Input number of rates is unequal to number of rates of the model!"
+                    )
+            else:
+                number_rates = self.input_args.nr
+        else:
+            if self.input_args.model:
+                number_rates = parse_rate_from_model(self.input_args.model)
+
+        return number_rates
 
     def run_iqtree_with_arguments(self, arguments, extra_arguments=[]):
         """Run IQ-TREE with given arguments and extra arguments."""

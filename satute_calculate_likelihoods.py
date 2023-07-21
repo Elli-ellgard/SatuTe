@@ -12,7 +12,6 @@ from satute_trees_and_subtrees import (
 )
 
 
-
 """ TODO: 
     - we should think about create a directory of the state_space at the beginning of the program and use it for dimension stuff
     - generalizes the functions below for other dimension (now only dimension 4)
@@ -87,6 +86,7 @@ def generate_output_state_file_for_cherry(
                 "{:.5f}".format(distribution[value]) for value in range(4)
             )
             state_file_writer.write(f"\nNode1\t{i + 1}\t{alignments[0][i]}\t{values}")
+
 
 # generate output.state file for leaves
 def generate_output_state_file_for_external_branch(
