@@ -2,6 +2,7 @@ import os
 import numpy as np
 import pandas as pd
 
+
 # Define a function to parse rate parameters from a file
 def parse_rate_parameters(file_path, dimension, model="GTR"):
     # Open the file in read mode
@@ -36,9 +37,11 @@ def parse_rate_parameters(file_path, dimension, model="GTR"):
         # Return the new model string
         return model_with_rates_token
 
+
 def parse_output_state_frequencies(file_path):
-    df = pd.read_csv(file_path, comment='#', sep='\t', engine='c')
+    df = pd.read_csv(file_path, comment="#", sep="\t", engine="c")
     return df
+
 
 # Define a function to parse state frequencies from a log content
 def parse_state_frequencies(log_file_path, dimension=4):
@@ -70,11 +73,41 @@ def parse_state_frequencies(log_file_path, dimension=4):
     else:
         # If "equal frequencies" is in the log content, return a pseudo dictionary with equal frequencies
         for i in range(dimension):
-            key = "key_"+ str(i)
+            key = "key_" + str(i)
             frequencies[key] = 1 / dimension
-        
+
     # Return the frequencies dictionary
     return frequencies
+
+
+def extract_rate_matrix(file_path):
+    file_content = ""
+    # Load the file content into a string
+    with open(file_path, 'r') as file:
+        file_content = file.read()
+
+    rate_matrix_start = file_content.find("Rate matrix Q:")
+    rate_matrix_text = file_content[rate_matrix_start:]
+    rate_matrix_lines = rate_matrix_text.split("\n")
+
+    rate_matrix = []
+    row_ids = []
+
+    for line in rate_matrix_lines[1:]:  # Skip the "Rate matrix Q:" line
+        # Check if the line starts with a letter (assumes row IDs are letters)
+        if not line.strip() or not line.strip()[0].isalpha():
+            continue
+        tokens = line.split()
+        try:
+            # Try to convert the tokens after the first one to floats
+            row = [float(x) for x in tokens[1:]]
+        except ValueError:
+            # If the conversion fails, we've reached the end of the matrix
+            break
+        row_ids.append(tokens[0])
+        rate_matrix.append(row)
+
+    return pd.DataFrame(rate_matrix, index=row_ids, columns=row_ids)
 
 
 # Define a function to parse state frequencies from a log content
@@ -109,7 +142,6 @@ def parse_rate_matrices(n, path):
                     raise Exception("Error while parsing empirical state frequencies.")
             elif "State frequencies: (equal frequencies)" in line:
                 np.fill_diagonal(phi_matrix, 0.25)
-
     return rate_matrix, phi_matrix
 
 
@@ -132,7 +164,6 @@ def parse_rate_and_frequencies_and_create_model_files(
     return state_frequencies.values(), model_and_frequency
 
 
-
 # def parse_rate_and_frequencies_and_create_model_files(
 #     path, number_rates, dimension, model="GTR"
 # ):
@@ -149,10 +180,10 @@ def parse_rate_and_frequencies_and_create_model_files(
 #     # Construct the model string with parsed rate parameters
 #     log_file_path = f"{path}.iqtree"
 #     model_final = parse_rate_parameters(log_file_path, dimension, model=model)
-    
+
 #     # Parse state frequencies from the log content
 #     state_frequencies = parse_state_frequencies(log_file_path, dimension=dimension)
-   
+
 #     # Create a string of state frequencies separated by a space
 #     concatenated_rates = " ".join(map(str, state_frequencies.values()))
 
@@ -173,5 +204,3 @@ def parse_rate_and_frequencies_and_create_model_files(
 #             )
 
 #     return state_frequencies.values(), model_and_frequency
-
-

@@ -13,7 +13,10 @@ from satute_util_new import (
 from satute_calculate_likelihoods import run_iqtree_for_each_subtree_parallel
 from satute_repository import parse_rate_and_frequencies_and_create_model_files
 from ete3 import Tree
-
+from satute_repository import parse_rate_matrices, extract_rate_matrix
+from calculate_partial_likelihood import (
+    run_calculation_partial_likelihood_for_directories,
+)
 
 # Configure the logging settings (optional)
 logging.basicConfig(
@@ -267,7 +270,6 @@ class Satute:
         # Running IQ-TREE with constructed arguments
         # If no model specified in input arguments, extract best model from log file
 
-
         if not self.input_args.model:
             self.run_iqtree_with_arguments(
                 arguments_dict["arguments"], ["-m", "TESTONLY", "--redo", "--quiet"]
@@ -348,30 +350,44 @@ class Satute:
         )
         logger.info(f"Building tree test space with {number_rates} rate categories")
 
-        # Build the structure for the subtrees and msas 
+        # Build the structure for the subtrees and msas
         valid_category_rates = build_tree_test_space(
             number_rates=number_rates,
             msa_file_name=str(arguments_dict["msa_file"]),
             target_directory=self.active_directory,
         )
-
         logger.info(f"These are the valid {str(valid_category_rates)} rate categories")
 
         logger.info(
             f"Run IQ-Tree for each subtree in parallel with {number_rates} rate categories"
         )
 
+        # TODO make or generate state_space and dimension
+        # Extract the rate matrix and row identifiers
+        rate_matrix = extract_rate_matrix(str(arguments_dict["msa_file"]) + ".iqtree")
+        state_space = rate_matrix.index.tolist()
+        dimension = len(state_space)
+        state_space = {id: index for index, id in enumerate(state_space)}
+
+        rate_matrix, psi_matrix = parse_rate_matrices(
+            dimension, str(arguments_dict["msa_file"])
+        )
+
+        logger.info(f"Rate Matrix: \n {rate_matrix}")
+        
         # For each rate, run IQ-TREE for the calculation of the posterior distributions in parallel
-        for i in valid_category_rates:
-            run_iqtree_for_each_subtree_parallel(
-                self.active_directory, number_rates, i, self.input_args.iqtree
+        for category_rate in valid_category_rates:
+            run_calculation_partial_likelihood_for_directories(
+                self.active_directory,
+                number_rates,
+                category_rate,
+                rate_matrix,
+                dimension,
+                state_space,
             )
 
         logger.info(
-            f"Run test for saturation for each branch and category with {number_rates} rate categories"
-        )
-        logger.info(
-            "Results will be written to the directory: " + self.active_directory.name
+            f"Run test for saturation for each branch and category with {number_rates} rate categories\n Results will be written to the directory:{self.active_directory.name}"
         )
 
         # Run the test for branch saturation
@@ -383,21 +399,6 @@ class Satute:
             t=Tree(newick_string, format=1),
             valid_category_rates=valid_category_rates,
         )
-
-        # for i in range(number_rates):
-        #     logger.info(f"Here comes the {i + 1} th fastest evolving region: ")
-        #     saturation_test_cli(
-        #         str(arguments_dict["msa_file"]),
-        #         newick_string,
-        #         str(self.input_args.iqtree),
-        #         4,
-        #         number_rates,
-        #         str(number_rates - i),
-        #         self.input_args.alpha,
-        #         1,
-        #         0.01,
-        #         self.input_args.model,
-        #     )
 
         # Writing log file
         self.write_log(arguments_dict["msa_file"])

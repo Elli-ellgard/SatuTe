@@ -32,7 +32,7 @@ from satute_rate_categories_and_alignments import (
     filter_alignment_by_ids,
     read_alignment_file,
     split_msa_into_rate_categories,
-    parse_category_rates,    
+    parse_category_rates,
 )
 
 from satute_test_statistic import (
@@ -70,6 +70,7 @@ def initialize_logger(log_file):
 
 
 """ ## SPECTRAL DECOMPOSITION OF THE RATE MATRIX"""
+
 
 def spectral_decomposition(n, path):
     rate_matrix, psi_matrix = parse_rate_matrices(n, path)
@@ -117,7 +118,9 @@ def spectral_decomposition(n, path):
 
     return array_eigenvectors, multiplicity
 
+
 """ ## GENERATE STRUCTURE FOR SUBTREES"""
+
 
 def write_subtree_and_sub_alignments(
     generated_subtree_pairs, alignment, state_frequencies, rate_matrix, path_prefix="./"
@@ -201,6 +204,7 @@ def write_subtree_and_sub_alignments(
                 rate_matrix,
             )
 
+
 def parse_file_to_data_frame(file_path):
     try:
         # Read the file into a dataframe
@@ -210,6 +214,7 @@ def parse_file_to_data_frame(file_path):
 
     except FileNotFoundError:
         raise Exception(f"File not found: {file_path}")
+
 
 def generate_write_subtree_pairs_and_msa(
     number_rates,
@@ -266,10 +271,12 @@ def generate_write_subtree_pairs_and_msa(
                 path_prefix=f"./{file_path}/subsequence{i}/",
             )
 
+
 def fetch_subdirectories(directory, prefix):
     pattern = os.path.join(directory, prefix + "*")
     subdirectories = glob.glob(pattern)
     return subdirectories
+
 
 def build_tree_test_space(number_rates, msa_file_name, target_directory, dimension=4):
     site_probability = parse_file_to_data_frame(f"{msa_file_name}.siteprob")
@@ -280,7 +287,10 @@ def build_tree_test_space(number_rates, msa_file_name, target_directory, dimensi
         f"{msa_file_name}.iqtree", dimension=dimension
     )
 
-    (rate_matrix, phi_matrix) = parse_rate_matrices(dimension, msa_file_name)
+    (
+        rate_matrix,
+        phi_matrix,
+    ) = parse_rate_matrices(dimension, msa_file_name)
 
     valid_category_rates = []
 
@@ -303,6 +313,7 @@ def build_tree_test_space(number_rates, msa_file_name, target_directory, dimensi
 
     return valid_category_rates
 
+
 def run_saturation_test_for_branches_and_categories(
     input_directory,
     target_directory,
@@ -310,7 +321,7 @@ def run_saturation_test_for_branches_and_categories(
     t,
     dimension,
     alpha=0.01,
-    valid_category_rates = [],
+    valid_category_rates=[],
 ):
     # number of branches
     branch_count = len(t.get_descendants())
@@ -409,7 +420,7 @@ def run_saturation_test_for_branches_and_categories(
                 left_subtree_dir = subtree_directories[0]
                 right_subtree_dir = subtree_directories[1]
                 branch_type = "internal"
-            
+
             # read the posterior probabilities of the left subtree from .state file
             posterior_probabilities_left_subtree = parse_output_state_frequencies(
                 f"{left_subtree_dir}/output.state"
@@ -419,7 +430,7 @@ def run_saturation_test_for_branches_and_categories(
                 f"{right_subtree_dir}/output.state"
             )
 
-            # Calculation of the  test for branch saturation 
+            # Calculation of the  test for branch saturation
             results = run_saturation_test_for_branch(
                 multiplicity,
                 array_eigenvectors,
@@ -432,7 +443,9 @@ def run_saturation_test_for_branches_and_categories(
                 input_directory,
             )
 
+
             results_list[number_rates].append(results)
+            
 
             write_results_and_newick_tree(
                 results_list[number_rates],
@@ -442,6 +455,7 @@ def run_saturation_test_for_branches_and_categories(
                 results_list[number_rates][0]["c_s_two_sequence"],
                 t,
             )
+
 
 def write_results_and_newick_tree(
     results_list, newick_string, path_folder, chosen_rate, c_sTwoSequence, T
@@ -461,8 +475,6 @@ def write_results_and_newick_tree(
     # Convert the results_list into a pandas dataframe
     saturation_branches_data_frame = pd.DataFrame(results_list)
 
-    print(saturation_branches_data_frame)
-
     # Save the dataframe as a tab-separated CSV file
     saturation_branches_data_frame.to_csv(
         f"{path_folder}/resultsRate{chosen_rate}.satute.csv",
@@ -471,6 +483,8 @@ def write_results_and_newick_tree(
         sep="\t",
         mode="w",
     )
+
+    print(saturation_branches_data_frame)
 
     # Generate a newick string with saturation information
     # saturation_information_newick_string = map_values_to_newick(
@@ -502,6 +516,7 @@ def write_results_and_newick_tree(
         # Write the saturation information newick string to the file
         # satute_result_file.write(f"\n\n Tree with saturation values: {saturation_information_newick_string}")
 
+
 def run_saturation_test_for_branch(
     multiplicity,
     array_eigenvectors,
@@ -530,10 +545,7 @@ def run_saturation_test_for_branch(
         alpha,
     )
 
-    (
-        lr_test, 
-        result_lr_test
-    ) = calculate_likelihood_ratio_test(
+    (lr_test, result_lr_test) = calculate_likelihood_ratio_test(
         input_directory,
         branch_length,
         posterior_probabilities_left_subtree,
@@ -541,8 +553,7 @@ def run_saturation_test_for_branch(
         dimension,
         alpha,
     )
-    
-    
+
     return {
         "delta": delta,
         "c_s": c_s,
@@ -553,4 +564,3 @@ def run_saturation_test_for_branch(
         "lr_test": lr_test,
         "result_lr_test": result_lr_test,
     }
-

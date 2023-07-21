@@ -11,6 +11,29 @@ def parse_file_to_data_frame(file_path):
 
     except FileNotFoundError:
         raise Exception(f"File not found: {file_path}")
+    
+
+def parse_rate_matrix(file_content):
+    rate_matrix_start = file_content.find("Rate matrix Q:")
+    rate_matrix_text = file_content[rate_matrix_start:]
+    rate_matrix_lines = rate_matrix_text.split("\n")
+
+    rate_matrix = []
+    row_ids = []
+
+    for line in rate_matrix_lines:
+        # Continue until line doesn't start with a letter (assumes row IDs are letters)
+        if line.strip() == "" or not line.strip()[0].isalpha():
+            break
+        tokens = line.split()
+        row_ids.append(tokens[0])
+        rate_matrix.append([float(x) for x in tokens[1:]])
+
+    return pd.DataFrame(rate_matrix, index=row_ids, columns=row_ids)
+
+
+
+
 
 def parse_newick_file(file_path):
     try:
@@ -28,12 +51,14 @@ def parse_newick_file(file_path):
     except FileNotFoundError:
         raise Exception("File not found: " + file_path)
 
+
 def get_leaves(tree):
     leaves = []
     for leaf in tree:
         if leaf.is_leaf():
             leaves.append(leaf.name)
     return leaves
+
 
 def branch_lengths(T):
     vector_branches = []
@@ -62,6 +87,7 @@ def branch_lengths(T):
 
     return vector_branches, vector_distances
 
+
 def name_nodes_by_level_order(tree):
     i = 1
     for node in tree.traverse("levelorder"):
@@ -69,6 +95,7 @@ def name_nodes_by_level_order(tree):
             node.name = f"Node{i}*"
             i += 1
     return tree
+
 
 def rescale_branch_lengths(tree, rescale_factor):
     """
@@ -89,12 +116,14 @@ def rescale_branch_lengths(tree, rescale_factor):
     # Return the tree with rescaled branch lengths
     return tree
 
+
 def get_all_subtrees(tree):
     subtrees = []
     for node in tree.traverse("levelorder"):
         if not node.is_root():
             subtrees.append(node)
     return subtrees
+
 
 def get_opposite_subtree(tree, subtree):
     # Create a copy of the tree so as not to modify the original
@@ -105,6 +134,7 @@ def get_opposite_subtree(tree, subtree):
     # Detach this node (and its descendants) from the tree
     node.detach()
     return tree_copy
+
 
 def generate_subtree_pair(subtrees, t):
     subtree_pairs = []
@@ -119,6 +149,3 @@ def generate_subtree_pair(subtrees, t):
         subtree_pairs.append(subtree_pair_entry)
 
     return subtree_pairs
-
-
-
