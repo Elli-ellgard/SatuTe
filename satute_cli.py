@@ -294,7 +294,6 @@ class Satute:
 
         # Validate and append ufboot and boot parameters to extra_arguments
         extra_arguments = extra_arguments + self.validate_and_append_boot_arguments()
-
         # Check if the IQ-TREE state file exists and
         # check in the case of a +G or +R model if the IQ-Tree siteprob file exists
         # if necessary  we have to rerun IQ-TREE
@@ -304,7 +303,6 @@ class Satute:
             self.run_iqtree_with_arguments(
                 arguments=arguments_dict["arguments"], extra_arguments=extra_arguments
             )
-
         # ======== Tree File Handling =========
         newick_string = self.get_newick_string_from_args()
         # ======== End Tree File Handling =========
@@ -344,9 +342,9 @@ class Satute:
 
         logger.info(
             f"""
-                        These are the valid {str(valid_category_rates)} rate categories")
-                        Run IQ-Tree for each subtree in parallel with {number_rates} rate categories
-                    """
+                These are the valid {str(valid_category_rates)} rate categories")
+                Run IQ-Tree for each subtree in parallel with {number_rates} rate categories
+            """
         )
 
         # TODO make or generate state_space and dimension
@@ -370,9 +368,11 @@ class Satute:
                 dimension,
                 state_space,
             )
-            
+
         logger.info(
-            f"Run test for saturation for each branch and category with {number_rates} rate categories\n Results will be written to the directory:{self.active_directory.name}"
+            f"""Run test for saturation for each branch and category with {number_rates} rate categories\n 
+            Results will be written to the directory:{self.active_directory.name}
+            """
         )
 
         # Run the test for branch saturation
