@@ -10,7 +10,7 @@ from satute_util_new import (
     build_tree_test_space,
     run_saturation_test_for_branches_and_categories,
 )
-from satute_calculate_likelihoods import run_iqtree_for_each_subtree_parallel
+from satute_calculate_likelihoods import run_iqtree_for_each_subtree_parallel, run_iqtree_for_each_subtree
 from satute_repository import parse_rate_and_frequencies_and_create_model_files
 from ete3 import Tree
 
@@ -363,9 +363,11 @@ class Satute:
 
         # For each rate, run IQ-TREE for the calculation of the posterior distributions in parallel
         for i in valid_category_rates:
-            run_iqtree_for_each_subtree_parallel(
-                self.active_directory, number_rates, i, self.input_args.iqtree
-            )
+            run_iqtree_for_each_subtree(self.active_directory, number_rates, i, self.input_args.iqtree)
+
+            #run_iqtree_for_each_subtree_parallel(
+            #    self.active_directory, number_rates, i, self.input_args.iqtree
+            #)
 
         logger.info(
             f"Run test for saturation for each branch and category with {number_rates} rate categories"

@@ -12,7 +12,6 @@ from satute_trees_and_subtrees import (
 )
 
 
-
 """ TODO: 
     - we should think about create a directory of the state_space at the beginning of the program and use it for dimension stuff
     - generalizes the functions below for other dimension (now only dimension 4)
@@ -87,6 +86,7 @@ def generate_output_state_file_for_cherry(
                 "{:.5f}".format(distribution[value]) for value in range(4)
             )
             state_file_writer.write(f"\nNode1\t{i + 1}\t{alignments[0][i]}\t{values}")
+
 
 # generate output.state file for leaves
 def generate_output_state_file_for_external_branch(
@@ -210,3 +210,58 @@ def run_iqtree_for_each_subtree_parallel(
     # Create a multiprocessing pool and map the execute_iqtree_partial function to clade_dirs
     with Pool() as pool:
         pool.map(execute_iqtree_partial, subtrees_dirs)
+
+
+def run_iqtree_for_each_subtree(
+    path_folder, number_rates, chosen_rate, iqtree_path, model_and_frequency=""
+):
+    """
+    Run IQ-TREE for each clade directory.
+
+    Args:
+        path_folder (str): Root folder path.
+        number_rates (int): Number of rates.
+        chosen_rate (int): Chosen rate.
+        iqtree_path (str): Path to the IQ-TREE executable.
+
+    Raises:
+        FileNotFoundError: If model and frequency file does not exist.
+        NotADirectoryError: If the clade directory does not exist or is not a directory.
+        FileNotFoundError: If sequence.txt or tree.txt file does not exist in the clade directory.
+        RuntimeError: If IQ-TREE command fails.
+
+    """
+
+    subtrees_dir = ""
+
+    # Determine path and model based on number of rates
+    if number_rates > 1:
+        subtrees_dir = os.path.join(
+            path_folder, f"subsequence{chosen_rate}", "subtrees"
+        )
+
+    else:
+        subtrees_dir = os.path.join(path_folder, "subtrees")
+
+    # Check if clade directory exists and is a directory
+    if not os.path.isdir(subtrees_dir):
+        raise NotADirectoryError(
+            f"The subtrees directory '{subtrees_dir}' does not exist or is not a directory."
+        )
+
+    # Create a list of subtree directories for internal branches
+    subtrees_dirs = [
+        sub_dir
+        for sub_dir in Path(subtrees_dir).iterdir()
+        if sub_dir.is_dir()
+        and not os.path.isfile(os.path.join(sub_dir, "output.state"))
+    ]
+
+    # Create a partial function with fixed arguments for execute_iqtree
+    execute_iqtree_partial = partial(
+        execute_iqtree, iqtree_path=iqtree_path, model_and_frequency=model_and_frequency
+    )
+
+    # Call execute_iqtree_partial for each directory in clade_dirs
+    for dir in subtrees_dirs:
+        execute_iqtree_partial(dir)
