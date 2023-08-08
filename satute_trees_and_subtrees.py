@@ -11,7 +11,7 @@ def parse_file_to_data_frame(file_path):
 
     except FileNotFoundError:
         raise Exception(f"File not found: {file_path}")
-    
+
 
 def parse_rate_matrix(file_content):
     rate_matrix_start = file_content.find("Rate matrix Q:")
@@ -30,9 +30,6 @@ def parse_rate_matrix(file_content):
         rate_matrix.append([float(x) for x in tokens[1:]])
 
     return pd.DataFrame(rate_matrix, index=row_ids, columns=row_ids)
-
-
-
 
 
 def parse_newick_file(file_path):

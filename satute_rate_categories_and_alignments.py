@@ -190,3 +190,24 @@ def split_msa_into_rate_categories(site_probability, folder_path, msa_file_name)
     return valid_category_rates
 
 
+def split_msa_into_rate_categories_in_place(site_probability, folder_path, alignment):
+    sub_category = build_categories_by_sub_tables(site_probability)
+    per_category_alignment_dict = {}
+    valid_category_rates = []
+
+    for key, value in sub_category.items():
+        if len(value) > 0:
+            valid_category_rates = [int(key[1:])] + valid_category_rates
+        per_category_alignment_dict[key] = cut_alignment_columns(alignment, value)
+
+
+
+    for key, value in per_category_alignment_dict.items():
+        # Make a new directory for this subsequence, if it doesn't exist yet
+        os.makedirs(f"./{folder_path}/subsequence{key[1:]}/", exist_ok=True)
+
+        write_alignment(
+            value, f"./{folder_path}/subsequence{key[1:]}/rate.fasta", "fasta"
+        )
+
+    return valid_category_rates

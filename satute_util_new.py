@@ -237,6 +237,7 @@ def generate_write_subtree_pairs_and_msa(
             # Generate subtree pairs, assuming the function is defined elsewhere
             generated_subtree_pairs = generate_subtree_pair(subtrees, t)
             alignment = read_alignment_file(msa_file_name)
+
             write_subtree_and_sub_alignments(
                 generated_subtree_pairs,
                 alignment,
@@ -244,6 +245,7 @@ def generate_write_subtree_pairs_and_msa(
                 rate_matrix,
                 f"./{file_path}/",
             )
+
         except Exception as e:
             print(f"Error occurred during the first iteration: {e}")
     else:
@@ -443,9 +445,7 @@ def run_saturation_test_for_branches_and_categories(
                 input_directory,
             )
 
-
             results_list[number_rates].append(results)
-            
 
             write_results_and_newick_tree(
                 results_list[number_rates],

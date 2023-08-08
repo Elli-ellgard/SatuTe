@@ -79,7 +79,6 @@ def parse_state_frequencies(log_file_path, dimension=4):
     # Return the frequencies dictionary
     return frequencies
 
-
 def extract_rate_matrix(file_path):
     file_content = ""
     # Load the file content into a string
@@ -202,5 +201,4 @@ def parse_rate_and_frequencies_and_create_model_files(
 #             _write_model_file(
 #                 os.path.join(subsequence_folder, "model.txt"), model_and_frequency
 #             )
-
 #     return state_frequencies.values(), model_and_frequency

@@ -3,7 +3,6 @@ import numpy as np
 from scipy.sparse.linalg import expm
 from scipy.linalg import expm
 from satute_rate_categories_and_alignments import (
-    cut_alignment_columns,
     read_alignment_file,
 )
 import os
@@ -48,6 +47,8 @@ def get_initial_likelihood_vector(state, state_frequencies):
 def calculate_partial_likelihood_per_site(
     tree, pattern, rate_matrix, state_frequencies, dimension
 ):
+    partial_likelihood_dictionary = {}
+
     for node in tree.traverse("postorder"):
         if node.is_leaf():
             node.add_feature(
@@ -58,8 +59,11 @@ def calculate_partial_likelihood_per_site(
             )
         else:
             likelihood_factors = []
+
             for child_node in node.children:
+
                 branch_length = child_node.dist
+                
                 transition_matrix = get_transition_matrix(rate_matrix, branch_length)
                 factor = []
 
@@ -67,7 +71,6 @@ def calculate_partial_likelihood_per_site(
                     component = (
                         np.array(transition_matrix[i]) @ child_node.partial_likelihood
                     )
-
                     factor.append(component)
 
                 likelihood_factors.append(factor)
@@ -76,6 +79,10 @@ def calculate_partial_likelihood_per_site(
 
             for factor in likelihood_factors:
                 partial_likelihood_vector = partial_likelihood_vector * factor
+
+            partial_likelihood_dictionary[
+                node.write(format=1)
+            ] = partial_likelihood_vector
 
             node.add_feature("partial_likelihood", partial_likelihood_vector)
 
@@ -144,14 +151,23 @@ def run_calculation_partial_likelihood_for_directories(
     ]
 
     for subtree_dir in subtrees_dirs:
+        
         sub_tree = parse_newick_file(f"{subtree_dir}/subtree.treefile")
+
         sub_alignment = read_alignment_file(os.path.join(subtree_dir, "subtree.fasta"))
+
         partial_likelihoods = []
+
         for i in range(sub_alignment.get_alignment_length()):
-            pattern = cut_alignment_columns(sub_alignment, [i])
+            
+            pattern = sub_alignment[
+                :, (i + 1) - 1 : (i + 1)
+            ] 
+
             calculate_partial_likelihood_per_site(
                 sub_tree, pattern, rate_matrix, state_space, dimension
             )
+
             partial_likelihoods.append(
                 {
                     "Site": i + 1,
@@ -163,13 +179,15 @@ def run_calculation_partial_likelihood_for_directories(
                     "p_T": sub_tree.partial_likelihood[3],
                 }
             )
+
         partial_likelihoods = pd.DataFrame(partial_likelihoods)
+
         partial_likelihoods.to_csv(f"{subtree_dir}/output.state", sep="\t", index=False)
 
 
 if __name__ == "__main__":
     # test_tree = Tree("(t7:0.0000029501,(((t3:1.1860038987,t5:0.3574240070)Node4:0.3519068150,t6:0.0000026009)Node3:0.9333701329,t1:0.0000020740)Node2:1.0874051066,(t4:1.7362743020,t2:3.4573102784)Node5:0.0372190293)Node1;", format=1)
-    
+
     rate_matrix = np.asmatrix(
         [[-3.0, 1, 1, 1], [1, -3, 1, 1], [1, 1, -3, 1], [1, 1, 1, -3]], dtype=np.float64
     )
