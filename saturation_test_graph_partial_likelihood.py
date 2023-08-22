@@ -37,7 +37,7 @@ if __name__ == "__main__":
     print("Reading Rate Matrix")
 
     RATE_MATRIX = np.array([[-3, 1, 1, 1], [1, -3, 1, 1], [1, 1, -3, 1], [1, 1, 1, -3]])
-    number_rate = 4
+    number_rate = 2
     rate_matrix = RateMatrix(RATE_MATRIX)
 
     if number_rate == 1:
