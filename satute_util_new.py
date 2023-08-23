@@ -1,4 +1,3 @@
-from ete3 import Tree
 import os
 import pandas as pd
 from Bio import AlignIO
@@ -11,7 +10,6 @@ from satute_repository import (
     parse_state_frequencies,
     parse_rate_matrices,
 )
-import shutil
 import glob
 from satute_repository import parse_output_state_frequencies
 from satute_trees_and_subtrees import (

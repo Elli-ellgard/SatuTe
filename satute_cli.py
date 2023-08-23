@@ -10,7 +10,6 @@ from satute_util_new import (
     build_tree_test_space,
     run_saturation_test_for_branches_and_categories,
 )
-from satute_calculate_likelihoods import run_iqtree_for_each_subtree_parallel
 from satute_repository import parse_rate_and_frequencies_and_create_model_files
 from ete3 import Tree
 from satute_repository import parse_rate_matrices, extract_rate_matrix
@@ -129,6 +128,9 @@ def parse_substitution_model(file_path):
         # If the file cannot be read or ':' is not found in the content
         # Return None or an appropriate value for error handling
         return None
+
+
+import time
 
 
 class Satute:
@@ -317,6 +319,8 @@ class Satute:
             """
         )
 
+        start = time.time()
+        
         (
             state_frequencies,
             model_and_frequency,
@@ -347,6 +351,7 @@ class Satute:
             """
         )
 
+
         # TODO make or generate state_space and dimension
         # Extract the rate matrix and row identifiers
         rate_matrix = extract_rate_matrix(str(arguments_dict["msa_file"]) + ".iqtree")
@@ -356,7 +361,7 @@ class Satute:
         rate_matrix, psi_matrix = parse_rate_matrices(
             dimension, str(arguments_dict["msa_file"])
         )
-        
+
         logger.info(f"Rate Matrix: \n {rate_matrix}")
 
         # For each rate, run IQ-TREE for the calculation of the posterior distributions in parallel
@@ -369,6 +374,11 @@ class Satute:
                 dimension,
                 state_space,
             )
+
+        end = time.time()
+        print("Calculating the partial likelihood too that much time:")
+        print(end - start)
+
 
         logger.info(
             f"""Run test for saturation for each branch and category with {number_rates} rate categories\n 

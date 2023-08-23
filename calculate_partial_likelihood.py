@@ -1,4 +1,3 @@
-from ete3 import Tree
 import numpy as np
 from scipy.sparse.linalg import expm
 from scipy.linalg import expm
@@ -61,9 +60,8 @@ def calculate_partial_likelihood_per_site(
             likelihood_factors = []
 
             for child_node in node.children:
-
                 branch_length = child_node.dist
-                
+
                 transition_matrix = get_transition_matrix(rate_matrix, branch_length)
                 factor = []
 
@@ -151,7 +149,6 @@ def run_calculation_partial_likelihood_for_directories(
     ]
 
     for subtree_dir in subtrees_dirs:
-        
         sub_tree = parse_newick_file(f"{subtree_dir}/subtree.treefile")
 
         sub_alignment = read_alignment_file(os.path.join(subtree_dir, "subtree.fasta"))
@@ -159,10 +156,7 @@ def run_calculation_partial_likelihood_for_directories(
         partial_likelihoods = []
 
         for i in range(sub_alignment.get_alignment_length()):
-            
-            pattern = sub_alignment[
-                :, (i + 1) - 1 : (i + 1)
-            ] 
+            pattern = sub_alignment[:, (i + 1) - 1 : (i + 1)]
 
             calculate_partial_likelihood_per_site(
                 sub_tree, pattern, rate_matrix, state_space, dimension
@@ -193,7 +187,6 @@ if __name__ == "__main__":
     )
     state_space = {"A": 0, "C": 1, "G": 2, "T": 3}
     dimension = len(state_space)
-
     run_calculation_partial_likelihood_for_directories(
         "./test/octo-kraken-msa-test/", 4, 1, rate_matrix, dimension, state_space
     )
