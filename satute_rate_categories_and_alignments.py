@@ -5,8 +5,8 @@ import numpy as np
 from Bio.SeqRecord import SeqRecord
 from Bio.Seq import Seq
 
-
 """ ## RATE CATEGORIES  """
+
 
 def get_column_names_with_prefix(data_frame, prefix):
     # Filter the columns using the specified prefix
@@ -14,6 +14,7 @@ def get_column_names_with_prefix(data_frame, prefix):
         data_frame.columns.str.startswith(prefix)
     ].tolist()
     return columns_with_prefix
+
 
 def build_categories_by_sub_tables(data_frame):
     rate_category_dictionary = {}
@@ -34,11 +35,12 @@ def build_categories_by_sub_tables(data_frame):
 
     return rate_category_dictionary
 
+
 def parse_category_rates(log_file):
     f = open(log_file, "r")
     lines = f.readlines()
     f.close()
-    table_data = []
+    table_data = {}
 
     # Find the start and end indices of the table
     start_index = -1
@@ -67,17 +69,16 @@ def parse_category_rates(log_file):
             relative_rate = float(row[1])
             proportion = float(row[2])
             if category != "0":
-                table_data.append(
-                    {
-                        "Category": category,
-                        "Relative_rate": relative_rate,
-                        "Proportion": proportion,
-                    }
-                )
-    print(table_data)
+                table_data[f"p{category}"] = {
+                    "Category": category,
+                    "Relative_rate": relative_rate,
+                    "Proportion": proportion,
+                }
     return table_data
 
+
 """ ## HANDLE ALIGNMENTS  """
+
 
 def filter_alignment_by_ids(alignment, ids):
     """
@@ -97,6 +98,7 @@ def filter_alignment_by_ids(alignment, ids):
     )
 
     return filtered_alignment
+
 
 def guess_alignment_format(file_name):
     with open(file_name, "r") as f:
@@ -118,6 +120,7 @@ def guess_alignment_format(file_name):
     else:
         return "Unknown"
 
+
 def read_alignment_file(file_name):
     # Guess the format of the file
     file_format = guess_alignment_format(file_name)
@@ -133,6 +136,7 @@ def read_alignment_file(file_name):
     except Exception as e:
         print(f"An error occurred while reading the file: {str(e)}")
 
+
 def cut_alignment_columns(alignment, columns):
     # Convert the alignment to a NumPy array for easy column slicing
     alignment_array = np.array([list(rec) for rec in alignment], np.character)
@@ -147,6 +151,7 @@ def cut_alignment_columns(alignment, columns):
     selected_alignment = MultipleSeqAlignment(selected_records)
 
     return selected_alignment
+
 
 def write_alignment(alignment, file_name, file_format):
     """
@@ -167,6 +172,7 @@ def write_alignment(alignment, file_name, file_format):
 
     return num_alignments_written
 
+
 def split_msa_into_rate_categories(site_probability, folder_path, msa_file_name):
     sub_category = build_categories_by_sub_tables(site_probability)
     alignment = read_alignment_file(msa_file_name)
@@ -178,7 +184,6 @@ def split_msa_into_rate_categories(site_probability, folder_path, msa_file_name)
             valid_category_rates = [int(key[1:])] + valid_category_rates
         per_category_alignment_dict[key] = cut_alignment_columns(alignment, value)
 
-
     for key, value in per_category_alignment_dict.items():
         # Make a new directory for this subsequence, if it doesn't exist yet
         os.makedirs(f"./{folder_path}/subsequence{key[1:]}/", exist_ok=True)
@@ -190,24 +195,9 @@ def split_msa_into_rate_categories(site_probability, folder_path, msa_file_name)
     return valid_category_rates
 
 
-def split_msa_into_rate_categories_in_place(site_probability, folder_path, alignment):
+def split_msa_into_rate_categories_in_place(site_probability, alignment):
     sub_category = build_categories_by_sub_tables(site_probability)
     per_category_alignment_dict = {}
-    valid_category_rates = []
-
     for key, value in sub_category.items():
-        if len(value) > 0:
-            valid_category_rates = [int(key[1:])] + valid_category_rates
         per_category_alignment_dict[key] = cut_alignment_columns(alignment, value)
-
-
-
-    for key, value in per_category_alignment_dict.items():
-        # Make a new directory for this subsequence, if it doesn't exist yet
-        os.makedirs(f"./{folder_path}/subsequence{key[1:]}/", exist_ok=True)
-
-        write_alignment(
-            value, f"./{folder_path}/subsequence{key[1:]}/rate.fasta", "fasta"
-        )
-
-    return valid_category_rates
+    return per_category_alignment_dict

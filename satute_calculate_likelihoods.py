@@ -17,7 +17,6 @@ from satute_trees_and_subtrees import (
     - generalizes the functions below for other dimension (now only dimension 4)
 """
 
-
 # get transition matrix using matrix exponential
 def get_transition_matrix(rate_matrix, branch_length):
     return expm(rate_matrix * branch_length)

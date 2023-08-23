@@ -21,10 +21,6 @@ from satute_trees_and_subtrees import (
     get_all_subtrees,
     parse_newick_file,
 )
-from satute_calculate_likelihoods import (
-    generate_output_state_file_for_cherry,
-    generate_output_state_file_for_external_branch,
-)
 
 from satute_rate_categories_and_alignments import (
     filter_alignment_by_ids,
@@ -68,6 +64,50 @@ def initialize_logger(log_file):
 
 
 """ ## SPECTRAL DECOMPOSITION OF THE RATE MATRIX"""
+def spectral_decomposition_without_path(rate_matrix, psi_matrix):
+
+    """ 
+        Then psi_matrix := Diag(pi). Recall that matrix Q is reversible iff M:= psi_matrix^1/2 x Q x psi_matrix^{-1/2} is symmetric.
+        For a real symmetric matrix M, its eigenvectors can be chosen to be an orthonormal basis of R^n 
+    """
+    M = scipy.linalg.fractional_matrix_power(psi_matrix, +1 / 2) @ rate_matrix
+    M = M @ scipy.linalg.fractional_matrix_power(psi_matrix, -1 / 2)
+
+    """ eigendecomposition of matrix M"""
+    lamb, w = np.linalg.eig(M)  # Compute the eigenvalues and eigenvectors.
+    idx = lamb.argsort()[::-1]  # Order from large to small.
+    lamb = lamb[idx]  # Order the eigenvalues (large to small).
+    w = w[:, idx]  # Order the eigenvectors according to the eigenvalues"""
+
+    # the first one should be the eigenvalue 0 in lamb, why are we doing the following?
+    lamb_nozero = []  # list of eigenvalues without 0
+    for i in lamb:
+        if i > 0.00999 or i < -0.00999:
+            lamb_nozero.append(i)
+
+    max_lambda = max(lamb_nozero)  # dominant non-zero eigenvalue
+    # get the indices of the dominant non-zero eigenvalue in lamb taking numerical inaccuracies into account and identical values
+    index = []
+    for i in range(len(lamb)):
+        lambda_it = lamb[i]
+        if abs(lambda_it - max_lambda) < 0.01:
+            index.append(i)
+
+    multiplicity = len(index)  # multiplicity of the dominant non-zero eigenvalue
+    array_eigenvectors = (
+        []
+    )  # list of right eigenvectors for the dominant non-zero eigenvalue
+    for i in range(multiplicity):
+        # calculate the right eigenvectors for the dominant non-zero eigenvalue
+        v1 = scipy.linalg.fractional_matrix_power(psi_matrix, -1 / 2) @ w[:, index[i]]
+        array_eigenvectors.append(v1)
+        """# calculate the left eigenvectors for the dominant non-zero eigenvalue
+        h1 = (
+            scipy.linalg.fractional_matrix_power(psi_matrix, +1 / 2)
+            @ w[:, index[i]]
+            ) """
+
+    return array_eigenvectors, multiplicity
 
 
 def spectral_decomposition(n, path):

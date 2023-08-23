@@ -4,7 +4,26 @@ from functools import cache
 from scipy.sparse.linalg import expm
 import dataclasses
 from ete3 import Tree
-from satute_rate_categories_and_alignments import read_alignment_file
+from satute_rate_categories_and_alignments import (
+    read_alignment_file,
+    split_msa_into_rate_categories_in_place,
+)
+from satute_trees_and_subtrees import rescale_branch_lengths, parse_newick_file
+from satute_rate_categories_and_alignments import (
+    parse_category_rates,
+    read_alignment_file,
+    split_msa_into_rate_categories_in_place,
+)
+from satute_util_new import (
+    parse_file_to_data_frame,
+    spectral_decomposition_without_path,
+    parse_file_to_data_frame,
+)
+from satute_trees_and_subtrees import rescale_branch_lengths, parse_newick_file
+from satute_repository import parse_rate_matrices
+import pandas as pd
+from satute_test_statistic_using_partial_likelihood import calculate_test_statistic
+
 
 NUCLEOTIDE_CODE_VECTOR = {
     "A": [1, 0, 0, 0],
@@ -199,11 +218,11 @@ def calculate_partial_likelihoods_for_sites(tree, alignment, rate_matrix):
                           {
                               "Node": node_name,
                               "Site": site_index,
+                              "branch_length": branch_length,
                               "p_A": likelihood_A,
                               "p_C": likelihood_C,
                               "p_G": likelihood_G,
                               "p_T": likelihood_T,
-                              "branch_length": branch_length
                           },
                           ...
                       ],
@@ -211,11 +230,11 @@ def calculate_partial_likelihoods_for_sites(tree, alignment, rate_matrix):
                           {
                               "Node": node_name,
                               "Site": site_index,
+                              "branch_length": branch_length,
                               "p_A": likelihood_A,
                               "p_C": likelihood_C,
                               "p_G": likelihood_G,
                               "p_T": likelihood_T,
-                              "branch_length": branch_length
                           },
                           ...
                       ]
@@ -255,22 +274,22 @@ def calculate_partial_likelihoods_for_sites(tree, alignment, rate_matrix):
                         {
                             "Node": left.name,
                             "Site": i,
+                            "branch_length": branch_length,
                             "p_A": p1[0],
                             "p_C": p1[1],
                             "p_G": p1[2],
                             "p_T": p1[3],
-                            "branch_length": branch_length,
                         }
                     ],
                     "right": [
                         {
                             "Node": right.name,
                             "Site": i,
+                            "branch_length": branch_length,
                             "p_A": p2[0],
                             "p_C": p2[2],
                             "p_G": p2[2],
                             "p_T": p2[3],
-                            "branch_length": branch_length,
                         }
                     ],
                 }
@@ -396,18 +415,155 @@ def test_one_partial_likelihood():
         test(p1, p2)
 
 
-def main():
+def single_rate_analysis(t, alignment, rate_matrix, array_eigenvectors, multiplicity):
+    partial_likelihood_per_site_storage = calculate_partial_likelihoods_for_sites(
+        t, alignment, rate_matrix
+    )
+    result_test_dictionary = {}
+    result_list = []
+    for edge in partial_likelihood_per_site_storage.keys():
+        left_partial_likelihood = pd.DataFrame(
+            partial_likelihood_per_site_storage[edge]["left"]
+        )
+        right_partial_likelihood = pd.DataFrame(
+            partial_likelihood_per_site_storage[edge]["right"]
+        )
+
+        branch_type = "external"
+        if "Node" in edge[1]:
+            branch_type = "internal"
+
+        delta, c_s, c_sTwoSequence, p_value, result_test, result_test_tip2tip = calculate_test_statistic(
+            multiplicity,
+            array_eigenvectors,
+            left_partial_likelihood,
+            right_partial_likelihood,
+            4,
+            branch_type,
+            alpha=0.05,
+        )
+        result_list.append({
+            "edge": edge,
+            "delta": delta,
+            "c_s": c_s,
+            "c_sTwoSequence": c_sTwoSequence,
+            "p_value": p_value,
+            "result_test": result_test,
+            "result_test_tip2tip": result_test_tip2tip
+        })
+
+    result_test_dictionary["single_rate"] = result_list
+    return result_test_dictionary
+
+def multiple_rate_analysis(
+    t,
+    category_rates_factors,
+    rate_matrix,
+    array_eigenvectors,
+    multiplicity,
+    per_rate_category_alignment,
+):
+    
+    result_rate_dictionary = {}
+
+    for rate, alignment in per_rate_category_alignment.items():
+        relative_rate = category_rates_factors[rate]["Relative_rate"]
+        result_list = []
+        if len(alignment) > 0:
+            rescaled_tree = rescale_branch_lengths(t, relative_rate)
+            partial_likelihood_per_site_storage = (
+                calculate_partial_likelihoods_for_sites(
+                    rescaled_tree, alignment, rate_matrix
+                )
+            )
+            for edge in partial_likelihood_per_site_storage.keys():
+                left_partial_likelihood = pd.DataFrame(
+                    partial_likelihood_per_site_storage[edge]["left"]
+                )
+                right_partial_likelihood = pd.DataFrame(
+                    partial_likelihood_per_site_storage[edge]["right"]
+                )
+
+                branch_type = "external"
+                if "Node" in edge[1]:
+                    branch_type = "internal"
+
+                delta, c_s, c_sTwoSequence, p_value, result_test, result_test_tip2tip = calculate_test_statistic(
+                        multiplicity,
+                        array_eigenvectors,
+                        left_partial_likelihood,
+                        right_partial_likelihood,
+                        4,
+                        branch_type,
+                        alpha=0.05,
+                    )
+                
+                result_list.append({
+                    "edge": edge,
+                    "delta": delta,
+                    "c_s": c_s,
+                    "c_sTwoSequence": c_sTwoSequence,
+                    "p_value": p_value,
+                    "result_test": result_test,
+                    "result_test_tip2tip": result_test_tip2tip
+                })
+            result_rate_dictionary[rate] = result_list
+        return result_rate_dictionary
+ 
+
+def main_p():
     alignment_file = "./Clemens/example_3/sim-JC+G-AC1-AG1-AT1-CG1-CT1-GT1-alpha1.2-taxa64-len1000bp-bla0.01-blb0.8-blc0.2-rep01.fasta"
     newick_string = "(t000000:0.0067892257,t000001:0.0067787574,(((t000010:0.0059673375,((((((t010000:0.0030563760,t010001:0.0114093850):0.0094182376,(t010010:0.0131446398,t010011:0.0097395536):0.0133621566):0.0104108104,(((t011000:0.0124958339,t011001:0.0125011474):0.0075917776,(t011010:0.0051495665,t011011:0.0124730837):0.0069341413):0.0078912673,((t011100:0.0104118838,t011101:0.0072227008):0.0073307877,(t011110:0.0144514225,t011111:0.0055786880):0.0102245774):0.0059268453):0.0184390656):0.0061628417,(t010110:0.0082616199,t010111:0.0146332627):0.0101990740):0.0052544609,(t010100:0.0092991497,t010101:0.0114804795):0.0092491114):0.6992169228,(((((t100000:0.0114103154,t100001:0.0051613214):0.0061697358,(t100010:0.0136268730,t100011:0.0114221532):0.0072470758):0.0155632848,((t100100:0.0081218605,t100101:0.0073837399):0.0130036860,(t100110:0.0071915054,t100111:0.0125350507):0.0131619893):0.0090043100):0.0007243217,(((t101000:0.0106452037,t101001:0.0182293876):0.0045033981,(t101010:0.0121747946,t101011:0.0121664259):0.0105869819):0.0092355725,((t101100:0.0078255361,t101101:0.0176067822):0.0088049086,(t101110:0.0061914059,t101111:0.0114288359):0.0119823991):0.0077233513):0.0115530529):0.7027436378,(((((t110000:0.0152109080,t110001:0.0070318894):0.0081739309,(t110010:0.0101504845,t110011:0.0117088941):0.0091799218):0.0134467581,((t110100:0.0050989755,t110101:0.0103895458):0.0158105135,(t110110:0.0072259592,t110111:0.0124929711):0.0072567017):0.0115489293):0.0176840292,((t111000:0.0127615540,t111001:0.0059373002):0.0117927352,(t111010:0.0162749028,t111011:0.0080293329):0.0114795491):0.0181492686):0.0106254068,((t111100:0.0082902032,t111101:0.0114231618):0.0065691489,(t111110:0.0101567116,t111111:0.0058159250):0.0047846372):0.0005525044):0.8384907952):0.4960190049):0.7890571203):0.0055032299,t000011:0.0125092154):0.0125564734,(((t000100:0.0129052942,t000101:0.0081677003):0.0128058021,(t000110:0.0061739221,t000111:0.0124881756):0.0088603366):0.0105251504,(((t001000:0.0124981985,t001001:0.0103935537):0.0089686048,(t001010:0.0135912957,t001011:0.0093498130):0.0044762602):0.0161461211,((t001100:0.0093389059,t001101:0.0125044394):0.0064576918,(t001110:0.0104262512,t001111:0.0135413564):0.0135893360):0.0090709753):0.0287882859):0.0040229738):0.0188329058);"
     t = Tree(newick_string, format=1)
     t = name_nodes_by_level_order(t)
     alignment = read_alignment_file(alignment_file)
-
     rate_matrix = RateMatrix(RATE_MATRIX)
-
     partial_likelihood_per_site_storage = calculate_partial_likelihoods_for_sites(
         t, alignment, rate_matrix  #
     )
+
+
+def main():
+    alignment_file = "./Clemens/example_3/sim-JC+G-AC1-AG1-AT1-CG1-CT1-GT1-alpha1.2-taxa64-len1000bp-bla0.01-blb0.8-blc0.2-rep01.fasta"
+    alignment = read_alignment_file(alignment_file)
+    t = parse_newick_file(
+        "./Clemens/example_3/sim-JC+G-AC1-AG1-AT1-CG1-CT1-GT1-alpha1.2-taxa64-len1000bp-bla0.01-blb0.8-blc0.2-rep01.fasta.treefile"
+    )
+    t = name_nodes_by_level_order(t)
+    number_rate = 4
+
+    RATE_MATRIX, psi_matrix = parse_rate_matrices(
+        4,
+        "./Clemens/example_3/sim-JC+G-AC1-AG1-AT1-CG1-CT1-GT1-alpha1.2-taxa64-len1000bp-bla0.01-blb0.8-blc0.2-rep01.fasta",
+    )
+    rate_matrix = RateMatrix(RATE_MATRIX)
+
+    array_eigenvectors, multiplicity = spectral_decomposition_without_path(
+        RATE_MATRIX, psi_matrix
+    )
+
+    if number_rate == 1:
+        single_rate_analysis(
+            t, alignment, rate_matrix, array_eigenvectors, multiplicity
+        )
+    else:
+        site_probability = parse_file_to_data_frame(
+            "./Clemens/example_3/sim-JC+G-AC1-AG1-AT1-CG1-CT1-GT1-alpha1.2-taxa64-len1000bp-bla0.01-blb0.8-blc0.2-rep01.fasta.siteprob"
+        )
+        per_rate_category_alignment = split_msa_into_rate_categories_in_place(
+            site_probability, alignment
+        )
+        category_rates_factors = parse_category_rates(
+            "./Clemens/example_3/sim-JC+G-AC1-AG1-AT1-CG1-CT1-GT1-alpha1.2-taxa64-len1000bp-bla0.01-blb0.8-blc0.2-rep01.fasta.iqtree"
+        )
+        multiple_rate_analysis(
+            t,
+            category_rates_factors,
+            rate_matrix,
+            array_eigenvectors,
+            multiplicity,
+            per_rate_category_alignment,
+        )
 
 
 if __name__ == "__main__":

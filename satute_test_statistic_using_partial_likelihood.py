@@ -5,7 +5,6 @@ from satute_repository import (
     parse_state_frequencies,
     parse_rate_matrices,
 )
-from satute_calculate_likelihoods import get_transition_matrix
 
 
 """## CALCULATION OF THE SAMPLE COHERENCE """
@@ -75,6 +74,7 @@ def calculate_alternative_variance(
 """## CALCULATION OF THE TEST STATISTIC FOR BRANCH SATURATION"""
 # now the left eigenvectors h_i are necessary
 
+
 def calculate_test_statistic(
     multiplicity,
     array_left_eigenvectors,
@@ -86,10 +86,7 @@ def calculate_test_statistic(
 ):
     # quantile of the standard normal distribution
     z_alpha = st.norm.ppf(1 - alpha)
-
     number_sites = len(partial_likelihood_left_subtree["Site"].unique())
-    number_nodes_1 = len(partial_likelihood_left_subtree["Node"].unique())
-    number_nodes_2 = len(partial_likelihood_right_subtree["Node"].unique())
 
     """ Calculation of the factors for the coefficient C_1 (correspond to the dominant non-zero eigenvalue)"""
     # list of vetors of the scalar products between right eigenvector and posterior probability per site
@@ -97,7 +94,9 @@ def calculate_test_statistic(
     factors_right_subtree = []
 
     for i in range(multiplicity):
-        h = array_left_eigenvectors[i]  # left eigenvector h_i of the dominant non-zero eigenvalue
+        h = array_left_eigenvectors[
+            i
+        ]  # left eigenvector h_i of the dominant non-zero eigenvalue
 
         a = (
             []
@@ -106,26 +105,22 @@ def calculate_test_statistic(
             []
         )  # vector to store all scalar products v_i * site_partial_likelihood_right_subtree
 
-        for k in range(
-            number_sites * (number_nodes_1 - 1), number_sites * number_nodes_1
-        ):
+        for k in range(number_sites):
             a.append(
                 h
                 @ np.asarray(
                     partial_likelihood_left_subtree.iloc[k, 3 : (3 + dimension)]
                 )
             )
-        factors_left_subtree.append(a)
 
-        for k in range(
-            number_sites * (number_nodes_2 - 1), number_sites * number_nodes_2
-        ):
             b.append(
                 h
                 @ np.asarray(
                     partial_likelihood_right_subtree.iloc[k, 3 : (3 + dimension)]
                 )
             )
+
+        factors_left_subtree.append(a)
         factors_right_subtree.append(b)
 
     """ calculation of the dominant sample coherence """
@@ -196,15 +191,19 @@ def calculate_likelihood_ratio_test(
     """ Calculation of likelihood ratios per site"""
     likelihood_ratios = []
     # list of vectors
-    factors_left = []  # partial likelihood of left subtree times diagonal matix of the stationary distribution
+    factors_left = (
+        []
+    )  # partial likelihood of left subtree times diagonal matix of the stationary distribution
     factors_right = []  # transition matrix  times partial likelihood of right subtree
     site_likelihood_left = []
     site_likelihood_right = []
     vector = []
-    
 
     for k in range(number_sites * (number_nodes_1 - 1), number_sites * number_nodes_1):
-        vector = np.asarray(partial_likelihood_left_subtree.iloc[k, 3 : (3 + dimension)]) @ diag
+        vector = (
+            np.asarray(partial_likelihood_left_subtree.iloc[k, 3 : (3 + dimension)])
+            @ diag
+        )
         factors_left.append(vector)
         site_likelihood_left.append(sum(vector))
 
@@ -215,14 +214,21 @@ def calculate_likelihood_ratio_test(
                 partial_likelihood_right_subtree.iloc[k, 3 : (3 + dimension)]
             ).transpose()
         )
-        vector = np.asarray(partial_likelihood_right_subtree.iloc[k, 3 : (3 + dimension)]) @ diag
+        vector = (
+            np.asarray(partial_likelihood_right_subtree.iloc[k, 3 : (3 + dimension)])
+            @ diag
+        )
         site_likelihood_right.append(sum(vector))
 
     for k in range(number_sites):
         likelihood_ratios.append(
             np.dot(np.asarray(factors_left[k]), np.asarray(factors_right[k]))
         )
-    test_statistic = 2 * np.sum(np.log(likelihood_ratios)-np.prod(site_likelihood_left)- np.prod(site_likelihood_right)) 
+    test_statistic = 2 * np.sum(
+        np.log(likelihood_ratios)
+        - np.prod(site_likelihood_left)
+        - np.prod(site_likelihood_right)
+    )
 
     # critical value of the distribution for alpha = 0.05
     critical_value = 2.71

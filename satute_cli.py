@@ -6,32 +6,35 @@ import logging
 from pathlib import Path
 import re
 import subprocess
-from satute_util_new import (
-    build_tree_test_space,
-    run_saturation_test_for_branches_and_categories,
+from satute_repository import (
+    parse_rate_and_frequencies_and_create_model_files,
+    parse_rate_matrices,
+    extract_rate_matrix,
 )
-from satute_repository import parse_rate_and_frequencies_and_create_model_files
+from rich import print
+from rich.console import Console
+from rich.text import Text
+from satute_exception import (
+    InvalidDirectoryError,
+    NoAlignmentFileError,
+)
+from satute_util_new import spectral_decomposition_without_path
+from direction_based_saturation_test import single_rate_analysis, multiple_rate_analysis
+from satute_rate_categories_and_alignments import (
+    read_alignment_file,
+    split_msa_into_rate_categories_in_place,
+)
 from ete3 import Tree
-from satute_repository import parse_rate_matrices, extract_rate_matrix
-from calculate_partial_likelihood import (
-    run_calculation_partial_likelihood_for_directories,
-)
+from satute_util_new import parse_file_to_data_frame
+from satute_rate_categories_and_alignments import parse_category_rates
+from direction_based_saturation_test import RateMatrix
+import pandas as pd
 
 # Configure the logging settings (optional)
 logging.basicConfig(
     level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
-
-
-from rich import print
-from rich.console import Console
-from rich.text import Text
-from satute_exception import (
-    InputArgumentsError,
-    InvalidDirectoryError,
-    NoAlignmentFileError,
-)
 
 
 def print_ascii_art(ascii_art):
@@ -128,9 +131,6 @@ def parse_substitution_model(file_path):
         # If the file cannot be read or ':' is not found in the content
         # Return None or an appropriate value for error handling
         return None
-
-
-import time
 
 
 class Satute:
@@ -291,7 +291,6 @@ class Satute:
         extra_arguments = arguments_dict.get("model_arguments", []) + [
             "--quiet",
             "--redo",
-            # "-T AUTO",
         ]
 
         # Validate and append ufboot and boot parameters to extra_arguments
@@ -319,8 +318,6 @@ class Satute:
             """
         )
 
-        start = time.time()
-        
         (
             state_frequencies,
             model_and_frequency,
@@ -333,24 +330,8 @@ class Satute:
         logger.info(
             f"""
                 Run with model and frequencies: \n {' '.join(model_and_frequency)}
-                Building tree test space with {number_rates} rate categories
             """
         )
-
-        # Build the structure for the subtrees and msas
-        valid_category_rates = build_tree_test_space(
-            number_rates=number_rates,
-            msa_file_name=str(arguments_dict["msa_file"]),
-            target_directory=self.active_directory,
-        )
-
-        logger.info(
-            f"""
-                These are the valid {str(valid_category_rates)} rate categories")
-                Run IQ-Tree for each subtree in parallel with {number_rates} rate categories
-            """
-        )
-
 
         # TODO make or generate state_space and dimension
         # Extract the rate matrix and row identifiers
@@ -362,39 +343,54 @@ class Satute:
             dimension, str(arguments_dict["msa_file"])
         )
 
+        RATE_MATRIX = RateMatrix(rate_matrix)
         logger.info(f"Rate Matrix: \n {rate_matrix}")
-
-        # For each rate, run IQ-TREE for the calculation of the posterior distributions in parallel
-        for category_rate in valid_category_rates:
-            run_calculation_partial_likelihood_for_directories(
-                self.active_directory,
-                number_rates,
-                category_rate,
-                rate_matrix,
-                dimension,
-                state_space,
-            )
-
-        end = time.time()
-        print("Calculating the partial likelihood too that much time:")
-        print(end - start)
-
-
         logger.info(
             f"""Run test for saturation for each branch and category with {number_rates} rate categories\n 
             Results will be written to the directory:{self.active_directory.name}
             """
         )
-
-        # Run the test for branch saturation
-        run_saturation_test_for_branches_and_categories(
-            input_directory=str(arguments_dict["msa_file"]),
-            target_directory=self.active_directory,
-            dimension=dimension,
-            number_rates=number_rates,
-            t=Tree(newick_string, format=1),
-            valid_category_rates=valid_category_rates,
+        array_eigenvectors, multiplicity = spectral_decomposition_without_path(
+            RATE_MATRIX.rate_matrix, psi_matrix
         )
+
+        alignment = read_alignment_file(arguments_dict["msa_file"])
+        t = Tree(newick_string, format=1)
+
+        if number_rates == 1:
+            results = single_rate_analysis(
+                t, alignment, rate_matrix, array_eigenvectors, multiplicity
+            )
+
+            for key, results_set in results.items():
+                pd.DataFrame(results_set).to_csv(
+                    f"{self.active_directory}/satute_results.csv"
+                )
+
+        else:
+            site_probability = parse_file_to_data_frame(
+                f"{arguments_dict['msa_file']}.siteprob"
+            )
+            per_rate_category_alignment = split_msa_into_rate_categories_in_place(
+                site_probability, alignment
+            )
+            category_rates_factors = parse_category_rates(
+                f"{arguments_dict['msa_file']}.iqtree"
+            )
+
+            results = multiple_rate_analysis(
+                t,
+                category_rates_factors,
+                RATE_MATRIX,
+                array_eigenvectors,
+                multiplicity,
+                per_rate_category_alignment,
+            )
+
+            for key, results_set in results.items():
+                pd.DataFrame(results_set).to_csv(
+                    f"{self.active_directory}/satute_rate_{key}_results.csv"
+                )
 
         # Writing log file
         self.write_log(arguments_dict["msa_file"])

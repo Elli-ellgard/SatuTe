@@ -79,10 +79,11 @@ def parse_state_frequencies(log_file_path, dimension=4):
     # Return the frequencies dictionary
     return frequencies
 
+
 def extract_rate_matrix(file_path):
     file_content = ""
     # Load the file content into a string
-    with open(file_path, 'r') as file:
+    with open(file_path, "r") as file:
         file_content = file.read()
 
     rate_matrix_start = file_content.find("Rate matrix Q:")
@@ -161,44 +162,3 @@ def parse_rate_and_frequencies_and_create_model_files(
     model_and_frequency = f"{model_final}+FU{{{concatenated_rates}}}"
 
     return state_frequencies.values(), model_and_frequency
-
-
-# def parse_rate_and_frequencies_and_create_model_files(
-#     path, number_rates, dimension, model="GTR"
-# ):
-#     """
-#     Parse the rate parameter and state frequencies from the IQ-TREE log file and
-#     create model files based on these parameters.
-#     """
-
-#     def _write_model_file(path, content):
-#         """Helper function to write model and frequency tokens into a file."""
-#         with open(path, "w") as f:
-#             f.write(content)
-
-#     # Construct the model string with parsed rate parameters
-#     log_file_path = f"{path}.iqtree"
-#     model_final = parse_rate_parameters(log_file_path, dimension, model=model)
-
-#     # Parse state frequencies from the log content
-#     state_frequencies = parse_state_frequencies(log_file_path, dimension=dimension)
-
-#     # Create a string of state frequencies separated by a space
-#     concatenated_rates = " ".join(map(str, state_frequencies.values()))
-
-#     # Construct command line tokens for model and frequency
-#     model_and_frequency = f"{model_final}+FU{{{concatenated_rates}}}"
-
-#     # Get the directory of the path
-#     path_folder = os.path.dirname(path)
-
-#     # Write the model and frequency tokens into 'model.txt' files
-#     if number_rates == 1:
-#         _write_model_file(os.path.join(path_folder, "model.txt"), model_and_frequency)
-#     else:
-#         for i in range(1, number_rates + 1):
-#             subsequence_folder = os.path.join(path_folder, "subsequences", f"subseq{i}")
-#             _write_model_file(
-#                 os.path.join(subsequence_folder, "model.txt"), model_and_frequency
-#             )
-#     return state_frequencies.values(), model_and_frequency
