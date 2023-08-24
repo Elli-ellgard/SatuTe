@@ -18,10 +18,7 @@ from satute_repository import (
     parse_rate_matrices,
     parse_rate_parameters,
 )
-from satute_util import (
-    node_type,
-    branch_lengths,
-)
+from satute_util import branch_lengths
 import shutil
 import glob
 from satute_util import calculate_test_statistic, write_results_and_newick_tree
@@ -265,6 +262,7 @@ def generate_output_state_file_for_cherry(
                 "{:.5f}".format(distribution[value]) for value in range(4)
             )
             state_file_writer.write(f"\nNode1\t{i + 1}\t{alignments[0][i]}\t{values}")
+
 
 # generate output.state file for leaves
 def generate_output_state_file_for_external_branch(
@@ -602,7 +600,6 @@ def split_msa_into_rate_categories(site_probability, folder_path, msa_file_name)
             valid_category_rates = [int(key[1:])] + valid_category_rates
         per_category_alignment_dict[key] = cut_alignment_columns(alignment, value)
 
-
     for key, value in per_category_alignment_dict.items():
         # Make a new directory for this subsequence, if it doesn't exist yet
         os.makedirs(f"./{folder_path}/subsequence{key[1:]}/", exist_ok=True)
@@ -821,7 +818,7 @@ def run_saturation_test_for_branches_and_categories(
     t,
     dimension,
     alpha=0.01,
-    valid_category_rates = [],
+    valid_category_rates=[],
 ):
     # number of branches
     branch_count = len(t.get_descendants())
@@ -918,7 +915,7 @@ def run_saturation_test_for_branches_and_categories(
                 left_subtree_dir = subtree_directories[0]
                 right_subtree_dir = subtree_directories[1]
                 branch_type = "internal"
-            
+
             # read the posterior probabilities of the left subtree from .state file
             posterior_probabilities_left_subtree = parse_output_state_frequencies(
                 f"{left_subtree_dir}/output.state"
@@ -928,7 +925,7 @@ def run_saturation_test_for_branches_and_categories(
                 f"{right_subtree_dir}/output.state"
             )
 
-            # Calculation of the  test for branch saturation 
+            # Calculation of the  test for branch saturation
             results = run_saturation_test_for_branch(
                 multiplicity,
                 array_eigenvectors,

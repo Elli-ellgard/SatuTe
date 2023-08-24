@@ -4,8 +4,13 @@ from satute_repository import (
     parse_state_frequencies,
     parse_rate_matrices,
 )
-from satute_util_new import get_transition_matrix
+from scipy.sparse.linalg import expm
 
+
+
+# get transition matrix using matrix exponential
+def get_transition_matrix(rate_matrix, branch_length):
+    return expm(rate_matrix * branch_length)
 
 
 """## CALCULATION OF THE SAMPLE COHERENCE """
@@ -137,7 +142,7 @@ def calculate_test_statistic(
         number_sites,
         branch_type,
     )
-    
+
     variance = variance / number_sites
     if variance < 0:
         print(
