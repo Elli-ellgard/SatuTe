@@ -1,7 +1,7 @@
 import os
 import subprocess
 
-iqtree = "iqtree"
+iqtree = "iqtree2"
 
 
 def execute_command(command):
@@ -9,7 +9,7 @@ def execute_command(command):
 
 
 def process_directory(directory):
-    execute_command("source ./env/bin/activate")
+    #execute_command("source ./env/bin/activate")
     execute_command(
         f"python3 satute_cli.py -iqtree {iqtree} -msa {directory} -alpha 0.05"
     )

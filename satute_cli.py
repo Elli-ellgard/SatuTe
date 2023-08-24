@@ -350,7 +350,7 @@ class Satute:
             Results will be written to the directory:{self.active_directory.name}
             """
         )
-        array_eigenvectors, multiplicity = spectral_decomposition_without_path(
+        (array_left_eigenvectors, array_right_eigenvectors, multiplicity) = spectral_decomposition_without_path(
             RATE_MATRIX.rate_matrix, psi_matrix
         )
 
@@ -359,7 +359,7 @@ class Satute:
 
         if number_rates == 1:
             results = single_rate_analysis(
-                t, alignment, rate_matrix, array_eigenvectors, multiplicity
+                t, alignment, RATE_MATRIX, array_left_eigenvectors, multiplicity
             )
 
             for key, results_set in results.items():
@@ -382,7 +382,7 @@ class Satute:
                 t,
                 category_rates_factors,
                 RATE_MATRIX,
-                array_eigenvectors,
+                array_left_eigenvectors,
                 multiplicity,
                 per_rate_category_alignment,
             )
