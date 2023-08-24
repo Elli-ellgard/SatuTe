@@ -1,14 +1,21 @@
 import scipy.stats as st
 import numpy as np
-import pandas as pd
 from satute_repository import (
     parse_state_frequencies,
     parse_rate_matrices,
 )
-from satute_calculate_likelihoods import get_transition_matrix
+from scipy.sparse.linalg import expm
 
 
 """## CALCULATION OF THE SAMPLE COHERENCE """
+
+""" TODO: 
+    - we should think about create a directory of the state_space at the beginning of the program and use it for dimension stuff
+    - generalizes the functions below for other dimension (now only dimension 4)
+"""
+# get transition matrix using matrix exponential
+def get_transition_matrix(rate_matrix, branch_length):
+    return expm(rate_matrix * branch_length)
 
 
 def calculate_sample_coherence(

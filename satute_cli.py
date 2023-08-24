@@ -18,7 +18,7 @@ from satute_exception import (
     InvalidDirectoryError,
     NoAlignmentFileError,
 )
-from satute_util_new import spectral_decomposition_without_path
+from satute_util_new import spectral_decomposition
 from direction_based_saturation_test import single_rate_analysis, multiple_rate_analysis
 from satute_rate_categories_and_alignments import (
     read_alignment_file,
@@ -329,7 +329,6 @@ class Satute:
             model=self.input_args.model,
         )
 
-       
         # TODO make or generate state_space and dimension
         # Extract the rate matrix and row identifiers
         rate_matrix = extract_rate_matrix(str(arguments_dict["msa_file"]) + ".iqtree")
@@ -339,13 +338,12 @@ class Satute:
         dimension = len(state_space)
 
         state_space = {id: index for index, id in enumerate(state_space)}
-        
+
         rate_matrix, psi_matrix = parse_rate_matrices(
             dimension, str(arguments_dict["msa_file"])
         )
 
         RATE_MATRIX = RateMatrix(rate_matrix)
-        logger.info()
         logger.info(
             f"""
             Rate Matrix: \n {rate_matrix}"
@@ -355,18 +353,19 @@ class Satute:
             """
         )
 
-        array_eigenvectors, multiplicity = spectral_decomposition_without_path(
-            RATE_MATRIX.rate_matrix, psi_matrix
-        )
+        (
+            array_left_eigenvectors,
+            array_right_eigenvectors,
+            multiplicity,
+        ) = spectral_decomposition(RATE_MATRIX.rate_matrix, psi_matrix)
 
         alignment = read_alignment_file(arguments_dict["msa_file"])
 
         t = Tree(newick_string, format=1)
 
         if number_rates == 1:
-            
             results = single_rate_analysis(
-                t, alignment, RATE_MATRIX, array_eigenvectors, multiplicity
+                t, alignment, RATE_MATRIX, array_left_eigenvectors, multiplicity
             )
 
             for key, results_set in results.items():

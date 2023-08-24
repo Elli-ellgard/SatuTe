@@ -1,4 +1,3 @@
-import os
 from Bio import AlignIO
 from Bio.Align import MultipleSeqAlignment
 import numpy as np
@@ -6,7 +5,6 @@ from Bio.SeqRecord import SeqRecord
 from Bio.Seq import Seq
 
 """ ## RATE CATEGORIES  """
-
 
 def get_column_names_with_prefix(data_frame, prefix):
     # Filter the columns using the specified prefix
@@ -151,49 +149,6 @@ def cut_alignment_columns(alignment, columns):
     selected_alignment = MultipleSeqAlignment(selected_records)
 
     return selected_alignment
-
-
-def write_alignment(alignment, file_name, file_format):
-    """
-    Write a MultipleSeqAlignment object to a file.
-
-    Parameters:
-    alignment (MultipleSeqAlignment): The alignment to write.
-    file_name (str): The name of the file to write to.
-    file_format (str): The format of the alignment file. This must be a string specifying one
-                       of the formats that Biopython supports, such as "fasta", "clustal", "phylip", etc.
-
-    Returns:
-    int: The number of alignments written (should be 1 for a MultipleSeqAlignment object).
-    """
-
-    # Write the alignment to the file
-    num_alignments_written = AlignIO.write(alignment, file_name, file_format)
-
-    return num_alignments_written
-
-
-def split_msa_into_rate_categories(site_probability, folder_path, msa_file_name):
-    sub_category = build_categories_by_sub_tables(site_probability)
-    alignment = read_alignment_file(msa_file_name)
-    per_category_alignment_dict = {}
-    valid_category_rates = []
-
-    for key, value in sub_category.items():
-        if len(value) > 0:
-            valid_category_rates = [int(key[1:])] + valid_category_rates
-        per_category_alignment_dict[key] = cut_alignment_columns(alignment, value)
-
-    for key, value in per_category_alignment_dict.items():
-        # Make a new directory for this subsequence, if it doesn't exist yet
-        os.makedirs(f"./{folder_path}/subsequence{key[1:]}/", exist_ok=True)
-
-        write_alignment(
-            value, f"./{folder_path}/subsequence{key[1:]}/rate.fasta", "fasta"
-        )
-
-    return valid_category_rates
-
 
 def split_msa_into_rate_categories_in_place(site_probability, alignment):
     sub_category = build_categories_by_sub_tables(site_probability)

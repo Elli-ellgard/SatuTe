@@ -1,6 +1,5 @@
 import scipy.stats as st
 import numpy as np
-import pandas as pd
 from satute_repository import (
     parse_state_frequencies,
     parse_rate_matrices,
