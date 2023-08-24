@@ -484,6 +484,9 @@ def multiple_rate_analysis(
 ):
     result_rate_dictionary = {}
 
+
+    print("per_rate_category_alignment", per_rate_category_alignment)
+
     for rate, alignment in per_rate_category_alignment.items():
         relative_rate = category_rates_factors[rate]["Relative_rate"]
         result_list = []

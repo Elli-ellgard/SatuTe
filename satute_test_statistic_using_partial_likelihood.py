@@ -4,6 +4,8 @@ from satute_repository import (
     parse_state_frequencies,
     parse_rate_matrices,
 )
+from satute_util_new import get_transition_matrix
+
 
 
 """## CALCULATION OF THE SAMPLE COHERENCE """
@@ -83,12 +85,12 @@ def calculate_test_statistic(
     branch_type="external",
     alpha=0.05,
 ):
-    # quantile of the standard normal distribution
+    # quantiles of the standard normal distribution
     z_alpha = st.norm.ppf(1 - alpha)
     number_sites = len(partial_likelihood_left_subtree["Site"].unique())
 
     """ Calculation of the factors for the coefficient C_1 (correspond to the dominant non-zero eigenvalue)"""
-    # list of vetors of the scalar products between right eigenvector and posterior probability per site
+    # list of vectors of the scalar products between right eigenvector and posterior probability per site
     factors_left_subtree = []  # list of vectors
     factors_right_subtree = []
 
@@ -135,6 +137,7 @@ def calculate_test_statistic(
         number_sites,
         branch_type,
     )
+    
     variance = variance / number_sites
     if variance < 0:
         print(
@@ -154,14 +157,14 @@ def calculate_test_statistic(
         result_test = "Informative"
 
     # computing the saturation coherence between two sequences
-    c_sTwoSequence = multiplicity * z_alpha / np.sqrt(number_sites)
+    c_s_two_sequence = multiplicity * z_alpha / np.sqrt(number_sites)
 
-    if c_sTwoSequence > delta:
+    if c_s_two_sequence > delta:
         result_test_tip2tip = "SatuT2T"
     else:
         result_test_tip2tip = "InfoT2T"
 
-    return delta, c_s, c_sTwoSequence, p_value, result_test, result_test_tip2tip
+    return delta, c_s, c_s_two_sequence, p_value, result_test, result_test_tip2tip
 
 
 """## CALCULATION OF THE TEST STATISTIC FOR LIKELIHOOD RATIO TEST"""

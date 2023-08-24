@@ -364,6 +364,7 @@ class Satute:
         t = Tree(newick_string, format=1)
 
         if number_rates == 1:
+            
             results = single_rate_analysis(
                 t, alignment, RATE_MATRIX, array_left_eigenvectors, multiplicity
             )
