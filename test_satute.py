@@ -1,7 +1,7 @@
 import os
 import subprocess
 
-iqtree = "iqtree"
+iqtree = "iqtree2"
 
 
 def execute_command(command):

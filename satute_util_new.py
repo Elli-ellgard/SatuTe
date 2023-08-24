@@ -64,8 +64,8 @@ def initialize_logger(log_file):
 
 
 """ ## SPECTRAL DECOMPOSITION OF THE RATE MATRIX"""
-def spectral_decomposition_without_path(rate_matrix, psi_matrix):
 
+def spectral_decomposition_without_path(rate_matrix, psi_matrix):
     """ 
         Then psi_matrix := Diag(pi). Recall that matrix Q is reversible iff M:= psi_matrix^1/2 x Q x psi_matrix^{-1/2} is symmetric.
         For a real symmetric matrix M, its eigenvectors can be chosen to be an orthonormal basis of R^n 
@@ -94,20 +94,21 @@ def spectral_decomposition_without_path(rate_matrix, psi_matrix):
             index.append(i)
 
     multiplicity = len(index)  # multiplicity of the dominant non-zero eigenvalue
-    array_eigenvectors = (
+    array_right_eigenvectors = (
         []
     )  # list of right eigenvectors for the dominant non-zero eigenvalue
+    array_left_eigenvectors = (
+        []
+    )  # list of left eigenvectors for the dominant non-zero eigenvalue
     for i in range(multiplicity):
         # calculate the right eigenvectors for the dominant non-zero eigenvalue
         v1 = scipy.linalg.fractional_matrix_power(psi_matrix, -1 / 2) @ w[:, index[i]]
-        array_eigenvectors.append(v1)
-        """# calculate the left eigenvectors for the dominant non-zero eigenvalue
-        h1 = (
-            scipy.linalg.fractional_matrix_power(psi_matrix, +1 / 2)
-            @ w[:, index[i]]
-            ) """
+        array_right_eigenvectors.append(v1)
+        # calculate the left eigenvectors for the dominant non-zero eigenvalue
+        h1 = scipy.linalg.fractional_matrix_power(psi_matrix, +1 / 2) @ w[:, index[i]]
+        array_left_eigenvectors.append(h1)
 
-    return array_eigenvectors, multiplicity
+    return array_left_eigenvectors, array_right_eigenvectors, multiplicity
 
 
 def spectral_decomposition(n, path):
@@ -141,20 +142,21 @@ def spectral_decomposition(n, path):
             index.append(i)
 
     multiplicity = len(index)  # multiplicity of the dominant non-zero eigenvalue
-    array_eigenvectors = (
+    array_right_eigenvectors = (
         []
     )  # list of right eigenvectors for the dominant non-zero eigenvalue
+    array_left_eigenvectors = (
+        []
+    )  # list of left eigenvectors for the dominant non-zero eigenvalue
     for i in range(multiplicity):
         # calculate the right eigenvectors for the dominant non-zero eigenvalue
         v1 = scipy.linalg.fractional_matrix_power(psi_matrix, -1 / 2) @ w[:, index[i]]
-        array_eigenvectors.append(v1)
-        """# calculate the left eigenvectors for the dominant non-zero eigenvalue
-        h1 = (
-            scipy.linalg.fractional_matrix_power(psi_matrix, +1 / 2)
-            @ w[:, index[i]]
-            ) """
+        array_right_eigenvectors.append(v1)
+        # calculate the left eigenvectors for the dominant non-zero eigenvalue
+        h1 = scipy.linalg.fractional_matrix_power(psi_matrix, +1 / 2) @ w[:, index[i]]
+        array_left_eigenvectors.append(h1)
 
-    return array_eigenvectors, multiplicity
+    return array_left_eigenvectors, array_right_eigenvectors, multiplicity
 
 
 """ ## GENERATE STRUCTURE FOR SUBTREES"""

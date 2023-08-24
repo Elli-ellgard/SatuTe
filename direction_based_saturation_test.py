@@ -30,6 +30,17 @@ NUCLEOTIDE_CODE_VECTOR = {
     "C": [0, 1, 0, 0],
     "G": [0, 0, 1, 0],
     "T": [0, 0, 0, 1],
+    "U": [0, 0, 0, 1],
+    "R": [1, 0, 1, 0],
+    "Y": [0, 1, 0, 1],
+    "K": [0, 0, 1, 1],
+    "M": [1, 1, 0, 0],
+    "S": [0, 1, 1, 0],
+    "W": [1, 0, 0, 1],
+    "B": [0, 1, 1, 1],
+    "D": [1, 0, 1, 1],
+    "H": [1, 1, 0, 1],
+    "V": [1, 1, 1, 0],
     "N": [1, 1, 1, 1],
     "-": [1, 1, 1, 1],
 }
@@ -558,13 +569,13 @@ def main():
     )
     rate_matrix = RateMatrix(RATE_MATRIX)
 
-    array_eigenvectors, multiplicity = spectral_decomposition_without_path(
+    (array_left_eigenvectors, array_right_eigenvectors, multiplicity) = spectral_decomposition_without_path(
         RATE_MATRIX, psi_matrix
     )
 
     if number_rate == 1:
         single_rate_analysis(
-            t, alignment, rate_matrix, array_eigenvectors, multiplicity
+            t, alignment, rate_matrix, array_left_eigenvectors, multiplicity
         )
     else:
         site_probability = parse_file_to_data_frame(

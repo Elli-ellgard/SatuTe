@@ -389,7 +389,7 @@ class Satute:
                 t,
                 category_rates_factors,
                 RATE_MATRIX,
-                array_eigenvectors,
+                array_left_eigenvectors,
                 multiplicity,
                 per_rate_category_alignment,
             )
