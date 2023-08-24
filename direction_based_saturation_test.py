@@ -247,7 +247,6 @@ def calculate_partial_likelihoods_for_sites(tree, alignment, rate_matrix):
         - It constructs a dictionary to store partial likelihood information per site.
         - The partial likelihoods are calculated for both left and right descendants of each edge.
         - The resulting dictionary provides detailed information about likelihoods and branch lengths.
-
     Warning:
         Ensure that the provided tree structure and alignment data are accurate and compatible.
     """
@@ -433,7 +432,14 @@ def single_rate_analysis(t, alignment, rate_matrix, array_eigenvectors, multipli
         if "Node" in edge[1]:
             branch_type = "internal"
 
-        delta, c_s, c_sTwoSequence, p_value, result_test, result_test_tip2tip = calculate_test_statistic(
+        (
+            delta,
+            c_s,
+            c_sTwoSequence,
+            p_value,
+            result_test,
+            result_test_tip2tip,
+        ) = calculate_test_statistic(
             multiplicity,
             array_eigenvectors,
             left_partial_likelihood,
@@ -442,18 +448,21 @@ def single_rate_analysis(t, alignment, rate_matrix, array_eigenvectors, multipli
             branch_type,
             alpha=0.05,
         )
-        result_list.append({
-            "edge": edge,
-            "delta": delta,
-            "c_s": c_s,
-            "c_sTwoSequence": c_sTwoSequence,
-            "p_value": p_value,
-            "result_test": result_test,
-            "result_test_tip2tip": result_test_tip2tip
-        })
+        result_list.append(
+            {
+                "edge": edge,
+                "delta": delta,
+                "c_s": c_s,
+                "c_sTwoSequence": c_sTwoSequence,
+                "p_value": p_value,
+                "result_test": result_test,
+                "result_test_tip2tip": result_test_tip2tip,
+            }
+        )
 
     result_test_dictionary["single_rate"] = result_list
     return result_test_dictionary
+
 
 def multiple_rate_analysis(
     t,
@@ -463,53 +472,64 @@ def multiple_rate_analysis(
     multiplicity,
     per_rate_category_alignment,
 ):
-    
     result_rate_dictionary = {}
 
     for rate, alignment in per_rate_category_alignment.items():
         relative_rate = category_rates_factors[rate]["Relative_rate"]
         result_list = []
-        if len(alignment) > 0:
-            rescaled_tree = rescale_branch_lengths(t, relative_rate)
-            partial_likelihood_per_site_storage = (
-                calculate_partial_likelihoods_for_sites(
-                    rescaled_tree, alignment, rate_matrix
-                )
+        rescaled_tree = rescale_branch_lengths(t, relative_rate)
+        partial_likelihood_per_site_storage = (
+            calculate_partial_likelihoods_for_sites(
+                rescaled_tree, alignment, rate_matrix
             )
-            for edge in partial_likelihood_per_site_storage.keys():
-                left_partial_likelihood = pd.DataFrame(
-                    partial_likelihood_per_site_storage[edge]["left"]
-                )
-                right_partial_likelihood = pd.DataFrame(
-                    partial_likelihood_per_site_storage[edge]["right"]
-                )
+        )
 
-                branch_type = "external"
-                if "Node" in edge[1]:
-                    branch_type = "internal"
+        for edge in partial_likelihood_per_site_storage.keys():
+            left_partial_likelihood = pd.DataFrame(
+                partial_likelihood_per_site_storage[edge]["left"]
+            )
+            right_partial_likelihood = pd.DataFrame(
+                partial_likelihood_per_site_storage[edge]["right"]
+            )
 
-                delta, c_s, c_sTwoSequence, p_value, result_test, result_test_tip2tip = calculate_test_statistic(
-                        multiplicity,
-                        array_eigenvectors,
-                        left_partial_likelihood,
-                        right_partial_likelihood,
-                        4,
-                        branch_type,
-                        alpha=0.05,
-                    )
-                
-                result_list.append({
+            branch_type = "external"
+
+            if "Node" in edge[1]:
+                branch_type = "internal"
+
+            (
+                delta,
+                c_s,
+                c_s_two_sequence,
+                p_value,
+                result_test,
+                result_test_tip2tip,
+            ) = calculate_test_statistic(
+                multiplicity,
+                array_eigenvectors,
+                left_partial_likelihood,
+                right_partial_likelihood,
+                4,
+                branch_type,
+                alpha=0.05,
+            )
+
+            result_list.append(
+                {
                     "edge": edge,
                     "delta": delta,
                     "c_s": c_s,
-                    "c_sTwoSequence": c_sTwoSequence,
+                    "c_sTwoSequence": c_s_two_sequence,
                     "p_value": p_value,
                     "result_test": result_test,
-                    "result_test_tip2tip": result_test_tip2tip
-                })
-            result_rate_dictionary[rate] = result_list
-        return result_rate_dictionary
- 
+                    "result_test_tip2tip": result_test_tip2tip,
+                }
+            )
+
+
+        result_rate_dictionary[rate] = result_list
+    return result_rate_dictionary
+
 
 def main_p():
     alignment_file = "./Clemens/example_3/sim-JC+G-AC1-AG1-AT1-CG1-CT1-GT1-alpha1.2-taxa64-len1000bp-bla0.01-blb0.8-blc0.2-rep01.fasta"

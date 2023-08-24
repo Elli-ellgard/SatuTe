@@ -291,6 +291,7 @@ class Satute:
         extra_arguments = arguments_dict.get("model_arguments", []) + [
             "--quiet",
             "--redo",
+            "-T AUTO",
         ]
 
         # Validate and append ufboot and boot parameters to extra_arguments
@@ -302,7 +303,8 @@ class Satute:
         site_probability_file = self.find_file({".siteprob"})
         if state_file is None or (number_rates > 1 and site_probability_file is None):
             self.run_iqtree_with_arguments(
-                arguments=arguments_dict["arguments"], extra_arguments=extra_arguments
+                arguments=arguments_dict["arguments"],
+                extra_arguments=extra_arguments,
             )
         # ======== Tree File Handling =========
         newick_string = self.get_newick_string_from_args()
@@ -327,39 +329,44 @@ class Satute:
             model=self.input_args.model,
         )
 
-        logger.info(
-            f"""
-                Run with model and frequencies: \n {' '.join(model_and_frequency)}
-            """
-        )
-
+       
         # TODO make or generate state_space and dimension
         # Extract the rate matrix and row identifiers
         rate_matrix = extract_rate_matrix(str(arguments_dict["msa_file"]) + ".iqtree")
+
         state_space = rate_matrix.index.tolist()
+
         dimension = len(state_space)
+
         state_space = {id: index for index, id in enumerate(state_space)}
+        
         rate_matrix, psi_matrix = parse_rate_matrices(
             dimension, str(arguments_dict["msa_file"])
         )
 
         RATE_MATRIX = RateMatrix(rate_matrix)
-        logger.info(f"Rate Matrix: \n {rate_matrix}")
+        logger.info()
         logger.info(
-            f"""Run test for saturation for each branch and category with {number_rates} rate categories\n 
+            f"""
+            Rate Matrix: \n {rate_matrix}"
+            Run with model and frequencies: \n {' '.join(model_and_frequency)}
+            Run test for saturation for each branch and category with {number_rates} rate categories\n 
             Results will be written to the directory:{self.active_directory.name}
             """
         )
+
         array_eigenvectors, multiplicity = spectral_decomposition_without_path(
             RATE_MATRIX.rate_matrix, psi_matrix
         )
 
         alignment = read_alignment_file(arguments_dict["msa_file"])
+
         t = Tree(newick_string, format=1)
 
         if number_rates == 1:
+            
             results = single_rate_analysis(
-                t, alignment, rate_matrix, array_eigenvectors, multiplicity
+                t, alignment, RATE_MATRIX, array_eigenvectors, multiplicity
             )
 
             for key, results_set in results.items():
