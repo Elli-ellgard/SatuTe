@@ -7,7 +7,6 @@ from satute_repository import (
 from scipy.sparse.linalg import expm
 
 
-
 # get transition matrix using matrix exponential
 def get_transition_matrix(rate_matrix, branch_length):
     return expm(rate_matrix * branch_length)

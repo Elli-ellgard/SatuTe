@@ -6,6 +6,7 @@ from Bio.Seq import Seq
 
 """ ## RATE CATEGORIES  """
 
+
 def get_column_names_with_prefix(data_frame, prefix):
     # Filter the columns using the specified prefix
     columns_with_prefix = data_frame.columns[
@@ -149,6 +150,7 @@ def cut_alignment_columns(alignment, columns):
     selected_alignment = MultipleSeqAlignment(selected_records)
 
     return selected_alignment
+
 
 def split_msa_into_rate_categories_in_place(site_probability, alignment):
     sub_category = build_categories_by_sub_tables(site_probability)

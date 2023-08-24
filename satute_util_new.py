@@ -33,10 +33,11 @@ def initialize_logger(log_file):
 
 """ ## SPECTRAL DECOMPOSITION OF THE RATE MATRIX"""
 
+
 def spectral_decomposition(rate_matrix, psi_matrix):
-    """ 
-        Then psi_matrix := Diag(pi). Recall that matrix Q is reversible iff M:= psi_matrix^1/2 x Q x psi_matrix^{-1/2} is symmetric.
-        For a real symmetric matrix M, its eigenvectors can be chosen to be an orthonormal basis of R^n 
+    """
+    Then psi_matrix := Diag(pi). Recall that matrix Q is reversible iff M:= psi_matrix^1/2 x Q x psi_matrix^{-1/2} is symmetric.
+    For a real symmetric matrix M, its eigenvectors can be chosen to be an orthonormal basis of R^n
     """
     M = scipy.linalg.fractional_matrix_power(psi_matrix, +1 / 2) @ rate_matrix
     M = M @ scipy.linalg.fractional_matrix_power(psi_matrix, -1 / 2)
@@ -80,6 +81,7 @@ def spectral_decomposition(rate_matrix, psi_matrix):
 
 
 """ ## GENERATE STRUCTURE FOR SUBTREES"""
+
 
 def parse_file_to_data_frame(file_path):
     try:
@@ -150,4 +152,3 @@ def write_results_and_newick_tree(
         satute_result_file.write(f"\n\n Tree with saturation values: {newick_string}")
         # Write the saturation information newick string to the file
         # satute_result_file.write(f"\n\n Tree with saturation values: {saturation_information_newick_string}")
-

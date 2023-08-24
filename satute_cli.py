@@ -265,7 +265,6 @@ class Satute:
 
         # Running IQ-TREE with constructed arguments
         # If no model specified in input arguments, extract best model from log file
-
         if not self.input_args.model:
             self.run_iqtree_with_arguments(
                 arguments_dict["arguments"], ["-m", "TESTONLY", "--redo", "--quiet"]
@@ -301,13 +300,18 @@ class Satute:
         # if necessary  we have to rerun IQ-TREE
         state_file = self.find_file({".state"})
         site_probability_file = self.find_file({".siteprob"})
+
+
         if state_file is None or (number_rates > 1 and site_probability_file is None):
             self.run_iqtree_with_arguments(
                 arguments=arguments_dict["arguments"],
                 extra_arguments=extra_arguments,
             )
+
+
         # ======== Tree File Handling =========
         newick_string = self.get_newick_string_from_args()
+        t = Tree(newick_string, format=1)        
         # ======== End Tree File Handling =========
 
         logger.info(
@@ -361,17 +365,16 @@ class Satute:
 
         alignment = read_alignment_file(arguments_dict["msa_file"])
 
-        t = Tree(newick_string, format=1)
 
         if number_rates == 1:
-            
+
             results = single_rate_analysis(
                 t, alignment, RATE_MATRIX, array_left_eigenvectors, multiplicity
             )
 
             for key, results_set in results.items():
                 pd.DataFrame(results_set).to_csv(
-                    f"{self.active_directory}/satute_results.csv"
+                    f"{self.active_directory}/{arguments_dict['msa_file']}_satute_results.csv"
                 )
 
         else:
@@ -396,7 +399,7 @@ class Satute:
 
             for key, results_set in results.items():
                 pd.DataFrame(results_set).to_csv(
-                    f"{self.active_directory}/satute_rate_{key}_results.csv"
+                    f"{self.active_directory}/{arguments_dict['msa_file']}_satute_rate_{key}_results.csv"
                 )
 
         # Writing log file
@@ -618,7 +621,7 @@ class Satute:
         """
         # If directory is provided, check for tree file and iqtree file
         return self.get_newick_string(
-            self.find_file({".treefile"})
+            self.find_file({".treefile", ".nwk", ".tree"})
         ) or self.get_newick_string_from_iq_tree_file(self.find_file({".iqtree"}))
 
         # If tree argument is provided, get newick string directly
