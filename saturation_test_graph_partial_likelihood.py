@@ -5,7 +5,7 @@ from satute_rate_categories_and_alignments import (
 from satute_util_new import parse_file_to_data_frame
 from satute_trees_and_subtrees import rescale_branch_lengths, parse_newick_file
 from satute_rate_categories_and_alignments import parse_category_rates
-from direction_based_saturation_test import (
+from satute_direction_based_saturation_test import (
     name_nodes_by_level_order,
     calculate_partial_likelihoods_for_sites,
     RateMatrix,

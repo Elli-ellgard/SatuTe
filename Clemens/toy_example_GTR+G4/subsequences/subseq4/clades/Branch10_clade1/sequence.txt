@@ -1,4 +1,0 @@
-3 6
-t6*        GCGTAG
-copy_t6*        GCGTAG
-FOO  NNNNNA

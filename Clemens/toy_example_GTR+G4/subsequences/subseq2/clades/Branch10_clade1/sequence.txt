@@ -1,4 +1,0 @@
-3 6
-t6*        ACGGGT
-copy_t6*        ACGGGT
-FOO  NNNNNA

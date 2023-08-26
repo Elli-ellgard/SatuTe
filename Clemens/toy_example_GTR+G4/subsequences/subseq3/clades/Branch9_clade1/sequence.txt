@@ -1,4 +1,0 @@
-3 4
-t4*        ACAT
-copy_t4*        ACAT
-FOO  NNNA

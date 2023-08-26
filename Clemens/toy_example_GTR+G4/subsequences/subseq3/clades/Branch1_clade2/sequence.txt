@@ -1,5 +1,0 @@
-4 4
-t2*        TTAA
-t6*        AACA
-t3*        TTGC
-FOO  NNNA

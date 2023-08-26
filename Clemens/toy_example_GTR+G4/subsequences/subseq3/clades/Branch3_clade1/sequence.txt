@@ -1,4 +1,0 @@
-3 4
-t1*        ACCT
-t7*        CCCT
-FOO  NNNA

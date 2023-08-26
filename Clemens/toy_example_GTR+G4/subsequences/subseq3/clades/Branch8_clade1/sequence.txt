@@ -1,4 +1,0 @@
-3 4
-t7*        CCCT
-copy_t7*        CCCT
-FOO  NNNA

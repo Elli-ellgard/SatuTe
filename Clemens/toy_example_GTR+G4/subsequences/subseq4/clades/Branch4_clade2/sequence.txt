@@ -1,8 +1,0 @@
-7 6
-t2*        CTTGCA
-t5*        CAGGAG
-t6*        GCGTAG
-t4*        GACAAC
-t1*        AAT-TA
-t7*        TCAGTT
-FOO  NNNNNA

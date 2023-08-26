@@ -1,4 +1,0 @@
-3 4
-t2*        TTAA
-copy_t2*        TTAA
-FOO  NNNA

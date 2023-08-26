@@ -1,5 +1,0 @@
-4 6
-t2*        AGGGGT
-t6*        ACGGGT
-t3*        ATGTGG
-FOO  NNNNNA

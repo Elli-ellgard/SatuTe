@@ -1,4 +1,0 @@
-3 6
-t1*        TGCTTT
-copy_t1*        TGCTTT
-FOO  NNNNNA

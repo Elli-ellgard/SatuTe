@@ -1,4 +1,0 @@
-3 6
-t2*        CTTGCA
-copy_t2*        CTTGCA
-FOO  NNNNNA

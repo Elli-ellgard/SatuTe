@@ -47,6 +47,9 @@ fi
 
 python3 satute_cli.py -iqtree $iqtree -dir $DIR -alpha 0.05
 
+python3 satute_cli.py -iqtree $iqtree -msa $alignment -tree random_generated_tree.tree -model $model -alpha 0.05
+
+
 #cd visualisation
 #./script-annotate-trees-from-satute.sh ../$DIR    
 #cd ..

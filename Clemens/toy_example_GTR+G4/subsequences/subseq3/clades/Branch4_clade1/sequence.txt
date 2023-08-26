@@ -1,4 +1,0 @@
-3 4
-t3*        TTGC
-copy_t3*        TTGC
-FOO  NNNA

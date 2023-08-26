@@ -1,4 +1,0 @@
-3 6
-t5*        CAGGAG
-copy_t5*        CAGGAG
-FOO  NNNNNA

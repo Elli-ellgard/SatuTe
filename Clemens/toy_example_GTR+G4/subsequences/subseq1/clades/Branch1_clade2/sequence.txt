@@ -1,5 +1,0 @@
-4 4
-t2*        TACA
-t6*        TACA
-t3*        TACA
-FOO  NNNA

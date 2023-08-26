@@ -1,4 +1,0 @@
-3 6
-t3*        GTACTT
-copy_t3*        GTACTT
-FOO  NNNNNA

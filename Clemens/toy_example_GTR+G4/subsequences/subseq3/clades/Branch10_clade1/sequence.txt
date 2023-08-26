@@ -1,4 +1,0 @@
-3 4
-t6*        AACA
-copy_t6*        AACA
-FOO  NNNA

@@ -1,4 +1,0 @@
-3 6
-t7*        TCAGTT
-copy_t7*        TCAGTT
-FOO  NNNNNA

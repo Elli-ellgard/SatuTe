@@ -2,7 +2,7 @@ import scipy.stats as st
 import numpy as np
 from satute_repository import (
     parse_state_frequencies,
-    parse_rate_matrices,
+    parse_rate_matrices_from_file,
 )
 from scipy.sparse.linalg import expm
 
@@ -187,7 +187,9 @@ def calculate_likelihood_ratio_test(
     )
     diag = np.diag(list(state_frequencies.values()))
 
-    (rate_matrix, phi_matrix) = parse_rate_matrices(dimension, input_directory)
+    (rate_matrix, phi_matrix) = parse_rate_matrices_from_file(
+        f"{input_directory}.iqtree"
+    )
     transition_matrix = get_transition_matrix(rate_matrix, branch_length)
 
     number_sites = len(partial_likelihood_left_subtree["Site"].unique())

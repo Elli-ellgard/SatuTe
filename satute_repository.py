@@ -1,7 +1,7 @@
 import os
 import numpy as np
 import pandas as pd
-
+import re
 
 # Define a function to parse rate parameters from a file
 def parse_rate_parameters(file_path, dimension, model="GTR"):
@@ -110,39 +110,79 @@ def extract_rate_matrix(file_path):
     return pd.DataFrame(rate_matrix, index=row_ids, columns=row_ids)
 
 
-# Define a function to parse state frequencies from a log content
-def parse_rate_matrices(n, path):
-    """Parse the rate matrix Q and stationary distribution pi from .iqtree file."""
-    rate_matrix = np.zeros((n, n))
-    phi_matrix = np.zeros((n, n))
-    filename = f"{path}.iqtree"
+def parse_rate_matrices_from_file(file_path):
+    """
+    Parse the rate matrix Q and stationary distribution pi from a given .iqtree file path.
+
+    Parameters:
+    - file_path (str): Path to the .iqtree file.
+
+    Returns:
+    - rate_matrix (np.array): The parsed rate matrix Q.
+    - phi_matrix (np.array): The stationary distribution pi with values filled in the diagonal.
+    """
 
     # Check if file exists
-    if not os.path.isfile(filename):
-        raise FileNotFoundError(f"The file '{filename}' does not exist.")
+    if not os.path.isfile(file_path):
+        raise FileNotFoundError(f"The file '{file_path}' does not exist.")
 
-    with open(filename, "r") as file:
+    with open(file_path, "r") as file:
         lines = file.readlines()
-        for idx, line in enumerate(lines):
-            if "Rate matrix Q:" in line:
-                try:
-                    for j in range(n):
-                        entries = lines[idx + j + 2].split()[1:]
-                        for k in range(n):
-                            rate_matrix[j, k] = (
-                                0 if "e" in entries[k] else float(entries[k])
-                            )
-                except (IndexError, ValueError):
-                    raise Exception("Error while parsing rate matrix.")
-            elif "State frequencies: (empirical counts from alignment)" in line:
-                try:
-                    for j in range(n):
-                        phi_matrix[j, j] = float(lines[idx + j + 2].split()[2])
-                except (IndexError, ValueError):
-                    raise Exception("Error while parsing empirical state frequencies.")
-            elif "State frequencies: (equal frequencies)" in line:
-                np.fill_diagonal(phi_matrix, 0.25)
+
+    # Dynamically determine the matrix dimension 'n'
+    start_idx = next(
+        (idx for idx, line in enumerate(lines) if "Rate matrix Q:" in line), None
+    )
+    if start_idx is None:
+        raise ValueError("'Rate matrix Q:' not found in file.")
+
+    # Detect the number of matrix rows based on numeric entries
+    n = 0
+    current_idx = start_idx + 2  # Adjusting to start from matrix values
+    while current_idx < len(lines) and re.search(
+        r"(\s*-?\d+\.\d+\s*)+", lines[current_idx]
+    ):
+        n += 1
+        current_idx += 1
+
+    rate_matrix = np.zeros((n, n))
+    phi_matrix = np.zeros((n, n))
+
+    # Parse the rate matrix Q
+    for idx, line in enumerate(lines):
+        if "Rate matrix Q:" in line:
+            try:
+                for j in range(n):
+                    entries = lines[idx + j + 2].split()
+                    for k in range(n):
+                        rate_matrix[j, k] = (
+                            0 if "e" in entries[k + 1] else float(entries[k + 1])
+                        )
+            except (IndexError, ValueError) as e:
+                raise Exception(f"Error while parsing rate matrix. Exception: {e}")
+
+        # Parse the state frequencies (empirical counts)
+        elif "State frequencies: (empirical counts from alignment)" in line:
+            try:
+                for j in range(n):
+                    phi_matrix[j, j] = float(lines[idx + j + 2].split()[2])
+            except (IndexError, ValueError) as e:
+                raise Exception(
+                    f"Error while parsing empirical state frequencies. Exception: {e}"
+                )
+
+        # If the state frequencies are equal, fill the diagonal accordingly
+        elif "State frequencies: (equal frequencies)" in line:
+            np.fill_diagonal(phi_matrix, 1 / n)
+
     return rate_matrix, phi_matrix
+
+
+# Return the function for review without executing it
+
+
+# Sample test call (without an actual file for now)
+# parse_rate_matrices("sample_path")
 
 
 def parse_rate_and_frequencies_and_create_model_files(

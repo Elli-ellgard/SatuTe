@@ -1,4 +1,0 @@
-3 4
-t5*        TACA
-copy_t5*        TACA
-FOO  NNNA

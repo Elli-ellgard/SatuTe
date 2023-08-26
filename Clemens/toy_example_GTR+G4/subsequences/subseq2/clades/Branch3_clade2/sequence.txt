@@ -1,7 +1,0 @@
-6 6
-t2*        AGGGGT
-t5*        TCA-AT
-t6*        ACGGGT
-t4*        CGTGGG
-t3*        ATGTGG
-FOO  NNNNNA
