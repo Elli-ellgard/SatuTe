@@ -319,8 +319,8 @@ class Satute:
             f"""
 
             Rate Matrix: \n {rate_matrix}"
-            Run with model and frequencies: \n {' '.join(model_and_frequency)}
-            Run test for saturation for each branch and category with {number_rates} rate categories\n 
+            Run with model and frequencies: {''.join(model_and_frequency)} \n
+            Run test for saturation for each branch and category with {number_rates} rate categories \n 
             Results will be written to the directory:{self.active_directory.name}"""
         )
 
@@ -331,6 +331,9 @@ class Satute:
         ) = spectral_decomposition(RATE_MATRIX.rate_matrix, psi_matrix)
 
         alignment = read_alignment_file(arguments_dict["msa_file"])
+
+        logger.info("Analysing tree")
+        logger.info(t)
 
         if number_rates == 1:
             
@@ -445,10 +448,10 @@ class Satute:
             if msa_file is None:
                 raise NoAlignmentFileError("No multiple sequence alignment file found")
 
-            # iqtree_file = self.file_handler.find_file_by_suffix({".iqtree"})
-            # if iqtree_file:
-            #    substitution_model = parse_substitution_model(iqtree_file)
-            #    self.input_args.model = substitution_model
+            iqtree_file = self.file_handler.find_file_by_suffix({".iqtree"})
+            if iqtree_file:
+               substitution_model = parse_substitution_model(iqtree_file)
+               self.input_args.model = substitution_model
 
             argument_option = {
                 "option": "msa",
