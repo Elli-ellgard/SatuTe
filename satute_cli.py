@@ -6,7 +6,7 @@ import logging
 from pathlib import Path
 import re
 from satute_repository import (
-    parse_rate_and_frequencies_and_create_model_files,
+    parse_rate_and_frequencies_and_model,
     parse_rate_matrices_from_file,
 )
 from satute_exception import (
@@ -252,6 +252,7 @@ class Satute:
                         Best model: {substitution_model}
                         Running a second time with the best model: {substitution_model}"""
             )
+
             # Update model in input arguments and re-construct arguments
             self.input_args.model = substitution_model
             arguments_dict = self.construct_arguments()
@@ -273,14 +274,11 @@ class Satute:
                 self.input_args.ufboot, self.input_args.boot
             )
         )
-        # Check if the IQ-TREE state file exists and
-        # check in the case of a +G or +R model if the IQ-Tree siteprob file exists
-        # if necessary  we have to rerun IQ-TREE
 
-        state_file = self.file_handler.find_file_by_suffix({".state"})
+        # check in the case of a +G or +R model if the IQ-Tree siteprob file exists if necessary we have to rerun IQ-TREE
         site_probability_file = self.file_handler.find_file_by_suffix({".siteprob"})
 
-        if state_file is None or (number_rates > 1 and site_probability_file is None):
+        if number_rates > 1 and site_probability_file is None:
             self.iqtree_handler.run_iqtree_with_arguments(
                 arguments=arguments_dict["arguments"],
                 extra_arguments=extra_arguments,
@@ -304,7 +302,7 @@ class Satute:
         (
             state_frequencies,
             model_and_frequency,
-        ) = parse_rate_and_frequencies_and_create_model_files(
+        ) = parse_rate_and_frequencies_and_model(
             input_path=arguments_dict["msa_file"],
             dimension=4,
             model=self.input_args.model,
@@ -332,11 +330,10 @@ class Satute:
 
         alignment = read_alignment_file(arguments_dict["msa_file"])
 
-        logger.info("Analysing tree")
+        logger.info("Analyzing tree")
         logger.info(t)
 
         if number_rates == 1:
-            
             results = single_rate_analysis(
                 t, alignment, RATE_MATRIX, array_left_eigenvectors, multiplicity
             )
@@ -450,8 +447,8 @@ class Satute:
 
             iqtree_file = self.file_handler.find_file_by_suffix({".iqtree"})
             if iqtree_file:
-               substitution_model = parse_substitution_model(iqtree_file)
-               self.input_args.model = substitution_model
+                substitution_model = parse_substitution_model(iqtree_file)
+                self.input_args.model = substitution_model
 
             argument_option = {
                 "option": "msa",
@@ -469,7 +466,7 @@ class Satute:
                 argument_option = {
                     "option": "msa",
                     "msa_file": self.input_args.msa,
-                    "arguments": ["-s", str(self.input_args.msa), "-asr"],
+                    "arguments": ["-s", str(self.input_args.msa)],
                 }
 
             if self.input_args.tree:
@@ -489,13 +486,6 @@ class Satute:
         return argument_option
 
         # If tree argument is provided, get newick string directly
-
-    def print_args(self):
-        print("")
-        print("=" * 10)
-        print(self.input_args)
-        print("=" * 10)
-        print("")
 
 
 if __name__ == "__main__":

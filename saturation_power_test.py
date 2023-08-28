@@ -297,7 +297,12 @@ def split_dataframe_by_column_value(df, column):
 
 
 def power_test_two_process(
-    model, sequence_length_begin, sequence_length_end, step, taxa_count
+    model,
+    sequence_length_begin,
+    sequence_length_end,
+    step,
+    taxa_count,
+    num_alignment=20,
 ):
     os.chdir("./power_test_two")
     generate_tree(taxa_count, file_name="./random_generated.tree")
@@ -307,11 +312,12 @@ def power_test_two_process(
     for sequence_length in range(sequence_length_begin, sequence_length_end, step):
         prefix = f"{model}-{sequence_length}"
         execute_command(
-            f"iqtree --alisim {prefix} -t random_generated.tree --length {sequence_length} --seqtype DNA  -m {model}"
+            f"iqtree --alisim {prefix} -t random_generated.tree --length {sequence_length} --num-alignments {num_alignment} --seqtype DNA  -m {model}"
         )
         move_phy_files_to_subdirectories("./")
-        execute_satute_cli_for_experiment_folders("./", iqtree)
-
+    
+    
+    execute_satute_cli_for_experiment_folders("./", iqtree)
     # Define the main directory containing the experiment subdirectories
     main_directory = "./"
     consolidated_data = consolidate_data(main_directory)
@@ -323,7 +329,13 @@ def power_test_two_process(
 
 if __name__ == "__main__":
     # model_set = ["GTR", "GTR+G4", "GTR+G8", "JC", "JC+G4", "JC+G8"]
-    prefix = "JC-100"
     # delete_files_with_prefix("./saturation_test", prefix)
     # power_test_one_process("JC", 100, 3)
-    power_test_two_process("JC", 100, 1000, 50, 6)
+    power_test_two_process(
+        "JC",
+        sequence_length_begin=100,
+        sequence_length_end=400,
+        step=100,
+        taxa_count=6,
+        num_alignment=20,
+    )

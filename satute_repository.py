@@ -185,7 +185,7 @@ def parse_rate_matrices_from_file(file_path):
 # parse_rate_matrices("sample_path")
 
 
-def parse_rate_and_frequencies_and_create_model_files(
+def parse_rate_and_frequencies_and_model(
     input_path, dimension, model="GTR"
 ):
     # Construct the model string with parsed rate parameters
