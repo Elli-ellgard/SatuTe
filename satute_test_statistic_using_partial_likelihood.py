@@ -76,6 +76,67 @@ def calculate_alternative_variance(
     return variance
 
 
+def calculate_sample_variance_optimized(
+    multiplicity,
+    factors_left_subtree,
+    factors_right_subtree,
+    number_sites,
+    branch_type,
+):
+    # Convert the input lists to numpy arrays for efficient matrix operations
+    factors_left_subtree = np.asarray(factors_left_subtree)
+    factors_right_subtree = np.asarray(factors_right_subtree)
+
+    # Compute M_left:
+    # If the branch type is 'internal', compute M_left for each factor in the left subtree.
+    # Otherwise, set M_left to a constant value of multiplicity for all factors.
+    if branch_type == "internal":
+        # '@' is the matrix multiplication operator in Python.
+        # The expression computes the dot product of each factor with itself.
+        # `.diagonal()` extracts the diagonal elements from the resulting matrix.
+        # Each diagonal element is then divided by `number_sites`.
+        M_left = (
+            factors_left_subtree @ factors_left_subtree.T
+        ).diagonal() / number_sites
+    else:
+        # If branch type is not 'internal', create an array filled with the value of `multiplicity`.
+        M_left = np.full(multiplicity, multiplicity)
+
+    # Compute M_right in a similar manner to M_left, but for the right subtree factors.
+    M_right = (
+        factors_right_subtree @ factors_right_subtree.T
+    ).diagonal() / number_sites
+
+    # Broadcasting:
+    # The following line computes the outer product of M_left and M_right.
+    # This is equivalent to multiplying each element of M_left with each element of M_right.
+    # The resulting matrix contains all the products of pairs of elements from M_left and M_right.
+    variance_matrix = M_left[:, None] * M_right
+
+    # Sum all elements of the variance matrix to get the final variance value.
+    return variance_matrix.sum()
+
+
+# Optimized function with comments
+def calculate_sample_coherence_optimized(
+    multiplicity, factors_left_subtree, factors_right_subtree, number_sites
+):
+    # Convert the input lists of factors to numpy arrays.
+    # This allows for efficient vectorized operations.
+    factors_left_subtree = np.asarray(factors_left_subtree)
+    factors_right_subtree = np.asarray(factors_right_subtree)
+
+    # Multiply corresponding factors (elements) from the left and right subtrees element-wise.
+    # Then, sum the results to get the total delta value.
+    # This replaces the loop in the original function.
+    delta = np.sum(factors_left_subtree * factors_right_subtree)
+
+    # Normalize the delta value by dividing by the number of sites.
+    delta = delta / number_sites
+
+    return delta
+
+
 """## CALCULATION OF THE TEST STATISTIC FOR BRANCH SATURATION"""
 # now the left eigenvectors h_i are necessary
 
