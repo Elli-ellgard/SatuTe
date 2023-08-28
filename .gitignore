@@ -167,3 +167,4 @@ cython_debug/
 #.idea/
 test
 test/octo-kraken-msa-test
+power_test_two
