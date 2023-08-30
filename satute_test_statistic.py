@@ -13,6 +13,8 @@ from scipy.sparse.linalg import expm
     - we should think about create a directory of the state_space at the beginning of the program and use it for dimension stuff
     - generalizes the functions below for other dimension (now only dimension 4)
 """
+
+
 # get transition matrix using matrix exponential
 def get_transition_matrix(rate_matrix, branch_length):
     return expm(rate_matrix * branch_length)
@@ -62,23 +64,6 @@ def calculate_sample_variance(
     return variance
 
 
-def calculate_alternative_variance(
-    multiplicity, factors_left_subtree, factors_right_subtree, number_sites
-):
-    variance = 0
-    for i in range(multiplicity):
-        for j in range(multiplicity):
-            square_factor_left = np.asarray(factors_left_subtree[i]) * np.asarray(
-                factors_left_subtree[i]
-            )
-            square_factor_right = np.asarray(factors_right_subtree[j]) * np.asarray(
-                factors_right_subtree[j]
-            )
-            variance += square_factor_left @ square_factor_right
-    variance = variance / number_sites
-    return variance
-
-
 """## CALCULATION OF THE TEST STATISTIC FOR BRANCH SATURATION"""
 
 
@@ -91,7 +76,7 @@ def calculate_test_statistic(
     branch_type="external",
     alpha=0.05,
 ):
-    # quantile of the standard normal distribution
+    # quantiles of the standard normal distribution
     z_alpha = st.norm.ppf(1 - alpha)
 
     number_sites = len(posterior_probabilities_left_subtree["Site"].unique())
@@ -99,7 +84,7 @@ def calculate_test_statistic(
     number_nodes_2 = len(posterior_probabilities_right_subtree["Node"].unique())
 
     """ Calculation of the factors for the coefficient C_1 (correspond to the dominant non-zero eigenvalue)"""
-    # list of vetors of the scalar products between right eigenvector and posterior probability per site
+    # list of vectors of the scalar products between right eigenvector and posterior probability per site
     factors_left_subtree = []  # list of vectors
     factors_right_subtree = []
 

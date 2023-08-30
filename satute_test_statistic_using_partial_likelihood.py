@@ -117,26 +117,6 @@ def calculate_sample_variance_optimized(
     return variance_matrix.sum()
 
 
-# Optimized function with comments
-def calculate_sample_coherence_optimized(
-    multiplicity, factors_left_subtree, factors_right_subtree, number_sites
-):
-    # Convert the input lists of factors to numpy arrays.
-    # This allows for efficient vectorized operations.
-    factors_left_subtree = np.asarray(factors_left_subtree)
-    factors_right_subtree = np.asarray(factors_right_subtree)
-
-    # Multiply corresponding factors (elements) from the left and right subtrees element-wise.
-    # Then, sum the results to get the total delta value.
-    # This replaces the loop in the original function.
-    delta = np.sum(factors_left_subtree * factors_right_subtree)
-
-    # Normalize the delta value by dividing by the number of sites.
-    delta = delta / number_sites
-
-    return delta
-
-
 """## CALCULATION OF THE TEST STATISTIC FOR BRANCH SATURATION"""
 # now the left eigenvectors h_i are necessary
 

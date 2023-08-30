@@ -16,7 +16,6 @@ from satute_rate_categories_and_alignments import (
 )
 from satute_util_new import parse_file_to_data_frame
 from satute_trees_and_subtrees import rescale_branch_lengths, parse_newick_file
-from satute_repository import parse_rate_matrices_from_file
 import pandas as pd
 from satute_test_statistic_using_partial_likelihood import calculate_test_statistic
 
