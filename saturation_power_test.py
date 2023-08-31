@@ -44,6 +44,39 @@ def fetch_files_with_prefix_and_extension(directory, prefix, extension):
     return matching_files
 
 
+import os
+
+
+def fetch_files_with_prefix_and_extension_absolute(directory, prefix, extension):
+    """
+    Fetch all files in a directory that start with a specific prefix and have a specific file type (extension).
+
+    Parameters:
+      - directory: The path to the directory to search.
+      - prefix: The file prefix to match.
+      - extension: The file extension to match (e.g., ".txt" for text files).
+
+    Returns:
+      - A list of filenames that match the prefix and extension, absolute paths.
+    """
+
+    # Ensure the extension starts with a dot
+    if not extension.startswith("."):
+        extension = "." + extension
+
+    # List all files in the directory
+    all_files = os.listdir(directory)
+
+    # Filter files based on the prefix and extension
+    matching_files = [
+        os.path.join(directory, f)
+        for f in all_files
+        if f.startswith(prefix) and f.endswith(extension)
+    ]
+
+    return matching_files
+
+
 def execute_command(command):
     subprocess.run(command, shell=True)
 
@@ -288,9 +321,9 @@ def power_test_one_process(model, sequence_length, alignment_num, taxa_count):
     os.chdir("./..")
 
 
-def consolidate_data(main_directory):
+def consolidate_data(main_directory, model="JC"):
     """
-    Extract and consolidate the satute_results.csv files from each experiment subdirectory.
+    Extract and consolidate the arbitrary .csv files from each experiment subdirectory.
     """
     # List all subdirectories in the main directory
     subdirectories = [
@@ -299,28 +332,29 @@ def consolidate_data(main_directory):
         if os.path.isdir(os.path.join(main_directory, d))
     ]
 
+    print(main_directory)
     # Collect the data from each subdirectory
-    all_dataframes = []
+    all_data_frames = []
 
+    print(subdirectories)
     for subdir in subdirectories:
-        result_file_path = os.path.join(subdir, "satute_results.csv")
-
-        # Check if the result file exists in the subdirectory
-        if os.path.exists(result_file_path):
-            df = pd.read_csv(result_file_path)
-
-            # Extract sequence length from the subdirectory name and add it as a new column
-            sequence_length = int(subdir.split("-")[1].split("_")[0])
-            df["sequence_length"] = sequence_length
-
-            all_dataframes.append(df)
+        result_file_paths = fetch_files_with_prefix_and_extension_absolute(
+            subdir, model, ".csv"
+        )
+        for result_file_path in result_file_paths:
+            if os.path.exists(result_file_path):
+                df = pd.read_csv(result_file_path)
+                # Extract sequence length from the subdirectory name and add it as a new column
+                sequence_length = int(subdir.split("-")[1].split("_")[0])
+                df["sequence_length"] = sequence_length
+                all_data_frames.append(df)
 
     # Concatenate all individual dataframes to get the consolidated dataframe
-    consolidated_df = pd.concat(all_dataframes, ignore_index=True)
+    consolidated_df = pd.concat(all_data_frames, ignore_index=True)
     return consolidated_df
 
 
-def save_consolidated_data(df, file_name="consolidated_results.csv"):
+def save_consolidated_data(df, file_name="./consolidated_results.csv"):
     """
     Save the consolidated dataframe as a CSV file.
     """
@@ -372,7 +406,7 @@ def power_test_two_process(
     sequence_length_end,
     step,
     taxa_count,
-    num_alignment=20,
+    num_alignment=2,
 ):
     os.chdir("./power_test_two")
     generate_tree(taxa_count, file_name="./random_generated.tree")
@@ -388,10 +422,10 @@ def power_test_two_process(
 
     execute_satute_cli_for_experiment_folders("./", iqtree)
     # Define the main directory containing the experiment subdirectories
+
     main_directory = "./"
     consolidated_data = consolidate_data(main_directory)
     save_consolidated_data(consolidated_data)
-
     delete_directories_with_prefix("./", "saturation_plots")
     plot_violin_graphs_to_directory(consolidated_data)
 
@@ -551,7 +585,9 @@ def summarize_saturation_results(base_folder, edge="(Node1*, s5)", branch_length
                     print(row["edge"], row["p_value"], row["result_test"], length)
 
 
-def power_test_three_process(model, start, end, sequence_length, num_alignment=20):
+def power_test_three_process(
+    model, start, end, sequence_length, step, num_alignment=20
+):
     os.chdir("./power_test_three")
     delete_directories_with_prefix("./", f"given_tree_branch")
 
@@ -560,18 +596,12 @@ def power_test_three_process(model, start, end, sequence_length, num_alignment=2
     newick_str = "(((s1:1,s2:2):0.5,(s3:1,s4:1):0.5),s5:1);"
     tree = Tree(newick_str)
     branch_index = 1
-    # tree.write(
-    #     outfile=f"./given_tree_branch_{branch_index}_{start}.tree",
-    #     format=1,
-    # )
 
     # Make a specific branch longer (e.g., the 2nd branch)
-    for increment_branch_length in np.arange(start, end + 0.1, 0.1):
+    for increment_branch_length in np.arange(start, end + step, step):
         tree = assign_branch_length(
             tree, factor=increment_branch_length, branch_idx=branch_index
         )
-
-        print(tree.get_ascii(attributes=["name", "dist"]))
 
         tree.write(
             outfile=f"./given_tree_branch_{branch_index}_{increment_branch_length}.tree",
@@ -581,7 +611,7 @@ def power_test_three_process(model, start, end, sequence_length, num_alignment=2
         move_tree_files_to_subdirectories("./")
 
         execute_command(
-            f"iqtree --alisim given_tree_branch_{branch_index}_{increment_branch_length} -t ./given_tree_branch_{branch_index}_{increment_branch_length}/given_tree_branch_{branch_index}_{increment_branch_length}.tree --length {sequence_length} --seqtype DNA  -m {model} --quiet"
+            f"iqtree --alisim given_tree_branch_{branch_index}_{increment_branch_length} --num-alignments {num_alignment} -t ./given_tree_branch_{branch_index}_{increment_branch_length}/given_tree_branch_{branch_index}_{increment_branch_length}.tree --length {sequence_length} --seqtype DNA  -m {model} --quiet"
         )
 
         move_files_by_suffix(
@@ -597,32 +627,22 @@ def power_test_three_process(model, start, end, sequence_length, num_alignment=2
             model,
         )
 
-
         summarize_saturation_results("./", "(Node1*, s5)", increment_branch_length)
-
-        
-
-    # Define the main directory containing the experiment subdirectories
-    # main_directory = "./"
-    # consolidated_data = consolidate_data(main_directory)
-    # save_consolidated_data(consolidated_data)
-    # delete_directories_with_prefix("./", "saturation_plots")
-    # plot_violin_graphs_to_directory(consolidated_data)
 
 
 if __name__ == "__main__":
     # model_set = ["GTR", "GTR+G4", "GTR+G8", "JC", "JC+G4", "JC+G8"]
     # delete_files_with_prefix("./saturation_test", prefix)
     # power_test_one_process("JC", 100, 3)
+    power_test_three_process(
+        model="JC", start=1, end=10, step=1, sequence_length=500, num_alignment=2
+    )
+
     # power_test_two_process(
     #     "JC",
     #     sequence_length_begin=100,
-    #     sequence_length_end=400,
+    #     sequence_length_end=300,
     #     step=100,
-    #     taxa_count=6,
-    #     num_alignment=30,
+    #     taxa_count=5,
+    #     num_alignment=2,
     # )
-    # power_test_three_process(model="JC", start=1,end=2,sequence_length=500 num_alignment=2)
-    power_test_three_process(
-        model="JC", start=1, end=2, sequence_length=500, num_alignment=5
-    )

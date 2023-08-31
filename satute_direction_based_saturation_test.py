@@ -363,10 +363,8 @@ def partial_likelihood(tree, node, coming_from, rate_matrix):
             # Calculate the exponential matrix and partial likelihood for the child node.
             e = calculate_exponential_matrix(rate_matrix, node.connected[child])
             p = partial_likelihood(tree, child, node, rate_matrix)
-
             # Update the results by multiplying with the exponential matrix and partial likelihood.
             results = results * (e @ p)
-
     return results
 
 
@@ -480,17 +478,14 @@ def multiple_rate_analysis(
 ):
     result_rate_dictionary = {}
 
-
     print("per_rate_category_alignment", per_rate_category_alignment)
 
     for rate, alignment in per_rate_category_alignment.items():
         relative_rate = category_rates_factors[rate]["Relative_rate"]
         result_list = []
         rescaled_tree = rescale_branch_lengths(t, relative_rate)
-        partial_likelihood_per_site_storage = (
-            calculate_partial_likelihoods_for_sites(
-                rescaled_tree, alignment, rate_matrix
-            )
+        partial_likelihood_per_site_storage = calculate_partial_likelihoods_for_sites(
+            rescaled_tree, alignment, rate_matrix
         )
 
         for edge in partial_likelihood_per_site_storage.keys():
@@ -532,9 +527,9 @@ def multiple_rate_analysis(
                     "p_value": p_value,
                     "result_test": result_test,
                     "result_test_tip2tip": result_test_tip2tip,
+                    "category_rate": rate,
                 }
             )
-
 
         result_rate_dictionary[rate] = result_list
     return result_rate_dictionary
@@ -567,9 +562,11 @@ def main():
     )
     rate_matrix = RateMatrix(RATE_MATRIX)
 
-    (array_left_eigenvectors, array_right_eigenvectors, multiplicity) = spectral_decomposition_without_path(
-        RATE_MATRIX, psi_matrix
-    )
+    (
+        array_left_eigenvectors,
+        array_right_eigenvectors,
+        multiplicity,
+    ) = spectral_decomposition_without_path(RATE_MATRIX, psi_matrix)
 
     if number_rate == 1:
         single_rate_analysis(
