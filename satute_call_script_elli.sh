@@ -1,4 +1,4 @@
-iqtree=iqtree
+iqtree=iqtree2
 #rm -r test/octo-kraken-msa-test/clades  
 #rm -r test/octo-kraken-msa-test/subsequences      
 #python3 remove_files_except.py -m  
@@ -45,7 +45,7 @@ if [ -d "$DIR/subsequences" ]; then
     rm -r $DIR/subsequences
 fi
 
-python satute_cli.py -iqtree $iqtree -dir $DIR -alpha 0.05
+python3 satute_cli.py -iqtree $iqtree -msa $DIR/$msa -alpha 0.05
 
 #python3 satute_cli.py -iqtree $iqtree -msa $alignment -tree random_generated_tree.tree -model $model -alpha 0.05
 
