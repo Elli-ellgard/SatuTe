@@ -124,12 +124,17 @@ def calculate_sample_variance_optimized(
 def calculate_test_statistic(
     multiplicity,
     array_left_eigenvectors,
+    state_frequencies,
     partial_likelihood_left_subtree,
     partial_likelihood_right_subtree,
     dimension,
     branch_type="external",
     alpha=0.05,
 ):
+    freq = np.array(list(state_frequencies.values()))
+    diag = np.diag(list(state_frequencies.values()))
+    site_likelihood_left_subtree = []
+    site_likelihood_right_subtree = []
     # quantiles of the standard normal distribution
     z_alpha = st.norm.ppf(1 - alpha)
     number_sites = len(partial_likelihood_left_subtree["Site"].unique())
@@ -138,6 +143,9 @@ def calculate_test_statistic(
     # list of vectors of the scalar products between right eigenvector and posterior probability per site
     factors_left_subtree = []  # list of vectors
     factors_right_subtree = []
+    for k in range(number_sites):
+        site_likelihood_right_subtree.append(np.dot(np.asarray(partial_likelihood_right_subtree.iloc[k, 3 : (3 + dimension)]), freq))
+        site_likelihood_left_subtree.append(np.sum(np.asarray(partial_likelihood_left_subtree.iloc[k, 3 : (3 + dimension)]) @ diag))
 
     for i in range(multiplicity):
         h = array_left_eigenvectors[
@@ -156,24 +164,25 @@ def calculate_test_statistic(
                 h
                 @ np.asarray(
                     partial_likelihood_left_subtree.iloc[k, 3 : (3 + dimension)]
-                )
+                )/site_likelihood_left_subtree[k]
             )
 
             b.append(
                 h
                 @ np.asarray(
                     partial_likelihood_right_subtree.iloc[k, 3 : (3 + dimension)]
-                )
+                )/site_likelihood_right_subtree[k]
             )
 
         factors_left_subtree.append(a)
         factors_right_subtree.append(b)
+    #print(factors_left_subtree)
 
     """ calculation of the dominant sample coherence """
     delta = calculate_sample_coherence(
         multiplicity, factors_left_subtree, factors_right_subtree, number_sites
     )
-
+    #print(delta)
     """ calculation of the sample variance """
     variance = calculate_sample_variance(
         multiplicity,
@@ -182,7 +191,8 @@ def calculate_test_statistic(
         number_sites,
         branch_type,
     )
-
+    print("test statistic")
+    print(abs(delta / np.sqrt(variance)))
     variance = variance / number_sites
     if variance < 0:
         print(
