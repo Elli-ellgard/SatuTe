@@ -520,7 +520,7 @@ def multiple_rate_analysis(
             right_partial_likelihood = pd.DataFrame(
                 partial_likelihood_per_site_storage[edge]["right"]
             )
-
+            print(edge)
             branch_type = "external"
 
             if "Node" in edge[1]:
