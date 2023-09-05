@@ -4,29 +4,24 @@ import os
 import logging
 from pathlib import Path
 import re
-from satute_repository import parse_rate_matrices_from_file
-from satute_exception import (
-    InvalidDirectoryError,
-    NoAlignmentFileError,
-)
-from satute_util_new import spectral_decomposition
+import pandas as pd
+from ete3 import Tree
+from satute_repository import parse_rate_matrices_from_file, parse_state_frequencies
+from satute_exception import InvalidDirectoryError, NoAlignmentFileError
+from satute_util_new import spectral_decomposition, parse_file_to_data_frame
+
 from satute_direction_based_saturation_test import (
     single_rate_analysis,
     multiple_rate_analysis,
     RateMatrix,
 )
-
 from satute_rate_categories_and_alignments import (
     read_alignment_file,
     split_msa_into_rate_categories_in_place,
 )
-from ete3 import Tree
-from satute_util_new import parse_file_to_data_frame
 from satute_rate_categories_and_alignments import parse_category_rates
-import pandas as pd
 from FileHandler import FileHandler, IqTreeHandler
 from satute_trees_and_subtrees import name_nodes_by_level_order
-from satute_repository import parse_state_frequencies
 
 # Configure the logging settings (optional)
 logging.basicConfig(
@@ -346,15 +341,12 @@ class Satute:
         # Parsing input arguments and constructing IQ-TREE command-line arguments
         self.parse_input()
         arguments_dict = self.construct_arguments()
-
         self.run_iqtree_workflow(arguments_dict)
-
         rate_matrix, psi_matrix = parse_rate_matrices_from_file(
-            str(arguments_dict["msa_file"]) + ".iqtree"
+            f"{arguments_dict['msa_file'].resolve()}.iqtree"
         )
-
         state_frequencies = parse_state_frequencies(
-            str(arguments_dict["msa_file"]) + ".iqtree", dimension=dimension
+            f"{arguments_dict['msa_file'].resolve()}.iqtree", dimension=dimension
         )
         RATE_MATRIX = RateMatrix(rate_matrix)
 
@@ -377,7 +369,7 @@ class Satute:
             Running tests and initial IQ-Tree with configurations:
             Mode {arguments_dict['option']}
             Model: {self.input_args.model}
-            Running Saturation Test on file: {arguments_dict['msa_file']}
+            Running Saturation Test on file: {arguments_dict['msa_file'].resolve()}
             Number of rate categories: {number_rates}
             Options for Initial IQ-Tree run: {arguments_dict['option']}
             Multiplicity: {multiplicity}
@@ -399,19 +391,19 @@ class Satute:
 
             for key, results_set in results.items():
                 pd.DataFrame(results_set).to_csv(
-                    f"{self.active_directory}/{self.input_args.msa.name}_satute_results.csv"
+                    f"{self.input_args.msa.resolve()}_satute_results.csv"
                 )
 
         else:
             site_probability = parse_file_to_data_frame(
-                f"{self.input_args.msa}.siteprob"
+                f"{self.input_args.msa.resolve()}.siteprob"
             )
             per_rate_category_alignment = split_msa_into_rate_categories_in_place(
                 site_probability, alignment
             )
 
             category_rates_factors = parse_category_rates(
-                f"{self.input_args.msa}.iqtree"
+                f"{self.input_args.msa.resolve()}.iqtree"
             )
 
             results = multiple_rate_analysis(
@@ -426,7 +418,7 @@ class Satute:
 
             for key, results_set in results.items():
                 pd.DataFrame(results_set).to_csv(
-                    f"{self.active_directory}/{self.input_args.msa.name}satute_rate_{key}_results.csv"
+                    f"{self.input_args.msa.resolve()}satute_rate_{key}_results.csv"
                 )
 
     def handle_number_rates(self):

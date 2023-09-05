@@ -303,11 +303,11 @@ def calculate_partial_likelihoods_for_sites(tree, alignment, rate_matrix):
                     {
                         "Node": left.name,
                         "Site": i,
+                        "branch_length": branch_length,
                         "p_A": p1[0],
                         "p_C": p1[1],
                         "p_G": p1[2],
                         "p_T": p1[3],
-                        "branch_length": branch_length,
                     }
                 )
                 partial_likelihood_per_site_storage[f"({left.name}, {right.name})"][
@@ -316,11 +316,11 @@ def calculate_partial_likelihoods_for_sites(tree, alignment, rate_matrix):
                     {
                         "Node": right.name,
                         "Site": i,
+                        "branch_length": branch_length,
                         "p_A": p1[0],
                         "p_C": p1[1],
                         "p_G": p1[2],
                         "p_T": p1[3],
-                        "branch_length": branch_length,
                     }
                 )
     return partial_likelihood_per_site_storage
@@ -485,6 +485,7 @@ def single_rate_analysis(
                 "p_value": p_value,
                 "result_test": result_test,
                 "result_test_tip2tip": result_test_tip2tip,
+                'branch_length': left_partial_likelihood['branch_length'][0],
             }
         )
 
@@ -552,6 +553,7 @@ def multiple_rate_analysis(
                     "result_test": result_test,
                     "result_test_tip2tip": result_test_tip2tip,
                     "category_rate": rate,
+                    "branch_length": left_partial_likelihood["branch_length"][0],
                 }
             )
 
@@ -567,7 +569,7 @@ def main_p():
     alignment = read_alignment_file(alignment_file)
     rate_matrix = RateMatrix(RATE_MATRIX)
     partial_likelihood_per_site_storage = calculate_partial_likelihoods_for_sites(
-        t, alignment, rate_matrix  #
+        t, alignment, rate_matrix  
     )
 
 

@@ -44,9 +44,6 @@ def fetch_files_with_prefix_and_extension(directory, prefix, extension):
     return matching_files
 
 
-import os
-
-
 def fetch_files_with_prefix_and_extension_absolute(directory, prefix, extension):
     """
     Fetch all files in a directory that start with a specific prefix and have a specific file type (extension).
@@ -461,11 +458,6 @@ def delete_files_by_suffix(folder_path, suffix):
             deleted_files_count += 1
 
     return deleted_files_count
-
-
-# Example usage
-# folder_path = "/path/to/folder"
-# print(f"Deleted {deleted_count} files with suffix '{suffix}' from folder '{folder_path}'")
 
 
 def assign_branch_length(tree, factor=2.0, branch_idx=None):

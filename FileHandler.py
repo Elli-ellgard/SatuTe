@@ -1,8 +1,5 @@
-#from ensurepip import bootstrap
 import os
 import subprocess
-from pathlib import Path
-from satute_exception import InvalidDirectoryError, NoAlignmentFileError
 
 
 class FileHandler:

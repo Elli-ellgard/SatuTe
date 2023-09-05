@@ -94,7 +94,7 @@ def calculate_test_statistic(
     z_alpha = st.norm.ppf(1 - alpha)
     number_sites = len(partial_likelihood_left_subtree["Site"].unique())
 
-    """ Caluclation of the site likelihoods for both subtrees"""
+    """ Calculation of the site likelihoods for both subtrees"""
     freq = np.array(list(state_frequencies.values()))
     diag = np.diag(list(state_frequencies.values()))
     site_likelihood_left_subtree = []
