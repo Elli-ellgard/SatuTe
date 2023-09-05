@@ -258,41 +258,9 @@ class Satute:
                 )
 
         elif arguments_dict["option"] == "msa + tree":
-            # Running IQ-TREE with constructed arguments
-            # If no model specified in input arguments, extract best model from log file
-
-            self.iqtree_handler.run_iqtree_with_arguments(
-                arguments=arguments_dict["arguments"],
-                extra_arguments=[
-                    "-m",
-                    "TESTONLY",
-                    "--redo",
-                    "--quiet",
-                    "-blfix",
-                    "-n 0",
-                ],
+            raise ValueError(
+                "Cannot run Satute with only a tree file and MSA file. The model must be specified."
             )
-
-            substitution_model = parse_substitution_model(
-                str(arguments_dict["msa_file"]) + ".iqtree"
-            )
-
-            self.input_args.model = substitution_model
-            arguments_dict = self.construct_arguments()
-            number_rates = self.handle_number_rates()
-
-            if number_rates > 1:
-                self.iqtree_handler.run_iqtree_with_arguments(
-                    arguments=arguments_dict["arguments"],
-                    extra_arguments=[
-                        "-m",
-                        self.input_args.model,
-                        "--redo",
-                        "-blfix",
-                        "-n 0",
-                        "-wspr",
-                    ],
-                )
 
         elif arguments_dict["option"] == "msa":
             logger.info("Running IQ-TREE with constructed arguments")
@@ -318,12 +286,11 @@ class Satute:
 
             # Update model in input arguments and re-construct arguments
             substitution_model = parse_substitution_model(
-                str(arguments_dict["msa_file"]) + ".iqtree"
+                f"{arguments_dict['msa_file']}.iqtree"
             )
 
             self.input_args.model = substitution_model
             number_rates = self.handle_number_rates()
-
 
             extra_arguments = bb_arguments + [
                 "-m",
