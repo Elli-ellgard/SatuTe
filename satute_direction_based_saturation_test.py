@@ -498,7 +498,8 @@ def multiple_rate_analysis(
     category_rates_factors,
     rate_matrix,
     state_frequencies,
-    array_eigenvectors,
+    array_left_eigenvectors,
+    array_right_eigenvectors,
     multiplicity,
     per_rate_category_alignment,
 ):
@@ -524,17 +525,33 @@ def multiple_rate_analysis(
 
             if "Node" in edge[1]:
                 branch_type = "internal"
-
             (
                 delta,
                 c_s,
-                c_s_two_sequence,
+                c_sTwoSequence,
                 p_value,
                 result_test,
                 result_test_tip2tip,
             ) = calculate_test_statistic(
                 multiplicity,
-                array_eigenvectors,
+                array_left_eigenvectors,
+                state_frequencies,
+                left_partial_likelihood,
+                right_partial_likelihood,
+                4,
+                branch_type,
+                alpha=0.05,
+            )
+            (
+                delta,
+                c_s,
+                c_sTwoSequence,
+                p_value,
+                result_test,
+                result_test_tip2tip,
+            ) = calculate_test_statistic_posterior_distribution(
+                multiplicity,
+                array_right_eigenvectors,
                 state_frequencies,
                 left_partial_likelihood,
                 right_partial_likelihood,
@@ -548,7 +565,7 @@ def multiple_rate_analysis(
                     "edge": edge,
                     "delta": delta,
                     "c_s": c_s,
-                    "c_sTwoSequence": c_s_two_sequence,
+                    "c_sTwoSequence": c_sTwoSequence,
                     "p_value": p_value,
                     "result_test": result_test,
                     "result_test_tip2tip": result_test_tip2tip,

@@ -104,6 +104,8 @@ def calculate_test_statistic_posterior_distribution(
             )
             / sl
         )
+        print(f"Site {k}")
+        print(posterior_probabilities_left_subtree[0])
         posterior_probabilities_right_subtree.append(
             np.array(
                 diag

@@ -412,6 +412,7 @@ class Satute:
                 RATE_MATRIX,
                 state_frequencies,
                 array_left_eigenvectors,
+                array_right_eigenvectors,
                 multiplicity,
                 per_rate_category_alignment,
             )
