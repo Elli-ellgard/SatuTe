@@ -26,6 +26,7 @@ from satute_rate_categories_and_alignments import parse_category_rates
 import pandas as pd
 from FileHandler import FileHandler, IqTreeHandler
 from satute_trees_and_subtrees import name_nodes_by_level_order
+from satute_repository import parse_state_frequencies
 
 # Configure the logging settings (optional)
 logging.basicConfig(
@@ -367,6 +368,7 @@ class Satute:
     def run(self):
         """Main entry point for running the Satute command-line tool."""
         number_rates = 1
+        dimension = 4
         # Parsing input arguments and constructing IQ-TREE command-line arguments
         self.parse_input()
         arguments_dict = self.construct_arguments()
@@ -376,6 +378,7 @@ class Satute:
             str(arguments_dict["msa_file"]) + ".iqtree"
         )
 
+        state_frequencies = parse_state_frequencies(str(arguments_dict["msa_file"])+ ".iqtree", dimension=dimension)
         RATE_MATRIX = RateMatrix(rate_matrix)
 
         # ======== Tree File Handling =========
@@ -410,6 +413,7 @@ class Satute:
                 to_be_tested_tree,
                 alignment,
                 RATE_MATRIX,
+                state_frequencies,
                 array_left_eigenvectors,
                 multiplicity,
             )
@@ -435,6 +439,7 @@ class Satute:
                 to_be_tested_tree,
                 category_rates_factors,
                 RATE_MATRIX,
+                state_frequencies,
                 array_left_eigenvectors,
                 multiplicity,
                 per_rate_category_alignment,

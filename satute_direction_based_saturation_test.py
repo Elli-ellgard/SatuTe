@@ -418,7 +418,7 @@ def test_one_partial_likelihood():
         test(p1, p2)
 
 
-def single_rate_analysis(t, alignment, rate_matrix, array_eigenvectors, multiplicity):
+def single_rate_analysis(t, alignment, rate_matrix, state_frequencies, array_eigenvectors, multiplicity):
     partial_likelihood_per_site_storage = calculate_partial_likelihoods_for_sites(
         t, alignment, rate_matrix
     )
@@ -446,6 +446,7 @@ def single_rate_analysis(t, alignment, rate_matrix, array_eigenvectors, multipli
         ) = calculate_test_statistic(
             multiplicity,
             array_eigenvectors,
+            state_frequencies,
             left_partial_likelihood,
             right_partial_likelihood,
             4,
@@ -472,6 +473,7 @@ def multiple_rate_analysis(
     t,
     category_rates_factors,
     rate_matrix,
+    state_frequencies,
     array_eigenvectors,
     multiplicity,
     per_rate_category_alignment,
@@ -511,6 +513,7 @@ def multiple_rate_analysis(
             ) = calculate_test_statistic(
                 multiplicity,
                 array_eigenvectors,
+                state_frequencies,
                 left_partial_likelihood,
                 right_partial_likelihood,
                 4,
