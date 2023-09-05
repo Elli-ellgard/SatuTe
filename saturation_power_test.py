@@ -13,7 +13,7 @@ import numpy as np
 import shutil
 
 
-iqtree = "iqtree2"
+iqtree = "iqtree"
 
 
 def fetch_files_with_prefix_and_extension(directory, prefix, extension):
@@ -158,7 +158,9 @@ def move_files_to_directory(prefix, alignment_num):
     print(f"Moved {alignment_num} alignments and trees to individual directories.")
 
 
-def execute_satute_cli_for_experiment_folders(main_directory, iqtree_executable):
+def execute_satute_cli_for_experiment_folders(
+    main_directory, iqtree_executable, model="JC"
+):
     """
     Execute the satute_cli.py script for each experiment subdirectory in the main directory.
 
@@ -196,6 +198,8 @@ def execute_satute_cli_for_experiment_folders(main_directory, iqtree_executable)
                 alignment_path,
                 "-tree",
                 "./random_generated.tree",
+                "-model",
+                model,
             ]
 
             # Execute the command
@@ -313,11 +317,11 @@ def power_test_one_process(model, sequence_length, alignment_num, taxa_count):
     generate_tree(taxa_count)
     os.chdir("./power_test_one")
     execute_command(
-        f"iqtree2 --alisim {model}-{sequence_length} -t random_generated.tree --length {sequence_length} --seqtype DNA --num-alignments {alignment_num} -m {model}"
+        f"iqtree --alisim {model}-{sequence_length} -t random_generated.tree --length {sequence_length} --seqtype DNA --num-alignments {alignment_num} -m {model}"
     )
     # Move the generated files to individual directories
     move_files_to_directory(prefix, alignment_num)
-    execute_satute_cli_for_experiment_folders("./", iqtree)
+    execute_satute_cli_for_experiment_folders("./", iqtree, model="JC")
     os.chdir("./..")
 
 
@@ -611,7 +615,7 @@ def power_test_three_process(
         move_tree_files_to_subdirectories("./")
 
         execute_command(
-            f"iqtree2 --alisim given_tree_branch_{branch_index}_{increment_branch_length} --num-alignments {num_alignment} -t ./given_tree_branch_{branch_index}_{increment_branch_length}/given_tree_branch_{branch_index}_{increment_branch_length}.tree --length {sequence_length} --seqtype DNA  -m {model} --quiet"
+            f"iqtree --alisim given_tree_branch_{branch_index}_{increment_branch_length} --num-alignments {num_alignment} -t ./given_tree_branch_{branch_index}_{increment_branch_length}/given_tree_branch_{branch_index}_{increment_branch_length}.tree --length {sequence_length} --seqtype DNA  -m {model} --quiet"
         )
 
         move_files_by_suffix(
@@ -635,7 +639,7 @@ if __name__ == "__main__":
     # delete_files_with_prefix("./saturation_test", prefix)
     # power_test_one_process("JC", 100, 3)
     power_test_three_process(
-        model="JC", start=0.1, end=4, step=0.5, sequence_length=500, num_alignment=1
+        model="GTR", start=0.1, end=4, step=0.5, sequence_length=10, num_alignment=1
     )
 
     # power_test_two_process(

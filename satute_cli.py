@@ -97,7 +97,6 @@ def map_values_to_newick(value_rows, newick_string):
     """
     for row in value_rows:
         node_one, node_two = row["vector_branches"].split("-")
-        print(node_one, node_two)
         # node_two = node_two.split("*")[0]  # remove trailing '*'
         # values_dict[node_two] = {
         #     "delta": row["delta"],
@@ -296,10 +295,17 @@ class Satute:
                 )
 
         elif arguments_dict["option"] == "msa":
+            logger.info("Running IQ-TREE with constructed arguments")
+            logger.info(
+                "If no model specified in input arguments, extract best model from log file"
+            )
             # Validate and append ufboot and boot parameters to extra_arguments
             bb_arguments = self.iqtree_handler.validate_and_append_boot_arguments(
                 self.input_args.ufboot, self.input_args.boot
             )
+
+            logger.info(" ".join(arguments_dict["arguments"]))
+            logger.info(" ".join(bb_arguments))
 
             self.iqtree_handler.run_iqtree_with_arguments(
                 arguments=arguments_dict["arguments"],
@@ -317,6 +323,7 @@ class Satute:
 
             self.input_args.model = substitution_model
             number_rates = self.handle_number_rates()
+
 
             extra_arguments = bb_arguments + [
                 "-m",
@@ -372,13 +379,16 @@ class Satute:
         # Parsing input arguments and constructing IQ-TREE command-line arguments
         self.parse_input()
         arguments_dict = self.construct_arguments()
+
         self.run_iqtree_workflow(arguments_dict)
 
         rate_matrix, psi_matrix = parse_rate_matrices_from_file(
             str(arguments_dict["msa_file"]) + ".iqtree"
         )
 
-        state_frequencies = parse_state_frequencies(str(arguments_dict["msa_file"])+ ".iqtree", dimension=dimension)
+        state_frequencies = parse_state_frequencies(
+            str(arguments_dict["msa_file"]) + ".iqtree", dimension=dimension
+        )
         RATE_MATRIX = RateMatrix(rate_matrix)
 
         # ======== Tree File Handling =========
@@ -391,14 +401,15 @@ class Satute:
         ) = spectral_decomposition(RATE_MATRIX.rate_matrix, psi_matrix)
 
         alignment = read_alignment_file(arguments_dict["msa_file"])
-        print(to_be_tested_tree.get_ascii(attributes=["name", "dist"]))
+        # print(to_be_tested_tree.get_ascii(attributes=["name", "dist"]))
+        number_rates = self.handle_number_rates()
+
         # ======== Saturation Test =========
         logger.info(
             f"""
             Running tests and initial IQ-Tree with configurations:
             Mode {arguments_dict['option']}
-            Running a second time with the best model: {self.input_args.model}
-            Using tree: {self.input_args.tree}
+            Model: {self.input_args.model}
             Running Saturation Test on file: {arguments_dict['msa_file']}
             Number of rate categories: {number_rates}
             Options for Initial IQ-Tree run: {arguments_dict['option']}
@@ -426,14 +437,14 @@ class Satute:
 
         else:
             site_probability = parse_file_to_data_frame(
-                f"{self.input_args.msa.name}.siteprob"
+                f"{self.input_args.msa}.siteprob"
             )
             per_rate_category_alignment = split_msa_into_rate_categories_in_place(
                 site_probability, alignment
             )
 
             category_rates_factors = parse_category_rates(
-                f"{self.input_args.msa.name}.iqtree"
+                f"{self.input_args.msa}.iqtree"
             )
 
             results = multiple_rate_analysis(

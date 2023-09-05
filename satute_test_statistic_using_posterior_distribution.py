@@ -1,9 +1,5 @@
 import scipy.stats as st
 import numpy as np
-#from satute_repository import (
- #   parse_state_frequencies,
- #   parse_rate_matrices,
-#)
 from scipy.sparse.linalg import expm
 
 
@@ -70,32 +66,53 @@ def calculate_sample_variance(
 def calculate_test_statistic_posterior_distribution(
     multiplicity,
     array_eigenvectors,
-    state_frequencies, 
+    state_frequencies,
     partial_likelihood_left_subtree,
     partial_likelihood_right_subtree,
     dimension,
     branch_type="external",
     alpha=0.05,
 ):
-    
     # quantiles of the standard normal distribution
     z_alpha = st.norm.ppf(1 - alpha)
     number_sites = len(partial_likelihood_left_subtree["Site"].unique())
 
     """Calculation of the posterior distributions """
-    posterior_probabilities_left_subtree=[]
-    posterior_probabilities_right_subtree=[]
+    posterior_probabilities_left_subtree = []
+    posterior_probabilities_right_subtree = []
     freq = np.array(list(state_frequencies.values()))
     diag = np.diag(list(state_frequencies.values()))
     site_likelihood_left_subtree = []
     site_likelihood_right_subtree = []
     for k in range(number_sites):
-        sr=np.dot(np.asarray(partial_likelihood_right_subtree.iloc[k, 3 : (3 + dimension)]), freq)
-        sl=np.sum(np.asarray(partial_likelihood_left_subtree.iloc[k, 3 : (3 + dimension)]) @ diag)
+        sr = np.dot(
+            np.asarray(partial_likelihood_right_subtree.iloc[k, 3 : (3 + dimension)]),
+            freq,
+        )
+        sl = np.sum(
+            np.asarray(partial_likelihood_left_subtree.iloc[k, 3 : (3 + dimension)])
+            @ diag
+        )
         site_likelihood_right_subtree.append(sr)
         site_likelihood_left_subtree.append(sl)
-        posterior_probabilities_left_subtree.append(np.array(diag @ np.asarray(partial_likelihood_left_subtree.iloc[k, 3 : (3 + dimension)]))/sl)
-        posterior_probabilities_right_subtree.append(np.array(diag @ np.asarray(partial_likelihood_right_subtree.iloc[k, 3 : (3 + dimension)]))/sr)
+        posterior_probabilities_left_subtree.append(
+            np.array(
+                diag
+                @ np.asarray(
+                    partial_likelihood_left_subtree.iloc[k, 3 : (3 + dimension)]
+                )
+            )
+            / sl
+        )
+        posterior_probabilities_right_subtree.append(
+            np.array(
+                diag
+                @ np.asarray(
+                    partial_likelihood_right_subtree.iloc[k, 3 : (3 + dimension)]
+                )
+            )
+            / sr
+        )
 
     """ Calculation of the factors for the coefficient C_1 (correspond to the dominant non-zero eigenvalue)"""
     # list of vectors of the scalar products between right eigenvector and posterior probability per site
@@ -113,21 +130,10 @@ def calculate_test_statistic_posterior_distribution(
         )  # vector to store all scalar products v_i * site_posterior_probabilities_right_subtree
 
         for k in range(number_sites):
-            a.append(
-                v
-                @ np.asarray(
-                    posterior_probabilities_left_subtree[k]
-                )
-            )
-            b.append(
-                v
-                @ np.asarray(
-                    posterior_probabilities_right_subtree[k]
-                )
-            )
+            a.append(v @ np.asarray(posterior_probabilities_left_subtree[k]))
+            b.append(v @ np.asarray(posterior_probabilities_right_subtree[k]))
         factors_right_subtree.append(b)
         factors_left_subtree.append(a)
-
 
     """ calculation of the dominant sample coherence """
     delta = calculate_sample_coherence(
@@ -143,8 +149,6 @@ def calculate_test_statistic_posterior_distribution(
         branch_type,
     )
     variance = variance / number_sites
-    print("test statistic posterior")
-    print(abs(delta / np.sqrt(variance))) 
     if variance < 0:
         print(
             "VARIANCE ESTIMATION IS NEGATIVE - CONSIDER INCREASING THE NUMBER OF STANDARD DEVIATIONS (number_standard_deviations) (CONFIDENCE INTERVAL)"

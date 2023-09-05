@@ -121,8 +121,6 @@ def write_results_and_newick_tree(
         mode="w",
     )
 
-    print(saturation_branches_data_frame)
-
     # Generate a newick string with saturation information
     # saturation_information_newick_string = map_values_to_newick(
     #    results_list, newick_string
