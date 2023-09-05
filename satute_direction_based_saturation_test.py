@@ -485,7 +485,7 @@ def single_rate_analysis(
                 "p_value": p_value,
                 "result_test": result_test,
                 "result_test_tip2tip": result_test_tip2tip,
-                'branch_length': left_partial_likelihood['branch_length'][0],
+                "branch_length": left_partial_likelihood["branch_length"][0],
             }
         )
 
@@ -569,7 +569,7 @@ def main_p():
     alignment = read_alignment_file(alignment_file)
     rate_matrix = RateMatrix(RATE_MATRIX)
     partial_likelihood_per_site_storage = calculate_partial_likelihoods_for_sites(
-        t, alignment, rate_matrix  
+        t, alignment, rate_matrix
     )
 
 
