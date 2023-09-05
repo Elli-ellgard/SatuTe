@@ -13,7 +13,7 @@ import numpy as np
 import shutil
 
 
-iqtree = "iqtree"
+iqtree = "iqtree2"
 
 
 def fetch_files_with_prefix_and_extension(directory, prefix, extension):
@@ -314,7 +314,7 @@ def power_test_one_process(model, sequence_length, alignment_num, taxa_count):
     generate_tree(taxa_count)
     os.chdir("./power_test_one")
     execute_command(
-        f"iqtree --alisim {model}-{sequence_length} -t random_generated.tree --length {sequence_length} --seqtype DNA --num-alignments {alignment_num} -m {model}"
+        f"{iqtree} --alisim {model}-{sequence_length} -t random_generated.tree --length {sequence_length} --seqtype DNA --num-alignments {alignment_num} -m {model}"
     )
     # Move the generated files to individual directories
     move_files_to_directory(prefix, alignment_num)
@@ -417,7 +417,7 @@ def power_test_two_process(
     for sequence_length in range(sequence_length_begin, sequence_length_end, step):
         prefix = f"{model}-{sequence_length}"
         execute_command(
-            f"iqtree2 --alisim {prefix} -t random_generated.tree --length {sequence_length} --num-alignments {num_alignment} --seqtype DNA  -m {model}"
+            f"{iqtree} --alisim {prefix} -t random_generated.tree --length {sequence_length} --num-alignments {num_alignment} --seqtype DNA  -m {model}"
         )
         move_phy_files_to_subdirectories("./")
 
@@ -607,7 +607,7 @@ def power_test_three_process(
         move_tree_files_to_subdirectories("./")
 
         execute_command(
-            f"iqtree --alisim given_tree_branch_{branch_index}_{increment_branch_length} --num-alignments {num_alignment} -t ./given_tree_branch_{branch_index}_{increment_branch_length}/given_tree_branch_{branch_index}_{increment_branch_length}.tree --length {sequence_length} --seqtype DNA  -m {model} --quiet"
+            f"{iqtree} --alisim given_tree_branch_{branch_index}_{increment_branch_length} --num-alignments {num_alignment} -t ./given_tree_branch_{branch_index}_{increment_branch_length}/given_tree_branch_{branch_index}_{increment_branch_length}.tree --length {sequence_length} --seqtype DNA  -m {model} --quiet"
         )
 
         move_files_by_suffix(
@@ -631,7 +631,7 @@ if __name__ == "__main__":
     # delete_files_with_prefix("./saturation_test", prefix)
     # power_test_one_process("JC", 100, 3)
     power_test_three_process(
-        model="GTR", start=0.1, end=4, step=0.5, sequence_length=10, num_alignment=1
+        model="GTR", start=0.1, end=4, step=0.5, sequence_length=1000, num_alignment=1
     )
 
     # power_test_two_process(
