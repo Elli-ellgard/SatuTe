@@ -23,7 +23,7 @@ def calculate_sample_coherence(
         delta += np.asarray(factors_left_subtree[i]) @ np.asarray(
             factors_right_subtree[i]
         )
-
+       
     delta = delta / number_sites
     return delta
 
@@ -45,13 +45,13 @@ def calculate_sample_variance(
             if branch_type == "internal":
                 M_left = (
                     np.asarray(factors_left_subtree[i])
-                    @ np.asarray(factors_left_subtree[i])
+                    @ np.asarray(factors_left_subtree[j])
                     / number_sites
                 )
             else:
                 M_left = multiplicity
             M_right = (
-                np.asarray(factors_right_subtree[j])
+                np.asarray(factors_right_subtree[i])
                 @ np.asarray(factors_right_subtree[j])
                 / number_sites
             )
@@ -131,22 +131,24 @@ def calculate_test_statistic(
     branch_type="external",
     alpha=0.05,
 ):
+    # quantiles of the standard normal distribution
+    z_alpha = st.norm.ppf(1 - alpha)
+    number_sites = len(partial_likelihood_left_subtree["Site"].unique())
+
+    """ Caluclation of the site likelihoods for both subtrees"""
     freq = np.array(list(state_frequencies.values()))
     diag = np.diag(list(state_frequencies.values()))
     site_likelihood_left_subtree = []
     site_likelihood_right_subtree = []
-    # quantiles of the standard normal distribution
-    z_alpha = st.norm.ppf(1 - alpha)
-    number_sites = len(partial_likelihood_left_subtree["Site"].unique())
+    for k in range(number_sites):
+        site_likelihood_right_subtree.append(np.dot(np.asarray(partial_likelihood_right_subtree.iloc[k, 3 : (3 + dimension)]), freq))
+        site_likelihood_left_subtree.append(np.sum(np.asarray(partial_likelihood_left_subtree.iloc[k, 3 : (3 + dimension)]) @ diag))
 
     """ Calculation of the factors for the coefficient C_1 (correspond to the dominant non-zero eigenvalue)"""
     # list of vectors of the scalar products between right eigenvector and posterior probability per site
     factors_left_subtree = []  # list of vectors
     factors_right_subtree = []
-    for k in range(number_sites):
-        site_likelihood_right_subtree.append(np.dot(np.asarray(partial_likelihood_right_subtree.iloc[k, 3 : (3 + dimension)]), freq))
-        site_likelihood_left_subtree.append(np.sum(np.asarray(partial_likelihood_left_subtree.iloc[k, 3 : (3 + dimension)]) @ diag))
-
+ 
     for i in range(multiplicity):
         h = array_left_eigenvectors[
             i
@@ -177,12 +179,13 @@ def calculate_test_statistic(
         factors_left_subtree.append(a)
         factors_right_subtree.append(b)
     #print(factors_left_subtree)
+    
 
     """ calculation of the dominant sample coherence """
     delta = calculate_sample_coherence(
         multiplicity, factors_left_subtree, factors_right_subtree, number_sites
     )
-    #print(delta)
+    
     """ calculation of the sample variance """
     variance = calculate_sample_variance(
         multiplicity,
@@ -191,9 +194,10 @@ def calculate_test_statistic(
         number_sites,
         branch_type,
     )
+
+    variance = variance / number_sites
     print("test statistic")
     print(abs(delta / np.sqrt(variance)))
-    variance = variance / number_sites
     if variance < 0:
         print(
             "VARIANCE ESTIMATION IS NEGATIVE - CONSIDER INCREASING THE NUMBER OF STANDARD DEVIATIONS (number_standard_deviations) (CONFIDENCE INTERVAL)"
@@ -212,7 +216,7 @@ def calculate_test_statistic(
         result_test = "Informative"
 
     # computing the saturation coherence between two sequences
-    c_s_two_sequence = multiplicity * z_alpha / np.sqrt(number_sites)
+    c_s_two_sequence = np.sqrt(multiplicity) * z_alpha / np.sqrt(number_sites)
 
     if c_s_two_sequence > delta:
         result_test_tip2tip = "SatuT2T"

@@ -18,6 +18,7 @@ from satute_util_new import parse_file_to_data_frame
 from satute_trees_and_subtrees import rescale_branch_lengths, parse_newick_file
 import pandas as pd
 from satute_test_statistic_using_partial_likelihood import calculate_test_statistic
+from satute_test_statistic_using_posterior_distribution import calculate_test_statistic_posterior_distribution
 
 
 NUCLEOTIDE_CODE_VECTOR = {
@@ -292,7 +293,7 @@ def calculate_partial_likelihoods_for_sites(tree, alignment, rate_matrix):
                             "Site": i,
                             "branch_length": branch_length,
                             "p_A": p2[0],
-                            "p_C": p2[2],
+                            "p_C": p2[1],
                             "p_G": p2[2],
                             "p_T": p2[3],
                         }
@@ -418,7 +419,7 @@ def test_one_partial_likelihood():
         test(p1, p2)
 
 
-def single_rate_analysis(t, alignment, rate_matrix, state_frequencies, array_eigenvectors, multiplicity):
+def single_rate_analysis(t, alignment, rate_matrix, state_frequencies, array_left_eigenvectors, array_right_eigenvectors, multiplicity):
     partial_likelihood_per_site_storage = calculate_partial_likelihoods_for_sites(
         t, alignment, rate_matrix
     )
@@ -445,7 +446,24 @@ def single_rate_analysis(t, alignment, rate_matrix, state_frequencies, array_eig
             result_test_tip2tip,
         ) = calculate_test_statistic(
             multiplicity,
-            array_eigenvectors,
+            array_left_eigenvectors,
+            state_frequencies,
+            left_partial_likelihood,
+            right_partial_likelihood,
+            4,
+            branch_type,
+            alpha=0.05,
+        )
+        (
+            delta,
+            c_s,
+            c_sTwoSequence,
+            p_value,
+            result_test,
+            result_test_tip2tip,
+        ) = calculate_test_statistic_posterior_distribution(
+            multiplicity,
+            array_right_eigenvectors,
             state_frequencies,
             left_partial_likelihood,
             right_partial_likelihood,

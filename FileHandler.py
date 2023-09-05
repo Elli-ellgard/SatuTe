@@ -1,4 +1,4 @@
-from ensurepip import bootstrap
+#from ensurepip import bootstrap
 import os
 import subprocess
 from pathlib import Path

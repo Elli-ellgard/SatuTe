@@ -78,7 +78,7 @@ print(N2_pl)
 print("Calculate likelihood of N3")
 factor_N1=get_transition_matrix(RATE_MATRIX,N1_N3_bl) @ N1_pl
 factor_N2=get_transition_matrix(RATE_MATRIX,N2_N3_bl) @ N2_pl
-N3_pl=
+N3_pl=factor_N1*factor_N2
 
 
 # root_partial_likelihood = (transition_matrix @ inner_node_1_partial_likelihood) * (
