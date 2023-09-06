@@ -101,6 +101,10 @@ class Node:
         """Check if the node is a leaf (has a state vector)."""
         return self.state is not None
 
+    def __repr__(self):
+        """Return the string representation of the Node."""
+        return f"Node({self.name})"
+
 
 def get_initial_likelihood_vector(state):
     """Get the initial likelihood vector for a given nucleotide state."""
@@ -263,7 +267,7 @@ def calculate_partial_likelihoods_for_sites(tree, alignment, rate_matrix):
         )
 
         for edge in graph.get_edges():
-            left, right, branch_length = edge
+            right, left, branch_length = edge
 
             p1 = partial_likelihood(graph, left, right, rate_matrix)
             p2 = partial_likelihood(graph, right, left, rate_matrix)
