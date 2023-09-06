@@ -267,10 +267,14 @@ def calculate_partial_likelihoods_for_sites(tree, alignment, rate_matrix):
         )
 
         for edge in graph.get_edges():
+
+
             right, left, branch_length = edge
 
             p1 = partial_likelihood(graph, left, right, rate_matrix)
+
             p2 = partial_likelihood(graph, right, left, rate_matrix)
+
 
             if (
                 f"({left.name}, {right.name})"
@@ -365,7 +369,6 @@ def partial_likelihood(tree, node, coming_from, rate_matrix):
             # Calculate the exponential matrix and partial likelihood for the child node.
             e = calculate_exponential_matrix(rate_matrix, node.connected[child])
             p = partial_likelihood(tree, child, node, rate_matrix)
-
             # Update the results by multiplying with the exponential matrix and partial likelihood.
             results = results * (e @ p)
     return results
@@ -645,18 +648,18 @@ from Bio.Align import MultipleSeqAlignment
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 
-import json
 
 
 def test_one():
     # Create SeqRecord objects for your sequences
-    seq1 = SeqRecord(Seq("AGT"), id="A")
-    seq2 = SeqRecord(Seq("CGT"), id="B")
-    seq3 = SeqRecord(Seq("GGT"), id="C")
+    seq1 = SeqRecord(Seq("AGTATA"), id="A")
+    seq2 = SeqRecord(Seq("CGTATG"), id="B")
+    seq3 = SeqRecord(Seq("GGTATG"), id="C")
+    seq4 = SeqRecord(Seq("GGTACG"), id="D")
 
     # Create a MultipleSeqAlignment object
-    alignment = MultipleSeqAlignment([seq1, seq2, seq3])
-    newick_string = "((A:0.2, B:0.4):0.3, C:0.5);"
+    alignment = MultipleSeqAlignment([seq1, seq2, seq3, seq4])
+    newick_string = "((A:0.2, B:0.4):0.3, (C:0.5,D:0.2):2);"
     t = Tree(newick_string, format=1)
     t = name_nodes_by_level_order(t)
 
@@ -668,16 +671,18 @@ def test_one():
         t, alignment, rate_matrix
     )
 
-    for key, values in partial_likelihood_per_site_storage.items():
-        print("#### Left")
-        for value in values["left"]:
-            print(value)
-            print("\n")
-
-        print("#### Right")
-        for value in values["right"]:
-            print(value)
-            print("\n")
+    # for key, values in partial_likelihood_per_site_storage.items():
+    #    print(key)
+    #    print("#### Left")
+    #    for value in values["left"]:
+    #        print(value)
+    #        print("\n")
+# 
+# 
+    #    print("#### Right")
+    #    for value in values["right"]:
+    #        print(value)
+    #        print("\n")
 
 
 if __name__ == "__main__":

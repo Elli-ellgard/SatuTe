@@ -294,6 +294,7 @@ class Satute:
                 "--quiet",
             ]
 
+
             if number_rates > 1:
                 self.iqtree_handler.run_iqtree_with_arguments(
                     arguments=arguments_dict["arguments"],

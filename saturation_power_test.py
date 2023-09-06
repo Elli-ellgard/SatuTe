@@ -13,7 +13,7 @@ import numpy as np
 import shutil
 
 
-iqtree = "iqtree2"
+iqtree = "iqtree"
 
 
 def fetch_files_with_prefix_and_extension(directory, prefix, extension):
@@ -589,7 +589,7 @@ def power_test_three_process(
 
     # Create a tree using the Newick format
     # Here, numbers in the format represent branch lengths
-    newick_str = "(((s1:1,s2:2):0.5,(s3:1,s4:1):0.5),s5:1);"
+    newick_str = "(((s1:0.2,s2:0.2):0.2,(s3:0.2,s4:0.2):0.2),s5:0.1);"
     tree = Tree(newick_str)
     branch_index = 1
 
@@ -623,7 +623,7 @@ def power_test_three_process(
             model,
         )
 
-        summarize_saturation_results("./", "(Node1*, s5)", increment_branch_length)
+        summarize_saturation_results("./", "(s5, Node1*)", increment_branch_length)
 
 
 if __name__ == "__main__":
@@ -631,7 +631,7 @@ if __name__ == "__main__":
     # delete_files_with_prefix("./saturation_test", prefix)
     # power_test_one_process("JC", 100, 3)
     power_test_three_process(
-        model="GTR", start=0.1, end=4, step=0.5, sequence_length=1000, num_alignment=1
+        model="JC", start=0.01, end=4, step=0.1, sequence_length=500, num_alignment=1
     )
 
     # power_test_two_process(

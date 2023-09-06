@@ -4,17 +4,9 @@ from scipy.sparse.linalg import expm
 
 
 """## CALCULATION OF THE SAMPLE COHERENCE """
-
-""" TODO: 
-    - we should think about create a directory of the state_space at the beginning of the program and use it for dimension stuff
-    - generalizes the functions below for other dimension (now only dimension 4)
-"""
-
-
 # get transition matrix using matrix exponential
 def get_transition_matrix(rate_matrix, branch_length):
     return expm(rate_matrix * branch_length)
-
 
 def calculate_sample_coherence(
     multiplicity, factors_left_subtree, factors_right_subtree, number_sites
@@ -50,7 +42,8 @@ def calculate_sample_variance(
                     / number_sites
                 )
             else:
-                M_left = multiplicity
+                M_left =  (i == j)
+                
             M_right = (
                 np.asarray(factors_right_subtree[i])
                 @ np.asarray(factors_right_subtree[j])
@@ -104,8 +97,8 @@ def calculate_test_statistic_posterior_distribution(
             )
             / sl
         )
-        print(f"Site {k}")
-        print(posterior_probabilities_left_subtree[0])
+        # print(f"Site {k}")
+        # print(posterior_probabilities_left_subtree[0])
         posterior_probabilities_right_subtree.append(
             np.array(
                 diag
@@ -169,14 +162,14 @@ def calculate_test_statistic_posterior_distribution(
         result_test = "Informative"
 
     # computing the saturation coherence between two sequences
-    c_sTwoSequence = multiplicity * z_alpha / np.sqrt(number_sites)
+    c_s_two_sequence = np.sqrt(multiplicity) * z_alpha / np.sqrt(number_sites)
 
-    if c_sTwoSequence > delta:
+    if c_s_two_sequence > delta:
         result_test_tip2tip = "SatuT2T"
     else:
         result_test_tip2tip = "InfoT2T"
 
-    return delta, c_s, c_sTwoSequence, p_value, result_test, result_test_tip2tip
+    return delta, c_s, c_s_two_sequence, p_value, result_test, result_test_tip2tip
 
 
 """## CALCULATION OF THE TEST STATISTIC FOR LIKELIHOOD RATIO TEST"""
