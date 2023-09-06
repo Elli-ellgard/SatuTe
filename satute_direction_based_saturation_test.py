@@ -261,7 +261,7 @@ def calculate_partial_likelihoods_for_sites(tree, alignment, rate_matrix):
     alignment_look_up_table = get_alignment_look_up_table(alignment)
     partial_likelihood_per_site_storage = {}
 
-    for i in range(1, len(alignment[0].seq), 1):
+    for i in range(0, len(alignment[0].seq), 1):
         graph = convert_ete3_tree_to_directed_acyclic_graph(
             tree, alignment[:, (i + 1) - 1 : (i + 1)], alignment_look_up_table
         )
@@ -321,10 +321,10 @@ def calculate_partial_likelihoods_for_sites(tree, alignment, rate_matrix):
                         "Node": right.name,
                         "Site": i,
                         "branch_length": branch_length,
-                        "p_A": p1[0],
-                        "p_C": p1[1],
-                        "p_G": p1[2],
-                        "p_T": p1[3],
+                        "p_A": p2[0],
+                        "p_C": p2[1],
+                        "p_G": p2[2],
+                        "p_T": p2[3],
                     }
                 )
     return partial_likelihood_per_site_storage
@@ -365,6 +365,7 @@ def partial_likelihood(tree, node, coming_from, rate_matrix):
             # Calculate the exponential matrix and partial likelihood for the child node.
             e = calculate_exponential_matrix(rate_matrix, node.connected[child])
             p = partial_likelihood(tree, child, node, rate_matrix)
+
             # Update the results by multiplying with the exponential matrix and partial likelihood.
             results = results * (e @ p)
     return results
@@ -396,6 +397,7 @@ def calculate_exponential_matrix(rate_matrix, branch_length):
     Warning:
         Ensure that the rate matrix and branch length are appropriately defined for accurate results.
     """
+
     return expm(rate_matrix.rate_matrix * branch_length)
 
 
@@ -524,7 +526,6 @@ def multiple_rate_analysis(
             right_partial_likelihood = pd.DataFrame(
                 partial_likelihood_per_site_storage[edge]["right"]
             )
-            print(edge)
             branch_type = "external"
 
             if "Node" in edge[1]:
@@ -640,5 +641,44 @@ def main():
         )
 
 
+from Bio.Align import MultipleSeqAlignment
+from Bio.Seq import Seq
+from Bio.SeqRecord import SeqRecord
+
+import json
+
+
+def test_one():
+    # Create SeqRecord objects for your sequences
+    seq1 = SeqRecord(Seq("AGT"), id="A")
+    seq2 = SeqRecord(Seq("CGT"), id="B")
+    seq3 = SeqRecord(Seq("GGT"), id="C")
+
+    # Create a MultipleSeqAlignment object
+    alignment = MultipleSeqAlignment([seq1, seq2, seq3])
+    newick_string = "((A:0.2, B:0.4):0.3, C:0.5);"
+    t = Tree(newick_string, format=1)
+    t = name_nodes_by_level_order(t)
+
+    print(t.get_ascii(attributes=["name", "dist"]))
+
+    rate_matrix = RateMatrix(RATE_MATRIX)
+
+    partial_likelihood_per_site_storage = calculate_partial_likelihoods_for_sites(
+        t, alignment, rate_matrix
+    )
+
+    for key, values in partial_likelihood_per_site_storage.items():
+        print("#### Left")
+        for value in values["left"]:
+            print(value)
+            print("\n")
+
+        print("#### Right")
+        for value in values["right"]:
+            print(value)
+            print("\n")
+
+
 if __name__ == "__main__":
-    main()
+    test_one()
