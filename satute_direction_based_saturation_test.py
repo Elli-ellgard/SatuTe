@@ -629,7 +629,8 @@ def main():
             t,
             category_rates_factors,
             rate_matrix,
-            array_eigenvectors,
+            array_left_eigenvectors,
+            array_right_eigenvectors,
             multiplicity,
             per_rate_category_alignment,
         )
