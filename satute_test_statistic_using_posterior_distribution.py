@@ -23,7 +23,6 @@ def calculate_sample_coherence(
 
 """## ESTIMATION OF THE SAMPLE VARIANCE"""
 
-
 def calculate_sample_variance(
     multiplicity,
     factors_left_subtree,
@@ -36,25 +35,24 @@ def calculate_sample_variance(
     for i in range(multiplicity):
         for j in range(multiplicity):
             if branch_type == "internal":
-                M_left = (
+                m_left = (
                     np.asarray(factors_left_subtree[i])
                     @ np.asarray(factors_left_subtree[j])
                     / number_sites
                 )
             else:
-                M_left =  (i == j)
+                m_left =  (i == j)
                 
-            M_right = (
+            m_right = (
                 np.asarray(factors_right_subtree[i])
                 @ np.asarray(factors_right_subtree[j])
                 / number_sites
             )
-            variance += M_right * M_left
+            variance += m_right * m_left
     return variance
 
 
 """## CALCULATION OF THE TEST STATISTIC FOR BRANCH SATURATION"""
-
 
 def calculate_test_statistic_posterior_distribution(
     multiplicity,

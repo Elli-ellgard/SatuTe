@@ -100,10 +100,7 @@ def calculate_test_statistic(
     site_likelihood_left_subtree = []
     site_likelihood_right_subtree = []
     for k in range(number_sites):
-
         site_likelihood_right_subtree.append(
-
-
             np.dot(
                 np.asarray(
                     partial_likelihood_right_subtree.iloc[k, 3 : (3 + dimension)]

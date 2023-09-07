@@ -267,14 +267,11 @@ def calculate_partial_likelihoods_for_sites(tree, alignment, rate_matrix):
         )
 
         for edge in graph.get_edges():
-
-
             right, left, branch_length = edge
 
             p1 = partial_likelihood(graph, left, right, rate_matrix)
 
             p2 = partial_likelihood(graph, right, left, rate_matrix)
-
 
             if (
                 f"({left.name}, {right.name})"
@@ -448,9 +445,11 @@ def single_rate_analysis(
         )
 
         branch_type = "external"
-        if "Node" in edge[1]:
+
+        if "Node" in edge[1] and "Node" in edge[0]:
             branch_type = "internal"
 
+        """
         (
             delta,
             c_s,
@@ -468,6 +467,8 @@ def single_rate_analysis(
             branch_type,
             alpha=0.05,
         )
+        """
+
         (
             delta,
             c_s,
@@ -533,6 +534,8 @@ def multiple_rate_analysis(
 
             if "Node" in edge[1] and "Node" in edge[0]:
                 branch_type = "internal"
+
+            """
             (
                 delta,
                 c_s,
@@ -550,6 +553,7 @@ def multiple_rate_analysis(
                 branch_type,
                 alpha=0.05,
             )
+            """
             (
                 delta,
                 c_s,
@@ -649,7 +653,6 @@ from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 
 
-
 def test_one():
     # Create SeqRecord objects for your sequences
     seq1 = SeqRecord(Seq("AGTATA"), id="A")
@@ -677,12 +680,14 @@ def test_one():
     #    for value in values["left"]:
     #        print(value)
     #        print("\n")
-# 
-# 
-    #    print("#### Right")
-    #    for value in values["right"]:
-    #        print(value)
-    #        print("\n")
+
+
+#
+#
+#    print("#### Right")
+#    for value in values["right"]:
+#        print(value)
+#        print("\n")
 
 
 if __name__ == "__main__":

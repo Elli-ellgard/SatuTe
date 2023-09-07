@@ -75,6 +75,7 @@ def parse_substitution_model(file_path):
         # Return None or an appropriate value for error handling
         raise ValueError("Could not parse the substitution model from the file.")
 
+
 # ========= Mapping Code to Newick String ===========
 def map_values_to_newick(value_rows, newick_string):
     # Parsing the file of values into a dictionary
@@ -436,7 +437,6 @@ class Satute:
 
         logger.info("Finished running Satute")
 
-
     def handle_number_rates(self):
         number_rates = 1
         if self.input_args.nr:
@@ -502,7 +502,6 @@ class Satute:
         argument_option = {}
 
         if self.input_args.dir:
-
             self.active_directory = self.input_args.dir
 
             # Check if the input directory exists
