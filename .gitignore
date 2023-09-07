@@ -1,12 +1,17 @@
 # test
-test
-octo-kraken-msa-test
-test_cladding_and_subsequence
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
+
+*.iqtree
+*.bionj
+*.ckp.gz
+*.mldist
+*.model.gz
+*.siteprop
+*.log
 
 # C extensions
 *.so
