@@ -212,7 +212,6 @@ class Satute:
             },
         ]
         self.iqtree_handler = None
-
         self.active_directory = None
 
     def parse_input(self):
@@ -391,8 +390,6 @@ class Satute:
             """
         )
 
-        # print(to_be_tested_tree.get_ascii(attributes=["name", "dist"]))
-
         if number_rates == 1:
             results = single_rate_analysis(
                 to_be_tested_tree,
@@ -436,6 +433,9 @@ class Satute:
                 pd.DataFrame(results_set).to_csv(
                     f"{self.input_args.msa.resolve()}satute_rate_{key}_results.csv"
                 )
+
+        logger.info("Finished running Satute")
+
 
     def handle_number_rates(self):
         number_rates = 1
@@ -502,6 +502,9 @@ class Satute:
         argument_option = {}
 
         if self.input_args.dir:
+
+            self.active_directory = self.input_args.dir
+
             # Check if the input directory exists
             self.validate_directory()
 
@@ -535,7 +538,6 @@ class Satute:
             if self.iqtree_tree_file:
                 substitution_model = parse_substitution_model(self.iqtree_tree_file)
                 self.input_args.model = substitution_model
-                print(substitution_model)
             else:
                 raise FileNotFoundError("No iqtree file found in directory")
 
