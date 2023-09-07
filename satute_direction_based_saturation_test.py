@@ -531,7 +531,7 @@ def multiple_rate_analysis(
             )
             branch_type = "external"
 
-            if "Node" in edge[1]:
+            if "Node" in edge[1] and "Node" in edge[0]:
                 branch_type = "internal"
             (
                 delta,

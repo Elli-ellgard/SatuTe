@@ -69,11 +69,11 @@ def parse_substitution_model(file_path):
                 if "Best-fit model according to BIC:" in line:
                     model_string = line.split(":")[1].strip()
                     return model_string
+            raise ValueError("Could not parse the substitution model from the file.")
     except (IOError, ValueError):
         # If the file cannot be read or ':' is not found in the content
         # Return None or an appropriate value for error handling
-        return None
-
+        raise ValueError("Could not parse the substitution model from the file.")
 
 # ========= Mapping Code to Newick String ===========
 def map_values_to_newick(value_rows, newick_string):
@@ -135,6 +135,7 @@ class Satute:
         boot=None,
     ):
         self.iqtree = iqtree
+        self.iqtree_tree_file = None
         self.input_dir = None
         self.tree = None
         self.msa = None
@@ -145,7 +146,9 @@ class Satute:
         self.boot = boot
         self.input_args = []
         self.input_args_dict = {}
+        self.site_probabilities_file = None
         self.alpha = 0.01
+        self.number_rates = 1
 
         self.arguments = [
             {
@@ -223,6 +226,12 @@ class Satute:
         self.input_args_dict = vars(self.input_args)
 
     def run_iqtree_workflow(self, arguments_dict):
+        if arguments_dict["option"] == "dir":
+            logger.info("Running Satute without iqtree run with constructed arguments")
+
+        if arguments_dict["option"] == "dir + site_probabilities":
+            logger.info("Running Satute with site probabilities")
+
         if arguments_dict["option"] == "msa + tree + model":
             number_rates = self.handle_number_rates()
 
@@ -294,7 +303,6 @@ class Satute:
                 "--quiet",
             ]
 
-
             if number_rates > 1:
                 self.iqtree_handler.run_iqtree_with_arguments(
                     arguments=arguments_dict["arguments"],
@@ -341,18 +349,23 @@ class Satute:
         dimension = 4
         # Parsing input arguments and constructing IQ-TREE command-line arguments
         self.parse_input()
+
         arguments_dict = self.construct_arguments()
+
         self.run_iqtree_workflow(arguments_dict)
+
         rate_matrix, psi_matrix = parse_rate_matrices_from_file(
             f"{arguments_dict['msa_file'].resolve()}.iqtree"
         )
+
         state_frequencies = parse_state_frequencies(
             f"{arguments_dict['msa_file'].resolve()}.iqtree", dimension=dimension
         )
-        RATE_MATRIX = RateMatrix(rate_matrix)
 
         # ======== Tree File Handling =========
         to_be_tested_tree = self.tree_handling()
+        # ======== End Tree Handling =========
+        RATE_MATRIX = RateMatrix(rate_matrix)
 
         (
             array_left_eigenvectors,
@@ -361,7 +374,6 @@ class Satute:
         ) = spectral_decomposition(RATE_MATRIX.rate_matrix, psi_matrix)
 
         alignment = read_alignment_file(arguments_dict["msa_file"])
-        # print(to_be_tested_tree.get_ascii(attributes=["name", "dist"]))
         number_rates = self.handle_number_rates()
 
         # ======== Saturation Test =========
@@ -378,6 +390,8 @@ class Satute:
             Results will be written to the directory:{self.active_directory.name}
             """
         )
+
+        # print(to_be_tested_tree.get_ascii(attributes=["name", "dist"]))
 
         if number_rates == 1:
             results = single_rate_analysis(
@@ -490,30 +504,51 @@ class Satute:
         if self.input_args.dir:
             # Check if the input directory exists
             self.validate_directory()
-            # Find the tree and sequence alignment files in the directory
-            tree_file = self.file_handler.find_file_by_suffix(tree_file_types)
-            msa_file = self.file_handler.find_file_by_suffix(msa_file_types)
+
+            # Find msa file in the directory
+            self.input_args.msa_file = self.file_handler.find_file_by_suffix(
+                msa_file_types
+            )
 
             # Check if a sequence alignment file was found
-            if msa_file is None:
+            if self.input_args.msa_file:
+                self.input_args.msa = Path(self.input_args.msa_file)
+                argument_option = {
+                    "option": "dir",
+                    "msa_file": self.input_args.msa,
+                    "arguments": ["-s", self.input_args.msa.resolve()],
+                }
+            else:
                 raise NoAlignmentFileError("No multiple sequence alignment file found")
 
-            iqtree_file = self.file_handler.find_file_by_suffix({".iqtree"})
-            if iqtree_file:
-                substitution_model = parse_substitution_model(iqtree_file)
-                self.input_args.model = substitution_model
-
-            argument_option = {
-                "option": "msa",
-                "msa_file": msa_file,
-                "arguments": ["-s", str(msa_file.resolve())],
-            }
-
+            # Find the tree file in the directory
+            tree_file = self.file_handler.find_file_by_suffix(tree_file_types)
             # Check if a tree file was found
             if tree_file:
-                argument_option["option"] = "msa + tree"
                 argument_option["arguments"].extend(["-te", str(tree_file)])
+            else:
+                raise FileNotFoundError("No tree file found in directory")
 
+            # Find iqtree file in the directory
+            self.iqtree_tree_file = self.file_handler.find_file_by_suffix({".iqtree"})
+            # Check if iqtree file was found
+            if self.iqtree_tree_file:
+                substitution_model = parse_substitution_model(self.iqtree_tree_file)
+                self.input_args.model = substitution_model
+                print(substitution_model)
+            else:
+                raise FileNotFoundError("No iqtree file found in directory")
+
+            self.number_rates = self.handle_number_rates()
+
+            if self.number_rates > 1:
+                self.site_probabilities_file = self.file_handler.find_file_by_suffix(
+                    {".siteprob"}
+                )
+                if not self.site_probabilities_file:
+                    argument_option["option"] += " + site_probabilities"
+
+            return argument_option
         else:
             if self.input_args.msa:
                 argument_option = {
@@ -528,13 +563,13 @@ class Satute:
                     ["-te", str(self.input_args.tree.resolve())]
                 )
 
-        # If a model was specified in the input arguments, add it to the argument options
-        if self.input_args.model:
-            argument_option["option"] += " + model"
-            argument_option["model_arguments"] = ["-m", self.input_args.model]
-            # If the model includes a Gamma distribution, add the corresponding argument
-            if "+G" in self.input_args.model or "+R" in self.input_args.model:
-                argument_option["model_arguments"].extend(["-wspr"])
+            # If a model was specified in the input arguments, add it to the argument options
+            if self.input_args.model:
+                argument_option["option"] += " + model"
+                argument_option["model_arguments"] = ["-m", self.input_args.model]
+                # If the model includes a Gamma distribution, add the corresponding argument
+                if "+G" in self.input_args.model or "+R" in self.input_args.model:
+                    argument_option["model_arguments"].extend(["-wspr"])
 
         # Return the constructed argument options
 
