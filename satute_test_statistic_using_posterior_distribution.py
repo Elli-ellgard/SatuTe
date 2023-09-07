@@ -4,9 +4,12 @@ from scipy.sparse.linalg import expm
 
 
 """## CALCULATION OF THE SAMPLE COHERENCE """
+
+
 # get transition matrix using matrix exponential
 def get_transition_matrix(rate_matrix, branch_length):
     return expm(rate_matrix * branch_length)
+
 
 def calculate_sample_coherence(
     multiplicity, factors_left_subtree, factors_right_subtree, number_sites
@@ -23,6 +26,7 @@ def calculate_sample_coherence(
 
 """## ESTIMATION OF THE SAMPLE VARIANCE"""
 
+
 def calculate_sample_variance(
     multiplicity,
     factors_left_subtree,
@@ -37,14 +41,14 @@ def calculate_sample_variance(
             if branch_type == "internal":
                 m_left = (
                     np.asarray(factors_left_subtree[i])
-                    @ np.asarray(factors_left_subtree[j])
+                    @ np.asarray(factors_left_subtree[i])
                     / number_sites
                 )
             else:
-                m_left =  (i == j)
-                
+                m_left = i == j
+
             m_right = (
-                np.asarray(factors_right_subtree[i])
+                np.asarray(factors_right_subtree[j])
                 @ np.asarray(factors_right_subtree[j])
                 / number_sites
             )
@@ -53,6 +57,7 @@ def calculate_sample_variance(
 
 
 """## CALCULATION OF THE TEST STATISTIC FOR BRANCH SATURATION"""
+
 
 def calculate_test_statistic_posterior_distribution(
     multiplicity,
@@ -71,11 +76,15 @@ def calculate_test_statistic_posterior_distribution(
     """Calculation of the posterior distributions """
     posterior_probabilities_left_subtree = []
     posterior_probabilities_right_subtree = []
+
     freq = np.array(list(state_frequencies.values()))
     diag = np.diag(list(state_frequencies.values()))
+
     site_likelihood_left_subtree = []
     site_likelihood_right_subtree = []
+
     for k in range(number_sites):
+
         sr = np.dot(
             np.asarray(partial_likelihood_right_subtree.iloc[k, 3 : (3 + dimension)]),
             freq,
@@ -95,8 +104,7 @@ def calculate_test_statistic_posterior_distribution(
             )
             / sl
         )
-        # print(f"Site {k}")
-        # print(posterior_probabilities_left_subtree[0])
+
         posterior_probabilities_right_subtree.append(
             np.array(
                 diag
@@ -151,8 +159,8 @@ def calculate_test_statistic_posterior_distribution(
     else:
         # computing the saturation coherence / critical value
         c_s = z_alpha * np.sqrt(variance)
-        # computing the  p-value
-        p_value = st.norm.sf(abs(delta / np.sqrt(variance)))
+        # computing the p-value
+        p_value = st.norm.sf(delta / np.sqrt(variance))
 
     if c_s > delta:
         result_test = "Saturated"

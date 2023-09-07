@@ -227,10 +227,11 @@ class Satute:
 
     def run_iqtree_workflow(self, arguments_dict):
         if arguments_dict["option"] == "dir":
-            logger.info("Running Satute without iqtree run with constructed arguments")
+            logger.info("Running Satute without iqtree run")
 
         if arguments_dict["option"] == "dir + site_probabilities":
             logger.info("Running Satute with site probabilities")
+            # TO call Iqtree only for .sibeprob file
 
         if arguments_dict["option"] == "msa + tree + model":
             number_rates = self.handle_number_rates()
@@ -262,6 +263,9 @@ class Satute:
                 )
 
         elif arguments_dict["option"] == "msa + tree":
+            logger.error(
+                "Cannot run Satute with only a tree file and MSA file. The model must be specified."
+            )
             raise ValueError(
                 "Cannot run Satute with only a tree file and MSA file. The model must be specified."
             )
@@ -283,6 +287,7 @@ class Satute:
                 arguments=arguments_dict["arguments"],
                 extra_arguments=bb_arguments
                 + [
+                    "-m MF",
                     "--redo",
                     "--quiet",
                 ],
@@ -307,6 +312,10 @@ class Satute:
                 self.iqtree_handler.run_iqtree_with_arguments(
                     arguments=arguments_dict["arguments"],
                     extra_arguments=extra_arguments + ["-wspr"],
+                )
+            else:
+                self.iqtree_handler.run_iqtree_with_arguments(
+                    arguments=arguments_dict["arguments"],
                 )
 
         elif arguments_dict["option"] == "msa + model":
@@ -338,13 +347,17 @@ class Satute:
             to_be_tested_tree = name_nodes_by_level_order(to_be_tested_tree)
         else:
             newick_string = self.file_handler.get_newick_string_from_args()
+            if(newick_string is None):
+                raise ValueError("No tree file found in directory")
             to_be_tested_tree = Tree(newick_string, format=1)
             to_be_tested_tree = name_nodes_by_level_order(to_be_tested_tree)
+         
         return to_be_tested_tree
         # ======== End Tree File Handling =========
 
     def run(self):
         """Main entry point for running the Satute command-line tool."""
+        # TODO Change number rated to None and test
         number_rates = 1
         dimension = 4
         # Parsing input arguments and constructing IQ-TREE command-line arguments
@@ -352,12 +365,15 @@ class Satute:
 
         arguments_dict = self.construct_arguments()
 
+        # Todo Check for model of substitution
         self.run_iqtree_workflow(arguments_dict)
+
 
         rate_matrix, psi_matrix = parse_rate_matrices_from_file(
             f"{arguments_dict['msa_file'].resolve()}.iqtree"
         )
 
+        # TODO Change state frequency function
         state_frequencies = parse_state_frequencies(
             f"{arguments_dict['msa_file'].resolve()}.iqtree", dimension=dimension
         )
@@ -373,7 +389,7 @@ class Satute:
             multiplicity,
         ) = spectral_decomposition(RATE_MATRIX.rate_matrix, psi_matrix)
 
-        alignment = read_alignment_file(arguments_dict["msa_file"])
+        alignment = read_alignment_file(arguments_dict["msa_file"].resolve())
         number_rates = self.handle_number_rates()
 
         # ======== Saturation Test =========
@@ -542,6 +558,8 @@ class Satute:
 
             self.number_rates = self.handle_number_rates()
 
+            # TODO Test when there is no site probabilities file in the directory
+            # How apply iqtree just to get the site probabilities file without --redo
             if self.number_rates > 1:
                 self.site_probabilities_file = self.file_handler.find_file_by_suffix(
                     {".siteprob"}

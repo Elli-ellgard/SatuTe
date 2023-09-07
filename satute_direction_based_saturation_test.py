@@ -17,6 +17,10 @@ from satute_test_statistic_using_posterior_distribution import (
 )
 from satute_repository import parse_rate_matrices_from_file
 from satute_util_new import spectral_decomposition
+from Bio.Align import MultipleSeqAlignment
+from Bio.Seq import Seq
+from Bio.SeqRecord import SeqRecord
+
 
 NUCLEOTIDE_CODE_VECTOR = {
     "A": [1, 0, 0, 0],
@@ -270,7 +274,6 @@ def calculate_partial_likelihoods_for_sites(tree, alignment, rate_matrix):
             right, left, branch_length = edge
 
             p1 = partial_likelihood(graph, left, right, rate_matrix)
-
             p2 = partial_likelihood(graph, right, left, rate_matrix)
 
             if (
@@ -472,7 +475,7 @@ def single_rate_analysis(
         (
             delta,
             c_s,
-            c_sTwoSequence,
+            c_s_two_sequence,
             p_value,
             result_test,
             result_test_tip2tip,
@@ -491,7 +494,7 @@ def single_rate_analysis(
                 "edge": edge,
                 "delta": delta,
                 "c_s": c_s,
-                "c_sTwoSequence": c_sTwoSequence,
+                "c_sTwoSequence": c_s_two_sequence,
                 "p_value": p_value,
                 "result_test": result_test,
                 "result_test_tip2tip": result_test_tip2tip,
@@ -557,7 +560,7 @@ def multiple_rate_analysis(
             (
                 delta,
                 c_s,
-                c_sTwoSequence,
+                c_s_two_sequence,
                 p_value,
                 result_test,
                 result_test_tip2tip,
@@ -577,7 +580,7 @@ def multiple_rate_analysis(
                     "edge": edge,
                     "delta": delta,
                     "c_s": c_s,
-                    "c_sTwoSequence": c_sTwoSequence,
+                    "c_sTwoSequence": c_s_two_sequence,
                     "p_value": p_value,
                     "result_test": result_test,
                     "result_test_tip2tip": result_test_tip2tip,
@@ -646,11 +649,6 @@ def main():
             multiplicity,
             per_rate_category_alignment,
         )
-
-
-from Bio.Align import MultipleSeqAlignment
-from Bio.Seq import Seq
-from Bio.SeqRecord import SeqRecord
 
 
 def test_one():
