@@ -11,7 +11,7 @@ def parse_file_to_data_frame(file_path):
 
     except FileNotFoundError:
         raise Exception(f"File not found: {file_path}")
-    
+
 
 def parse_rate_matrix(file_content):
     rate_matrix_start = file_content.find("Rate matrix Q:")
@@ -146,3 +146,48 @@ def generate_subtree_pair(subtrees, t):
         subtree_pairs.append(subtree_pair_entry)
 
     return subtree_pairs
+
+
+# ========= Mapping Code to Newick String ===========
+def map_values_to_newick(value_rows, newick_string):
+    # Parsing the file of values into a dictionary
+    values_dict = {}
+    """
+     {
+                "index": i + 1,
+                "delta": delta,
+                "c_s": c_s,
+                "p_value": p_value,
+                "result_test": result_test,
+                "result_test_tip2tip": result_test_tip2tip,
+                "vector_branches": vector_branches[i],
+    }
+    """
+    for row in value_rows:
+        node_one, node_two = row["vector_branches"].split("-")
+        node_two = node_two.split("*")[0]  # remove trailing '*'
+        values_dict[node_two] = {
+            "delta": row["delta"],
+            "c_s": row["c_s"],
+            "p-value": row["p_value"],
+            "result_test": row["result_test"],
+            "status": row["result_test_tip2tip"],
+        }
+
+    saturated_newick_string = map_values_to_newick_regex(values_dict, newick_string)
+    return saturated_newick_string
+
+
+def map_values_to_newick_regex(values_dict, newick_string):
+    for node_name, values in values_dict.items():
+        delta = values["delta"]
+        c_s = values["c_s"]
+        p_value = values["p-value"]
+        branch_status = values["status"]
+        newick_string = re.sub(
+            rf"({node_name})",
+            rf"\1[delta={delta}; c_s={c_s}; p_value={p_value}; branch_status={branch_status}]",
+            newick_string,
+        )
+
+    return newick_string

@@ -71,6 +71,9 @@ class DirectedAcyclicGraph:
         """Return the list of edges in the DAG."""
         return self.edges
 
+    def set_edges(self, edges):
+        self.edges = edges
+
     def get_branch_length(self, edge):
         """Return the branch length of a given edge in the DAG."""
         return self.branch_lengths[edge]
@@ -208,7 +211,9 @@ def get_alignment_look_up_table(alignment):
     return alignment_look_up_table
 
 
-def calculate_partial_likelihoods_for_sites(tree, alignment, rate_matrix):
+def calculate_partial_likelihoods_for_sites(
+    tree, alignment, rate_matrix, focused_edge=None
+):
     """
     Calculate partial likelihoods for each site in the alignment given a phylogenetic tree.
 
@@ -269,6 +274,11 @@ def calculate_partial_likelihoods_for_sites(tree, alignment, rate_matrix):
         graph = convert_ete3_tree_to_directed_acyclic_graph(
             tree, alignment[:, (i + 1) - 1 : (i + 1)], alignment_look_up_table
         )
+
+        if focused_edge is not None:
+            for edge in graph.get_edges():
+                if edge[0].name in focused_edge and edge[1].name in focused_edge:
+                    graph.set_edges([edge])
 
         for edge in graph.get_edges():
             right, left, branch_length = edge
@@ -440,9 +450,11 @@ def single_rate_analysis(
     array_right_eigenvectors,
     multiplicity,
     alpha=0.05,
+    focused_edge=None,
 ):
+
     partial_likelihood_per_site_storage = calculate_partial_likelihoods_for_sites(
-        t, alignment, rate_matrix
+        t, alignment, rate_matrix, focused_edge
     )
     result_test_dictionary = {}
     result_list = []
@@ -523,6 +535,7 @@ def multiple_rate_analysis(
     multiplicity,
     per_rate_category_alignment,
     alpha=0.05,
+    focused_edge=None,
 ):
     result_rate_dictionary = {}
 
@@ -532,10 +545,8 @@ def multiple_rate_analysis(
         rescaled_tree = rescale_branch_lengths(t, relative_rate)
 
 
-        print(rate ,len(alignment[0].seq))
-
         partial_likelihood_per_site_storage = calculate_partial_likelihoods_for_sites(
-            rescaled_tree, alignment, rate_matrix
+            rescaled_tree, alignment, rate_matrix, focused_edge
         )
 
         for edge in partial_likelihood_per_site_storage.keys():
@@ -624,7 +635,6 @@ def main():
         "./Clemens/example_3/sim-JC+G-AC1-AG1-AT1-CG1-CT1-GT1-alpha1.2-taxa64-len1000bp-bla0.01-blb0.8-blc0.2-rep01.fasta.treefile"
     )
     t = name_nodes_by_level_order(t)
-    number_rate = 4
 
     RATE_MATRIX, psi_matrix = parse_rate_matrices_from_file(
         4,
@@ -637,30 +647,6 @@ def main():
         array_right_eigenvectors,
         multiplicity,
     ) = spectral_decomposition(RATE_MATRIX, psi_matrix)
-
-    if number_rate == 1:
-        single_rate_analysis(
-            t, alignment, rate_matrix, array_left_eigenvectors, multiplicity
-        )
-    else:
-        site_probability = parse_file_to_data_frame(
-            "./Clemens/example_3/sim-JC+G-AC1-AG1-AT1-CG1-CT1-GT1-alpha1.2-taxa64-len1000bp-bla0.01-blb0.8-blc0.2-rep01.fasta.siteprob"
-        )
-        per_rate_category_alignment = split_msa_into_rate_categories_in_place(
-            site_probability, alignment
-        )
-        category_rates_factors = parse_category_rates(
-            "./Clemens/example_3/sim-JC+G-AC1-AG1-AT1-CG1-CT1-GT1-alpha1.2-taxa64-len1000bp-bla0.01-blb0.8-blc0.2-rep01.fasta.iqtree"
-        )
-        multiple_rate_analysis(
-            t,
-            category_rates_factors,
-            rate_matrix,
-            array_left_eigenvectors,
-            array_right_eigenvectors,
-            multiplicity,
-            per_rate_category_alignment,
-        )
 
 
 def test_one():
@@ -684,21 +670,7 @@ def test_one():
         t, alignment, rate_matrix
     )
 
-    # for key, values in partial_likelihood_per_site_storage.items():
-    #    print(key)
-    #    print("#### Left")
-    #    for value in values["left"]:
-    #        print(value)
-    #        print("\n")
-
-
-#
-#
-#    print("#### Right")
-#    for value in values["right"]:
-#        print(value)
-#        print("\n")
-
+    
 
 if __name__ == "__main__":
     test_one()

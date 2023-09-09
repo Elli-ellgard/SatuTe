@@ -79,51 +79,6 @@ def parse_substitution_model(file_path):
         raise ValueError("Could not parse the substitution model from the file.")
 
 
-# ========= Mapping Code to Newick String ===========
-def map_values_to_newick(value_rows, newick_string):
-    # Parsing the file of values into a dictionary
-    values_dict = {}
-    """
-     {
-                "index": i + 1,
-                "delta": delta,
-                "c_s": c_s,
-                "p_value": p_value,
-                "result_test": result_test,
-                "result_test_tip2tip": result_test_tip2tip,
-                "vector_branches": vector_branches[i],
-    }
-    """
-    for row in value_rows:
-        node_one, node_two = row["vector_branches"].split("-")
-        node_two = node_two.split("*")[0]  # remove trailing '*'
-        values_dict[node_two] = {
-            "delta": row["delta"],
-            "c_s": row["c_s"],
-            "p-value": row["p_value"],
-            "result_test": row["result_test"],
-            "status": row["result_test_tip2tip"],
-        }
-
-    saturated_newick_string = map_values_to_newick_regex(values_dict, newick_string)
-    return saturated_newick_string
-
-
-def map_values_to_newick_regex(values_dict, newick_string):
-    for node_name, values in values_dict.items():
-        delta = values["delta"]
-        c_s = values["c_s"]
-        p_value = values["p-value"]
-        branch_status = values["status"]
-        newick_string = re.sub(
-            rf"({node_name})",
-            rf"\1[delta={delta}; c_s={c_s}; p_value={p_value}; branch_status={branch_status}]",
-            newick_string,
-        )
-
-    return newick_string
-
-
 class Satute:
     """Class representing Satute command-line tool for wrapping up functions of IQ-TREE."""
 
@@ -212,6 +167,13 @@ class Satute:
                 "type": float,
                 "default": self.alpha,
                 "metavar": "<num>",
+            },
+            {
+                "flag": "-edge",
+                "help": "edge to be tested",
+                "type": str,
+                "default": None,
+                "metavar": "str",
             },
         ]
         self.iqtree_handler = None
@@ -367,9 +329,9 @@ class Satute:
 
         arguments_dict = self.construct_arguments()
 
-        self.input_args.iqtree = self.iqtree_handler.get_iqtree_version(
-            self.input_args.iqtree
-        )
+        # self.input_args.iqtree = self.iqtree_handler.get_iqtree_version(
+        #     self.input_args.iqtree
+        # )
 
         # TODO Check for model of substitution
         self.run_iqtree_workflow(arguments_dict)
@@ -428,6 +390,7 @@ class Satute:
                 array_right_eigenvectors,
                 multiplicity,
                 self.input_args.alpha,
+                self.input_args.edge,
             )
 
             for key, results_set in results.items():
@@ -436,6 +399,8 @@ class Satute:
                 )
 
         else:
+
+
             site_probability = parse_file_to_data_frame(
                 f"{self.input_args.msa.resolve()}.siteprob"
             )
@@ -443,6 +408,9 @@ class Satute:
                 site_probability, alignment
             )
 
+            for rate in per_rate_category_alignment.keys():
+                logger.info(f"""Category Rate {rate}, Site per category {len(per_rate_category_alignment[rate][0].seq)}""")                        
+                        
             category_rates_factors = parse_category_rates(
                 f"{self.input_args.msa.resolve()}.iqtree"
             )
@@ -457,6 +425,7 @@ class Satute:
                 multiplicity,
                 per_rate_category_alignment,
                 self.input_args.alpha,
+                self.input_args.edge,
             )
 
             for key, results_set in results.items():
