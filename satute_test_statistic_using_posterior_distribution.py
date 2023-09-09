@@ -41,14 +41,14 @@ def calculate_sample_variance(
             if branch_type == "internal":
                 m_left = (
                     np.asarray(factors_left_subtree[i])
-                    @ np.asarray(factors_left_subtree[i])
+                    @ np.asarray(factors_left_subtree[j])
                     / number_sites
                 )
             else:
                 m_left = i == j
 
             m_right = (
-                np.asarray(factors_right_subtree[j])
+                np.asarray(factors_right_subtree[i])
                 @ np.asarray(factors_right_subtree[j])
                 / number_sites
             )

@@ -1,5 +1,6 @@
 import os
 import subprocess
+import shutil
 
 
 class FileHandler:
@@ -167,3 +168,74 @@ class IqTreeHandler:
             subprocess.run(iq_tree_command, shell=True, check=True)
         except subprocess.CalledProcessError as e:
             print(f"IQ-TREE execution failed with the following error: {e}")
+
+    def get_iqtree_version(self, path=None):
+        """
+        Get the version of iqtree installed on the system.
+
+        Args:
+        - path (str, optional): Path to the iqtree executable. If not provided, will search for 'iqtree' or 'iqtree2' in the system PATH.
+
+        Returns:
+        - tuple: Version of iqtree and the path to the executable.
+
+        Raises:
+        - Exception: If iqtree is not found or any other error occurs.
+        """
+
+        if path:
+            # Try to execute the given path
+            try:
+                result = subprocess.run(
+                    [path, "-h"], capture_output=True, text=True, check=True
+                )
+                first_line = result.stdout.splitlines()[0]
+                if "version" in first_line.lower():
+                    version = first_line.split()[-1]
+                    return version, os.path.abspath(path)
+                else:
+                    raise Exception(
+                        "Version information not found in the iqtree output from the provided path."
+                    )
+            except FileNotFoundError:
+                raise Exception(
+                    f"The given path '{path}' does not point to a valid iqtree executable."
+                )
+            except subprocess.CalledProcessError:
+                raise Exception(
+                    f"Error while trying to execute iqtree at the given path '{path}'."
+                )
+
+        # If no path is provided, check default executables
+        executables = ["iqtree", "iqtree2"]
+
+        for exe in executables:
+            try:
+                result = subprocess.run(
+                    [exe, "-h"], capture_output=True, text=True, check=True
+                )
+                if result.stdout:
+                    first_line = result.stdout.splitlines()[0]
+                    if "version" in first_line.lower():
+                        version = first_line.split()[-1]
+                        return version, os.path.abspath(exe)
+                    else:
+                        continue
+                else:
+                    continue
+
+            except (FileNotFoundError, subprocess.CalledProcessError):
+                continue
+
+        raise Exception(
+            "iqtree or iqtree2 is not installed or not found in the system PATH."
+        )
+
+
+# Testing the function
+try:
+    version, path_to_exe = get_iqtree_version()
+    print(f"iqtree version: {version}")
+    print(f"Path to iqtree executable: {path_to_exe}")
+except Exception as e:
+    print(f"Error: {e}")

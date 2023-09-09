@@ -23,23 +23,23 @@ from Bio.SeqRecord import SeqRecord
 
 
 NUCLEOTIDE_CODE_VECTOR = {
-    "A": [1, 0, 0, 0],
-    "C": [0, 1, 0, 0],
-    "G": [0, 0, 1, 0],
-    "T": [0, 0, 0, 1],
-    "U": [0, 0, 0, 1],
-    "R": [1, 0, 1, 0],
-    "Y": [0, 1, 0, 1],
-    "K": [0, 0, 1, 1],
-    "M": [1, 1, 0, 0],
-    "S": [0, 1, 1, 0],
-    "W": [1, 0, 0, 1],
-    "B": [0, 1, 1, 1],
-    "D": [1, 0, 1, 1],
-    "H": [1, 1, 0, 1],
-    "V": [1, 1, 1, 0],
-    "N": [1, 1, 1, 1],
-    "-": [1, 1, 1, 1],
+    "A": np.array([1, 0, 0, 0]),
+    "C": np.array([0, 1, 0, 0]),
+    "G": np.array([0, 0, 1, 0]),
+    "T": np.array([0, 0, 0, 1]),
+    "U": np.array([0, 0, 0, 1]),
+    "R": np.array([1, 0, 1, 0]),
+    "Y": np.array([0, 1, 0, 1]),
+    "K": np.array([0, 0, 1, 1]),
+    "M": np.array([1, 1, 0, 0]),
+    "S": np.array([0, 1, 1, 0]),
+    "W": np.array([1, 0, 0, 1]),
+    "B": np.array([0, 1, 1, 1]),
+    "D": np.array([1, 0, 1, 1]),
+    "H": np.array([1, 1, 0, 1]),
+    "V": np.array([1, 1, 1, 0]),
+    "N": np.array([1, 1, 1, 1]),
+    "-": np.array([1, 1, 1, 1]),
 }
 
 RATE_MATRIX = np.array([[-3, 1, 1, 1], [1, -3, 1, 1], [1, 1, -3, 1], [1, 1, 1, -3]])
@@ -273,8 +273,8 @@ def calculate_partial_likelihoods_for_sites(tree, alignment, rate_matrix):
         for edge in graph.get_edges():
             right, left, branch_length = edge
 
-            p1 = partial_likelihood(graph, left, right, rate_matrix)
-            p2 = partial_likelihood(graph, right, left, rate_matrix)
+            p1, p1_factor = partial_likelihood(graph, left, right, rate_matrix)
+            p2, p2_factor = partial_likelihood(graph, right, left, rate_matrix)
 
             if (
                 f"({left.name}, {right.name})"
@@ -335,7 +335,7 @@ def calculate_partial_likelihoods_for_sites(tree, alignment, rate_matrix):
 
 
 @cache
-def partial_likelihood(tree, node, coming_from, rate_matrix):
+def partial_likelihood(tree, node, coming_from, rate_matrix, factor=0):
     """
     Compute the partial likelihood of a given node in a directed acyclic graph (DAG) tree.
 
@@ -360,18 +360,24 @@ def partial_likelihood(tree, node, coming_from, rate_matrix):
     results = 1
     # If the current node is a leaf, return its initial likelihood vector.
     if node.is_leaf():
-        return node.state
+        return node.state, factor
 
     # Iterate through child nodes connected to the current node.
     for child in node.connected.keys():
         # Avoid traversing the path back to the parent node (coming_from).
-        if not child.__eq__(coming_from):
+        if not child == coming_from:
             # Calculate the exponential matrix and partial likelihood for the child node.
             e = calculate_exponential_matrix(rate_matrix, node.connected[child])
-            p = partial_likelihood(tree, child, node, rate_matrix)
+            p, factor = partial_likelihood(tree, child, node, rate_matrix, factor)
             # Update the results by multiplying with the exponential matrix and partial likelihood.
             results = results * (e @ p)
-    return results
+
+            # Check if scaling is needed
+            if results.sum() < 1e-50:
+                results *= 1e50
+                factor += 50  # Keeping track of the total scaling
+
+    return results, factor
 
 
 @cache
@@ -433,6 +439,7 @@ def single_rate_analysis(
     array_left_eigenvectors,
     array_right_eigenvectors,
     multiplicity,
+    alpha=0.05,
 ):
     partial_likelihood_per_site_storage = calculate_partial_likelihoods_for_sites(
         t, alignment, rate_matrix
@@ -487,7 +494,7 @@ def single_rate_analysis(
             right_partial_likelihood,
             4,
             branch_type,
-            alpha=0.05,
+            alpha=alpha,
         )
         result_list.append(
             {
@@ -515,6 +522,7 @@ def multiple_rate_analysis(
     array_right_eigenvectors,
     multiplicity,
     per_rate_category_alignment,
+    alpha=0.05,
 ):
     result_rate_dictionary = {}
 
@@ -522,6 +530,10 @@ def multiple_rate_analysis(
         relative_rate = category_rates_factors[rate]["Relative_rate"]
         result_list = []
         rescaled_tree = rescale_branch_lengths(t, relative_rate)
+
+
+        print(rate ,len(alignment[0].seq))
+
         partial_likelihood_per_site_storage = calculate_partial_likelihoods_for_sites(
             rescaled_tree, alignment, rate_matrix
         )
@@ -572,7 +584,7 @@ def multiple_rate_analysis(
                 right_partial_likelihood,
                 4,
                 branch_type,
-                alpha=0.05,
+                alpha,
             )
 
             result_list.append(

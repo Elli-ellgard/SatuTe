@@ -69,6 +69,9 @@ def parse_substitution_model(file_path):
                 if "Best-fit model according to BIC:" in line:
                     model_string = line.split(":")[1].strip()
                     return model_string
+                if "Model of substitution: GTR+F+G4" in line:
+                    model_string = line.split(":")[1].strip()
+                    return model_string
             raise ValueError("Could not parse the substitution model from the file.")
     except (IOError, ValueError):
         # If the file cannot be read or ':' is not found in the content
@@ -93,17 +96,16 @@ def map_values_to_newick(value_rows, newick_string):
     """
     for row in value_rows:
         node_one, node_two = row["vector_branches"].split("-")
-        # node_two = node_two.split("*")[0]  # remove trailing '*'
-        # values_dict[node_two] = {
-        #     "delta": row["delta"],
-        #     "c_s": row["c_s"],
-        #     "p-value": row["p_value"],
-        #     "result_test": row["result_test"],
-        #     "status": row["result_test_tip2tip"],
-        # }
+        node_two = node_two.split("*")[0]  # remove trailing '*'
+        values_dict[node_two] = {
+            "delta": row["delta"],
+            "c_s": row["c_s"],
+            "p-value": row["p_value"],
+            "result_test": row["result_test"],
+            "status": row["result_test_tip2tip"],
+        }
 
     saturated_newick_string = map_values_to_newick_regex(values_dict, newick_string)
-
     return saturated_newick_string
 
 
@@ -148,7 +150,7 @@ class Satute:
         self.input_args = []
         self.input_args_dict = {}
         self.site_probabilities_file = None
-        self.alpha = 0.01
+        self.alpha = 0.05
         self.number_rates = 1
 
         self.arguments = [
@@ -344,14 +346,14 @@ class Satute:
             logger.info(f"Using the already defined tree: {self.input_args.tree}")
             with open(self.input_args.tree, "r") as file:
                 to_be_tested_tree = Tree(file.readlines()[0], format=1)
-            to_be_tested_tree = name_nodes_by_level_order(to_be_tested_tree)
+            to_be_tested_tree = self.modify_tree(to_be_tested_tree)
         else:
             newick_string = self.file_handler.get_newick_string_from_args()
-            if(newick_string is None):
+            if newick_string is None:
                 raise ValueError("No tree file found in directory")
             to_be_tested_tree = Tree(newick_string, format=1)
-            to_be_tested_tree = name_nodes_by_level_order(to_be_tested_tree)
-         
+            to_be_tested_tree = self.modify_tree(to_be_tested_tree)
+
         return to_be_tested_tree
         # ======== End Tree File Handling =========
 
@@ -365,9 +367,12 @@ class Satute:
 
         arguments_dict = self.construct_arguments()
 
-        # Todo Check for model of substitution
-        self.run_iqtree_workflow(arguments_dict)
+        self.input_args.iqtree = self.iqtree_handler.get_iqtree_version(
+            self.input_args.iqtree
+        )
 
+        # TODO Check for model of substitution
+        self.run_iqtree_workflow(arguments_dict)
 
         rate_matrix, psi_matrix = parse_rate_matrices_from_file(
             f"{arguments_dict['msa_file'].resolve()}.iqtree"
@@ -398,6 +403,7 @@ class Satute:
             Running tests and initial IQ-Tree with configurations:
             Mode {arguments_dict['option']}
             Model: {self.input_args.model}
+            Alpha: {self.input_args.alpha}
             Running Saturation Test on file: {arguments_dict['msa_file'].resolve()}
             Number of rate categories: {number_rates}
             Options for Initial IQ-Tree run: {arguments_dict['option']}
@@ -405,6 +411,11 @@ class Satute:
             Run test for saturation for each branch and category with {number_rates} rate categories
             Results will be written to the directory:{self.active_directory.name}
             """
+        )
+
+        # TODO Test when there is no site probabilities file in the directory
+        to_be_tested_tree.write(
+            format=1, outfile=f"{arguments_dict['msa_file'].resolve()}_satute_tree.tree"
         )
 
         if number_rates == 1:
@@ -416,11 +427,12 @@ class Satute:
                 array_left_eigenvectors,
                 array_right_eigenvectors,
                 multiplicity,
+                self.input_args.alpha,
             )
 
             for key, results_set in results.items():
                 pd.DataFrame(results_set).to_csv(
-                    f"{self.input_args.msa.resolve()}_satute_results.csv"
+                    f"{self.input_args.msa.resolve()}_{self.input_args.alpha}_satute.csv"
                 )
 
         else:
@@ -444,14 +456,32 @@ class Satute:
                 array_right_eigenvectors,
                 multiplicity,
                 per_rate_category_alignment,
+                self.input_args.alpha,
             )
 
             for key, results_set in results.items():
                 pd.DataFrame(results_set).to_csv(
-                    f"{self.input_args.msa.resolve()}satute_rate_{key}_results.csv"
+                    f"{self.input_args.msa.resolve()}_satute_rate_{key}_{self.input_args.alpha}_.csv"
                 )
 
         logger.info("Finished running Satute")
+
+    def modify_tree(self, t):
+        # Initialize counter for preorder traversal
+        idx = 1  # Start index from 1 as per your requirement
+        for node in t.traverse("preorder"):
+            # Process only inner nodes
+            if not node.is_leaf():
+                # If node name starts with "Node", stop the modifications
+                if node.name.startswith("Node"):
+                    return t
+                # Check if node name is just a number
+                if node.name.isdigit():
+                    node.add_features(apriori_knowledge=node.name)
+                # Set inner node names as "Node<index>*"
+                node.name = "Node" + str(idx) + "*"
+                idx += 1
+        return t
 
     def handle_number_rates(self):
         number_rates = 1
