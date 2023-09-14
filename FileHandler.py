@@ -233,9 +233,3 @@ class IqTreeHandler:
 
 
 # Testing the function
-try:
-    version, path_to_exe = get_iqtree_version()
-    print(f"iqtree version: {version}")
-    print(f"Path to iqtree executable: {path_to_exe}")
-except Exception as e:
-    print(f"Error: {e}")

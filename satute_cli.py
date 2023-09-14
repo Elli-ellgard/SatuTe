@@ -329,9 +329,15 @@ class Satute:
 
         arguments_dict = self.construct_arguments()
 
-        # self.input_args.iqtree = self.iqtree_handler.get_iqtree_version(
-        #     self.input_args.iqtree
-        # )
+        try:
+            (
+                path_to_exe,
+                self.input_args.iqtree,
+            ) = self.iqtree_handler.get_iqtree_version(self.input_args.iqtree)
+            print(f"iqtree version: {self.input_args.iqtree}")
+            print(f"Path to iqtree executable: {path_to_exe}")
+        except Exception as e:
+            print(f"Error: {e}")
 
         # TODO Check for model of substitution
         self.run_iqtree_workflow(arguments_dict)
@@ -399,8 +405,6 @@ class Satute:
                 )
 
         else:
-
-
             site_probability = parse_file_to_data_frame(
                 f"{self.input_args.msa.resolve()}.siteprob"
             )
@@ -409,8 +413,10 @@ class Satute:
             )
 
             for rate in per_rate_category_alignment.keys():
-                logger.info(f"""Category Rate {rate}, Site per category {len(per_rate_category_alignment[rate][0].seq)}""")                        
-                        
+                logger.info(
+                    f"""Category Rate {rate}, Site per category {len(per_rate_category_alignment[rate][0].seq)}"""
+                )
+
             category_rates_factors = parse_category_rates(
                 f"{self.input_args.msa.resolve()}.iqtree"
             )
@@ -429,6 +435,11 @@ class Satute:
             )
 
             for key, results_set in results.items():
+                to_be_tested_tree.write(
+                    "newick",
+                    f"{self.input_args.msa.resolve()}_satute_rate_{key}_{self.input_args.alpha}_.tree",
+                    format=1,
+                )
                 pd.DataFrame(results_set).to_csv(
                     f"{self.input_args.msa.resolve()}_satute_rate_{key}_{self.input_args.alpha}_.csv"
                 )
@@ -449,6 +460,7 @@ class Satute:
                     node.add_features(apriori_knowledge=node.name)
                 # Set inner node names as "Node<index>*"
                 node.name = "Node" + str(idx) + "*"
+                print(node.name)
                 idx += 1
         return t
 
