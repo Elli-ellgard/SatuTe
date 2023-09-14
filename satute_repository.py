@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 import re
 
+
 # Define a function to parse rate parameters from a file
 def parse_rate_parameters(file_path, dimension, model="GTR"):
     # Open the file in read mode
@@ -182,12 +183,9 @@ def parse_rate_matrices_from_file(file_path):
 
 
 # Sample test call (without an actual file for now)
-# parse_rate_matrices("sample_path")
 
 
-def parse_rate_and_frequencies_and_model(
-    input_path, dimension, model="GTR"
-):
+def parse_rate_and_frequencies_and_model(input_path, dimension, model="GTR"):
     # Construct the model string with parsed rate parameters
     log_file_path = f"{input_path}.iqtree"
     model_final = parse_rate_parameters(log_file_path, dimension, model=model)

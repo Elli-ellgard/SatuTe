@@ -5,7 +5,6 @@ import shutil
 
 class FileHandler:
     """Handles file operations for the Satute project."""
-
     def __init__(self, base_directory):
         """
         Initialize with a base directory.
@@ -108,10 +107,14 @@ class FileHandler:
         """
         # If directory is provided, check for tree file and iqtree file
         return self.get_newick_string(
-            self.find_file_by_suffix({".treefile", ".nwk", ".tree"})
+            self.find_file_by_suffix({".treefile", ".nwk"})
         ) or self.get_newick_string_from_iq_tree_file(
             self.find_file_by_suffix({".iqtree"})
         )
+
+class IqTreeNotFoundError(Exception):
+    """Exception raised when IQ-TREE is not found at the given path."""
+    pass
 
 
 class IqTreeHandler:
@@ -231,5 +234,11 @@ class IqTreeHandler:
             "iqtree or iqtree2 is not installed or not found in the system PATH."
         )
 
-
-# Testing the function
+    def check_iqtree_path(self, iqtree_path):
+     """Check if the given IQ-TREE path exists and raise an exception if it doesn't."""
+     if os.path.exists(iqtree_path) and os.path.isfile(iqtree_path):
+         return True
+     elif shutil.which(iqtree_path):
+         return True
+     else:
+         raise IqTreeNotFoundError(f"IQ-TREE does not exist at {iqtree_path}")

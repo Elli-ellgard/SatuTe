@@ -452,7 +452,6 @@ def single_rate_analysis(
     alpha=0.05,
     focused_edge=None,
 ):
-
     partial_likelihood_per_site_storage = calculate_partial_likelihoods_for_sites(
         t, alignment, rate_matrix, focused_edge
     )
@@ -542,8 +541,7 @@ def multiple_rate_analysis(
     for rate, alignment in per_rate_category_alignment.items():
         relative_rate = category_rates_factors[rate]["Relative_rate"]
         result_list = []
-        rescaled_tree = rescale_branch_lengths(t, relative_rate)
-
+        rescaled_tree = rescale_branch_lengths(t.copy(), relative_rate)
 
         partial_likelihood_per_site_storage = calculate_partial_likelihoods_for_sites(
             rescaled_tree, alignment, rate_matrix, focused_edge
@@ -612,7 +610,11 @@ def multiple_rate_analysis(
                 }
             )
 
-        result_rate_dictionary[rate] = result_list
+        result_rate_dictionary[rate] = {
+            "result_list": result_list,
+            "rescaled_tree": rescaled_tree,
+        }
+
     return result_rate_dictionary
 
 
@@ -670,7 +672,6 @@ def test_one():
         t, alignment, rate_matrix
     )
 
-    
 
 if __name__ == "__main__":
     test_one()

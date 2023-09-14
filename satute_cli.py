@@ -69,7 +69,7 @@ def parse_substitution_model(file_path):
                 if "Best-fit model according to BIC:" in line:
                     model_string = line.split(":")[1].strip()
                     return model_string
-                if "Model of substitution: GTR+F+G4" in line:
+                if "Model of substitution:" in line:
                     model_string = line.split(":")[1].strip()
                     return model_string
             raise ValueError("Could not parse the substitution model from the file.")
@@ -79,9 +79,43 @@ def parse_substitution_model(file_path):
         raise ValueError("Could not parse the substitution model from the file.")
 
 
+def get_target_node(edge):
+    return edge.split(",")[0].replace("(", "").strip()
+
+
+def map_values_to_newick(newick, df):
+    for index, row in df.iterrows():
+        target_node = get_target_node(row["edge"])
+
+        # Escape any special characters in target node for regex
+        escaped_target_node = re.escape(target_node)
+
+        # Adjusting the metadata as per the requirements
+        meta_data = f"delta={row['delta']},c_s={row['c_s']},p_value={row['p_value']},result_test={row['result_test']}"
+
+        # Check for existing square brackets after the node
+        pattern_with_brackets = re.compile(
+            f"({escaped_target_node}:\d+(\.\d+)?(e-?\d+)?)\[([^\]]+)\]"
+        )
+        pattern_without_brackets = re.compile(
+            f"({escaped_target_node}:\d+(\.\d+)?(e-?\d+)?)"
+        )
+
+        # If square brackets are present, append the metadata inside those brackets
+        if pattern_with_brackets.search(newick):
+            newick = pattern_with_brackets.sub(f"\\1[\\4,{meta_data}]", newick)
+        else:
+            # If no square brackets, add them and insert the metadata
+            newick = pattern_without_brackets.sub(f"\\1[{meta_data}]", newick)
+
+    return newick
+
+
 class Satute:
     """Class representing Satute command-line tool for wrapping up functions of IQ-TREE."""
 
+
+class Satute:
     def __init__(
         self,
         iqtree=None,
@@ -92,23 +126,37 @@ class Satute:
         ufboot=None,
         boot=None,
     ):
+        # IQ-TREE related attributes
         self.iqtree = iqtree
         self.iqtree_tree_file = None
+        self.iqtree_handler = None
+
+        # Directories and paths
         self.input_dir = None
         self.tree = None
         self.msa = None
+        self.site_probabilities_file = None
+        self.active_directory = None
+
+        # Model and testing parameters
         self.model = model
         self.nr = nr
-        self.output_prefix = output_prefix
         self.ufboot = ufboot
         self.boot = boot
+        self.alpha = 0.05
+
+        # Miscellaneous attributes
+        self.output_prefix = output_prefix
         self.input_args = []
         self.input_args_dict = {}
-        self.site_probabilities_file = None
-        self.alpha = 0.05
         self.number_rates = 1
 
-        self.arguments = [
+        # Command-line argument configurations
+        self.arguments = self._initialize_arguments()
+
+    def _initialize_arguments(self):
+        """Returns a list of dictionaries representing the command-line arguments."""
+        return [
             {
                 "flag": "-dir",
                 "help": "Path to input directory",
@@ -176,8 +224,6 @@ class Satute:
                 "metavar": "str",
             },
         ]
-        self.iqtree_handler = None
-        self.active_directory = None
 
     def parse_input(self):
         """Parse command-line arguments."""
@@ -191,16 +237,25 @@ class Satute:
 
     def run_iqtree_workflow(self, arguments_dict):
         if arguments_dict["option"] == "dir":
-            logger.info("Running Satute without iqtree run")
+            logger.info(
+                "IQ-TREE will not to be needed the analysis will be done on the already existing iqtree files."
+            )
 
+        # TODO Test if IQTREE exists
         if arguments_dict["option"] == "dir + site_probabilities":
             logger.info("Running Satute with site probabilities")
-            # TO call Iqtree only for .sibeprob file
+            logger.info(
+                "IQ-TREE will be needed for the site probabilities for the corresponding rate categories."
+            )
+            # TODO call IQTREE only for .sibeprob file
 
         if arguments_dict["option"] == "msa + tree + model":
             number_rates = self.handle_number_rates()
 
             if number_rates > 1:
+                self.iqtree_handler.check_iqtree_path(self.input_args.iqtree)
+
+                # TODO call IQTREE only for .sibeprob file
                 self.iqtree_handler.run_iqtree_with_arguments(
                     arguments_dict["arguments"],
                     [
@@ -211,18 +266,6 @@ class Satute:
                         "-blfix",
                         "-n 0",
                         "-wspr",
-                    ],
-                )
-            else:
-                self.iqtree_handler.run_iqtree_with_arguments(
-                    arguments_dict["arguments"],
-                    [
-                        "-m",
-                        self.input_args.model,
-                        "--redo",
-                        "--quiet",
-                        "-blfix",
-                        "-n 0",
                     ],
                 )
 
@@ -239,6 +282,15 @@ class Satute:
             logger.info(
                 "If no model specified in input arguments, extract best model from log file"
             )
+            logger.warning(
+                "Please consider for the analysis that IQTree will be running with the default options"
+            )
+            logger.warning(
+                "If for the analysis specific options are required, please run IQTree separately"
+            )
+
+            self.iqtree_handler.check_iqtree_path(self.input_args.iqtree)
+
             # Validate and append ufboot and boot parameters to extra_arguments
             bb_arguments = self.iqtree_handler.validate_and_append_boot_arguments(
                 self.input_args.ufboot, self.input_args.boot
@@ -282,11 +334,13 @@ class Satute:
                     arguments=arguments_dict["arguments"],
                 )
 
+        # TODO Test if iqtree exists
         elif arguments_dict["option"] == "msa + model":
             number_rates = self.handle_number_rates()
             bb_arguments = self.iqtree_handler.validate_and_append_boot_arguments(
                 self.input_args.ufboot, self.input_args.boot
             )
+            self.iqtree_handler.check_iqtree_path(self.input_args.iqtree)
 
             extra_arguments = bb_arguments + [
                 "-m",
@@ -302,22 +356,105 @@ class Satute:
                 arguments=arguments_dict["arguments"], extra_arguments=extra_arguments
             )
 
-    def tree_handling(self):
-        to_be_tested_tree = None
+    def extract_tree(self):
+        """
+        Extract the Newick representation of a tree from a specified file or directory.
+
+        If a specific tree file is provided via the input arguments, it uses that file.
+        Otherwise, it attempts to retrieve the tree from the specified directory.
+
+        Returns:
+            Tree: An ETE Tree object constructed from the Newick representation.
+
+        Raises:
+            ValueError: If no tree file is found in the directory.
+        """
         if self.input_args.tree:
             logger.info(f"Using the already defined tree: {self.input_args.tree}")
             with open(self.input_args.tree, "r") as file:
-                to_be_tested_tree = Tree(file.readlines()[0], format=1)
-            to_be_tested_tree = self.modify_tree(to_be_tested_tree)
+                tree_string = ""
+                for line in file:
+                    tree_string += line.strip()
+                    if ";" in line:  # Check for the end of the Newick representation
+                        break
+                return Tree(tree_string, format=1)
         else:
             newick_string = self.file_handler.get_newick_string_from_args()
             if newick_string is None:
                 raise ValueError("No tree file found in directory")
-            to_be_tested_tree = Tree(newick_string, format=1)
-            to_be_tested_tree = self.modify_tree(to_be_tested_tree)
+            return Tree(newick_string, format=1)
 
-        return to_be_tested_tree
-        # ======== End Tree File Handling =========
+    def modify_tree(self, t):
+        """
+        Modify the input tree by naming its nodes using a preorder traversal.
+
+        Nodes are named as "NodeX*" where X is an incremental number.
+        If a node name is purely numeric, it is preserved as 'apriori_knowledge' feature of the node.
+
+        Args:
+            t (Tree): The input tree to be modified.
+
+        Returns:
+            Tree: The modified tree with updated node names.
+        """
+        idx = 1
+        for node in t.traverse("preorder"):
+            if not node.is_leaf():
+                # If a node name already starts with "Node", no further modification is required.
+                if node.name.startswith("Node"):
+                    return t
+                # Preserve numeric node names as 'apriori_knowledge' for reference.
+                if node.name.isdigit():
+                    node.add_features(apriori_knowledge=node.name)
+                # Assign new node names based on the preorder traversal index.
+                node.name = "Node" + str(idx) + "*"
+                idx += 1
+        return t
+
+    def tree_handling(self):
+        """
+        Handle the extraction and subsequent modification of the tree.
+
+        This function first extracts the tree from either the specified tree file
+        or the directory. After extraction, the tree nodes are modified to
+        have unique names based on a preorder traversal.
+
+        Returns:
+            Tree: The modified tree.
+        """
+        to_be_tested_tree = self.extract_tree()
+        return self.modify_tree(to_be_tested_tree)
+
+    def write_results_for_single_rate(self, results, to_be_tested_tree):
+        """
+        Writes the results for single rate to appropriate files.
+
+        Args:
+        - results (dict): Dictionary containing the results data.
+        - to_be_tested_tree (Tree): The tree object containing the data to be written.
+        """
+        for key, results_set in results.items():
+            file_name_base = (
+                f"{self.input_args.msa.resolve()}_{self.input_args.alpha}.satute"
+            )
+
+            # Append the edge information to the file name if provided
+            if self.input_args.edge:
+                file_name_base += f"_{self.input_args.edge}"
+
+            results_data_frame = pd.DataFrame(results_set)
+
+            # Writing the .tree file
+            with open(f"{file_name_base}.tree", "w") as tree_file:
+                newick_string = to_be_tested_tree.write(
+                    format=1, features=["apriori_knowledge"]
+                )
+                print(newick_string)
+                newick_string = map_values_to_newick(newick_string, results_data_frame)
+                tree_file.write(newick_string)
+
+            # Writing the .csv file
+            results_data_frame.to_csv(f"{file_name_base}.csv")
 
     def run(self):
         """Main entry point for running the Satute command-line tool."""
@@ -329,17 +466,6 @@ class Satute:
 
         arguments_dict = self.construct_arguments()
 
-        try:
-            (
-                path_to_exe,
-                self.input_args.iqtree,
-            ) = self.iqtree_handler.get_iqtree_version(self.input_args.iqtree)
-            print(f"iqtree version: {self.input_args.iqtree}")
-            print(f"Path to iqtree executable: {path_to_exe}")
-        except Exception as e:
-            print(f"Error: {e}")
-
-        # TODO Check for model of substitution
         self.run_iqtree_workflow(arguments_dict)
 
         rate_matrix, psi_matrix = parse_rate_matrices_from_file(
@@ -381,11 +507,6 @@ class Satute:
             """
         )
 
-        # TODO Test when there is no site probabilities file in the directory
-        to_be_tested_tree.write(
-            format=1, outfile=f"{arguments_dict['msa_file'].resolve()}_satute_tree.tree"
-        )
-
         if number_rates == 1:
             results = single_rate_analysis(
                 to_be_tested_tree,
@@ -399,11 +520,7 @@ class Satute:
                 self.input_args.edge,
             )
 
-            for key, results_set in results.items():
-                pd.DataFrame(results_set).to_csv(
-                    f"{self.input_args.msa.resolve()}_{self.input_args.alpha}_satute.csv"
-                )
-
+            self.write_results_for_single_rate(results, to_be_tested_tree)
         else:
             site_probability = parse_file_to_data_frame(
                 f"{self.input_args.msa.resolve()}.siteprob"
@@ -434,35 +551,60 @@ class Satute:
                 self.input_args.edge,
             )
 
-            for key, results_set in results.items():
-                to_be_tested_tree.write(
-                    "newick",
-                    f"{self.input_args.msa.resolve()}_satute_rate_{key}_{self.input_args.alpha}_.tree",
-                    format=1,
-                )
-                pd.DataFrame(results_set).to_csv(
-                    f"{self.input_args.msa.resolve()}_satute_rate_{key}_{self.input_args.alpha}_.csv"
-                )
+            self.write_results_for_category_rates(results)
 
-        logger.info("Finished running Satute")
+    def rename_internal_nodes(self, t: Tree) -> Tree:
+        """
+        Rename the internal nodes of the tree to a standardized format.
 
-    def modify_tree(self, t):
-        # Initialize counter for preorder traversal
+        Args:
+        - t (Tree): The tree to be modified.
+
+        Returns:
+        - Tree: The modified tree.
+        """
         idx = 1  # Start index from 1 as per your requirement
         for node in t.traverse("preorder"):
             # Process only inner nodes
             if not node.is_leaf():
-                # If node name starts with "Node", stop the modifications
+                # If node name starts with "Node", skip this node
                 if node.name.startswith("Node"):
-                    return t
+                    continue
                 # Check if node name is just a number
                 if node.name.isdigit():
                     node.add_features(apriori_knowledge=node.name)
                 # Set inner node names as "Node<index>*"
-                node.name = "Node" + str(idx) + "*"
-                print(node.name)
+                node.name = f"Node{idx}*"
                 idx += 1
         return t
+
+    def write_results_for_category_rates(self, results):
+        """
+        Writes the results for category rates to appropriate files.
+
+        Args:
+        - results (dict): Dictionary containing the results data.
+        """
+        for key, results_set in results.items():
+            file_name = (
+                f"{self.input_args.msa.resolve()}_{key}_{self.input_args.alpha}.satute"
+            )
+
+            # Append the edge information to the file name if provided
+            if self.input_args.edge:
+                file_name = file_name + f"_{self.input_args.edge}"
+
+            results_data_frame = pd.DataFrame(results_set["result_list"])
+
+            if "rescaled_tree" in results_set and "result_list" in results_set:
+                with open(f"{file_name}.tree", "w") as tree_file_writer:
+                    newick_string = results_set["rescaled_tree"].write(format=1)
+                    newick_string = map_values_to_newick(
+                        newick_string, results_data_frame
+                    )
+                    tree_file_writer.write(newick_string)
+                results_data_frame.to_csv(f"{file_name}.csv")
+        logger.info("Finished writing results for category rates to files")
 
     def handle_number_rates(self):
         number_rates = 1
@@ -521,7 +663,7 @@ class Satute:
         """
         # Define the acceptable file types for sequence alignments and trees
         msa_file_types = {".fasta", ".nex", ".phy", ".txt"}
-        tree_file_types = {".treefile", ".nex", ".nwk", ".tree"}
+        tree_file_types = {".treefile", ".nex", ".nwk"}
 
         self.convert_paths_to_objects()
         self.initialize_handlers()
@@ -552,6 +694,7 @@ class Satute:
 
             # Find the tree file in the directory
             tree_file = self.file_handler.find_file_by_suffix(tree_file_types)
+
             # Check if a tree file was found
             if tree_file:
                 argument_option["arguments"].extend(["-te", str(tree_file)])
