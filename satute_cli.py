@@ -3,13 +3,17 @@ import argparse
 import os
 import logging
 from pathlib import Path
-import re
 import pandas as pd
 from ete3 import Tree
-from satute_repository import parse_rate_matrices_from_file, parse_state_frequencies
+from satute_repository import (
+    parse_rate_matrices_from_file,
+    parse_state_frequencies,
+    parse_substitution_model,
+    parse_rate_from_model,
+    parse_file_to_data_frame,
+)
 from satute_exception import InvalidDirectoryError, NoAlignmentFileError
-from satute_util_new import spectral_decomposition, parse_file_to_data_frame
-
+from satute_util_new import spectral_decomposition
 from satute_direction_based_saturation_test import (
     single_rate_analysis,
     multiple_rate_analysis,
@@ -21,7 +25,7 @@ from satute_rate_categories_and_alignments import (
 )
 from satute_rate_categories_and_alignments import parse_category_rates
 from FileHandler import FileHandler, IqTreeHandler
-from satute_trees_and_subtrees import name_nodes_by_level_order
+from satute_trees_and_subtrees import map_values_to_newick
 
 # Configure the logging settings (optional)
 logging.basicConfig(
@@ -30,92 +34,9 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def parse_rate_from_model(model):
-    # Find the index of '+G' and '+R' in the model string
-    plus_g_index = model.find("+G")
-    plus_r_index = model.find("+R")
-
-    if plus_g_index != -1 and plus_r_index != -1:
-        raise ValueError("Cannot use +G and +R")
-
-    if plus_g_index != -1:
-        rate_start_index = plus_g_index + 2
-    elif plus_r_index != -1:
-        rate_start_index = plus_r_index + 2
-    else:
-        return 1  # default number_rates = 1 if no +G or +R model
-
-    try:
-        # Extract the substring after '+G'
-        number = model[rate_start_index:]
-
-        # Parse the extracted substring as an integer
-        rate = int(number)
-
-        return rate
-    except ValueError:
-        # If '+G' is not found or the number after '+G' is not a valid integer
-        # Return None or an appropriate value for error handling
-        logger.info("Could not find a Gamma distribution in the model.")
-        logger.info("So not rates were found.")
-        return 1
-
-
-def parse_substitution_model(file_path):
-    try:
-        with open(file_path, "r") as file:
-            content = file.read()
-            for line in content.splitlines():
-                if "Best-fit model according to BIC:" in line:
-                    model_string = line.split(":")[1].strip()
-                    return model_string
-                if "Model of substitution:" in line:
-                    model_string = line.split(":")[1].strip()
-                    return model_string
-            raise ValueError("Could not parse the substitution model from the file.")
-    except (IOError, ValueError):
-        # If the file cannot be read or ':' is not found in the content
-        # Return None or an appropriate value for error handling
-        raise ValueError("Could not parse the substitution model from the file.")
-
-
-def get_target_node(edge):
-    return edge.split(",")[0].replace("(", "").strip()
-
-
-def map_values_to_newick(newick, df):
-    for index, row in df.iterrows():
-        target_node = get_target_node(row["edge"])
-
-        # Escape any special characters in target node for regex
-        escaped_target_node = re.escape(target_node)
-
-        # Adjusting the metadata as per the requirements
-        meta_data = f"delta={row['delta']},c_s={row['c_s']},p_value={row['p_value']},result_test={row['result_test']}"
-
-        # Check for existing square brackets after the node
-        pattern_with_brackets = re.compile(
-            f"({escaped_target_node}:\d+(\.\d+)?(e-?\d+)?)\[([^\]]+)\]"
-        )
-        pattern_without_brackets = re.compile(
-            f"({escaped_target_node}:\d+(\.\d+)?(e-?\d+)?)"
-        )
-
-        # If square brackets are present, append the metadata inside those brackets
-        if pattern_with_brackets.search(newick):
-            newick = pattern_with_brackets.sub(f"\\1[\\4,{meta_data}]", newick)
-        else:
-            # If no square brackets, add them and insert the metadata
-            newick = pattern_without_brackets.sub(f"\\1[{meta_data}]", newick)
-
-    return newick
-
-
 class Satute:
     """Class representing Satute command-line tool for wrapping up functions of IQ-TREE."""
 
-
-class Satute:
     def __init__(
         self,
         iqtree=None,
@@ -159,69 +80,100 @@ class Satute:
         return [
             {
                 "flag": "-dir",
-                "help": "Path to input directory",
+                "help": (
+                    "Path to an existing directory containing IQ-TREE output files. "
+                    "Use this option when you've already run IQ-TREE and want to avoid rerunning it. "
+                    "The directory should contain essential IQ-TREE output files including the `.iqtree` file, tree file(s), and possibly a `.siteprob` file."
+                ),
                 "default": self.input_dir,
-                "metavar": "<file_name>",
+                "metavar": "<directory_path>",
             },
             {
                 "flag": "-tree",
-                "help": "Path to input tree file",
+                "help": (
+                    "Path to the input tree file in Newick or Nexus format. "
+                    "This tree will be used as the basis for the saturation analysis."
+                ),
                 "default": self.tree,
-                "metavar": "<file_name>",
+                "metavar": "<tree_file_path>",
             },
             {
                 "flag": "-msa",
-                "help": "Path to MSA",
+                "help": (
+                    "Path to the Multiple Sequence Alignment (MSA) file you wish to analyze. "
+                    "The MSA can be in FASTA, NEXUS, PHYLIP, or TXT format."
+                ),
                 "default": self.msa,
-                "metavar": "<file_name>",
+                "metavar": "<msa_file_path>",
             },
             {
                 "flag": "-iqtree",
-                "help": "Path to IQ-TREE",
+                "help": (
+                    "Specifies the path to the IQ-TREE executable. If IQ-TREE is installed system-wide, "
+                    "just providing the executable name (`iqtree` or `iqtree2`) will suffice. "
+                    "Otherwise, give the complete path."
+                ),
                 "default": self.iqtree,
-                "metavar": "<file_name>",
+                "metavar": "<iqtree_path>",
             },
             {
                 "flag": "-model",
-                "help": "Model of evolution",
+                "help": (
+                    "Indicates the model of sequence evolution. Common models include `GTR`, `HKY`, etc. "
+                    "You can also specify rate heterogeneity and other model extensions, like `+G4` for gamma-distributed rates."
+                ),
                 "type": str,
                 "default": self.model,
-                "metavar": "<str>",
+                "metavar": "<evolution_model>",
             },
             {
                 "flag": "-nr",
-                "help": "Number of rate categories",
+                "help": (
+                    "Number of rate categories for the model. Relevant for models with gamma-distributed rate variations. "
+                    "If the `-model` option includes rate variation (e.g., `+G4`), the `-nr` should match the number in the model."
+                ),
                 "type": int,
                 "default": self.nr,
-                "metavar": "<num>",
+                "metavar": "<number_of_rates>",
             },
             {
                 "flag": "-ufboot",
-                "help": "Replicates for ultrafast bootstrap (>=1000)",
+                "help": (
+                    "Number of replicates for the ultrafast bootstrap analysis. Typically, a higher number like `1000` or `5000` is used. "
+                    "Ultrafast bootstrap provides rapid approximations to traditional bootstrap values."
+                ),
                 "type": int,
                 "default": self.ufboot,
-                "metavar": "<num>",
+                "metavar": "<number_of_replicates>",
             },
             {
                 "flag": "-boot",
-                "help": "Replicates for bootstrap + ML tree + consensus tree",
+                "help": (
+                    "Number of replicates for traditional bootstrap analysis. This also computes a Maximum Likelihood (ML) tree and a consensus tree. "
+                    "Common values are `1000` or `5000`."
+                ),
                 "type": int,
                 "default": self.boot,
-                "metavar": "<num>",
+                "metavar": "<number_of_replicates>",
             },
             {
                 "flag": "-alpha",
-                "help": "significance level of the test",
+                "help": (
+                    "Significance level for the saturation test. A common threshold is `0.05`, indicating a 5% significance level. "
+                    "Lower values make the test more stringent."
+                ),
                 "type": float,
                 "default": self.alpha,
-                "metavar": "<num>",
+                "metavar": "<significance_level>",
             },
             {
                 "flag": "-edge",
-                "help": "edge to be tested",
+                "help": (
+                    "Specify a branch or edge name to focus the analysis on. Useful when you want to check saturation on a specific branch."
+                ),
                 "type": str,
                 "default": None,
-                "metavar": "str",
+                "metavar": "<edge_name>",
             },
         ]
 
@@ -247,15 +199,8 @@ class Satute:
             logger.info(
                 "IQ-TREE will be needed for the site probabilities for the corresponding rate categories."
             )
-            # TODO call IQTREE only for .sibeprob file
-
-        if arguments_dict["option"] == "msa + tree + model":
             number_rates = self.handle_number_rates()
-
-            if number_rates > 1:
-                self.iqtree_handler.check_iqtree_path(self.input_args.iqtree)
-
-                # TODO call IQTREE only for .sibeprob file
+            if number_rates > 1 and self.site_probabilities_file is None:
                 self.iqtree_handler.run_iqtree_with_arguments(
                     arguments_dict["arguments"],
                     [
@@ -268,6 +213,32 @@ class Satute:
                         "-wspr",
                     ],
                 )
+
+        if arguments_dict["option"] == "msa + tree + model":
+            number_rates = self.handle_number_rates()
+
+            iqtree_args = [
+                "-m",
+                self.input_args.model,
+                "--redo",
+                "--quiet",
+                "-blfix",
+                "-n 0",
+            ]
+
+            self.site_probabilities_file = self.file_handler.find_file_by_suffix(
+                {".siteprob"}
+            )
+
+            # Add the '-wspr' option if number_rates > 1
+            if number_rates > 1 and self.site_probabilities_file is None:
+                iqtree_args.append("-wspr")
+                self.iqtree_handler.check_iqtree_path(self.input_args.iqtree)
+
+            # Call IQ-TREE with the constructed arguments
+            self.iqtree_handler.run_iqtree_with_arguments(
+                arguments_dict["arguments"], iqtree_args
+            )
 
         elif arguments_dict["option"] == "msa + tree":
             logger.error(
@@ -389,7 +360,7 @@ class Satute:
         Modify the input tree by naming its nodes using a preorder traversal.
 
         Nodes are named as "NodeX*" where X is an incremental number.
-        If a node name is purely numeric, it is preserved as 'apriori_knowledge' feature of the node.
+        If a node name is purely numeric, it is preserved as 'apriori' feature of the node.
 
         Args:
             t (Tree): The input tree to be modified.
@@ -403,9 +374,9 @@ class Satute:
                 # If a node name already starts with "Node", no further modification is required.
                 if node.name.startswith("Node"):
                     return t
-                # Preserve numeric node names as 'apriori_knowledge' for reference.
+                # Preserve numeric node names as 'apriori' for reference.
                 if node.name.isdigit():
-                    node.add_features(apriori_knowledge=node.name)
+                    node.add_features(apriori=node.name)
                 # Assign new node names based on the preorder traversal index.
                 node.name = "Node" + str(idx) + "*"
                 idx += 1
@@ -446,10 +417,7 @@ class Satute:
 
             # Writing the .tree file
             with open(f"{file_name_base}.tree", "w") as tree_file:
-                newick_string = to_be_tested_tree.write(
-                    format=1, features=["apriori_knowledge"]
-                )
-                print(newick_string)
+                newick_string = to_be_tested_tree.write(format=1, features=["apriori"])
                 newick_string = map_values_to_newick(newick_string, results_data_frame)
                 tree_file.write(newick_string)
 
@@ -480,7 +448,10 @@ class Satute:
         # ======== Tree File Handling =========
         to_be_tested_tree = self.tree_handling()
         # ======== End Tree Handling =========
+
+        # ======== Begin Rate Matrix =========
         RATE_MATRIX = RateMatrix(rate_matrix)
+        # ======== End Rate Matrix =========
 
         (
             array_left_eigenvectors,
@@ -572,7 +543,7 @@ class Satute:
                     continue
                 # Check if node name is just a number
                 if node.name.isdigit():
-                    node.add_features(apriori_knowledge=node.name)
+                    node.add_features(apriori=node.name)
                 # Set inner node names as "Node<index>*"
                 node.name = f"Node{idx}*"
                 idx += 1
@@ -671,6 +642,11 @@ class Satute:
         argument_option = {}
 
         if self.input_args.dir:
+            if self.input_args.model:
+                raise ValueError(
+                    "Model cannot be specified with a directory please run Satute with -msa and -model arguments"
+                )
+
             self.active_directory = self.input_args.dir
 
             # Check if the input directory exists
@@ -720,7 +696,6 @@ class Satute:
                 )
                 if not self.site_probabilities_file:
                     argument_option["option"] += " + site_probabilities"
-
             return argument_option
         else:
             if self.input_args.msa:

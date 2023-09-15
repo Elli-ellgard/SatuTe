@@ -2,7 +2,6 @@ import pandas as pd
 import scipy
 import scipy.linalg
 import numpy as np
-from rich import print
 import logging
 
 
@@ -81,18 +80,6 @@ def spectral_decomposition(rate_matrix, psi_matrix):
 
 
 """ ## GENERATE STRUCTURE FOR SUBTREES"""
-
-
-def parse_file_to_data_frame(file_path):
-    try:
-        # Read the file into a dataframe
-        df = pd.read_csv(file_path, delimiter="\t")
-
-        return df
-
-    except FileNotFoundError:
-        raise Exception(f"File not found: {file_path}")
-
 
 def write_results_and_newick_tree(
     results_list, newick_string, path_folder, chosen_rate, c_sTwoSequence, T

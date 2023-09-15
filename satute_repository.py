@@ -200,3 +200,61 @@ def parse_rate_and_frequencies_and_model(input_path, dimension, model="GTR"):
     model_and_frequency = f"{model_final}+FU{{{concatenated_rates}}}"
 
     return state_frequencies.values(), model_and_frequency
+
+
+def parse_substitution_model(file_path):
+    try:
+        with open(file_path, "r") as file:
+            content = file.read()
+            for line in content.splitlines():
+                if "Best-fit model according to BIC:" in line:
+                    model_string = line.split(":")[1].strip()
+                    return model_string
+                if "Model of substitution:" in line:
+                    model_string = line.split(":")[1].strip()
+                    return model_string
+            raise ValueError("Could not parse the substitution model from the file.")
+    except (IOError, ValueError):
+        # If the file cannot be read or ':' is not found in the content
+        # Return None or an appropriate value for error handling
+        raise ValueError("Could not parse the substitution model from the file.")
+    
+
+def parse_rate_from_model(model):
+    # Find the index of '+G' and '+R' in the model string
+    plus_g_index = model.find("+G")
+    plus_r_index = model.find("+R")
+
+    if plus_g_index != -1 and plus_r_index != -1:
+        raise ValueError("Cannot use +G and +R")
+
+    if plus_g_index != -1:
+        rate_start_index = plus_g_index + 2
+    elif plus_r_index != -1:
+        rate_start_index = plus_r_index + 2
+    else:
+        return 1  # default number_rates = 1 if no +G or +R model
+
+    try:
+        # Extract the substring after '+G'
+        number = model[rate_start_index:]
+
+        # Parse the extracted substring as an integer
+        rate = int(number)
+
+        return rate
+    except ValueError:
+        # If '+G' is not found or the number after '+G' is not a valid integer
+        # Return None or an appropriate value for error handling
+        raise ValueError("Could not parse the substitution model from the file.")
+        
+
+def parse_file_to_data_frame(file_path):
+    try:
+        # Read the file into a dataframe
+        df = pd.read_csv(file_path, delimiter="\t")
+
+        return df
+
+    except FileNotFoundError:
+        raise Exception(f"File not found: {file_path}")

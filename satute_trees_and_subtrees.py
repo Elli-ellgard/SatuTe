@@ -1,6 +1,6 @@
 from ete3 import Tree
 import pandas as pd
-
+import re
 
 def parse_file_to_data_frame(file_path):
     try:
@@ -110,42 +110,36 @@ def rescale_branch_lengths(tree, rescale_factor):
         if node.up:
             node.dist *= rescale_factor
 
-    # Return the tree with rescaled branch lengths
-    return tree
+
+def get_target_node(edge):
+    return edge.split(",")[0].replace("(", "").strip()
 
 
-def get_all_subtrees(tree):
-    subtrees = []
-    for node in tree.traverse("levelorder"):
-        if not node.is_root():
-            subtrees.append(node)
-    return subtrees
+def map_values_to_newick(newick, df):
+    for index, row in df.iterrows():
+        target_node = get_target_node(row["edge"])
 
+        # Escape any special characters in target node for regex
+        escaped_target_node = re.escape(target_node)
 
-def get_opposite_subtree(tree, subtree):
-    # Create a copy of the tree so as not to modify the original
-    tree_copy = Tree(tree.write())
-    tree_copy = name_nodes_by_level_order(tree_copy)
-    # Get the node in the copied tree that corresponds to the root of the subtree
-    node = tree_copy.search_nodes(name=subtree.name)[0]
-    # Detach this node (and its descendants) from the tree
-    node.detach()
-    return tree_copy
+        # Adjusting the metadata as per the requirements
+        meta_data = f"delta={row['delta']},c_s={row['c_s']},p_value={row['p_value']},result_test={row['result_test']}"
 
+        # Check for existing square brackets after the node
+        pattern_with_brackets = re.compile(
+            f"({escaped_target_node}:\d+(\.\d+)?(e-?\d+)?)\[([^\]]+)\]"
+        )
+        pattern_without_brackets = re.compile(
+            f"({escaped_target_node}:\d+(\.\d+)?(e-?\d+)?)"
+        )
 
-def generate_subtree_pair(subtrees, t):
-    subtree_pairs = []
-    for subtree in subtrees:
-        subtree_copy = t.search_nodes(name=subtree.name)[0]
-        opposite_subtree = get_opposite_subtree(t, subtree_copy)
+        # If square brackets are present, append the metadata inside those brackets
+        if pattern_with_brackets.search(newick):
+            newick = pattern_with_brackets.sub(f"\\1[\\4,{meta_data}]", newick)
+        else:
+            # If no square brackets, add them and insert the metadata
+            newick = pattern_without_brackets.sub(f"\\1[{meta_data}]", newick)
 
-        subtree_pair_entry = {
-            "trees": (subtree_copy, opposite_subtree),
-        }
-
-        subtree_pairs.append(subtree_pair_entry)
-
-    return subtree_pairs
-
+    return newick
 
 
