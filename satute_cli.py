@@ -593,7 +593,8 @@ class Satute:
                 )
 
             category_rates_factors = parse_category_rates(
-                f"{self.input_args.msa.resolve()}.iqtree"
+                f"{self.input_args.msa.resolve()}.iqtree",
+                number_rates
             )
 
             results = multiple_rate_analysis(
