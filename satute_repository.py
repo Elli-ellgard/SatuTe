@@ -44,7 +44,7 @@ def parse_output_state_frequencies(file_path):
     return df
 
 
-# Define a function to parse state frequencies from a log content
+""" # Define a function to parse state frequencies from a log content
 def parse_state_frequencies(log_file_path, dimension=4):
     # Read the content of the log file
     with open(log_file_path, "r") as f:
@@ -79,7 +79,7 @@ def parse_state_frequencies(log_file_path, dimension=4):
 
     # Return the frequencies dictionary
     return frequencies
-
+ """
 
 def extract_rate_matrix(file_path):
     file_content = ""
@@ -110,6 +110,70 @@ def extract_rate_matrix(file_path):
 
     return pd.DataFrame(rate_matrix, index=row_ids, columns=row_ids)
 
+def parse_state_frequencies_from_file(file_path):
+    """
+    Parse the stationary distribution pi from a given .iqtree file path.
+
+    Parameters:
+    - file_path (str): Path to the .iqtree file.
+
+    Returns
+    - frequencies (directory): The stationary distribution.
+    """
+
+    # Check if file exists
+    if not os.path.isfile(file_path):
+        raise FileNotFoundError(f"The file '{file_path}' does not exist.")
+
+    with open(file_path, "r") as file:
+        lines = file.readlines()
+
+    index = next(
+        (idx for idx, line in enumerate(lines) if "State frequencies:" in line), None
+    )
+    if index is None:
+        raise ValueError("'State frequencies:' not found in file.")
+
+    # Dynamically determine the dimension 'n'
+    start_idx = next(
+        (idx for idx, line in enumerate(lines) if "Rate matrix Q:" in line), None
+    )
+    if start_idx is None:
+        raise ValueError("'Rate matrix Q:' not found in file. Determination of dimension not possible.")
+
+    # Detect the number of matrix rows based on numeric entries
+    n = 0
+    current_idx = start_idx + 2  # Adjusting to start from matrix values
+    while current_idx < len(lines) and re.search(
+        r"(\s*-?\d+\.\d+\s*)+", lines[current_idx]
+    ):
+        n += 1
+        current_idx += 1
+    
+    # Initialize an empty dictionary to hold the frequencies
+    frequencies = {}
+
+    # Parse the state frequencies
+    for idx, line in enumerate(lines):
+        # Parse the state frequencies (empirical counts)
+        if "State frequencies: (empirical counts from alignment)" in line:
+            try:
+                for i in range(n):
+                   # Split the line on " = " into a key and a value, and add them to the frequencies dictionary
+                   key, value = lines[idx + i + 2].split(" = ")
+                   frequencies[key] = float(value)  # convert value to float before storing
+            except (IndexError, ValueError) as e:
+                raise Exception(
+                    f"Error while parsing empirical state frequencies. Exception: {e}"
+                )
+
+        # If "equal frequencies" is in the log content, return a pseudo dictionary with equal frequencies
+        elif "State frequencies: (equal frequencies)" in line:
+            for i in range(n):
+                key = "key_" + str(i)
+                frequencies[key] = float(1 / n)
+
+    return frequencies
 
 def parse_rate_matrices_from_file(file_path):
     """

@@ -7,7 +7,7 @@ import pandas as pd
 from ete3 import Tree
 from satute_repository import (
     parse_rate_matrices_from_file,
-    parse_state_frequencies,
+    parse_state_frequencies_from_file,
     parse_substitution_model,
     parse_rate_from_model,
     parse_file_to_data_frame,
@@ -42,7 +42,7 @@ class Satute:
         iqtree=None,
         input_dir=None,
         model=None,
-        nr="None",
+        nr=None,
         output_prefix=None,
         ufboot=None,
         boot=None,
@@ -100,7 +100,7 @@ class Satute:
             {
                 "flag": "-msa",
                 "help": (
-                    "Path to the Multiple Sequence Alignment (MSA) file you wish to analyze. "
+                    "Path to the Multiple Sequence Alignment (MSA) file you wish to analyze."
                     "The MSA can be in FASTA, NEXUS, PHYLIP, or TXT format."
                 ),
                 "default": self.msa,
@@ -201,17 +201,21 @@ class Satute:
             )
             number_rates = self.handle_number_rates()
             if number_rates > 1 and self.site_probabilities_file is None:
+                self.iqtree_handler.check_iqtree_path(self.input_args.iqtree)
+
+                print(arguments_dict)
+
+                iqtree_args = [
+                "-m",
+                self.input_args.model,
+                "--redo",
+                "-blfix",
+                "-n 0",
+                "-wspr"
+                ]
+
                 self.iqtree_handler.run_iqtree_with_arguments(
-                    arguments_dict["arguments"],
-                    [
-                        "-m",
-                        self.input_args.model,
-                        "--redo",
-                        "--quiet",
-                        "-blfix",
-                        "-n 0",
-                        "-wspr",
-                    ],
+                    arguments_dict["arguments"], iqtree_args
                 )
 
         if arguments_dict["option"] == "msa + tree + model":
@@ -234,7 +238,8 @@ class Satute:
             if number_rates > 1 and self.site_probabilities_file is None:
                 iqtree_args.append("-wspr")
                 self.iqtree_handler.check_iqtree_path(self.input_args.iqtree)
-
+            
+            print(arguments_dict)
             # Call IQ-TREE with the constructed arguments
             self.iqtree_handler.run_iqtree_with_arguments(
                 arguments_dict["arguments"], iqtree_args
@@ -428,7 +433,6 @@ class Satute:
         """Main entry point for running the Satute command-line tool."""
         # TODO Change number rated to None and test
         number_rates = 1
-        dimension = 4
         # Parsing input arguments and constructing IQ-TREE command-line arguments
         self.parse_input()
 
@@ -436,14 +440,14 @@ class Satute:
 
         self.run_iqtree_workflow(arguments_dict)
 
+        # Get rate matrix and diagonal matrix of the stationary distribution
         rate_matrix, psi_matrix = parse_rate_matrices_from_file(
             f"{arguments_dict['msa_file'].resolve()}.iqtree"
         )
 
-        # TODO Change state frequency function
-        state_frequencies = parse_state_frequencies(
-            f"{arguments_dict['msa_file'].resolve()}.iqtree", dimension=dimension
-        )
+        # Get dictionary for stationary distribution 
+        state_frequencies=parse_state_frequencies_from_file(f"{arguments_dict['msa_file'].resolve()}.iqtree")
+      
 
         # ======== Tree File Handling =========
         to_be_tested_tree = self.tree_handling()
