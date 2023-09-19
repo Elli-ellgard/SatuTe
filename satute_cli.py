@@ -178,7 +178,9 @@ class Satute:
         ]
 
     def parse_input(self):
-        """Parse command-line arguments."""
+        """
+        Parse command-line arguments.
+        """
         parser = argparse.ArgumentParser(description="Satute")
         for argument in self.arguments:
             flag = argument["flag"]
@@ -186,6 +188,75 @@ class Satute:
             parser.add_argument(flag, **argument)
         self.input_args = parser.parse_args()
         self.input_args_dict = vars(self.input_args)
+
+    def check_input(self):
+        """
+        Check allowed option combinations.
+        """
+        if self.input_args.dir is not None: 
+            if self.input_args.msa is not None:
+                logger.error(
+                    " The option -dir is for specifying a path to an existing directory containing IQ-TREE output files \
+                          and cannot be run with the options msa, tree, model, nr, ufboot, boot"
+                )
+                raise ValueError(
+                    "Cannot run Satute with option -dir and -msa."
+                ) 
+            
+            if self.input_args.tree is not None:
+                logger.error(
+                    "The option -dir is for specifying a path to an existing directory containing IQ-TREE output files \
+                          and cannot be run with the options msa, tree, model, nr, ufboot, boot"
+                )
+                raise ValueError(
+                    "Cannot run Satute with option -dir and -tree."
+                ) 
+            
+            if self.input_args.model is not None:
+                logger.error(
+                    "The option -dir is for specifying a path to an existing directory containing IQ-TREE output files \
+                          and cannot be run with the options msa, tree, model, nr, ufboot, boot"
+                )
+                raise ValueError(
+                    "Cannot run Satute with option -dir and -model."
+                )
+            
+            if self.input_args.nr is not None:
+                logger.error(
+                    "The option -dir is for specifying a path to an existing directory containing IQ-TREE output files \
+                          and cannot be run with the options msa, tree, model, nr, ufboot, boot"
+                )
+                raise ValueError(
+                    "Cannot run Satute with option -dir and -nr."
+                )
+            
+            if self.input_args.ufboot is not None:
+                logger.error(
+                    "The option -dir is for specifying a path to an existing directory containing IQ-TREE output files \
+                          and cannot be run with the options msa, tree, model, nr, ufboot, boot"
+                )
+                raise ValueError(
+                    "Cannot run Satute with option -dir and -ufboot."
+                )
+            
+            if self.input_args.boot is not None:
+                logger.error(
+                    "The option -dir is for specifying a path to an existing directory containing IQ-TREE output files \
+                          and cannot be run with the options msa, tree, model, nr, ufboot, boot"
+                )
+                raise ValueError(
+                    "Cannot run Satute with option -dir and -boot."
+                )
+
+            
+        if self.input_args.msa is not None:
+            if self.input_args.tree is not None and self.input_args.model is None: 
+                logger.error(
+                    "Cannot run Satute with only a tree file and MSA file. The model must be specified."
+                )
+                raise ValueError(
+                    "Cannot run Satute with only a tree file and MSA file. The model must be specified."
+                ) 
 
     def run_iqtree_workflow(self, arguments_dict):
         if arguments_dict["option"] == "dir":
@@ -430,43 +501,46 @@ class Satute:
             results_data_frame.to_csv(f"{file_name_base}.csv")
 
     def run(self):
-        """Main entry point for running the Satute command-line tool."""
-        # TODO Change number rated to None and test
-        number_rates = 1
-        # Parsing input arguments and constructing IQ-TREE command-line arguments
+        """
+        Main entry point for running the Satute command-line tool.
+        """
+        # Parsing and checking input arguments and constructing IQ-TREE command-line arguments
         self.parse_input()
-
+        self.check_input()
+        
         arguments_dict = self.construct_arguments()
 
         self.run_iqtree_workflow(arguments_dict)
 
-        # Get rate matrix and diagonal matrix of the stationary distribution
+        # ======== Tree File Handling =========
+        to_be_tested_tree = self.tree_handling()
+
+        # ======== Model parameter ===========        
+        ## Get dictionary for stationary distribution 
+        state_frequencies=parse_state_frequencies_from_file(f"{arguments_dict['msa_file'].resolve()}.iqtree")
+
+        ## Get rate matrix and diagonal matrix of the stationary distribution
         rate_matrix, psi_matrix = parse_rate_matrices_from_file(
             f"{arguments_dict['msa_file'].resolve()}.iqtree"
         )
-
-        # Get dictionary for stationary distribution 
-        state_frequencies=parse_state_frequencies_from_file(f"{arguments_dict['msa_file'].resolve()}.iqtree")
-      
-
-        # ======== Tree File Handling =========
-        to_be_tested_tree = self.tree_handling()
-        # ======== End Tree Handling =========
-
-        # ======== Begin Rate Matrix =========
+        ## Convert representation of rate_matrix         
         RATE_MATRIX = RateMatrix(rate_matrix)
-        # ======== End Rate Matrix =========
 
+        ## Calculation of the spectral decomposition of the rate matrix
         (
             array_left_eigenvectors,
             array_right_eigenvectors,
             multiplicity,
         ) = spectral_decomposition(RATE_MATRIX.rate_matrix, psi_matrix)
 
-        alignment = read_alignment_file(arguments_dict["msa_file"].resolve())
+        ## Get number of rate categories in case of a +G or +R model
         number_rates = self.handle_number_rates()
 
-        # ======== Saturation Test =========
+        # ======== Multiple Sequence Alignment
+        alignment = read_alignment_file(arguments_dict["msa_file"].resolve())
+        
+
+        # ========  Test for Branch Saturation =========
         logger.info(
             f"""
             Running tests and initial IQ-Tree with configurations:
@@ -601,7 +675,9 @@ class Satute:
         return number_rates
 
     def convert_paths_to_objects(self):
-        """Convert input paths to Path objects for easier handling."""
+        """
+        Convert input paths to Path objects for easier handling.
+        """
         paths_to_convert = ["dir", "iqtree", "msa", "tree"]
         for path_key in paths_to_convert:
             path_value = getattr(self.input_args, path_key)
@@ -614,12 +690,16 @@ class Satute:
             self.active_directory = self.input_args.dir
 
     def initialize_handlers(self):
-        """Initialize the FileHandler and IqTreeHandler."""
+        """
+        Initialize the FileHandler and IqTreeHandler.
+        """
         self.file_handler = FileHandler(self.active_directory)
         self.iqtree_handler = IqTreeHandler(self.input_args.iqtree)
 
     def validate_directory(self):
-        """Validate the input directory."""
+        """
+        Validate the input directory.
+        """
         if not self.input_args.dir.is_dir():
             raise InvalidDirectoryError("Input directory does not exist")
         if not os.listdir(self.input_args.dir):
@@ -646,10 +726,13 @@ class Satute:
         argument_option = {}
 
         if self.input_args.dir:
-            if self.input_args.model:
+            # Check the other options
+            if self.input_args.model or self.input_args.nr:
                 raise ValueError(
-                    "Model cannot be specified with a directory please run Satute with -msa and -model arguments"
+                    "Model or number of rate categories cannot be specified with a directory please run Satute with -msa and -model arguments"
                 )
+
+            
 
             self.active_directory = self.input_args.dir
 
