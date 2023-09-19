@@ -262,22 +262,25 @@ class Satute:
                 "IQ-TREE will be needed for the site probabilities for the corresponding rate categories."
             )
             number_rates = self.handle_number_rates()
-            if number_rates > 1 and self.site_probabilities_file is None:
-
-                print(arguments_dict)
-
-                iqtree_args = [
+ 
+            iqtree_args = [
                 "-m",
                 self.input_args.model,
                 "--redo",
-                "-blfix",
+                "--tree-fix",
                 "-n 0",
-                "-wspr"
-                ]
+                "-wspr",
+                "--quiet"
+            ]
+                
+            logger.info("Used IQ-TREE options:")
+            logger.info(" ".join(arguments_dict["arguments"]))
+            logger.info(" ".join(iqtree_args))
 
-                self.iqtree_handler.run_iqtree_with_arguments(
-                    arguments_dict["arguments"], iqtree_args
-                )
+            self.iqtree_handler.run_iqtree_with_arguments(
+                arguments_dict["arguments"], iqtree_args
+            )
+
 
         elif arguments_dict["option"] == "msa":
             logger.info("Running IQ-TREE with constructed arguments")
@@ -390,16 +393,12 @@ class Satute:
                 "-m",
                 self.input_args.model,
                 "--quiet",
-                "-blfix",
+                "--tree-fix",
                 "-n 0",
             ]
 
-            self.site_probabilities_file = self.file_handler.find_file_by_suffix(
-                {".siteprob"}
-            )
-
             # Add the '-wspr' option if number_rates > 1
-            if number_rates > 1 and self.site_probabilities_file is None:
+            if number_rates > 1:
                 iqtree_args.append("-wspr")
             
             logger.info("Used IQ-TREE options:")
@@ -408,7 +407,7 @@ class Satute:
 
             # Call IQ-TREE with the constructed arguments
             self.iqtree_handler.run_iqtree_with_arguments(
-                arguments_dict["arguments"], iqtree_args
+               arguments_dict["arguments"], iqtree_args
             )
 
     def extract_tree(self):
@@ -752,7 +751,7 @@ class Satute:
                 argument_option = {
                     "option": "dir",
                     "msa_file": self.input_args.msa,
-                    "arguments": ["-s", self.input_args.msa.resolve()],
+                    "arguments": ["-s", str(self.input_args.msa.resolve())],
                 }
             else:
                 raise NoAlignmentFileError("No multiple sequence alignment file found")
