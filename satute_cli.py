@@ -194,69 +194,58 @@ class Satute:
         Check allowed option combinations.
         """
         if self.input_args.dir is not None: 
+            error_str="The option -dir is for specifying a path to an existing directory containing IQ-TREE output files and cannot be run with the options msa, tree, model, nr, ufboot, boot."
             if self.input_args.msa is not None:
-                logger.error(
-                    " The option -dir is for specifying a path to an existing directory containing IQ-TREE output files \
-                          and cannot be run with the options msa, tree, model, nr, ufboot, boot"
-                )
+                logger.error( f"{error_str}")
                 raise ValueError(
                     "Cannot run Satute with option -dir and -msa."
-                ) 
+                )
             
             if self.input_args.tree is not None:
-                logger.error(
-                    "The option -dir is for specifying a path to an existing directory containing IQ-TREE output files \
-                          and cannot be run with the options msa, tree, model, nr, ufboot, boot"
-                )
+                logger.error( f"{error_str}")
                 raise ValueError(
                     "Cannot run Satute with option -dir and -tree."
                 ) 
             
             if self.input_args.model is not None:
-                logger.error(
-                    "The option -dir is for specifying a path to an existing directory containing IQ-TREE output files \
-                          and cannot be run with the options msa, tree, model, nr, ufboot, boot"
-                )
+                logger.error( f"{error_str}")
                 raise ValueError(
                     "Cannot run Satute with option -dir and -model."
                 )
             
             if self.input_args.nr is not None:
-                logger.error(
-                    "The option -dir is for specifying a path to an existing directory containing IQ-TREE output files \
-                          and cannot be run with the options msa, tree, model, nr, ufboot, boot"
-                )
+                logger.error( f"{error_str}")
                 raise ValueError(
                     "Cannot run Satute with option -dir and -nr."
                 )
             
             if self.input_args.ufboot is not None:
-                logger.error(
-                    "The option -dir is for specifying a path to an existing directory containing IQ-TREE output files \
-                          and cannot be run with the options msa, tree, model, nr, ufboot, boot"
-                )
+                logger.error( f"{error_str}")
                 raise ValueError(
                     "Cannot run Satute with option -dir and -ufboot."
                 )
             
             if self.input_args.boot is not None:
-                logger.error(
-                    "The option -dir is for specifying a path to an existing directory containing IQ-TREE output files \
-                          and cannot be run with the options msa, tree, model, nr, ufboot, boot"
-                )
+                logger.error( f"{error_str}")
                 raise ValueError(
                     "Cannot run Satute with option -dir and -boot."
                 )
-
-            
-        if self.input_args.msa is not None:
-            if self.input_args.tree is not None and self.input_args.model is None: 
+        else: 
+            if self.input_args.msa is None: 
                 logger.error(
-                    "Cannot run Satute with only a tree file and MSA file. The model must be specified."
+                        "Cannot run Satute without a given MSA file or a given directory path."
                 )
                 raise ValueError(
-                    "Cannot run Satute with only a tree file and MSA file. The model must be specified."
-                ) 
+                        "Cannot run Satute without a given MSA file or a given directory path."
+                )    
+            else:
+                if self.input_args.tree is not None and self.input_args.model is None: 
+                    logger.error(
+                        "Cannot run Satute with only a tree file and MSA file. The model must be specified."
+                    )
+                    raise ValueError(
+                        "Cannot run Satute with only a tree file and MSA file. The model must be specified."
+                    ) 
 
     def run_iqtree_workflow(self, arguments_dict):
         if arguments_dict["option"] == "dir":
@@ -316,13 +305,13 @@ class Satute:
                 arguments_dict["arguments"], iqtree_args
             )
 
-        elif arguments_dict["option"] == "msa + tree":
-            logger.error(
-                "Cannot run Satute with only a tree file and MSA file. The model must be specified."
-            )
-            raise ValueError(
-                "Cannot run Satute with only a tree file and MSA file. The model must be specified."
-            )
+        # elif arguments_dict["option"] == "msa + tree":
+        #     logger.error(
+        #         "Cannot run Satute with only a tree file and MSA file. The model must be specified."
+        #     )
+        #     raise ValueError(
+        #         "Cannot run Satute with only a tree file and MSA file. The model must be specified."
+        #     )
 
         elif arguments_dict["option"] == "msa":
             logger.info("Running IQ-TREE with constructed arguments")
@@ -726,14 +715,6 @@ class Satute:
         argument_option = {}
 
         if self.input_args.dir:
-            # Check the other options
-            if self.input_args.model or self.input_args.nr:
-                raise ValueError(
-                    "Model or number of rate categories cannot be specified with a directory please run Satute with -msa and -model arguments"
-                )
-
-            
-
             self.active_directory = self.input_args.dir
 
             # Check if the input directory exists
@@ -764,7 +745,7 @@ class Satute:
             else:
                 raise FileNotFoundError("No tree file found in directory")
 
-            # Find iqtree file in the directory
+            # Find .iqtree file in the directory
             self.iqtree_tree_file = self.file_handler.find_file_by_suffix({".iqtree"})
             # Check if iqtree file was found
             if self.iqtree_tree_file:
