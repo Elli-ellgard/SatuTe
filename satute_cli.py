@@ -279,40 +279,6 @@ class Satute:
                     arguments_dict["arguments"], iqtree_args
                 )
 
-        if arguments_dict["option"] == "msa + tree + model":
-            number_rates = self.handle_number_rates()
-
-            iqtree_args = [
-                "-m",
-                self.input_args.model,
-                "--redo",
-                "--quiet",
-                "-blfix",
-                "-n 0",
-            ]
-
-            self.site_probabilities_file = self.file_handler.find_file_by_suffix(
-                {".siteprob"}
-            )
-
-            # Add the '-wspr' option if number_rates > 1
-            if number_rates > 1 and self.site_probabilities_file is None:
-                iqtree_args.append("-wspr")
-            
-            print(arguments_dict)
-            # Call IQ-TREE with the constructed arguments
-            self.iqtree_handler.run_iqtree_with_arguments(
-                arguments_dict["arguments"], iqtree_args
-            )
-
-        # elif arguments_dict["option"] == "msa + tree":
-        #     logger.error(
-        #         "Cannot run Satute with only a tree file and MSA file. The model must be specified."
-        #     )
-        #     raise ValueError(
-        #         "Cannot run Satute with only a tree file and MSA file. The model must be specified."
-        #     )
-
         elif arguments_dict["option"] == "msa":
             logger.info("Running IQ-TREE with constructed arguments")
             logger.info(
@@ -400,6 +366,49 @@ class Satute:
             self.iqtree_handler.run_iqtree_with_arguments(
                 arguments=arguments_dict["arguments"], 
                 extra_arguments=extra_arguments
+            )
+
+        # elif arguments_dict["option"] == "msa + tree":
+        #     logger.error(
+        #         "Cannot run Satute with only a tree file and MSA file. The model must be specified."
+        #     )
+        #     raise ValueError(
+        #         "Cannot run Satute with only a tree file and MSA file. The model must be specified."
+        #     )
+
+        if arguments_dict["option"] == "msa + tree + model":
+            logger.info("Running IQ-TREE with constructed arguments")
+            logger.warning(
+                "Please consider for the analysis that IQ-Tree will be running with default options."
+            )
+            logger.warning(
+                "If specific options are required for the analysis, please run IQ-Tree separately."
+            )
+            number_rates = self.handle_number_rates()
+
+            iqtree_args = [
+                "-m",
+                self.input_args.model,
+                "--quiet",
+                "-blfix",
+                "-n 0",
+            ]
+
+            self.site_probabilities_file = self.file_handler.find_file_by_suffix(
+                {".siteprob"}
+            )
+
+            # Add the '-wspr' option if number_rates > 1
+            if number_rates > 1 and self.site_probabilities_file is None:
+                iqtree_args.append("-wspr")
+            
+            logger.info("Used IQ-TREE options:")
+            logger.info(" ".join(arguments_dict["arguments"]))
+            logger.info(" ".join(iqtree_args))
+
+            # Call IQ-TREE with the constructed arguments
+            self.iqtree_handler.run_iqtree_with_arguments(
+                arguments_dict["arguments"], iqtree_args
             )
 
     def extract_tree(self):
