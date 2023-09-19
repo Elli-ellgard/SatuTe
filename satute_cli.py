@@ -252,8 +252,10 @@ class Satute:
             logger.info(
                 "IQ-TREE will not to be needed the analysis will be done on the already existing iqtree files."
             )
-
-        # TODO Test if IQTREE exists
+        else: 
+            # For the other options IQ-Tree is necessary. Therefore, test if IQ-TREE exists
+            self.iqtree_handler.check_iqtree_path(self.input_args.iqtree)
+        
         if arguments_dict["option"] == "dir + site_probabilities":
             logger.info("Running Satute with site probabilities")
             logger.info(
@@ -261,7 +263,6 @@ class Satute:
             )
             number_rates = self.handle_number_rates()
             if number_rates > 1 and self.site_probabilities_file is None:
-                self.iqtree_handler.check_iqtree_path(self.input_args.iqtree)
 
                 print(arguments_dict)
 
@@ -297,7 +298,6 @@ class Satute:
             # Add the '-wspr' option if number_rates > 1
             if number_rates > 1 and self.site_probabilities_file is None:
                 iqtree_args.append("-wspr")
-                self.iqtree_handler.check_iqtree_path(self.input_args.iqtree)
             
             print(arguments_dict)
             # Call IQ-TREE with the constructed arguments
@@ -316,33 +316,31 @@ class Satute:
         elif arguments_dict["option"] == "msa":
             logger.info("Running IQ-TREE with constructed arguments")
             logger.info(
-                "If no model specified in input arguments, extract best model from log file"
+                "If no model is specified in input arguments, best-fit model will be extracted from log file."
             )
             logger.warning(
-                "Please consider for the analysis that IQTree will be running with the default options"
+                "Please consider for the analysis that IQ-Tree will be running with default options."
             )
             logger.warning(
-                "If for the analysis specific options are required, please run IQTree separately"
+                "If specific options are required for the analysis, please run IQ-Tree separately."
             )
-
-            self.iqtree_handler.check_iqtree_path(self.input_args.iqtree)
-
+            
             # Validate and append ufboot and boot parameters to extra_arguments
             bb_arguments = self.iqtree_handler.validate_and_append_boot_arguments(
                 self.input_args.ufboot, self.input_args.boot
             )
-
+            extra_arguments = bb_arguments + [
+                    "-m MF",
+                    "--quiet",
+                ]
+            
+            logger.info("Used IQ-TREE options for Modelfinder run:")
             logger.info(" ".join(arguments_dict["arguments"]))
-            logger.info(" ".join(bb_arguments))
+            logger.info(" ".join(extra_arguments))
 
             self.iqtree_handler.run_iqtree_with_arguments(
                 arguments=arguments_dict["arguments"],
-                extra_arguments=bb_arguments
-                + [
-                    "-m MF",
-                    "--redo",
-                    "--quiet",
-                ],
+                extra_arguments=extra_arguments,
             ),
 
             # Update model in input arguments and re-construct arguments
@@ -361,35 +359,47 @@ class Satute:
             ]
 
             if number_rates > 1:
-                self.iqtree_handler.run_iqtree_with_arguments(
-                    arguments=arguments_dict["arguments"],
-                    extra_arguments=extra_arguments + ["-wspr"],
-                )
-            else:
-                self.iqtree_handler.run_iqtree_with_arguments(
-                    arguments=arguments_dict["arguments"],
-                )
+                extra_arguments = extra_arguments + ["-wspr"]
 
-        # TODO Test if iqtree exists
+            logger.info("Used IQ-TREE options for final run:")
+            logger.info(" ".join(arguments_dict["arguments"]))
+            logger.info(" ".join(extra_arguments))
+
+            self.iqtree_handler.run_iqtree_with_arguments(
+                arguments=arguments_dict["arguments"], 
+                extra_arguments=extra_arguments
+            )
+
         elif arguments_dict["option"] == "msa + model":
+            logger.info("Running IQ-TREE with constructed arguments")
+            logger.warning(
+                "Please consider for the analysis that IQ-Tree will be running with default options."
+            )
+            logger.warning(
+                "If specific options are required for the analysis, please run IQ-Tree separately."
+            )
+
             number_rates = self.handle_number_rates()
             bb_arguments = self.iqtree_handler.validate_and_append_boot_arguments(
                 self.input_args.ufboot, self.input_args.boot
             )
-            self.iqtree_handler.check_iqtree_path(self.input_args.iqtree)
-
+            
             extra_arguments = bb_arguments + [
                 "-m",
                 self.input_args.model,
-                "--redo",
                 "--quiet",
             ]
 
             if number_rates > 1:
                 extra_arguments = extra_arguments + ["-wspr"]
 
+            logger.info("Used IQ-TREE options:")
+            logger.info(" ".join(arguments_dict["arguments"]))
+            logger.info(" ".join(extra_arguments))
+
             self.iqtree_handler.run_iqtree_with_arguments(
-                arguments=arguments_dict["arguments"], extra_arguments=extra_arguments
+                arguments=arguments_dict["arguments"], 
+                extra_arguments=extra_arguments
             )
 
     def extract_tree(self):
@@ -498,6 +508,8 @@ class Satute:
         self.check_input()
         
         arguments_dict = self.construct_arguments()
+
+        print(arguments_dict)
 
         self.run_iqtree_workflow(arguments_dict)
 
