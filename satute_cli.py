@@ -506,6 +506,7 @@ class Satute:
 
             # Writing the .csv file
             results_data_frame.to_csv(f"{file_name_base}.csv")
+            logger.info("Finished writing results to files")
 
     def run(self):
         """
@@ -516,8 +517,6 @@ class Satute:
         self.check_input()
         
         arguments_dict = self.construct_arguments()
-
-        print(arguments_dict)
 
         self.run_iqtree_workflow(arguments_dict)
 
