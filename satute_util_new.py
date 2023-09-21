@@ -42,6 +42,9 @@ def spectral_decomposition(rate_matrix, psi_matrix):
     M = M @ scipy.linalg.fractional_matrix_power(psi_matrix, -1 / 2)
 
     """ eigendecomposition of matrix M"""
+    # Cassius' suggestion?
+    #lambMatrix, w = scipy.linalg.schur(M)
+    #lamb = np.diagonal(lambmatrix)
     lamb, w = np.linalg.eig(M)  # Compute the eigenvalues and eigenvectors.
     idx = lamb.argsort()[::-1]  # Order from large to small.
     lamb = lamb[idx]  # Order the eigenvalues (large to small).
