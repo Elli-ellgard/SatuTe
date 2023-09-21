@@ -239,13 +239,27 @@ class Satute:
                         "Cannot run Satute without a given MSA file or a given directory path."
                 )    
             else:
-                if self.input_args.tree is not None and self.input_args.model is None: 
-                    logger.error(
-                        "Cannot run Satute with only a tree file and MSA file. The model must be specified."
-                    )
-                    raise ValueError(
-                        "Cannot run Satute with only a tree file and MSA file. The model must be specified."
-                    ) 
+                if self.input_args.tree is not None: 
+                    if self.input_args.model is None: 
+                        logger.error(
+                            "Cannot run Satute with only a tree file and MSA file. The model must be specified."
+                        )
+                        raise ValueError(
+                            "Cannot run Satute with only a tree file and MSA file. The model must be specified."
+                        )
+                    else:
+                        if self.input_args.ufboot is not None:
+                            logger.error("Cannot run the Satute modi msa+model+tree with otpion -ufboot.")
+                            raise ValueError(
+                                "Cannot run the Satute modi msa+model+tree with otpion -ufboot."
+                            )
+                        if self.input_args.boot is not None:
+                            logger.error("Cannot run the Satute modi msa+model+tree with otpion -boot.")
+                            raise ValueError(
+                                "Cannot run the Satute modi msa+model+tree with otpion -boot."
+                            )
+
+                
 
     def run_iqtree_workflow(self, arguments_dict):
         if arguments_dict["option"] == "dir":
@@ -294,11 +308,7 @@ class Satute:
                 "If specific options are required for the analysis, please run IQ-Tree separately."
             )
             
-            # Validate and append ufboot and boot parameters to extra_arguments
-            bb_arguments = self.iqtree_handler.validate_and_append_boot_arguments(
-                self.input_args.ufboot, self.input_args.boot
-            )
-            extra_arguments = bb_arguments + [
+            extra_arguments = [
                     "-m MF",
                     "--quiet",
                 ]
@@ -319,6 +329,11 @@ class Satute:
 
             self.input_args.model = substitution_model
             number_rates = self.handle_number_rates()
+
+            # Validate and append ufboot and boot parameters to extra_arguments
+            bb_arguments = self.iqtree_handler.validate_and_append_boot_arguments(
+                self.input_args.ufboot, self.input_args.boot
+            )
 
             extra_arguments = bb_arguments + [
                 "-m",
@@ -461,7 +476,7 @@ class Satute:
                 if node.name.isdigit():
                     node.add_features(apriori=node.name)
                 # Assign new node names based on the preorder traversal index.
-                node.name = "Node" + str(idx) + "*"
+                node.name = "Node" + str(idx)
                 idx += 1
         return t
 
@@ -517,13 +532,13 @@ class Satute:
         self.check_input()
         
         arguments_dict = self.construct_arguments()
-
+        
         self.run_iqtree_workflow(arguments_dict)
 
         # ======== Tree File Handling =========
         to_be_tested_tree = self.tree_handling()
 
-        # ======== Model parameter ===========        
+        #======== Model parameter ===========        
         ## Get dictionary for stationary distribution 
         state_frequencies=parse_state_frequencies_from_file(f"{arguments_dict['msa_file'].resolve()}.iqtree")
 
