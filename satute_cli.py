@@ -7,6 +7,7 @@ import pandas as pd
 from ete3 import Tree
 from satute_repository import (
     parse_rate_matrices_from_file,
+    parse_rate_matrices_from_file_new,
     parse_state_frequencies_from_file,
     parse_substitution_model,
     parse_rate_from_model,
@@ -539,13 +540,18 @@ class Satute:
         to_be_tested_tree = self.tree_handling()
 
         #======== Model parameter ===========        
-        ## Get dictionary for stationary distribution 
-        state_frequencies=parse_state_frequencies_from_file(f"{arguments_dict['msa_file'].resolve()}.iqtree")
-
-        ## Get rate matrix and diagonal matrix of the stationary distribution
-        rate_matrix, psi_matrix = parse_rate_matrices_from_file(
-            f"{arguments_dict['msa_file'].resolve()}.iqtree"
+        ## Get dictionary for stationary distribution and diagonal matrix of the stationary distribution
+        state_frequencies, psi_matrix =parse_state_frequencies_from_file(f"{arguments_dict['msa_file'].resolve()}.iqtree")
+        
+        ## Get rate matrix using rate parameters and stationay distribution
+        rate_matrix = parse_rate_matrices_from_file_new(
+            f"{arguments_dict['msa_file'].resolve()}.iqtree",
+            state_frequencies
         )
+        #rate_matrix = parse_rate_matrices_from_file(
+        #   f"{arguments_dict['msa_file'].resolve()}.iqtree"
+        #)
+        
         ## Convert representation of rate_matrix         
         RATE_MATRIX = RateMatrix(rate_matrix)
 
