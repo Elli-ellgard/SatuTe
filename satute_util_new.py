@@ -41,15 +41,13 @@ def spectral_decomposition(rate_matrix, psi_matrix):
     M = scipy.linalg.fractional_matrix_power(psi_matrix, +1 / 2) @ rate_matrix
     M = M @ scipy.linalg.fractional_matrix_power(psi_matrix, -1 / 2)
 
-    """ eigendecomposition of matrix M"""
-    # Cassius' suggestion?
-    #lambMatrix, w = scipy.linalg.schur(M)
-    #lamb = np.diagonal(lambmatrix)
-    lamb, w = np.linalg.eig(M)  # Compute the eigenvalues and eigenvectors.
-    idx = lamb.argsort()[::-1]  # Order from large to small.
-    lamb = lamb[idx]  # Order the eigenvalues (large to small).
+    """ Schur decomposition of matrix M"""
+    lambMatrix, w = scipy.linalg.schur(M) # Compute the eigenvalues and eigenvectors.
+    lamb = np.diagonal(lambMatrix)
+    #lamb, w = np.linalg.eig(M)  # Compute the eigenvalues and eigenvectors.
+    idx = lamb.argsort()[::-1]  # Order from small to large.
+    lamb = lamb[idx]  # Order the eigenvalues according to idx.
     w = w[:, idx]  # Order the eigenvectors according to the eigenvalues"""
-
     # the first one should be the eigenvalue 0 in lamb, why are we doing the following?
     lamb_nozero = []  # list of eigenvalues without 0
     for i in lamb:
