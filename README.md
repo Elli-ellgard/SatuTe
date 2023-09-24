@@ -69,7 +69,9 @@ Certain combinations of command-line arguments are invalid:
    
 2. **Model and Tree without MSA**: Just providing the `-model` and `-tree` without a msa (`-msa`) is insufficient.
 
-3. **Edge without MSA**: The `-edge` option, used to focus the analysis on a specific branch, requires the `-msa` option.
+3. **MSA+Model+Tree with ufboot or boot option**: In the msa+model+tree mode, the inference is not re-done again, such that no ufboot and boot values can be determined.
+
+4. **Edge without MSA**: The `-edge` option, used to focus the analysis on a specific branch, requires at least the `-msa` option or `-dir` option.
 
 ---
 ### Arguments:
