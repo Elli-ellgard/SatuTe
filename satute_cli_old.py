@@ -7,8 +7,7 @@ import pandas as pd
 from ete3 import Tree
 from satute_repository import (
     parse_rate_matrices_from_file,
-    parse_rate_matrices_from_file_new,
-    parse_state_frequencies_from_file,
+    parse_state_frequencies,
     parse_substitution_model,
     parse_rate_from_model,
     parse_file_to_data_frame,
@@ -179,9 +178,7 @@ class Satute:
         ]
 
     def parse_input(self):
-        """
-        Parse command-line arguments.
-        """
+        """Parse command-line arguments."""
         parser = argparse.ArgumentParser(description="Satute")
         for argument in self.arguments:
             flag = argument["flag"]
@@ -190,137 +187,102 @@ class Satute:
         self.input_args = parser.parse_args()
         self.input_args_dict = vars(self.input_args)
 
-    def check_input(self):
-        """
-        Check allowed option combinations.
-        """
-        if self.input_args.dir is not None: 
-            error_str="The option -dir is for specifying a path to an existing directory containing IQ-TREE output files and cannot be run with the options msa, tree, model, nr, ufboot, boot."
-            if self.input_args.msa is not None:
-                logger.error( f"{error_str}")
-                raise ValueError(
-                    "Cannot run Satute with option -dir and -msa."
-                )
-            
-            if self.input_args.tree is not None:
-                logger.error( f"{error_str}")
-                raise ValueError(
-                    "Cannot run Satute with option -dir and -tree."
-                ) 
-            
-            if self.input_args.model is not None:
-                logger.error( f"{error_str}")
-                raise ValueError(
-                    "Cannot run Satute with option -dir and -model."
-                )
-            
-            if self.input_args.nr is not None:
-                logger.error( f"{error_str}")
-                raise ValueError(
-                    "Cannot run Satute with option -dir and -nr."
-                )
-            
-            if self.input_args.ufboot is not None:
-                logger.error( f"{error_str}")
-                raise ValueError(
-                    "Cannot run Satute with option -dir and -ufboot."
-                )
-            
-            if self.input_args.boot is not None:
-                logger.error( f"{error_str}")
-                raise ValueError(
-                    "Cannot run Satute with option -dir and -boot."
-                )
-        else: 
-            if self.input_args.msa is None: 
-                logger.error(
-                        "Cannot run Satute without a given MSA file or a given directory path."
-                )
-                raise ValueError(
-                        "Cannot run Satute without a given MSA file or a given directory path."
-                )    
-            else:
-                if self.input_args.tree is not None: 
-                    if self.input_args.model is None: 
-                        logger.error(
-                            "Cannot run Satute with only a tree file and MSA file. The model must be specified."
-                        )
-                        raise ValueError(
-                            "Cannot run Satute with only a tree file and MSA file. The model must be specified."
-                        )
-                    else:
-                        if self.input_args.ufboot is not None:
-                            logger.error("Cannot run the Satute modi msa+model+tree with otpion -ufboot.")
-                            raise ValueError(
-                                "Cannot run the Satute modi msa+model+tree with otpion -ufboot."
-                            )
-                        if self.input_args.boot is not None:
-                            logger.error("Cannot run the Satute modi msa+model+tree with otpion -boot.")
-                            raise ValueError(
-                                "Cannot run the Satute modi msa+model+tree with otpion -boot."
-                            )
-
-                
-
     def run_iqtree_workflow(self, arguments_dict):
         if arguments_dict["option"] == "dir":
             logger.info(
                 "IQ-TREE will not to be needed the analysis will be done on the already existing iqtree files."
             )
-        else: 
-            # For the other options IQ-Tree is necessary. Therefore, test if IQ-TREE exists
-            self.iqtree_handler.check_iqtree_path(self.input_args.iqtree)
-        
+
+        # TODO Test if IQTREE exists
         if arguments_dict["option"] == "dir + site_probabilities":
             logger.info("Running Satute with site probabilities")
             logger.info(
                 "IQ-TREE will be needed for the site probabilities for the corresponding rate categories."
             )
             number_rates = self.handle_number_rates()
- 
+            if number_rates > 1 and self.site_probabilities_file is None:
+                self.iqtree_handler.check_iqtree_path(self.input_args.iqtree)
+
+                print(arguments_dict)
+
+                iqtree_args = [
+                "-m",
+                self.input_args.model,
+                "--redo",
+                "-blfix",
+                "-n 0",
+                "-wspr"
+                ]
+
+                self.iqtree_handler.run_iqtree_with_arguments(
+                    arguments_dict["arguments"], iqtree_args
+                )
+
+        if arguments_dict["option"] == "msa + tree + model":
+            number_rates = self.handle_number_rates()
+
             iqtree_args = [
                 "-m",
                 self.input_args.model,
                 "--redo",
-                "--tree-fix",
+                "--quiet",
+                "-blfix",
                 "-n 0",
-                "-wspr",
-                "--quiet"
             ]
-                
-            logger.info("Used IQ-TREE options:")
-            logger.info(" ".join(arguments_dict["arguments"]))
-            logger.info(" ".join(iqtree_args))
 
+            self.site_probabilities_file = self.file_handler.find_file_by_suffix(
+                {".siteprob"}
+            )
+
+            # Add the '-wspr' option if number_rates > 1
+            if number_rates > 1 and self.site_probabilities_file is None:
+                iqtree_args.append("-wspr")
+                self.iqtree_handler.check_iqtree_path(self.input_args.iqtree)
+            
+            print(arguments_dict)
+            # Call IQ-TREE with the constructed arguments
             self.iqtree_handler.run_iqtree_with_arguments(
                 arguments_dict["arguments"], iqtree_args
             )
 
+        elif arguments_dict["option"] == "msa + tree":
+            logger.error(
+                "Cannot run Satute with only a tree file and MSA file. The model must be specified."
+            )
+            raise ValueError(
+                "Cannot run Satute with only a tree file and MSA file. The model must be specified."
+            )
 
         elif arguments_dict["option"] == "msa":
             logger.info("Running IQ-TREE with constructed arguments")
             logger.info(
-                "If no model is specified in input arguments, best-fit model will be extracted from log file."
+                "If no model specified in input arguments, extract best model from log file"
             )
             logger.warning(
-                "Please consider for the analysis that IQ-Tree will be running with default options."
+                "Please consider for the analysis that IQTree will be running with the default options"
             )
             logger.warning(
-                "If specific options are required for the analysis, please run IQ-Tree separately."
+                "If for the analysis specific options are required, please run IQTree separately"
             )
-            
-            extra_arguments = [
-                    "-m MF",
-                    "--quiet",
-                ]
-            
-            logger.info("Used IQ-TREE options for Modelfinder run:")
+
+            self.iqtree_handler.check_iqtree_path(self.input_args.iqtree)
+
+            # Validate and append ufboot and boot parameters to extra_arguments
+            bb_arguments = self.iqtree_handler.validate_and_append_boot_arguments(
+                self.input_args.ufboot, self.input_args.boot
+            )
+
             logger.info(" ".join(arguments_dict["arguments"]))
-            logger.info(" ".join(extra_arguments))
+            logger.info(" ".join(bb_arguments))
 
             self.iqtree_handler.run_iqtree_with_arguments(
                 arguments=arguments_dict["arguments"],
-                extra_arguments=extra_arguments,
+                extra_arguments=bb_arguments
+                + [
+                    "-m MF",
+                    "--redo",
+                    "--quiet",
+                ],
             ),
 
             # Update model in input arguments and re-construct arguments
@@ -331,10 +293,30 @@ class Satute:
             self.input_args.model = substitution_model
             number_rates = self.handle_number_rates()
 
-            # Validate and append ufboot and boot parameters to extra_arguments
+            extra_arguments = bb_arguments + [
+                "-m",
+                self.input_args.model,
+                "--redo",
+                "--quiet",
+            ]
+
+            if number_rates > 1:
+                self.iqtree_handler.run_iqtree_with_arguments(
+                    arguments=arguments_dict["arguments"],
+                    extra_arguments=extra_arguments + ["-wspr"],
+                )
+            else:
+                self.iqtree_handler.run_iqtree_with_arguments(
+                    arguments=arguments_dict["arguments"],
+                )
+
+        # TODO Test if iqtree exists
+        elif arguments_dict["option"] == "msa + model":
+            number_rates = self.handle_number_rates()
             bb_arguments = self.iqtree_handler.validate_and_append_boot_arguments(
                 self.input_args.ufboot, self.input_args.boot
             )
+            self.iqtree_handler.check_iqtree_path(self.input_args.iqtree)
 
             extra_arguments = bb_arguments + [
                 "-m",
@@ -346,84 +328,8 @@ class Satute:
             if number_rates > 1:
                 extra_arguments = extra_arguments + ["-wspr"]
 
-            logger.info("Used IQ-TREE options for final run:")
-            logger.info(" ".join(arguments_dict["arguments"]))
-            logger.info(" ".join(extra_arguments))
-
             self.iqtree_handler.run_iqtree_with_arguments(
-                arguments=arguments_dict["arguments"], 
-                extra_arguments=extra_arguments
-            )
-
-        elif arguments_dict["option"] == "msa + model":
-            logger.info("Running IQ-TREE with constructed arguments")
-            logger.warning(
-                "Please consider for the analysis that IQ-Tree will be running with default options."
-            )
-            logger.warning(
-                "If specific options are required for the analysis, please run IQ-Tree separately."
-            )
-
-            number_rates = self.handle_number_rates()
-            bb_arguments = self.iqtree_handler.validate_and_append_boot_arguments(
-                self.input_args.ufboot, self.input_args.boot
-            )
-            
-            extra_arguments = bb_arguments + [
-                "-m",
-                self.input_args.model,
-                "--quiet",
-            ]
-
-            if number_rates > 1:
-                extra_arguments = extra_arguments + ["-wspr"]
-
-            logger.info("Used IQ-TREE options:")
-            logger.info(" ".join(arguments_dict["arguments"]))
-            logger.info(" ".join(extra_arguments))
-
-            self.iqtree_handler.run_iqtree_with_arguments(
-                arguments=arguments_dict["arguments"], 
-                extra_arguments=extra_arguments
-            )
-
-        # elif arguments_dict["option"] == "msa + tree":
-        #     logger.error(
-        #         "Cannot run Satute with only a tree file and MSA file. The model must be specified."
-        #     )
-        #     raise ValueError(
-        #         "Cannot run Satute with only a tree file and MSA file. The model must be specified."
-        #     )
-
-        if arguments_dict["option"] == "msa + tree + model":
-            logger.info("Running IQ-TREE with constructed arguments")
-            logger.warning(
-                "Please consider for the analysis that IQ-Tree will be running with default options."
-            )
-            logger.warning(
-                "If specific options are required for the analysis, please run IQ-Tree separately."
-            )
-            number_rates = self.handle_number_rates()
-
-            iqtree_args = [
-                "-m",
-                self.input_args.model,
-                "--quiet",
-                "--tree-fix",
-                "-n 0",
-            ]
-
-            # Add the '-wspr' option if number_rates > 1
-            if number_rates > 1:
-                iqtree_args.append("-wspr")
-            
-            logger.info("Used IQ-TREE options:")
-            logger.info(" ".join(arguments_dict["arguments"]))
-            logger.info(" ".join(iqtree_args))
-
-            # Call IQ-TREE with the constructed arguments
-            self.iqtree_handler.run_iqtree_with_arguments(
-               arguments_dict["arguments"], iqtree_args
+                arguments=arguments_dict["arguments"], extra_arguments=extra_arguments
             )
 
     def extract_tree(self):
@@ -477,7 +383,7 @@ class Satute:
                 if node.name.isdigit():
                     node.add_features(apriori=node.name)
                 # Assign new node names based on the preorder traversal index.
-                node.name = "Node" + str(idx)
+                node.name = "Node" + str(idx) + "*"
                 idx += 1
         return t
 
@@ -522,54 +428,46 @@ class Satute:
 
             # Writing the .csv file
             results_data_frame.to_csv(f"{file_name_base}.csv")
-            logger.info("Finished writing results to files")
 
     def run(self):
-        """
-        Main entry point for running the Satute command-line tool.
-        """
-        # Parsing and checking input arguments and constructing IQ-TREE command-line arguments
+        """Main entry point for running the Satute command-line tool."""
+        # TODO Change number rated to None and test
+        number_rates = 1
+        dimension = 4
+        # Parsing input arguments and constructing IQ-TREE command-line arguments
         self.parse_input()
-        self.check_input()
-        
+
         arguments_dict = self.construct_arguments()
-        
+
         self.run_iqtree_workflow(arguments_dict)
+
+        rate_matrix, psi_matrix = parse_rate_matrices_from_file(
+            f"{arguments_dict['msa_file'].resolve()}.iqtree"
+        )
+
+        # TODO Change state frequency function
+        state_frequencies = parse_state_frequencies(
+            f"{arguments_dict['msa_file'].resolve()}.iqtree", dimension=dimension
+        )
 
         # ======== Tree File Handling =========
         to_be_tested_tree = self.tree_handling()
+        # ======== End Tree Handling =========
 
-        #======== Model parameter ===========        
-        ## Get dictionary for stationary distribution and diagonal matrix of the stationary distribution
-        state_frequencies, psi_matrix =parse_state_frequencies_from_file(f"{arguments_dict['msa_file'].resolve()}.iqtree")
-        
-        ## Get rate matrix using rate parameters and stationay distribution
-        rate_matrix = parse_rate_matrices_from_file_new(
-            f"{arguments_dict['msa_file'].resolve()}.iqtree",
-            state_frequencies
-        )
-        #rate_matrix = parse_rate_matrices_from_file(
-        #   f"{arguments_dict['msa_file'].resolve()}.iqtree"
-        #)
-        
-        ## Convert representation of rate_matrix         
+        # ======== Begin Rate Matrix =========
         RATE_MATRIX = RateMatrix(rate_matrix)
+        # ======== End Rate Matrix =========
 
-        ## Calculation of the spectral decomposition of the rate matrix
         (
             array_left_eigenvectors,
             array_right_eigenvectors,
             multiplicity,
         ) = spectral_decomposition(RATE_MATRIX.rate_matrix, psi_matrix)
 
-        ## Get number of rate categories in case of a +G or +R model
+        alignment = read_alignment_file(arguments_dict["msa_file"].resolve())
         number_rates = self.handle_number_rates()
 
-        # ======== Multiple Sequence Alignment
-        alignment = read_alignment_file(arguments_dict["msa_file"].resolve())
-        
-
-        # ========  Test for Branch Saturation =========
+        # ======== Saturation Test =========
         logger.info(
             f"""
             Running tests and initial IQ-Tree with configurations:
@@ -613,8 +511,7 @@ class Satute:
                 )
 
             category_rates_factors = parse_category_rates(
-                f"{self.input_args.msa.resolve()}.iqtree",
-                number_rates
+                f"{self.input_args.msa.resolve()}.iqtree"
             )
 
             results = multiple_rate_analysis(
@@ -705,9 +602,7 @@ class Satute:
         return number_rates
 
     def convert_paths_to_objects(self):
-        """
-        Convert input paths to Path objects for easier handling.
-        """
+        """Convert input paths to Path objects for easier handling."""
         paths_to_convert = ["dir", "iqtree", "msa", "tree"]
         for path_key in paths_to_convert:
             path_value = getattr(self.input_args, path_key)
@@ -720,16 +615,12 @@ class Satute:
             self.active_directory = self.input_args.dir
 
     def initialize_handlers(self):
-        """
-        Initialize the FileHandler and IqTreeHandler.
-        """
+        """Initialize the FileHandler and IqTreeHandler."""
         self.file_handler = FileHandler(self.active_directory)
         self.iqtree_handler = IqTreeHandler(self.input_args.iqtree)
 
     def validate_directory(self):
-        """
-        Validate the input directory.
-        """
+        """Validate the input directory."""
         if not self.input_args.dir.is_dir():
             raise InvalidDirectoryError("Input directory does not exist")
         if not os.listdir(self.input_args.dir):
@@ -756,6 +647,11 @@ class Satute:
         argument_option = {}
 
         if self.input_args.dir:
+            if self.input_args.model:
+                raise ValueError(
+                    "Model cannot be specified with a directory please run Satute with -msa and -model arguments"
+                )
+
             self.active_directory = self.input_args.dir
 
             # Check if the input directory exists
@@ -772,7 +668,7 @@ class Satute:
                 argument_option = {
                     "option": "dir",
                     "msa_file": self.input_args.msa,
-                    "arguments": ["-s", str(self.input_args.msa.resolve())],
+                    "arguments": ["-s", self.input_args.msa.resolve()],
                 }
             else:
                 raise NoAlignmentFileError("No multiple sequence alignment file found")
@@ -786,7 +682,7 @@ class Satute:
             else:
                 raise FileNotFoundError("No tree file found in directory")
 
-            # Find .iqtree file in the directory
+            # Find iqtree file in the directory
             self.iqtree_tree_file = self.file_handler.find_file_by_suffix({".iqtree"})
             # Check if iqtree file was found
             if self.iqtree_tree_file:

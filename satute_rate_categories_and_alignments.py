@@ -35,7 +35,7 @@ def build_categories_by_sub_tables(data_frame):
     return rate_category_dictionary
 
 
-def parse_category_rates(log_file):
+def parse_category_rates(log_file, number_rates):
     f = open(log_file, "r")
     lines = f.readlines()
     f.close()
@@ -49,9 +49,9 @@ def parse_category_rates(log_file):
         if line.strip().startswith("Category"):
             start_index = i + 1
         elif line.strip().startswith(
-            "Relative rates are computed as MEAN of the portion of the Gamma distribution falling in the category."
+            f"{number_rates}"
         ):
-            end_index = i
+            end_index = i + 1
             break
 
     if start_index == -1 or end_index == -1:

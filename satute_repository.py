@@ -44,7 +44,7 @@ def parse_output_state_frequencies(file_path):
     return df
 
 
-# Define a function to parse state frequencies from a log content
+""" # Define a function to parse state frequencies from a log content
 def parse_state_frequencies(log_file_path, dimension=4):
     # Read the content of the log file
     with open(log_file_path, "r") as f:
@@ -79,7 +79,7 @@ def parse_state_frequencies(log_file_path, dimension=4):
 
     # Return the frequencies dictionary
     return frequencies
-
+ """
 
 def extract_rate_matrix(file_path):
     file_content = ""
@@ -110,17 +110,162 @@ def extract_rate_matrix(file_path):
 
     return pd.DataFrame(rate_matrix, index=row_ids, columns=row_ids)
 
-
-def parse_rate_matrices_from_file(file_path):
+def parse_state_frequencies_from_file(file_path):
     """
-    Parse the rate matrix Q and stationary distribution pi from a given .iqtree file path.
+    Parse the stationary distribution pi from a given .iqtree file path.
+
+    Parameters:
+    - file_path (str): Path to the .iqtree file.
+
+    Returns
+    - frequencies (directory): The stationary distribution.
+    - phi_matrix (np.array): The stationary distribution pi with values filled in the diagonal.
+    """
+
+    # Check if file exists
+    if not os.path.isfile(file_path):
+        raise FileNotFoundError(f"The file '{file_path}' does not exist.")
+
+    with open(file_path, "r") as file:
+        lines = file.readlines()
+
+    index = next(
+        (idx for idx, line in enumerate(lines) if "State frequencies:" in line), None
+    )
+    if index is None:
+        raise ValueError("'State frequencies:' not found in file.")
+
+    # Dynamically determine the dimension 'n'
+    start_idx = next(
+        (idx for idx, line in enumerate(lines) if "Rate matrix Q:" in line), None
+    )
+    if start_idx is None:
+        raise ValueError("'Rate matrix Q:' not found in file. Determination of dimension not possible.")
+
+    # Detect the number of matrix rows based on numeric entries
+    n = 0
+    current_idx = start_idx + 2  # Adjusting to start from matrix values
+    while current_idx < len(lines) and re.search(
+        r"(\s*-?\d+\.\d+\s*)+", lines[current_idx]
+    ):
+        n += 1
+        current_idx += 1
+    
+    # Initialize an empty dictionary to hold the frequencies
+    frequencies = {}
+
+    # Parse the state frequencies
+    for idx, line in enumerate(lines):
+        # Parse the state frequencies (empirical counts)
+        if "State frequencies: (empirical counts from alignment)" in line:
+            try:
+                for i in range(n):
+                   # Split the line on " = " into a key and a value, and add them to the frequencies dictionary
+                   key, value = lines[idx + i + 2].split(" = ")
+                   frequencies[key] = float(value)  # convert value to float before storing
+            except (IndexError, ValueError) as e:
+                raise Exception(
+                    f"Error while parsing empirical state frequencies. Exception: {e}"
+                )
+
+        # If "equal frequencies" is in the log content, return a pseudo dictionary with equal frequencies
+        elif "State frequencies: (equal frequencies)" in line:
+            for i in range(n):
+                key = "key_" + str(i)
+                frequencies[key] = float(1 / n)
+
+    phi_matrix = np.diag(list(frequencies.values()))
+
+    return frequencies, phi_matrix
+
+def parse_rate_matrices_from_file_new(file_path, state_frequencies):
+    """
+    Parse the rate parameters R  .iqtree file path and determine 
+    the rate matrix Q using the rate parameters and stationary distribution
 
     Parameters:
     - file_path (str): Path to the .iqtree file.
 
     Returns:
     - rate_matrix (np.array): The parsed rate matrix Q.
-    - phi_matrix (np.array): The stationary distribution pi with values filled in the diagonal.
+    """
+
+    # Check if file exists
+    if not os.path.isfile(file_path):
+        raise FileNotFoundError(f"The file '{file_path}' does not exist.")
+
+    with open(file_path, "r") as file:
+        lines = file.readlines()
+
+    # Dynamically determine the matrix dimension 'n'
+    start_idx = next(
+        (idx for idx, line in enumerate(lines) if "Rate matrix Q:" in line), None
+    )
+    if start_idx is None:
+        raise ValueError("'Rate matrix Q:' not found in file.")
+
+    # Detect the number of matrix rows based on numeric entries
+    n = 0
+    current_idx = start_idx + 2  # Adjusting to start from matrix values
+    while current_idx < len(lines) and re.search(
+        r"(\s*-?\d+\.\d+\s*)+", lines[current_idx]
+    ):
+        n += 1
+        current_idx += 1
+
+    # Find the start and end indices of the rate parameter
+    start_index = -1
+    end_index = -1
+
+    for i, line in enumerate(lines):
+        if line.strip().startswith("Rate parameter R:"):
+            start_index = i + 1
+        elif line.strip().startswith("State frequencies"):
+            end_index = i
+            break
+
+    if start_index == -1 or end_index == -1:
+        raise ValueError("Rate parameter not found in the log file.")
+    
+    # Get the lines in between the start and end markers
+    parameter = lines[start_index + 1 : end_index]
+    rates = {}
+
+    # Loop through the lines we've extracted
+    for line in parameter:
+        # If the line is not empty after removing leading/trailing whitespace
+        if line.strip():
+           # Split the line on " = " into a key and a value, and add them to the frequencies dictionary
+            key, value = line.strip().split(":")
+            rates[key] = float(value)  # convert value to float before storing
+    
+    only_rates=list(rates.values())
+    list_state_freq=list(state_frequencies.values())
+    idx = 0
+    rate_matrix = np.zeros((n, n))
+    for i in range(n):
+        for j in range(i+1,n):
+            rate_matrix[i,j] = only_rates[idx] * list_state_freq[j]
+            rate_matrix[j,i] = only_rates[idx] * list_state_freq[i]
+            idx += 1
+    average_rate = 0
+    for i in range(n):
+        rate_matrix[i,i] = - sum(rate_matrix[i,])
+        average_rate = average_rate + rate_matrix[i,i] * list_state_freq[i]    
+    rate_matrix = - rate_matrix / average_rate
+
+    return rate_matrix
+
+
+def parse_rate_matrices_from_file(file_path):
+    """
+    Parse the rate matrix Q  from a given .iqtree file path.
+
+    Parameters:
+    - file_path (str): Path to the .iqtree file.
+
+    Returns:
+    - rate_matrix (np.array): The parsed rate matrix Q.
     """
 
     # Check if file exists
@@ -147,7 +292,6 @@ def parse_rate_matrices_from_file(file_path):
         current_idx += 1
 
     rate_matrix = np.zeros((n, n))
-    phi_matrix = np.zeros((n, n))
 
     # Parse the rate matrix Q
     for idx, line in enumerate(lines):
@@ -162,22 +306,7 @@ def parse_rate_matrices_from_file(file_path):
             except (IndexError, ValueError) as e:
                 raise Exception(f"Error while parsing rate matrix. Exception: {e}")
 
-        # Parse the state frequencies (empirical counts)
-        elif "State frequencies: (empirical counts from alignment)" in line:
-            try:
-                for j in range(n):
-                    phi_matrix[j, j] = float(lines[idx + j + 2].split()[2])
-            except (IndexError, ValueError) as e:
-                raise Exception(
-                    f"Error while parsing empirical state frequencies. Exception: {e}"
-                )
-
-        # If the state frequencies are equal, fill the diagonal accordingly
-        elif "State frequencies: (equal frequencies)" in line:
-            np.fill_diagonal(phi_matrix, 1 / n)
-
-    return rate_matrix, phi_matrix
-
+    return rate_matrix
 
 # Return the function for review without executing it
 
