@@ -1,6 +1,5 @@
 import copy
 
-
 # TreeNode class
 class TreeNode:
     def __init__(self, name=None, length=None):
@@ -107,10 +106,7 @@ def attach_to_all_edges_with_lengths(unrooted, rooted):
 if __name__ == "__main__":
     # Test examples
     examples = [
-        ("((A,B),(C,D));", "((E,F),(G,H));"),
-        ("((A:1,B:1):1,(C:1,D:1):1);", "((E:1,F:1),(G:1,H:1):1);"),
-        ("((A:1,B:1):1,(C:1,D:1):1);", "(((E:1,F:1),G:1):1,I:1);"),
-        ("((A,B),(C,D));", "(((E,F),G),H);"),
+        ("((A:1,B:1):1,(C:1,D:1):1);", "(((E:1,F:1),G:1),H:1);"),
     ]
 
     for unrooted_str, rooted_str in examples:
@@ -123,3 +119,5 @@ if __name__ == "__main__":
         )
         for tree_str in newick_results:
             print(tree_str)
+
+

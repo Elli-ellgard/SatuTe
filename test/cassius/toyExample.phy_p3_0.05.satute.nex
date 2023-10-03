@@ -1,0 +1,4 @@
+#NEXUS
+BEGIN TREES;
+Tree tree1 = (seq1:1.083e-06,seq2:1.083e-06,(long1:1.083e-06,long2:1.083e-06)Node2:10.2762);
+END TREES;

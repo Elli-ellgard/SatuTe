@@ -6,7 +6,6 @@ from pathlib import Path
 import pandas as pd
 from ete3 import Tree
 from satute_repository import (
-    parse_rate_matrices_from_file,
     parse_rate_matrices_from_file_new,
     parse_state_frequencies_from_file,
     parse_substitution_model,
@@ -515,10 +514,13 @@ class Satute:
             results_data_frame = pd.DataFrame(results_set)
 
             # Writing the .tree file
-            with open(f"{file_name_base}.tree", "w") as tree_file:
+            with open(f"{file_name_base}.nex", "w") as tree_file:
                 newick_string = to_be_tested_tree.write(format=1, features=["apriori"])
-                newick_string = map_values_to_newick(newick_string, results_data_frame)
-                tree_file.write(newick_string)
+                newick_string = map_values_to_newick(newick_string, results_data_frame)                
+                tree_file.write("#NEXUS")
+                tree_file.write("BEGIN TREES;")
+                tree_file.write(f"Tree tree1 = {newick_string}")
+                tree_file.write("END TREES;")
 
             # Writing the .csv file
             results_data_frame.to_csv(f"{file_name_base}.csv")
@@ -676,12 +678,17 @@ class Satute:
             results_data_frame = pd.DataFrame(results_set["result_list"])
 
             if "rescaled_tree" in results_set and "result_list" in results_set:
-                with open(f"{file_name}.tree", "w") as tree_file_writer:
+                with open(f"{file_name}.nex", "w") as tree_file_writer:
                     newick_string = results_set["rescaled_tree"].write(format=1)
                     newick_string = map_values_to_newick(
                         newick_string, results_data_frame
                     )
-                    tree_file_writer.write(newick_string)
+                       # Writing the .tree file
+                    tree_file_writer.write("#NEXUS\n")
+                    tree_file_writer.write("BEGIN TREES;\n")
+                    tree_file_writer.write(f"Tree tree1 = {newick_string}\n")
+                    tree_file_writer.write("END TREES;\n")
+
                 results_data_frame.to_csv(f"{file_name}.csv")
         logger.info("Finished writing results for category rates to files")
 

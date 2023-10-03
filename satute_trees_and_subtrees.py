@@ -123,7 +123,7 @@ def map_values_to_newick(newick, df):
         escaped_target_node = re.escape(target_node)
 
         # Adjusting the metadata as per the requirements
-        meta_data = f"delta={row['delta']},c_s={row['c_s']},p_value={row['p_value']},result_test={row['result_test']}"
+        meta_data = f"&delta={row['delta']}, &c_s={row['c_s']}, &p_value={row['p_value']}, &result_test={row['result_test']}"
 
         # Check for existing square brackets after the node
         pattern_with_brackets = re.compile(
