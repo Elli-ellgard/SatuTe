@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import argparse
+import subprocess
 import os
 import logging
 from pathlib import Path
@@ -46,6 +47,8 @@ class Satute:
         output_prefix=None,
         ufboot=None,
         boot=None,
+        image=False,
+
     ):
         # IQ-TREE related attributes
         self.iqtree = iqtree
@@ -175,6 +178,37 @@ class Satute:
                 "default": None,
                 "metavar": "<edge_name>",
             },
+
+            {
+                "flag": "-image",
+                "help": (
+                    "Flag to enable the generation of images using the nodestyle.py script."
+                ),
+                "action": "store_true",  # Set this to True when the flag is provided
+                "default": False,  # Default value is False when the flag is not provided
+            },
+
+            {
+                "flag": "-midpoint",
+                "help": "Flag to enable setting outgroup to the midpoint",
+                "action": "store_true",  # Set this to True when the flag is provided
+                "default": False,  # Default value is False when the flag is not provided
+            },
+
+            {
+                "flag": "-cycle",
+                "help": "creates image in cycle form",
+                "action": "store_true",  # Set this to True when the flag is provided
+                "default": False,  # Default value is False when the flag is not provided
+            },
+
+            {
+                "flag": "-compact",
+                "help": "makes image more compact",
+                "action": "store_true",  # Set this to True when the flag is provided
+                "default": False,  # Default value is False when the flag is not provided
+            },
+
         ]
 
     def parse_input(self):
@@ -480,6 +514,7 @@ class Satute:
                 idx += 1
         return t
 
+
     def tree_handling(self):
         """
         Handle the extraction and subsequent modification of the tree.
@@ -492,7 +527,35 @@ class Satute:
             Tree: The modified tree.
         """
         to_be_tested_tree = self.extract_tree()
-        return self.modify_tree(to_be_tested_tree)
+        modified_tree = self.modify_tree(to_be_tested_tree)
+
+
+        msa_directory = os.path.dirname(self.input_args.msa)
+
+
+
+        # Add code to write .node.treefile here
+        file_name_base = f"{self.input_args.msa.resolve()}_{self.input_args.alpha}.satute"
+
+        # Append the edge information to the file name if provided
+        if self.input_args.edge:
+            file_name_base += f"_{self.input_args.edge}"
+
+        #
+        ascii_tree = modified_tree.get_ascii(attributes=["name", "dist", "size"])
+
+
+        #writing the .node.treefile
+        with open(f"{file_name_base}.node.treefile", "w") as tree_file:
+            newick_string = modified_tree.write(format=1)
+
+            tree_file.write(newick_string)
+        #writing the ascii tree
+        with open(f"{file_name_base}.tree.txt", "w") as tree_txt:
+            tree_txt.write(ascii_tree)
+
+
+        return modified_tree
 
     def write_results_for_single_rate(self, results, to_be_tested_tree):
         """
@@ -533,28 +596,42 @@ class Satute:
         # Parsing and checking input arguments and constructing IQ-TREE command-line arguments
         self.parse_input()
         self.check_input()
-        
+
         arguments_dict = self.construct_arguments()
-        
+
+        if self.input_args.dir is not None:
+            # If the -dir flag is provided, use the specified directory
+            directory_path = self.input_args.dir
+            os.environ["SATUTE_DIRECTORY_PATH"] = directory_path
+        elif self.input_args.msa is not None:
+            # If the -msa flag is provided, extract the directory path from the input file path
+            directory_path = os.path.dirname(self.input_args.msa)
+            os.environ["SATUTE_DIRECTORY_PATH"] = directory_path
+        else:
+            # Handle the case where neither -dir nor -msa is provided
+            raise ValueError("You must provide either -dir or -msa flag.")
+
         self.run_iqtree_workflow(arguments_dict)
+
 
         # ======== Tree File Handling =========
         to_be_tested_tree = self.tree_handling()
 
-        #======== Model parameter ===========        
+        # ======== Model parameter ===========
         ## Get dictionary for stationary distribution and diagonal matrix of the stationary distribution
-        state_frequencies, psi_matrix =parse_state_frequencies_from_file(f"{arguments_dict['msa_file'].resolve()}.iqtree")
-        
+        state_frequencies, psi_matrix = parse_state_frequencies_from_file(
+            f"{arguments_dict['msa_file'].resolve()}.iqtree")
+
         ## Get rate matrix using rate parameters and stationay distribution
         rate_matrix = parse_rate_matrices_from_file_new(
             f"{arguments_dict['msa_file'].resolve()}.iqtree",
             state_frequencies
         )
-        #rate_matrix = parse_rate_matrices_from_file(
+        # rate_matrix = parse_rate_matrices_from_file(
         #   f"{arguments_dict['msa_file'].resolve()}.iqtree"
-        #)
-        
-        ## Convert representation of rate_matrix         
+        # )
+
+        ## Convert representation of rate_matrix
         RATE_MATRIX = RateMatrix(rate_matrix)
 
         ## Calculation of the spectral decomposition of the rate matrix
@@ -569,7 +646,6 @@ class Satute:
 
         # ======== Multiple Sequence Alignment
         alignment = read_alignment_file(arguments_dict["msa_file"].resolve())
-        
 
         # ========  Test for Branch Saturation =========
         logger.info(
@@ -633,6 +709,29 @@ class Satute:
             )
 
             self.write_results_for_category_rates(results)
+
+        if self.input_args.image:
+            # Call your nodestyle.py script to generate images
+            nodestyle_script = "nodestyle.py"  # Replace with the actual path if needed
+
+            # Define the arguments to pass to nodestyle.py
+            nodestyle_args = ["-image"]
+
+            # Check if the -midpoint flag is provided and add it if necessary
+            if self.input_args.midpoint:
+                nodestyle_args.append("-midpoint")
+            if self.input_args.cycle:
+                nodestyle_args.append("-cycle")
+            if self.input_args.compact:
+                nodestyle_args.append("-compact")
+
+            # Construct the full command
+            cmd = ["python", nodestyle_script] + nodestyle_args
+
+            # Execute the command
+            subprocess.run(cmd)
+
+            print("Generating images using nodestyle.py script...")
 
     def rename_internal_nodes(self, t: Tree) -> Tree:
         """
