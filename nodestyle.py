@@ -36,8 +36,8 @@ treefile_paths = glob.glob(pattern)
 # Filter out the paths with ".node.treefile"
 filtered_treefile_paths = [path for path in treefile_paths if not path.endswith(".node.treefile")]
 
-print("Matching .treefile paths:")
-print(filtered_treefile_paths)
+# print("Matching .treefile paths:")
+# print(filtered_treefile_paths)
 
 files = os.listdir(directory_path)
 
@@ -330,12 +330,13 @@ if filtered_treefile_paths:
         pdf_file_name = base_file_name + pdf_suffix
         pdf_file_path = os.path.join(image_directory, pdf_file_name)
 
-        dpi = 600  # Adjust this value as needed
+        dpi = 96#600  # Adjust this value as needed
 
         t.render(pdf_file_path, tree_style=ts, dpi=dpi)
         svg_file_name = base_file_name + svg_suffix
         svg_file_path = os.path.join(image_directory, svg_file_name)
-        t.render(svg_file_path, tree_style=ts, dpi=dpi)
+        t.render(svg_file_path, tree_style=ts, dpi=dpi, w=800, h=600)  # Adjust w and h values as needed
+
 
 
 else:
