@@ -73,6 +73,49 @@ def extract_rate_matrix(file_path):
 
     return pd.DataFrame(rate_matrix, index=row_ids, columns=row_ids)
 
+def parse_number_rate_categories_from_file(file_path):
+    """
+    Parse the number of rate categories from a given .iqtree file path.
+
+    Parameters:
+    - file_path (str): Path to the .iqtree file.
+
+    Return:
+    - number_rate_categories (int): The number of rate categories.
+    """
+
+    # Check if file exists
+    if not os.path.isfile(file_path):
+        raise FileNotFoundError(f"The file '{file_path}' does not exist.")
+
+    with open(file_path, "r") as file:
+        lines = file.readlines()
+
+    index = next(
+        (idx for idx, line in enumerate(lines) if "Model of rate heterogeneity:" in line), None
+    )
+    if index is None:
+        raise ValueError("'Model of rate heterogeneity:' not found in file.")
+    
+    if "Uniform" in lines[index]:
+        number_rate_categories = 1
+    else:
+        #initialize substrings
+        sub1 = "with "
+        sub2 = " categories"
+        # getting index of substrings
+        idx1 = lines[index].index(sub1)
+        idx2 = lines[index].index(sub2)
+
+        res = ''
+        # getting elements in between
+        for idx3 in range(idx1 + len(sub1), idx2):
+            res = res + lines[index][idx3]
+        
+        number_rate_categories = int(res)
+ 
+    return number_rate_categories
+
 def parse_state_frequencies_from_file(file_path):
     """
     Parse the stationary distribution pi from a given .iqtree file path.
@@ -328,11 +371,17 @@ def parse_rate_from_model(model):
         return 1  # default number_rates = 1 if no +G or +R model
 
     try:
-        # Extract the substring after '+G'
+        # Extract the substring after e.g.'+G'
         number = model[rate_start_index:]
 
         # Parse the extracted substring as an integer
-        rate = int(number)
+        if "{" in number:
+            # e.g. +G{0.9} will fix the Gamma shape parameter (alpha)to 0.9
+            # discrete Gamma model: default 4 rate categories
+            rate = 4
+        else:
+            # number of rate categories
+            rate = int(number)
 
         return rate
     except ValueError:

@@ -6,6 +6,7 @@ from pathlib import Path
 import pandas as pd
 from ete3 import Tree
 from satute_repository import (
+    parse_number_rate_categories_from_file,
     parse_rate_matrices_from_file_new,
     parse_state_frequencies_from_file,
     parse_substitution_model,
@@ -265,7 +266,7 @@ class Satute:
             logger.info(
                 "IQ-TREE will be needed for the site probabilities for the corresponding rate categories."
             )
-            number_rates = self.handle_number_rates()
+            #number_rates = self.handle_number_rates()
 
             iqtree_args = [
                 "-m",
@@ -550,8 +551,12 @@ class Satute:
         ) = spectral_decomposition(RATE_MATRIX.rate_matrix, psi_matrix)
 
         ## Get number of rate categories in case of a +G or +R model
-        number_rates = self.handle_number_rates()
-
+        number_rates = parse_number_rate_categories_from_file(
+            f"{arguments_dict['msa_file'].resolve()}.iqtree"
+        )
+        print(number_rates)
+        #number_rates = self.handle_number_rates()
+        #print(number_rates)
         # ======== Multiple Sequence Alignment
         alignment = read_alignment_file(arguments_dict["msa_file"].resolve())
 
