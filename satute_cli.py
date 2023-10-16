@@ -128,14 +128,14 @@ class Satute:
                 "metavar": "<evolution_model>",
             },
             {
-                "flag": "-nr",
+                "flag": "-category",
                 "help": (
-                    "Number of rate categories for the model. Relevant for models with gamma-distributed rate variations. "
-                    "If the `-model` option includes rate variation (e.g., `+G4`), the `-nr` should match the number in the model."
+                    "Rate categories of interest. Relevant for models with gamma-distributed rate variations or FreeRate model. "
+                    "If the `-model` option includes rate variation (e.g., `+G4`), the `-category` should be a number between 1 and 4."
                 ),
                 "type": int,
                 "default": self.nr,
-                "metavar": "<number_of_rates>",
+                "metavar": "<rate_category>",
             },
             {
                 "flag": "-ufboot",
