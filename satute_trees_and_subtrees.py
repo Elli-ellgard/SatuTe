@@ -2,6 +2,7 @@ from ete3 import Tree
 import pandas as pd
 import re
 
+
 def parse_file_to_data_frame(file_path):
     try:
         # Read the file into a dataframe
@@ -141,5 +142,3 @@ def map_values_to_newick(newick, df):
             newick = pattern_without_brackets.sub(f"\\1[{meta_data}]", newick)
 
     return newick
-
-

@@ -320,7 +320,7 @@ def parse_rate_and_frequencies_and_model(input_path, dimension, model="GTR"):
     model_final = parse_rate_parameters(log_file_path, dimension, model=model)
 
     # Parse state frequencies from the log content
-    state_frequencies = parse_state_frequencies(log_file_path, dimension=dimension)
+    state_frequencies = parse_state_frequencies_from_file(log_file_path)
 
     # Create a string of state frequencies separated by a space
     concatenated_rates = " ".join(map(str, state_frequencies.values()))

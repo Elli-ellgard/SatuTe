@@ -1,9 +1,7 @@
 import numpy as np
 import pandas as pd
-from typing import Optional
 from functools import cache
 from scipy.sparse.linalg import expm
-import dataclasses
 from ete3 import Tree
 from satute_rate_categories_and_alignments import read_alignment_file
 from satute_trees_and_subtrees import rescale_branch_lengths, parse_newick_file
@@ -16,6 +14,8 @@ from Bio.Align import MultipleSeqAlignment
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 from concurrent.futures import ProcessPoolExecutor
+from graph import Graph, Node
+from rate_matrix import RateMatrix
 
 
 NUCLEOTIDE_CODE_VECTOR = {
@@ -39,74 +39,6 @@ NUCLEOTIDE_CODE_VECTOR = {
 }
 
 RATE_MATRIX = np.array([[-3, 1, 1, 1], [1, -3, 1, 1], [1, 1, -3, 1], [1, 1, 1, -3]])
-
-
-class RateMatrix:
-    """Class representing a rate matrix for nucleotide substitutions."""
-
-    def __init__(self, rate_matrix):
-        """Initialize the RateMatrix with a given rate matrix."""
-        self.rate_matrix = rate_matrix
-
-    def __hash__(self):
-        """Return the hash value of the RateMatrix."""
-        return id(self)
-
-
-class DirectedAcyclicGraph:
-    """Class representing a directed acyclic graph (DAG) of interconnected nodes."""
-
-    def __init__(self, edges):
-        """Initialize the DAG with a list of directed edges."""
-        for left, right, branch_length in edges:
-            left.connect(right, branch_length)
-            right.connect(left, branch_length)
-        self.edges = edges
-
-    def get_edges(self):
-        """Return the list of edges in the DAG."""
-        return self.edges
-
-    def set_edges(self, edges):
-        self.edges = edges
-
-    def get_branch_length(self, edge):
-        """Return the branch length of a given edge in the DAG."""
-        return self.branch_lengths[edge]
-
-
-class Node:
-    """Class representing a node in the DAG."""
-
-    name: str
-    state: Optional[np.array] = dataclasses.field(default_factory=lambda: None)
-    connected: dict = dataclasses.field(default_factory=dict)
-
-    def __init__(self, name, state=None, connected=None):
-        """Initialize a Node with a name, optional state vector, and optional connections."""
-        self.name = name
-        self.state = state
-        self.connected = connected or {}
-
-    def __hash__(self):
-        """Return the hash value of the Node."""
-        return id(self)
-
-    def __eq__(self, other):
-        """Check if two nodes are equal."""
-        return self is other
-
-    def connect(self, other_node, branch_length):
-        """Connect the current node to another node with a given branch length."""
-        self.connected[other_node] = branch_length
-
-    def is_leaf(self):
-        """Check if the node is a leaf (has a state vector)."""
-        return self.state is not None
-
-    def __repr__(self):
-        """Return the string representation of the Node."""
-        return f"Node({self.name})"
 
 
 @cache
@@ -185,55 +117,6 @@ def calculate_exponential_matrix(rate_matrix, branch_length):
     return expm(rate_matrix.rate_matrix * branch_length)
 
 
-def process_site(args):
-    i, tree, alignment, rate_matrix, alignment_look_up_table, focused_edge = args
-    partial_likelihood_per_site_storage = {}
-
-    graph = convert_ete3_tree_to_directed_acyclic_graph(
-        tree, alignment[:, i : i + 1], alignment_look_up_table
-    )
-    if focused_edge:
-        filter_graph_edges_by_focus(graph, focused_edge)
-    for edge in graph.get_edges():
-        right, left, branch_length = edge
-        p1, _ = partial_likelihood(graph, left, right, rate_matrix)
-        p2, _ = partial_likelihood(graph, right, left, rate_matrix)
-        likelihood_data = get_partial_likelihood_dict(
-            (left, right), p1, p2, i, branch_length
-        )
-        edge_name = f"({left.name}, {right.name})"
-        update_partial_likelihood_storage(
-            partial_likelihood_per_site_storage, edge_name, likelihood_data
-        )
-
-    return partial_likelihood_per_site_storage
-
-
-def calculate_partial_likelihoods_for_sites_parallel(
-    tree, alignment, rate_matrix, focused_edge=None
-):
-    alignment_look_up_table = get_alignment_look_up_table(alignment)
-    results = []
-
-    with ProcessPoolExecutor() as executor:
-        args = [
-            (i, tree, alignment, rate_matrix, alignment_look_up_table, focused_edge)
-            for i in range(len(alignment[0].seq))
-        ]
-        results = list(executor.map(process_site, args))
-
-    # Combine results from all processes
-    combined_results = {}
-    for res in results:
-        for key, value in res.items():
-            if key in combined_results:
-                combined_results[key]["left"].extend(value["left"])
-                combined_results[key]["right"].extend(value["right"])
-            else:
-                combined_results[key] = value
-    return combined_results
-
-
 def get_initial_likelihood_vector(state):
     """Get the initial likelihood vector for a given nucleotide state."""
     return np.array(NUCLEOTIDE_CODE_VECTOR[state]).T
@@ -293,7 +176,7 @@ def convert_ete3_tree_to_directed_acyclic_graph(
             )
 
     # Return a DirectedAcyclicGraph representation of the tree using the constructed edges.
-    return DirectedAcyclicGraph(edge_list)
+    return Graph(edge_list)
 
 
 def get_alignment_look_up_table(alignment):
@@ -619,9 +502,12 @@ def process_test_statistics_posterior(
 
     return {key: value for key, value in zip(result_keys, results)}
 
+
 """
     ======= Tests =======
 """
+
+
 def name_nodes_by_level_order(tree):
     """Name nodes in a tree based on level-order traversal."""
     i = 1
@@ -630,6 +516,7 @@ def name_nodes_by_level_order(tree):
             node.name = f"Node{i}"
             i += 1
     return tree
+
 
 def test_one_partial_likelihood():
     a1, b2, u3, u4, c5, b6 = [
@@ -641,7 +528,7 @@ def test_one_partial_likelihood():
         Node("D", get_initial_likelihood_vector("A")),
     ]
 
-    tree = DirectedAcyclicGraph(
+    tree = Graph(
         [(a1, u3, 0.01), (u3, b2, 0.01), (u3, u4, 0.01), (u4, c5, 0.01), (u4, b6, 0.01)]
     )
 
@@ -649,7 +536,7 @@ def test_one_partial_likelihood():
         left, right, branch_length = edge
         p1 = partial_likelihood(tree, left, right)
         p2 = partial_likelihood(tree, right, left)
-        test(p1, p2)
+
 
 def test_three():
     alignment_file = "./Clemens/example_3/sim-JC+G-AC1-AG1-AT1-CG1-CT1-GT1-alpha1.2-taxa64-len1000bp-bla0.01-blb0.8-blc0.2-rep01.fasta"
@@ -661,6 +548,7 @@ def test_three():
     partial_likelihood_per_site_storage = calculate_partial_likelihoods_for_sites(
         t, alignment, rate_matrix
     )
+
 
 def test_two():
     alignment_file = "./Clemens/example_3/sim-JC+G-AC1-AG1-AT1-CG1-CT1-GT1-alpha1.2-taxa64-len1000bp-bla0.01-blb0.8-blc0.2-rep01.fasta"
@@ -681,6 +569,7 @@ def test_two():
         array_right_eigenvectors,
         multiplicity,
     ) = spectral_decomposition(RATE_MATRIX, psi_matrix)
+
 
 def test_one():
     # Create SeqRecord objects for your sequences
