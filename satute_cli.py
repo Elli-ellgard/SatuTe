@@ -682,21 +682,8 @@ class Satute:
 
     def handle_number_rates(self):
         number_rates = 1
-        if self.input_args.nr:
-            if self.input_args.model:
-                number_rates_model = parse_rate_from_model(self.input_args.model)
-                if self.input_args.nr == number_rates_model:
-                    number_rates = self.input_args.nr
-                else:
-                    raise ValueError(
-                        "Input number of rates is unequal to number of rates of the model!"
-                    )
-            else:
-                number_rates = self.input_args.nr
-        else:
-            if self.input_args.model:
-                number_rates = parse_rate_from_model(self.input_args.model)
-
+        if self.input_args.model:
+            number_rates = parse_rate_from_model(self.input_args.model)
         return number_rates
 
     def convert_paths_to_objects(self):
