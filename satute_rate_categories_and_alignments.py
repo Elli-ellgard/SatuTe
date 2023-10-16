@@ -123,14 +123,16 @@ def guess_alignment_format(file_name):
 def read_alignment_file(file_name):
     # Guess the format of the file
     file_format = guess_alignment_format(file_name)
-
     # If the format could not be guessed, raise an error
     if file_format is None:
         raise ValueError("Could not guess the format of the file.")
-
     # Try to read the file in the guessed format
     try:
-        alignment = AlignIO.read(file_name, file_format)
+        alignment = AlignIO.read(file_name, file_format)        
+        for record in alignment:
+            record.seq = record.seq.upper()
+            record.seq = record.seq.upper().replace(".", "-")
+            record.seq = record.seq.upper().replace("!", "-")
         return alignment
     except Exception as e:
         print(f"An error occurred while reading the file: {str(e)}")

@@ -44,43 +44,6 @@ def parse_output_state_frequencies(file_path):
     return df
 
 
-""" # Define a function to parse state frequencies from a log content
-def parse_state_frequencies(log_file_path, dimension=4):
-    # Read the content of the log file
-    with open(log_file_path, "r") as f:
-        log_content = f.read()
-    # If the string "equal frequencies" is not in the log content, proceed to parse
-    # Initialize an empty dictionary to hold the frequencies
-    frequencies = {}
-    if "equal frequencies" not in log_content:
-        # Define the start and end markers for the section of the file we want to parse
-        start_line = "State frequencies: (empirical counts from alignment)"
-        end_line = "Rate matrix Q:"
-        # Split the log content into lines
-        lines = log_content.split("\n")
-        # Find the indices of the start and end markers
-        start_index = lines.index(start_line)
-        end_index = lines.index(end_line)
-        # Get the lines in between the start and end markers
-        freq_lines = lines[start_index + 1 : end_index]
-
-        # Loop through the lines we've extracted
-        for line in freq_lines:
-            # If the line is not empty after removing leading/trailing whitespace
-            if line.strip():
-                # Split the line on " = " into a key and a value, and add them to the frequencies dictionary
-                key, value = line.strip().split(" = ")
-                frequencies[key] = float(value)  # convert value to float before storing
-    else:
-        # If "equal frequencies" is in the log content, return a pseudo dictionary with equal frequencies
-        for i in range(dimension):
-            key = "key_" + str(i)
-            frequencies[key] = 1 / dimension
-
-    # Return the frequencies dictionary
-    return frequencies
- """
-
 def extract_rate_matrix(file_path):
     file_content = ""
     # Load the file content into a string

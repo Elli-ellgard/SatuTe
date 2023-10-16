@@ -463,7 +463,7 @@ class Satute:
                 if node.name.isdigit():
                     node.add_features(apriori=node.name)
                 # Assign new node names based on the preorder traversal index.
-                node.name = "Node" + str(idx)
+                node.name = f"Node{idx}*"
                 idx += 1
         return t
 
