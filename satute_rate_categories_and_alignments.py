@@ -154,9 +154,13 @@ def cut_alignment_columns(alignment, columns):
     return selected_alignment
 
 
-def split_msa_into_rate_categories_in_place(site_probability, alignment):
+def split_msa_into_rate_categories_in_place(site_probability, alignment, rate_category):
     sub_category = build_categories_by_sub_tables(site_probability)
     per_category_alignment_dict = {}
-    for key, value in sub_category.items():
-        per_category_alignment_dict[key] = cut_alignment_columns(alignment, value)
+    if rate_category == "all":
+        for key, value in sub_category.items():
+            per_category_alignment_dict[key] = cut_alignment_columns(alignment, value)
+    else: 
+        key = f"p{rate_category}"
+        per_category_alignment_dict[key]=cut_alignment_columns(alignment, sub_category[key])
     return per_category_alignment_dict

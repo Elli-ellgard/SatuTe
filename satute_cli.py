@@ -43,7 +43,7 @@ class Satute:
         iqtree=None,
         input_dir=None,
         model=None,
-        nr=None,
+        category=None,
         output_prefix=None,
         ufboot=None,
         boot=None,
@@ -62,7 +62,7 @@ class Satute:
 
         # Model and testing parameters
         self.model = model
-        self.nr = nr
+        self.category = category
         self.ufboot = ufboot
         self.boot = boot
         self.alpha = 0.05
@@ -134,7 +134,7 @@ class Satute:
                     "If the `-model` option includes rate variation (e.g., `+G4`), the `-category` should be a number between 1 and 4."
                 ),
                 "type": int,
-                "default": self.nr,
+                "default": self.category,
                 "metavar": "<rate_category>",
             },
             {
@@ -208,10 +208,6 @@ class Satute:
                 logger.error(f"{error_str}")
                 raise ValueError("Cannot run Satute with option -dir and -model.")
 
-            if self.input_args.nr is not None:
-                logger.error(f"{error_str}")
-                raise ValueError("Cannot run Satute with option -dir and -nr.")
-
             if self.input_args.ufboot is not None:
                 logger.error(f"{error_str}")
                 raise ValueError("Cannot run Satute with option -dir and -ufboot.")
@@ -251,6 +247,16 @@ class Satute:
                             raise ValueError(
                                 "Cannot run the Satute modi msa+model+tree with otpion -boot."
                             )
+                if self.input_args.model is not None and self.input_args.category is not None:
+                    number_rates = self.handle_number_rates()
+                    if self.input_args.category < 1 or self.input_args.category > number_rates:
+                        logger.error(
+                            "Choosen category of interest is out of range."
+                        )
+                        raise ValueError(
+                            "Choosen category of interest is out of range."
+                        )
+
 
     def run_iqtree_workflow(self, arguments_dict):
         if arguments_dict["option"] == "dir":
@@ -555,8 +561,20 @@ class Satute:
             f"{arguments_dict['msa_file'].resolve()}.iqtree"
         )
         print(number_rates)
-        #number_rates = self.handle_number_rates()
-        #print(number_rates)
+
+        # Consider a specific rate category
+        rate_category = "all"
+        if self.input_args.category is not None: 
+            if self.input_args.category < 1 or self.input_args.category > number_rates:
+                logger.error(
+                    "Choosen category of interest is out of range."
+                )
+                raise ValueError(
+                    "Choosen category of interest is out of range."
+                )
+            else:
+                rate_category = str(self.input_args.category)
+
         # ======== Multiple Sequence Alignment
         alignment = read_alignment_file(arguments_dict["msa_file"].resolve())
 
@@ -569,6 +587,7 @@ class Satute:
             Alpha: {self.input_args.alpha}
             Running Saturation Test on file: {arguments_dict['msa_file'].resolve()}
             Number of rate categories: {number_rates}
+            Considered rate category: {rate_category}
             Options for Initial IQ-Tree run: {arguments_dict['option']}
             Multiplicity: {multiplicity}
             Run test for saturation for each branch and category with {number_rates} rate categories
@@ -595,7 +614,7 @@ class Satute:
                 f"{self.input_args.msa.resolve()}.siteprob"
             )
             per_rate_category_alignment = split_msa_into_rate_categories_in_place(
-                site_probability, alignment
+                site_probability, alignment, rate_category
             )
 
             for rate in per_rate_category_alignment.keys():
@@ -823,7 +842,7 @@ if __name__ == "__main__":
     input_directory = None
     output_prefix = None
     model = None
-    num_rate_categories = None
+    rate_category = None
     ufboot_replicates = None
     boot_replicates = None
     alpha = None
@@ -832,7 +851,7 @@ if __name__ == "__main__":
         iqtree=iqtree_path,
         input_dir=input_directory,
         model=model,
-        nr=num_rate_categories,
+        category=rate_category,
         output_prefix=output_prefix,
         ufboot=ufboot_replicates,
         boot=boot_replicates,
