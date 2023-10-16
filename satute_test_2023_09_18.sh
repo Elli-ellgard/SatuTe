@@ -112,7 +112,7 @@ echo " ============= MODI MSA+MODEL ===================="
 
 echo ""
 echo "---------------------------------------------------------"
-echo "TEST 3a: msa + model "
+echo "TEST 3a: msa + model, number of rate categories set"
 echo "---------------------------------------------------------"
 PDIR=$(dirname $DIR)
 if [ -e $DIR/${msa}.iqtree ]; then
@@ -124,35 +124,47 @@ fi
 $python satute_cli.py -msa $DIR/$msa  -model JC+G4 -alpha 0.05
 echo ""
 
-# echo ""
-# echo "---------------------------------------------------------"
-# echo "TEST 3b: msa + model with parameter "
-# echo "---------------------------------------------------------"
-# PDIR=$(dirname $DIR)
-# if [ -e $DIR/${msa}.iqtree ]; then
-#     mv $DIR/$msa $PDIR
-#     rm -r $DIR
-#     mkdir $DIR
-#     mv $PDIR/$msa $DIR
-# fi
-# $python satute_cli.py -msa $DIR/$msa  -model GTR{4.39/5.30/4.39/1.0/12.1} -alpha 0.05
-# echo ""
+echo ""
+echo "---------------------------------------------------------"
+echo "TEST 3b: msa + model with parameter "
+echo "---------------------------------------------------------"
+PDIR=$(dirname $DIR)
+if [ -e $DIR/${msa}.iqtree ]; then
+    mv $DIR/$msa $PDIR
+    rm -r $DIR
+    mkdir $DIR
+    mv $PDIR/$msa $DIR
+fi
+$python satute_cli.py -msa $DIR/$msa  -model GTR{4.39/5.30/4.39/1.0/12.1} -alpha 0.05
+echo ""
 
-# echo ""
-# echo "---------------------------------------------------------"
-# echo "TEST 3c: msa + model with parameter "
-# echo "---------------------------------------------------------"
-# PDIR=$(dirname $DIR)
-# if [ -e $DIR/${msa}.iqtree ]; then
-#     mv $DIR/$msa $PDIR
-#     rm -r $DIR
-#     mkdir $DIR
-#     mv $PDIR/$msa $DIR
-# fi
-# $python satute_cli.py -msa $DIR/$msa  -model TIM2{4.39/5.30/12.1}+G4 -alpha 0.05
-# echo ""
+echo ""
+echo "---------------------------------------------------------"
+echo "TEST 3c: msa + model with parameter + shape parameter of Gamma model"
+echo "---------------------------------------------------------"
+PDIR=$(dirname $DIR)
+if [ -e $DIR/${msa}.iqtree ]; then
+    mv $DIR/$msa $PDIR
+    rm -r $DIR
+    mkdir $DIR
+    mv $PDIR/$msa $DIR
+fi
+$python satute_cli.py -msa $DIR/$msa  -model TIM2{4.39/5.30/12.1}+G{0.7} -alpha 0.05
+echo ""
 
-
+echo ""
+echo "---------------------------------------------------------"
+echo "TEST 3c: msa + model with parameter +  "
+echo "---------------------------------------------------------"
+PDIR=$(dirname $DIR)
+if [ -e $DIR/${msa}.iqtree ]; then
+    mv $DIR/$msa $PDIR
+    rm -r $DIR
+    mkdir $DIR
+    mv $PDIR/$msa $DIR
+fi
+$python satute_cli.py -msa $DIR/$msa  -model TIM2{4.39/5.30/12.1}+R2{0.7/0.1/0.3/0.9} -alpha 0.05
+echo ""
 
 # echo ""
 # echo "---------------------------------------------------------"
@@ -381,49 +393,49 @@ echo " ============= MODI MSA+MODEL+TREE ===================="
 
 echo " ============= Option -edge ===================="
 
-echo ""
-echo "---------------------------------------------------------"
-echo "TEST 5: msa + model + tree, option edge"
-echo "---------------------------------------------------------"
-#clean folder
-PDIR=$(dirname $DIR)
-if [ -e $DIR/${msa}.iqtree ]; then
-    mv $DIR/$msa $PDIR
-    rm -r $DIR
-    mkdir $DIR
-    mv $PDIR/$msa $DIR
-fi
-#create output
-$python satute_cli.py -msa $DIR/$msa
-PDIR=$(dirname $DIR)
-if [ -e $DIR/${msa}.iqtree ]; then
-    mv $DIR/$msa $PDIR
-    mv $DIR/${msa}.treefile $PDIR
-    rm -r $DIR
-    mkdir $DIR
-    mv $PDIR/$msa $DIR
-    mv $PDIR/${msa}.treefile $DIR
-fi
-$python satute_cli.py -msa $DIR/$msa -model JC -tree $DIR/${msa}.treefile -edge "(Node2, Node1)"
-echo ""
+# echo ""
+# echo "---------------------------------------------------------"
+# echo "TEST 5: msa + model + tree, option edge"
+# echo "---------------------------------------------------------"
+# #clean folder
+# PDIR=$(dirname $DIR)
+# if [ -e $DIR/${msa}.iqtree ]; then
+#     mv $DIR/$msa $PDIR
+#     rm -r $DIR
+#     mkdir $DIR
+#     mv $PDIR/$msa $DIR
+# fi
+# #create output
+# $python satute_cli.py -msa $DIR/$msa
+# PDIR=$(dirname $DIR)
+# if [ -e $DIR/${msa}.iqtree ]; then
+#     mv $DIR/$msa $PDIR
+#     mv $DIR/${msa}.treefile $PDIR
+#     rm -r $DIR
+#     mkdir $DIR
+#     mv $PDIR/$msa $DIR
+#     mv $PDIR/${msa}.treefile $DIR
+# fi
+# $python satute_cli.py -msa $DIR/$msa -model JC -tree $DIR/${msa}.treefile -edge "(Node2*, Node1*)"
+# echo ""
 
-echo ""
-echo "---------------------------------------------------------"
-echo "TEST 5: dir, option edge"
-echo "---------------------------------------------------------"
-#clean folder
-PDIR=$(dirname $DIR)
-if [ -e $DIR/${msa}.iqtree ]; then
-    mv $DIR/$msa $PDIR
-    rm -r $DIR
-    mkdir $DIR
-    mv $PDIR/$msa $DIR
-fi
-#create output
-$python satute_cli.py -msa $DIR/$msa
+# echo ""
+# echo "---------------------------------------------------------"
+# echo "TEST 5: dir, option edge"
+# echo "---------------------------------------------------------"
+# #clean folder
+# PDIR=$(dirname $DIR)
+# if [ -e $DIR/${msa}.iqtree ]; then
+#     mv $DIR/$msa $PDIR
+#     rm -r $DIR
+#     mkdir $DIR
+#     mv $PDIR/$msa $DIR
+# fi
+# #create output
+# $python satute_cli.py -msa $DIR/$msa
 
-$python satute_cli.py -dir $DIR -edge "(Node2, Node1)"
-echo ""
+# $python satute_cli.py -dir $DIR -edge "(Node2*, Node1*)"
+# echo ""
 
 #python3 satute_cli.py -iqtree $iqtree -msa $alignment -tree random_generated_tree.tree -model $model -alpha 0.05
 
