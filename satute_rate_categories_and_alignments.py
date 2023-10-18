@@ -118,7 +118,14 @@ def guess_alignment_format(file_name):
         return "phylip"
     else:
         return "Unknown"
-
+    
+def change_states_to_allowed(alignment):
+    for record in alignment:
+        record.seq = record.seq.upper()
+        record.seq = record.seq.replace(".", "-")
+        record.seq = record.seq.replace("!", "-")
+     
+    return alignment
 
 def read_alignment_file(file_name):
     # Guess the format of the file
@@ -129,10 +136,7 @@ def read_alignment_file(file_name):
     # Try to read the file in the guessed format
     try:
         alignment = AlignIO.read(file_name, file_format)        
-        for record in alignment:
-            record.seq = record.seq.upper()
-            record.seq = record.seq.upper().replace(".", "-")
-            record.seq = record.seq.upper().replace("!", "-")
+        alignment = change_states_to_allowed(alignment)
         return alignment
     except Exception as e:
         print(f"An error occurred while reading the file: {str(e)}")
@@ -164,3 +168,6 @@ def split_msa_into_rate_categories_in_place(site_probability, alignment, rate_ca
         key = f"p{rate_category}"
         per_category_alignment_dict[key]=cut_alignment_columns(alignment, sub_category[key])
     return per_category_alignment_dict
+
+
+
