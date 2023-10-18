@@ -1,4 +1,0 @@
-#NEXUS
-BEGIN TREES;
-Tree tree1 = (seq1:7.407e-07,seq2:7.407e-07,(long1:7.407e-07,long2:7.407e-07)Node2:7.02824);
-END TREES;
