@@ -17,8 +17,8 @@ python=python3
 #DIR=./test/Clemens/example_sym_1
 #msa=ENSG00000119574_ZBTB45.fasta
 
-#DIR=./test/Clemens/example_sym_2
-#msa=ENSG00000138316_ADAMTS14.fasta
+DIR=./test/Clemens/exampl_sym_3
+msa=PF04055.fasta
 
 #DIR=./test/Clemens/toy_example_GTR+G4
 #msa=toy_example_ntaxa_7_run_1-alignment.phy
