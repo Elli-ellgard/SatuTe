@@ -7,24 +7,28 @@ import pandas as pd
 from ete3 import Tree
 from satute_repository import (
     parse_number_rate_categories_from_file,
-    parse_rate_matrices_from_file_new,
+    parse_rate_matrices_from_file,
     parse_state_frequencies_from_file,
     parse_substitution_model,
     parse_rate_from_model,
     parse_file_to_data_frame,
 )
+
 from satute_exception import InvalidDirectoryError, NoAlignmentFileError
-from satute_util_new import spectral_decomposition
-from satute_direction_based_saturation_test import (
+
+from satute_util import spectral_decomposition
+
+from partial_likelihood import (
     single_rate_analysis,
     multiple_rate_analysis,
 )
+
 from rate_matrix import RateMatrix
-from satute_rate_categories_and_alignments import (
+from satute_categories import (
     read_alignment_file,
     split_msa_into_rate_categories_in_place,
 )
-from satute_rate_categories_and_alignments import parse_category_rates
+from satute_categories import parse_category_rates
 from FileHandler import FileHandler, IqTreeHandler
 from satute_trees_and_subtrees import map_values_to_newick
 
@@ -247,16 +251,19 @@ class Satute:
                             raise ValueError(
                                 "Cannot run the Satute modi msa+model+tree with otpion -boot."
                             )
-                if self.input_args.model is not None and self.input_args.category is not None:
+                if (
+                    self.input_args.model is not None
+                    and self.input_args.category is not None
+                ):
                     number_rates = self.handle_number_rates()
-                    if self.input_args.category < 1 or self.input_args.category > number_rates:
-                        logger.error(
-                            "Choosen category of interest is out of range."
-                        )
+                    if (
+                        self.input_args.category < 1
+                        or self.input_args.category > number_rates
+                    ):
+                        logger.error("Choosen category of interest is out of range.")
                         raise ValueError(
                             "Choosen category of interest is out of range."
                         )
-
 
     def run_iqtree_workflow(self, arguments_dict):
         if arguments_dict["option"] == "dir":
@@ -272,7 +279,7 @@ class Satute:
             logger.info(
                 "IQ-TREE will be needed for the site probabilities for the corresponding rate categories."
             )
-            #number_rates = self.handle_number_rates()
+            # number_rates = self.handle_number_rates()
 
             iqtree_args = [
                 "-m",
@@ -472,6 +479,7 @@ class Satute:
                 # Assign new node names based on the preorder traversal index.
                 node.name = f"Node{idx}*"
                 idx += 1
+
         return t
 
     def tree_handling(self):
@@ -542,7 +550,7 @@ class Satute:
         )
 
         ## Get rate matrix using rate parameters and stationay distribution
-        rate_matrix = parse_rate_matrices_from_file_new(
+        rate_matrix = parse_rate_matrices_from_file(
             f"{arguments_dict['msa_file'].resolve()}.iqtree", state_frequencies
         )
 
@@ -557,21 +565,17 @@ class Satute:
         ) = spectral_decomposition(RATE_MATRIX.rate_matrix, psi_matrix)
 
         ## Get number of rate categories in case of a +G or +R model
+
         number_rates = parse_number_rate_categories_from_file(
             f"{arguments_dict['msa_file'].resolve()}.iqtree"
         )
-        print(number_rates)
 
         # Consider a specific rate category
         rate_category = "all"
-        if self.input_args.category is not None: 
+        if self.input_args.category is not None:
             if self.input_args.category < 1 or self.input_args.category > number_rates:
-                logger.error(
-                    "Choosen category of interest is out of range."
-                )
-                raise ValueError(
-                    "Choosen category of interest is out of range."
-                )
+                logger.error("Choosen category of interest is out of range.")
+                raise ValueError("Choosen category of interest is out of range.")
             else:
                 rate_category = str(self.input_args.category)
 

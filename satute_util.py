@@ -1,4 +1,3 @@
-import pandas as pd
 import scipy
 import scipy.linalg
 import numpy as np
@@ -80,61 +79,3 @@ def spectral_decomposition(rate_matrix, psi_matrix):
     return array_left_eigenvectors, array_right_eigenvectors, multiplicity
 
 
-""" ## GENERATE STRUCTURE FOR SUBTREES"""
-
-def write_results_and_newick_tree(
-    results_list, newick_string, path_folder, chosen_rate, c_sTwoSequence, T
-):
-    """
-    This function writes the saturation branches data to a file and then appends the saturation information
-    newick string to the same file.
-
-    :param results_list: List of results data to be written to file.
-    :param newick_string: Newick formatted string representing the tree.
-    :param path_folder: Path to the folder where results will be saved.
-    :param chosen_rate: Chosen rate parameter to be included in the filename.
-    :param c_sTwoSequence: Saturation coherence between two sequences.
-    :param T: ETE Tree instance.
-    """
-
-    # Convert the results_list into a pandas dataframe
-    saturation_branches_data_frame = pd.DataFrame(results_list)
-
-    # Save the dataframe as a tab-separated CSV file
-    saturation_branches_data_frame.to_csv(
-        f"{path_folder}/resultsRate{chosen_rate}.satute.csv",
-        header=True,
-        index=None,
-        sep="\t",
-        mode="w",
-    )
-
-    # Generate a newick string with saturation information
-    # saturation_information_newick_string = map_values_to_newick(
-    #    results_list, newick_string
-    # )
-
-    # Open the results file in append mode
-    with open(
-        f"{path_folder}/resultsRate{chosen_rate}.satute.csv", "a"
-    ) as satute_result_file:
-        # Write additional information to the file
-        satute_result_file.write(
-            "\n\nThe T2T status uses as threshold the saturation coherence between two sequences, which is  {:6.4f}".format(
-                c_sTwoSequence
-            )
-        )
-
-        satute_result_file.write(
-            "\n\nFor better reference, this is the reconstructed tree topology :\n\n"
-        )
-
-        # Write the ascii representation of the tree to the file
-        satute_result_file.write(
-            T.copy("newick").get_ascii(attributes=["name", "label", "distance"])
-        )
-
-        # Tree without saturation values
-        satute_result_file.write(f"\n\n Tree with saturation values: {newick_string}")
-        # Write the saturation information newick string to the file
-        # satute_result_file.write(f"\n\n Tree with saturation values: {saturation_information_newick_string}")

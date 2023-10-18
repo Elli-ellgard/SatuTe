@@ -3,7 +3,7 @@ from Bio.Align import MultipleSeqAlignment
 import numpy as np
 from Bio.SeqRecord import SeqRecord
 from Bio.Seq import Seq
-
+import os
 """ ## RATE CATEGORIES  """
 
 
@@ -48,9 +48,7 @@ def parse_category_rates(log_file, number_rates):
     for i, line in enumerate(lines):
         if line.strip().startswith("Category"):
             start_index = i + 1
-        elif line.strip().startswith(
-            f"{number_rates}"
-        ):
+        elif line.strip().startswith(f"{number_rates}"):
             end_index = i + 1
             break
 
@@ -117,29 +115,59 @@ def guess_alignment_format(file_name):
     elif first_line[0].isdigit():
         return "phylip"
     else:
-        return "Unknown"
-    
+        return None
+
+
 def change_states_to_allowed(alignment):
     for record in alignment:
         record.seq = record.seq.upper()
         record.seq = record.seq.replace(".", "-")
         record.seq = record.seq.replace("!", "-")
-     
+
     return alignment
 
+
 def read_alignment_file(file_name):
+    """
+    Reads an alignment file and returns the alignment object.
+
+    Args:
+    - file_name (str): Path to the alignment file.
+
+    Returns:
+    - alignment: The alignment object.
+
+    Raises:
+    - FileNotFoundError: If the file does not exist or is not readable.
+    - ValueError: If the file format could not be guessed or other issues with file content.
+    """
+
+    # Check if file exists and is readable
+    if not os.path.exists(file_name) or not os.access(file_name, os.R_OK):
+        raise FileNotFoundError(f"The file {file_name} does not exist or is not readable.")
+
     # Guess the format of the file
     file_format = guess_alignment_format(file_name)
+    
     # If the format could not be guessed, raise an error
     if file_format is None:
-        raise ValueError("Could not guess the format of the file.")
-    # Try to read the file in the guessed format
+        raise ValueError("Could not guess the format of MSA the file.")
+    
     try:
-        alignment = AlignIO.read(file_name, file_format)        
-        alignment = change_states_to_allowed(alignment)
-        return alignment
+        # Try to read the file in the guessed format
+        alignment = AlignIO.read(file_name, file_format)
     except Exception as e:
-        print(f"An error occurred while reading the file: {str(e)}")
+        # Catch specific exceptions for better error handling
+        raise ValueError(f"An error occurred while reading the file: {str(e)}")
+    
+    try:
+        # Process the alignment
+        alignment = change_states_to_allowed(alignment)
+    except Exception as e:
+        # Catch specific exceptions for better error handling
+        raise ValueError(f"An error occurred while processing the alignment: {str(e)}")
+
+    return alignment
 
 
 def cut_alignment_columns(alignment, columns):
@@ -164,10 +192,9 @@ def split_msa_into_rate_categories_in_place(site_probability, alignment, rate_ca
     if rate_category == "all":
         for key, value in sub_category.items():
             per_category_alignment_dict[key] = cut_alignment_columns(alignment, value)
-    else: 
+    else:
         key = f"p{rate_category}"
-        per_category_alignment_dict[key]=cut_alignment_columns(alignment, sub_category[key])
+        per_category_alignment_dict[key] = cut_alignment_columns(
+            alignment, sub_category[key]
+        )
     return per_category_alignment_dict
-
-
-

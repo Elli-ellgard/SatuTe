@@ -25,25 +25,61 @@ class FileHandler:
         Returns:
         - str: Full path to the file if found, None otherwise.
         """
+        # Iterate through the base directory and its subdirectories
         for root, dirs, files in os.walk(self.base_directory):
+            # Check each file to see if it ends with any of the specified suffixes
             for file in files:
                 if any(file.endswith(suffix) for suffix in suffixes):
+                    # Return the full path of the file if a match is found
                     return os.path.join(root, file)
+        # Return None if no file with the specified suffixes is found
         return None
 
     def file_exists(self, filepath):
-        """Check if a file exists."""
+        """
+        Check if a file exists.
+
+        Args:
+        - filepath (str): Path to the file to check.
+
+        Returns:
+        - bool: True if the file exists, False otherwise.
+        """
         return os.path.exists(filepath)
 
     def read_file(self, filepath):
-        """Read the contents of a file."""
+        """
+        Read the contents of a file.
+
+        Args:
+        - filepath (str): Path to the file to read.
+
+        Returns:
+        - str: Contents of the file.
+
+        Raises:
+        - FileNotFoundError: If the file does not exist.
+        - ValueError: If the file is empty.
+        """
+        # Check if the file exists
         if not self.file_exists(filepath):
             raise FileNotFoundError(f"{filepath} not found.")
+        # Check if the file is empty
+        if os.path.getsize(filepath) == 0:
+            raise ValueError(f"The file at path {filepath} is empty.")
+        # Open and read the file, then return its contents
         with open(filepath, "r") as file:
             return file.read()
 
     def write_to_file(self, filepath, content):
-        """Write content to a file."""
+        """
+        Write content to a file.
+
+        Args:
+        - filepath (str): Path to the file to write to.
+        - content (str): Content to write to the file.
+        """
+        # Open and write the content to the file
         with open(filepath, "w") as file:
             file.write(content)
 
@@ -56,16 +92,48 @@ class FileHandler:
 
         Returns:
         - str: Newick format string.
+
+        Raises:
+        - FileNotFoundError: If the IQ-TREE file does not exist.
+        - ValueError: If the IQ-TREE file is empty or does not contain a valid Newick format string.
         """
-        iq_tree_file = path + ".iqtree"
+        iq_tree_file = f"{path}.iqtree"
+
+        # Check if file exists
+        if not self.file_exists(iq_tree_file):
+            raise FileNotFoundError(
+                f"The IQ-TREE file at path {iq_tree_file} does not exist."
+            )
+
+        # Check if file is empty
+        if os.path.getsize(iq_tree_file) == 0:
+            raise ValueError(f"The IQ-TREE file at path {iq_tree_file} is empty.")
+
         newick_string = ""
-        with open(iq_tree_file, "r+") as f:
+        with open(iq_tree_file, "r") as f:
             lines = f.readlines()
-            for i in range(0, len(lines)):
-                line = lines[i]
-                if "Tree in newick format:" in line:
-                    newick_string = lines[i + 2]
-                    break
+
+        # Instead of iterating through every line, we'll use a more Pythonic approach to find the desired line
+        # This should help to slightly optimize the function.
+        try:
+            # Find the index of the line containing the Newick format header
+            newick_line_index = next(
+                i for i, line in enumerate(lines) if "Tree in newick format:" in line
+            )
+            # The Newick string is expected to be two lines after the header
+            newick_string = lines[newick_line_index + 2].strip()
+        except StopIteration:
+            # This exception will be raised if the header line is not found in the file
+            raise ValueError(
+                f"The IQ-TREE file at path {iq_tree_file} does not contain a valid Newick format string."
+            )
+
+        # Additional validation to ensure the Newick string is properly formatted
+        if not newick_string.endswith(";"):
+            raise ValueError(
+                f"The IQ-TREE file at path {iq_tree_file} does not contain a valid Newick format string."
+            )
+
         return newick_string
 
     def get_newick_string(self, file_path):
@@ -77,6 +145,10 @@ class FileHandler:
 
         Returns:
         - str: Newick format string.
+
+        Raises:
+        - FileNotFoundError: If the file does not exist.
+        - ValueError: If the file is empty or does not contain a valid Newick string.
         """
         from pathlib import Path
 
