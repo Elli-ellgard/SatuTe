@@ -34,8 +34,15 @@ NUCLEOTIDE_CODE_VECTOR = {
     "D": np.array([1, 0, 1, 1]),
     "H": np.array([1, 1, 0, 1]),
     "V": np.array([1, 1, 1, 0]),
+    #The following keys are treated as State_Unknown in IQ-Tree
     "N": np.array([1, 1, 1, 1]),
     "-": np.array([1, 1, 1, 1]),
+    "?": np.array([1, 1, 1, 1]),
+    ".": np.array([1, 1, 1, 1]),
+    "~": np.array([1, 1, 1, 1]),
+    "X": np.array([1, 1, 1, 1]),
+    #Additional key from EvoNaps database
+    "!": np.array([1, 1, 1, 1]),
 }
 
 RATE_MATRIX = np.array([[-3, 1, 1, 1], [1, -3, 1, 1], [1, 1, -3, 1], [1, 1, 1, -3]])
