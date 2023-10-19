@@ -290,7 +290,7 @@ def delete_and_rewire(node_to_delete, adjacency_dict):
 def graft_subtree_directed(graph, edge, subtree, subtree_root=None):
     parent, child = edge
     graph[parent].remove(child)  # Remove the old edge
-    # Create a new internal node and update the graph    
+    # Create a new internal node and update the graph
     new_node = f"grafted_node_{len(graph) + len(subtree) + 1}"
     new_node = f"grafted_node_{id(new_node)}"
     graph[new_node] = [child]
@@ -329,6 +329,7 @@ main_root_node_prefix = "ROOT_NODE_X"
 main_root_node = f"{main_root_node_prefix}{id(main_root_node_prefix)}"
 
 newick_string_main_tree = insert_root(newick_string_main_tree, main_root_node)
+
 adjacent_dictionary, adjacent_length_map = {}, {}
 tree_structure = pair_bracket_to_adjacency(
     newick_string_main_tree,
@@ -340,6 +341,7 @@ tree_structure = pair_bracket_to_adjacency(
 subtree_root_node_prefix = "ROOT_NODE_Y"
 subtree_root_node = f"{subtree_root_node_prefix}{id(main_root_node_prefix)}"
 newick_subtree = "(E:4,F:5);"
+
 newick_subtree = insert_root(newick_subtree, subtree_root_node)
 subtree_adjacent_dictionary, subtree_adjacent_length_map = {}, {}
 subtree_structure = pair_bracket_to_adjacency(

@@ -6,31 +6,26 @@ from pathlib import Path
 import pandas as pd
 from ete3 import Tree
 from satute_repository import (
-    parse_number_rate_categories_from_file,
-    parse_rate_matrices_from_file,
-    parse_state_frequencies_from_file,
     parse_substitution_model,
     parse_rate_from_model,
     parse_file_to_data_frame,
+    IqTreeParser,
 )
 
 from satute_exception import InvalidDirectoryError, NoAlignmentFileError
-
 from satute_util import spectral_decomposition
-
 from partial_likelihood import (
     single_rate_analysis,
     multiple_rate_analysis,
 )
-
 from rate_matrix import RateMatrix
 from satute_categories import (
     read_alignment_file,
     split_msa_into_rate_categories_in_place,
 )
-from satute_categories import parse_category_rates
-from FileHandler import FileHandler, IqTreeHandler
+from file_handler import FileHandler, IqTreeHandler
 from satute_trees_and_subtrees import map_values_to_newick
+
 
 # Configure the logging settings (optional)
 logging.basicConfig(
@@ -239,17 +234,17 @@ class Satute:
                     else:
                         if self.input_args.ufboot is not None:
                             logger.error(
-                                "Cannot run the Satute modi msa+model+tree with otpion -ufboot."
+                                "Cannot run the Satute modi msa+model+tree with option -ufboot."
                             )
                             raise ValueError(
-                                "Cannot run the Satute modi msa+model+tree with otpion -ufboot."
+                                "Cannot run the Satute modi msa+model+tree with option -ufboot."
                             )
                         if self.input_args.boot is not None:
                             logger.error(
-                                "Cannot run the Satute modi msa+model+tree with otpion -boot."
+                                "Cannot run the Satute modi msa+model+tree with option -boot."
                             )
                             raise ValueError(
-                                "Cannot run the Satute modi msa+model+tree with otpion -boot."
+                                "Cannot run the Satute modi msa+model+tree with option -boot."
                             )
                 if (
                     self.input_args.model is not None
@@ -261,9 +256,7 @@ class Satute:
                         or self.input_args.category > number_rates
                     ):
                         logger.error("Choosen category of interest is out of range.")
-                        raise ValueError(
-                            "Choosen category of interest is out of range."
-                        )
+                        raise ValueError("Chosen category of interest is out of range.")
 
     def run_iqtree_workflow(self, arguments_dict):
         if arguments_dict["option"] == "dir":
@@ -514,19 +507,21 @@ class Satute:
                 file_name_base += f"_{self.input_args.edge}"
 
             results_data_frame = pd.DataFrame(results_set)
-
-            # Writing the .tree file
-            with open(f"{file_name_base}.nex", "w") as tree_file:
-                newick_string = to_be_tested_tree.write(format=1, features=["apriori"])
-                newick_string = map_values_to_newick(newick_string, results_data_frame)
-                tree_file.write("#NEXUS")
-                tree_file.write("BEGIN TREES;")
-                tree_file.write(f"Tree tree1 = {newick_string}")
-                tree_file.write("END TREES;")
-
             # Writing the .csv file
             results_data_frame.to_csv(f"{file_name_base}.csv")
+            # Writing the .csv file
             logger.info("Finished writing results to files")
+            self.write_nexus_file(results_data_frame, to_be_tested_tree, file_name_base)
+
+    def write_nexus_file(self, results_data_frame, to_be_tested_tree, file_name_base):
+        # Writing the .tree file
+        with open(f"{file_name_base}.nex", "w") as tree_file:
+            newick_string = to_be_tested_tree.write(format=1, features=["apriori"])
+            newick_string = map_values_to_newick(newick_string, results_data_frame)
+            tree_file.write("#NEXUS")
+            tree_file.write("BEGIN TREES;")
+            tree_file.write(f"Tree tree1 = {newick_string}")
+            tree_file.write("END TREES;")
 
     def run(self):
         """
@@ -537,7 +532,6 @@ class Satute:
         self.check_input()
 
         arguments_dict = self.construct_arguments()
-
         self.run_iqtree_workflow(arguments_dict)
 
         # ======== Tree File Handling =========
@@ -545,37 +539,32 @@ class Satute:
 
         # ======== Model parameter ===========
         ## Get dictionary for stationary distribution and diagonal matrix of the stationary distribution
-        state_frequencies, psi_matrix = parse_state_frequencies_from_file(
-            f"{arguments_dict['msa_file'].resolve()}.iqtree"
-        )
-
-        ## Get rate matrix using rate parameters and stationay distribution
-        rate_matrix = parse_rate_matrices_from_file(
-            f"{arguments_dict['msa_file'].resolve()}.iqtree", state_frequencies
-        )
+        iq_tree_file_path = f"{arguments_dict['msa_file'].resolve()}.iqtree"
+        satute_iq_tree_parser = IqTreeParser(iq_tree_file_path)
+        substitution_model = satute_iq_tree_parser.load_substitution_model()
 
         ## Convert representation of rate_matrix
-        RATE_MATRIX = RateMatrix(rate_matrix)
+        RATE_MATRIX = RateMatrix(substitution_model.rate_matrix)
 
         ## Calculation of the spectral decomposition of the rate matrix
         (
             array_left_eigenvectors,
             array_right_eigenvectors,
             multiplicity,
-        ) = spectral_decomposition(RATE_MATRIX.rate_matrix, psi_matrix)
-
-        ## Get number of rate categories in case of a +G or +R model
-
-        number_rates = parse_number_rate_categories_from_file(
-            f"{arguments_dict['msa_file'].resolve()}.iqtree"
+        ) = spectral_decomposition(
+            substitution_model.rate_matrix, substitution_model.phi_matrix
         )
 
+        ## Get number of rate categories in case of a +G or +R model
         # Consider a specific rate category
         rate_category = "all"
         if self.input_args.category is not None:
-            if self.input_args.category < 1 or self.input_args.category > number_rates:
-                logger.error("Choosen category of interest is out of range.")
-                raise ValueError("Choosen category of interest is out of range.")
+            if (
+                self.input_args.category < 1
+                or self.input_args.category > substitution_model.number_rates
+            ):
+                logger.error("Chosen category of interest is out of range.")
+                raise ValueError("Chosen category of interest is out of range.")
             else:
                 rate_category = str(self.input_args.category)
 
@@ -590,21 +579,21 @@ class Satute:
             Model: {self.input_args.model}
             Alpha: {self.input_args.alpha}
             Running Saturation Test on file: {arguments_dict['msa_file'].resolve()}
-            Number of rate categories: {number_rates}
+            Number of rate categories: {substitution_model.number_rates}
             Considered rate category: {rate_category}
             Options for Initial IQ-Tree run: {arguments_dict['option']}
             Multiplicity: {multiplicity}
-            Run test for saturation for each branch and category with {number_rates} rate categories
+            Run test for saturation for each branch and category with {substitution_model.number_rates} rate categories
             Results will be written to the directory:{self.active_directory.name}
             """
         )
 
-        if number_rates == 1:
+        if substitution_model.number_rates == 1:
             results = single_rate_analysis(
                 to_be_tested_tree,
                 alignment,
                 RATE_MATRIX,
-                state_frequencies,
+                substitution_model.state_frequencies,
                 array_left_eigenvectors,
                 array_right_eigenvectors,
                 multiplicity,
@@ -617,6 +606,7 @@ class Satute:
             site_probability = parse_file_to_data_frame(
                 f"{self.input_args.msa.resolve()}.siteprob"
             )
+
             per_rate_category_alignment = split_msa_into_rate_categories_in_place(
                 site_probability, alignment, rate_category
             )
@@ -626,15 +616,11 @@ class Satute:
                     f"""Category Rate {rate}, Site per category {len(per_rate_category_alignment[rate][0].seq)}"""
                 )
 
-            category_rates_factors = parse_category_rates(
-                f"{self.input_args.msa.resolve()}.iqtree", number_rates
-            )
-
             results = multiple_rate_analysis(
                 to_be_tested_tree,
-                category_rates_factors,
+                substitution_model.category_rates,
                 RATE_MATRIX,
-                state_frequencies,
+                substitution_model.state_frequencies,
                 array_left_eigenvectors,
                 array_right_eigenvectors,
                 multiplicity,

@@ -1,7 +1,4 @@
 import numpy as np
-import pandas as pd
-from functools import cache
-from scipy.sparse.linalg import expm
 from ete3 import Tree
 from satute_categories import read_alignment_file
 from satute_trees_and_subtrees import parse_newick_file
@@ -12,14 +9,32 @@ from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 from graph import Graph, Node
 from rate_matrix import RateMatrix
-from nucleotide_code_vector import NUCLEOTIDE_CODE_VECTOR
 
 RATE_MATRIX = np.array([[-3, 1, 1, 1], [1, -3, 1, 1], [1, 1, -3, 1], [1, 1, 1, -3]])
+
+
+def parse_newick_file(file_path):
+    try:
+        # Open the file in read mode
+        with open(file_path, "r") as f:
+            # Read the content of the file
+            newick_string = f.readlines()
+
+        # Parse the newick string into a Tree object
+        t = Tree(newick_string[0], format=1)
+
+        # Return the parsed Tree object
+        return t
+
+    except FileNotFoundError:
+        raise Exception("File not found: " + file_path)
 
 
 """
     ======= Tests =======
 """
+
+
 def name_nodes_by_level_order(tree):
     """Name nodes in a tree based on level-order traversal."""
     i = 1

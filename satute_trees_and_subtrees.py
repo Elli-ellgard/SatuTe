@@ -1,22 +1,4 @@
-from ete3 import Tree
 import re
-
-
-def parse_newick_file(file_path):
-    try:
-        # Open the file in read mode
-        with open(file_path, "r") as f:
-            # Read the content of the file
-            newick_string = f.readlines()
-
-        # Parse the newick string into a Tree object
-        t = Tree(newick_string[0], format=1)
-
-        # Return the parsed Tree object
-        return t
-
-    except FileNotFoundError:
-        raise Exception("File not found: " + file_path)
 
 
 def rescale_branch_lengths(tree, rescale_factor):
