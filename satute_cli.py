@@ -319,11 +319,9 @@ class Satute:
             ),
 
             # Update model in input arguments and re-construct arguments
-            substitution_model = parse_substitution_model(
-                f"{arguments_dict['msa_file']}.iqtree"
-            )
 
-            self.input_args.model = substitution_model
+            iq_tree_parser = IqTreeParser(f"{arguments_dict['msa_file']}.iqtree")
+            self.input_args.model = iq_tree_parser.parse_substitution_model()
             number_rates = self.handle_number_rates()
 
             # Validate and append ufboot and boot parameters to extra_arguments

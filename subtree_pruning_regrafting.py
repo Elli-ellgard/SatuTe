@@ -1,33 +1,5 @@
 import copy
 
-
-def generate_newick_from_graph(graph, node, parent=None):
-    """
-    Recursively generate a Newick string representation of a tree (graph).
-
-    Parameters:
-    graph: dict
-        Adjacency list representation of a tree.
-    node: str
-        The current node being processed.
-    parent: str, optional
-        The parent of the current node being processed.
-
-    Returns:
-    str
-        Newick string representation of the tree rooted at `node`.
-    """
-    # Get the children of the current node (excluding the parent to avoid cycles)
-    children = [child for child in graph[node] if child != parent]
-
-    # If the node has children, recurse on them and wrap their Newick strings in parentheses
-    if children:
-        return f"({','.join(generate_newick_from_graph(graph, child, node) for child in children)}){node}"
-
-    # If the node has no children (i.e., it's a leaf), just return its name
-    return node
-
-
 def print_graph(graph):
     """
     Print the adjacency list representation of a graph in a readable format.
@@ -324,42 +296,74 @@ def to_newick(tree, root):
     return newick_str + ";"
 
 
-newick_string_main_tree = "(A:1,B:2);"
-main_root_node_prefix = "ROOT_NODE_X"
-main_root_node = f"{main_root_node_prefix}{id(main_root_node_prefix)}"
+class AdjacencyTree:
+    def __init__(self, adjacency_dictionary=None, adjacency_length_map=None) -> None:
+        self.adjacency_dictionary = adjacency_dictionary
+        self.adjacency_length_map = adjacency_length_map
+        self.root = tree_structure
 
-newick_string_main_tree = insert_root(newick_string_main_tree, main_root_node)
 
-adjacent_dictionary, adjacent_length_map = {}, {}
-tree_structure = pair_bracket_to_adjacency(
-    newick_string_main_tree,
-    adjacency_dictionary=adjacent_dictionary,
-    adjacency_length_map=adjacent_length_map,
-    rooted=True,
-)
+def newick_to_adjacency_entries(newick_s):
+    
+    adjacent_dictionary, branch_lengths = {}, {}
 
-subtree_root_node_prefix = "ROOT_NODE_Y"
-subtree_root_node = f"{subtree_root_node_prefix}{id(main_root_node_prefix)}"
-newick_subtree = "(E:4,F:5);"
+    main_root_node_prefix = "ROOT_NODE_X"
 
-newick_subtree = insert_root(newick_subtree, subtree_root_node)
-subtree_adjacent_dictionary, subtree_adjacent_length_map = {}, {}
-subtree_structure = pair_bracket_to_adjacency(
-    newick_subtree,
-    adjacency_dictionary=subtree_adjacent_dictionary,
-    adjacency_length_map=subtree_adjacent_length_map,
-    rooted=True,
-)
+    main_root_node = f"{main_root_node_prefix}{id(main_root_node_prefix)}"
 
-edge_set = get_edges(adjacent_dictionary)
-newick_list = []
+    newick_string_main_tree = insert_root(newick_s, main_root_node)
 
-for edge in edge_set:
-    #     Make a deep copy of tree_graph and subtree_graph to work with in this iteration
-    tree_graph_copy = copy.deepcopy(adjacent_dictionary)
-    subtree_graph_copy = copy.deepcopy(subtree_adjacent_dictionary)
-    #     Add the subtree to the copied graph, working with the copies in this iteration
-    new_tree_graph = graft_subtree_directed(
-        tree_graph_copy, edge, subtree_graph_copy, subtree_root_node
+    tree_structure = pair_bracket_to_adjacency(
+        newick_string_main_tree,
+        adjacency_dictionary=adjacent_dictionary,
+        adjacency_length_map=adjacent_length_map,
+        rooted=True,
     )
-    newick_list.append(to_newick(new_tree_graph, main_root_node))
+
+    return AdjacencyTree(adjacent_dictionary, branch_lengths, tree_structure)
+
+
+if __name__ == "__main__":
+    # TODO: Add branch length to the newick string.
+    #    Check if there is already a root node in the tree or not
+    #    Break the tree into two parts: the main tree and the subtree
+    newick_string_main_tree = "((A:1,B:2),E:1);"
+    main_root_node_prefix = "ROOT_NODE_X"
+    main_root_node = f"{main_root_node_prefix}{id(main_root_node_prefix)}"
+    newick_string_main_tree = insert_root(newick_string_main_tree, main_root_node)
+
+    adjacent_dictionary, adjacent_length_map = {}, {}
+
+    tree_structure = pair_bracket_to_adjacency(
+        newick_string_main_tree,
+        adjacency_dictionary=adjacent_dictionary,
+        adjacency_length_map=adjacent_length_map,
+        rooted=True,
+    )
+    """
+    subtree_root_node_prefix = "ROOT_NODE_Y"
+    subtree_root_node = f"{subtree_root_node_prefix}{id(main_root_node_prefix)}"
+    newick_subtree = "(E:4,F:5);"
+
+    newick_subtree = insert_root(newick_subtree, subtree_root_node)
+    subtree_adjacent_dictionary, subtree_adjacent_length_map = {}, {}
+    subtree_structure = pair_bracket_to_adjacency(
+        newick_subtree,
+        adjacency_dictionary=subtree_adjacent_dictionary,
+        adjacency_length_map=subtree_adjacent_length_map,
+        rooted=True,
+    )
+
+    edge_set = get_edges(adjacent_dictionary)
+    newick_list = []
+
+    for edge in edge_set:
+        #     Make a deep copy of tree_graph and subtree_graph to work with in this iteration
+        tree_graph_copy = copy.deepcopy(adjacent_dictionary)
+        subtree_graph_copy = copy.deepcopy(subtree_adjacent_dictionary)
+        #     Add the subtree to the copied graph, working with the copies in this iteration
+        new_tree_graph = graft_subtree_directed(
+            tree_graph_copy, edge, subtree_graph_copy, subtree_root_node
+        )
+        newick_list.append(to_newick(new_tree_graph, main_root_node))
+    """

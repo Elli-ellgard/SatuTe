@@ -89,7 +89,6 @@ def parse_file_to_data_frame(file_path):
     except FileNotFoundError:
         raise Exception(f"File not found: {file_path}")
 
-
 class SubstitutionModel:
     def __init__(
         self,
@@ -106,7 +105,6 @@ class SubstitutionModel:
         self.state_frequencies = state_frequencies
         self.phi_matrix = phi_matrix
         self.category_rates = category_rates
-
 
 class IqTreeParser:
     def __init__(self, file_path=None):
@@ -512,7 +510,6 @@ class IqTreeParser:
                     }
 
         return table_data
-
 
 
 if __name__ == "__main__":

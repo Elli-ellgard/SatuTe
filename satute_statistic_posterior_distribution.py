@@ -2,7 +2,6 @@ import scipy.stats as st
 import numpy as np
 from scipy.sparse.linalg import expm
 
-
 """## CALCULATION OF THE SAMPLE COHERENCE """
 
 
@@ -84,7 +83,6 @@ def calculate_test_statistic_posterior_distribution(
     site_likelihood_right_subtree = []
 
     for k in range(number_sites):
-
         sr = np.dot(
             np.asarray(partial_likelihood_right_subtree.iloc[k, 3 : (3 + dimension)]),
             freq,
