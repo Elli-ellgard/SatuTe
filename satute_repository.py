@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 import re
 
+
 def parse_substitution_model(file_path: str) -> str:
     """
     Parse the substitution model from an IQ-TREE log file.
@@ -45,6 +46,7 @@ def parse_substitution_model(file_path: str) -> str:
     except IOError:
         raise ValueError("Could not read the file.")
 
+
 def parse_rate_from_model(model):
     # Find the index of '+G' and '+R' in the model string
     plus_g_index = model.find("+G")
@@ -79,6 +81,7 @@ def parse_rate_from_model(model):
         # Return None or an appropriate value for error handling
         raise ValueError("Could not parse the substitution model from the file.")
 
+
 def parse_file_to_data_frame(file_path):
     try:
         # Read the file into a dataframe
@@ -89,25 +92,58 @@ def parse_file_to_data_frame(file_path):
     except FileNotFoundError:
         raise Exception(f"File not found: {file_path}")
 
+
 class SubstitutionModel:
+    """
+    A class representing a substitution model used in phylogenetics or related fields.
+
+    Attributes:
+    model (optional): An external model object that may be used for substitution computations.
+    state_frequencies (optional): A data structure (e.g., list or array) containing the
+                                  frequencies of different states in the model.
+    phi_matrix (optional): A matrix containing phi values, which could represent transition probabilities or
+                           other relevant parameters in the model.
+    rate_matrix (optional): A matrix containing rate values which could represent substitution rates or
+                            other relevant parameters in the model.
+    number_rates (optional): A scalar indicating the number of different rates in the model.
+    category_rates (optional): A data structure (e.g., list or array) containing the rates of different
+                               categories in the model.
+    """
+
     def __init__(
         self,
-        model=None,
-        state_frequencies=None,
-        phi_matrix=None,
-        rate_matrix=None,
-        number_rates=None,
-        category_rates=None,
+        model=None,  # An optional external model object
+        state_frequencies=None,  # Optional state frequencies
+        phi_matrix=None,  # Optional phi matrix
+        rate_matrix=None,  # Optional rate matrix
+        number_rates=None,  # Optional number of rates
+        category_rates=None,  # Optional category rates
     ) -> None:
-        self.model = model
-        self.number_rates = number_rates
-        self.rate_matrix = rate_matrix
-        self.state_frequencies = state_frequencies
-        self.phi_matrix = phi_matrix
-        self.category_rates = category_rates
+        """Initializes a new SubstitutionModel instance with the provided parameters."""
+        self.model = model  # Set the model attribute
+        self.number_rates = number_rates  # Set the number_rates attribute
+        self.rate_matrix = rate_matrix  # Set the rate_matrix attribute
+        self.state_frequencies = (
+            state_frequencies  # Set the state_frequencies attribute
+        )
+        self.phi_matrix = phi_matrix  # Set the phi_matrix attribute
+        self.category_rates = category_rates  # Set the category_rates attribute
+
 
 class IqTreeParser:
+    """
+    A class to parse IQ-TREE output files and extract relevant information for
+    constructing a SubstitutionModel object.
+    """
+
     def __init__(self, file_path=None):
+        """
+        Initializes the IqTreeParser with the path to the IQ-TREE file.
+
+        Parameters:
+        - file_path (str, optional): The path to the IQ-TREE file to be parsed.
+        """
+
         self.file_content = []
         self.file_path = file_path
         if self.file_path:
@@ -365,13 +401,13 @@ class IqTreeParser:
 
     def parse_number_rate_categories(self):
         """
-        Parse the number of rate categories from a given .iqtree file path.
+        Parse the number of rate categories from the substitution model string.
 
         Parameters:
-        - file_path (str): Path to the .iqtree file.
+        - model (str): The substitution model string from the file.
 
-        Return:
-        - number_rate_categories (int): The number of rate categories.
+        Returns:
+        - rate (int): The number of rate categories parsed from the model string.
         """
         index = next(
             (
@@ -405,7 +441,15 @@ class IqTreeParser:
         return number_rate_categories
 
     def parse_rate_from_model(self, model):
-        # Find the index of '+G' and '+R' in the model string
+        """
+        Parse the number of rate categories from the substitution model string.
+
+        Parameters:
+        - model (str): The substitution model string from the file.
+
+        Returns:
+        - rate (int): The number of rate categories parsed from the model string.
+        """
         plus_g_index = model.find("+G")
         plus_r_index = model.find("+R")
 

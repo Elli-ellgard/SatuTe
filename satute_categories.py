@@ -4,6 +4,7 @@ import numpy as np
 from Bio.SeqRecord import SeqRecord
 from Bio.Seq import Seq
 import os
+
 """ ## RATE CATEGORIES  """
 
 
@@ -144,22 +145,24 @@ def read_alignment_file(file_name):
 
     # Check if file exists and is readable
     if not os.path.exists(file_name) or not os.access(file_name, os.R_OK):
-        raise FileNotFoundError(f"The file {file_name} does not exist or is not readable.")
+        raise FileNotFoundError(
+            f"The file {file_name} does not exist or is not readable."
+        )
 
     # Guess the format of the file
     file_format = guess_alignment_format(file_name)
-    
+
     # If the format could not be guessed, raise an error
     if file_format is None:
         raise ValueError("Could not guess the format of MSA the file.")
-    
+
     try:
         # Try to read the file in the guessed format
         alignment = AlignIO.read(file_name, file_format)
     except Exception as e:
         # Catch specific exceptions for better error handling
         raise ValueError(f"An error occurred while reading the file: {str(e)}")
-    
+
     try:
         # Process the alignment
         alignment = change_states_to_allowed(alignment)
@@ -171,30 +174,68 @@ def read_alignment_file(file_name):
 
 
 def cut_alignment_columns(alignment, columns):
+    """
+    Extracts specified columns from a given multiple sequence alignment.
+
+    Parameters:
+    - alignment (MultipleSeqAlignment): The input alignment from which columns are to be extracted.
+    - columns (list): A list of indices specifying the columns to be extracted.
+
+    Returns:
+    - MultipleSeqAlignment: A new alignment containing only the specified columns.
+    """
+
     # Convert the alignment to a NumPy array for easy column slicing
     alignment_array = np.array([list(rec) for rec in alignment], np.character)
-    # Select the specified columns
 
+    # Select the specified columns from the alignment array
     selected_columns = alignment_array[:, columns]
+
+    # Initialize an empty list to hold the new SeqRecord objects
     selected_records = []
+
+    # Iterate through the rows of the selected columns, constructing a new SeqRecord for each
     for i, rec in enumerate(selected_columns):
+        # Create a new SeqRecord with the same ID as the original, but with the selected columns only
         selected_records.append(
             SeqRecord(Seq(rec.tobytes().decode()), id=alignment[i].id)
         )
+
+    # Create a new MultipleSeqAlignment from the list of SeqRecord objects
     selected_alignment = MultipleSeqAlignment(selected_records)
 
     return selected_alignment
 
 
 def split_msa_into_rate_categories_in_place(site_probability, alignment, rate_category):
+    """
+    Splits a multiple sequence alignment into sub-alignments based on rate categories.
+
+    Parameters:
+    - site_probability (dict): A dictionary mapping rate categories to lists of column indices.
+    - alignment (MultipleSeqAlignment): The input alignment to be split.
+    - rate_category (str): The specific rate category to extract, or "all" to extract all categories.
+
+    Returns:
+    - dict: A dictionary mapping rate categories to sub-alignments.
+    """
+
+    # Build a dictionary mapping rate categories to lists of column indices
     sub_category = build_categories_by_sub_tables(site_probability)
+
+    # Initialize an empty dictionary to hold the sub-alignments
     per_category_alignment_dict = {}
+
+    # Check if all rate categories should be extracted
     if rate_category == "all":
+        # Iterate through each rate category and extract the corresponding columns
         for key, value in sub_category.items():
             per_category_alignment_dict[key] = cut_alignment_columns(alignment, value)
     else:
+        # Extract only the specified rate category
         key = f"p{rate_category}"
         per_category_alignment_dict[key] = cut_alignment_columns(
             alignment, sub_category[key]
         )
+
     return per_category_alignment_dict

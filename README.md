@@ -58,7 +58,6 @@ Satute wraps around the IQ-TREE tool and adds functionalities specific to branch
 2. **NoAlignmentFileError**: Indicates that no multiple sequence alignment file was found in the specified directory. Ensure your directory contains the MSA file.
 
 3. **ValueError**: Can occur in multiple scenarios:
-    - If the number of rate categories provided (`-nr`) doesn't match the number in the model.
     - If only the `-msa` and `-tree` options are used without specifying a model.
 
 ## Invalid Command Combinations:
@@ -106,11 +105,11 @@ Certain combinations of command-line arguments are invalid:
   **Description**: Provides the path to an input tree file. This tree will be used for the saturation analysis. The tree file can be in Newick or Nexus format.  
   **Example**: `-tree /path/to/treefile.nwk`
 
-- **-nr**:  
+- **-category**:  
   **Type**: Integer  
   **Default**: None  
-  **Description**: Specifies the number of rate categories for the model. This is especially relevant for models with gamma-distributed rate variations. If the `-model` option includes a rate variation (e.g., `+G4`), the `-nr` should match the number specified in the model.  
-  **Example**: `-nr 4`
+  **Description**: Specifies the category of the model for rate heterogeneity that should be analyzed. The other categories will be ignored.  
+  **Example**: `-category 4`
 
 - **-ufboot**:  
   **Type**: Integer (>=1000)  

@@ -22,9 +22,11 @@ from rate_matrix import RateMatrix
 from satute_categories import (
     read_alignment_file,
     split_msa_into_rate_categories_in_place,
+    build_categories_by_sub_tables,
 )
 from file_handler import FileHandler, IqTreeHandler
 from satute_trees_and_subtrees import map_values_to_newick
+from Bio import AlignIO
 
 
 # Configure the logging settings (optional)
@@ -609,6 +611,12 @@ class Satute:
                 site_probability, alignment, rate_category
             )
 
+            categorized_sites = build_categories_by_sub_tables(site_probability)
+
+            self.write_alignment_and_indices(
+                per_rate_category_alignment, categorized_sites
+            )
+
             for rate in per_rate_category_alignment.keys():
                 logger.info(
                     f"""Category Rate {rate}, Site per category {len(per_rate_category_alignment[rate][0].seq)}"""
@@ -628,6 +636,37 @@ class Satute:
             )
 
             self.write_results_for_category_rates(results)
+
+    def write_alignment_and_indices(
+        self, per_rate_category_alignment, categorized_sites
+    ):
+        """
+        Writes MultipleSeqAlignment objects and indices to files.
+
+        Parameters:
+        - per_rate_category_alignment (dict): A dictionary mapping rates to MultipleSeqAlignment objects.
+        - categorized_sites (dict): A dictionary mapping rates to lists of integers (indices).
+
+        Returns:
+        - None
+        """
+        try:
+            for rate in per_rate_category_alignment.keys():
+                file_path = f"{self.input_args.msa.resolve()}.{rate}.phy.rate.indices"
+                with open(file_path, "w") as file:
+                    if (
+                        rate in per_rate_category_alignment
+                        and rate in categorized_sites
+                    ):
+                        # Convert MultipleSeqAlignment to string in FASTA format
+                        AlignIO.write(per_rate_category_alignment[rate], file, "phylip")
+                        file.write(",".join([str(i) for i in categorized_sites[rate]]))
+        except TypeError as e:
+            print(f"TypeError: {e}")
+        except IOError as e:
+            print(f"IOError: {e}")
+        except Exception as e:
+            print(f"An unexpected error occurred: {e}")
 
     def rename_internal_nodes(self, t: Tree) -> Tree:
         """
