@@ -177,3 +177,4 @@ cython_debug/
 #.idea/
 *.nex
 *.siteprob
+.DS_Store
