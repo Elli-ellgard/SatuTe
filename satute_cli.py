@@ -280,8 +280,9 @@ class Satute:
                 "-m",
                 self.input_args.model,
                 "--redo",
-                "--tree-fix",
-                "-n 0",
+                "-blfix"
+                # "--tree-fix",
+                # "-n 0",
                 "-wspr",
                 "--quiet",
             ]
@@ -402,8 +403,10 @@ class Satute:
                 "-m",
                 self.input_args.model,
                 "--quiet",
-                "--tree-fix",
-                "-n 0",
+                "-blfix"
+                # -blfix Fix branch lengths of user tree passed via -te
+                # --tree-fix,Fix -t tree (no tree search performed)
+                # "-n 0", Fix number of iterations to stop (default: OFF)
             ]
 
             # Add the '-wspr' option if number_rates > 1
