@@ -280,7 +280,8 @@ class Satute:
                 "-m",
                 self.input_args.model,
                 "--redo",
-                "-blfix"
+                "-blfix",
+                "--keep-ident",
                 # "--tree-fix",
                 # "-n 0",
                 "-wspr",
@@ -335,6 +336,7 @@ class Satute:
             extra_arguments = bb_arguments + [
                 "-m",
                 self.input_args.model,
+                "--keep-ident",
                 "--redo",
                 "--quiet",
             ]
@@ -367,6 +369,7 @@ class Satute:
             extra_arguments = bb_arguments + [
                 "-m",
                 self.input_args.model,
+                "--keep-ident",
                 "--quiet",
             ]
 
@@ -403,7 +406,8 @@ class Satute:
                 "-m",
                 self.input_args.model,
                 "--quiet",
-                "-blfix"
+                "--keep-ident",
+                "-blfix",
                 # -blfix Fix branch lengths of user tree passed via -te
                 # --tree-fix,Fix -t tree (no tree search performed)
                 # "-n 0", Fix number of iterations to stop (default: OFF)
