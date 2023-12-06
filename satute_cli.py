@@ -284,7 +284,7 @@ class Satute:
                 # "--tree-fix",
                 # "-n 0",
                 "-wspr",
-                "--quiet",
+                "--quiet" "--keep-ident",
             ]
 
             logger.info("Used IQ-TREE options:")
@@ -312,7 +312,7 @@ class Satute:
                 "--quiet",
             ]
 
-            logger.info("Used IQ-TREE options for Modelfinder run:")
+            logger.info("Used IQ-TREE options for Model Finder run:")
             logger.info(" ".join(arguments_dict["arguments"]))
             logger.info(" ".join(extra_arguments))
 
@@ -336,6 +336,7 @@ class Satute:
                 "-m",
                 self.input_args.model,
                 "--redo",
+                "--keep-ident",
                 "--quiet",
             ]
 
@@ -368,6 +369,7 @@ class Satute:
                 "-m",
                 self.input_args.model,
                 "--quiet",
+                "--keep-ident",
             ]
 
             if number_rates > 1:
@@ -402,8 +404,9 @@ class Satute:
             iqtree_args = [
                 "-m",
                 self.input_args.model,
-                "--quiet",
-                "-blfix"
+                "--quiet",                
+                "-blfix",
+                "--keep-ident",
                 # -blfix Fix branch lengths of user tree passed via -te
                 # --tree-fix,Fix -t tree (no tree search performed)
                 # "-n 0", Fix number of iterations to stop (default: OFF)
@@ -455,7 +458,7 @@ class Satute:
         Modify the input tree by naming its nodes using a preorder traversal.
 
         Nodes are named as "NodeX*" where X is an incremental number.
-        If a node name is purely numeric, it is preserved as 'apriori' feature of the node.
+        If a node name is purely numeric, it is preserved as 'apriorism' feature of the node.
 
         Args:
             t (Tree): The input tree to be modified.
