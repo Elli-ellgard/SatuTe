@@ -404,7 +404,7 @@ class Satute:
             iqtree_args = [
                 "-m",
                 self.input_args.model,
-                "--quiet",                
+                "--quiet",
                 "-blfix",
                 "--keep-ident",
                 # -blfix Fix branch lengths of user tree passed via -te
@@ -498,7 +498,6 @@ class Satute:
     def write_results_for_single_rate(self, results, to_be_tested_tree):
         """
         Writes the results for single rate to appropriate files.
-
         Args:
         - results (dict): Dictionary containing the results data.
         - to_be_tested_tree (Tree): The tree object containing the data to be written.
@@ -514,7 +513,7 @@ class Satute:
 
             results_data_frame = pd.DataFrame(results_set)
             # Writing the .csv file
-            results_data_frame.to_csv(f"{file_name_base}.csv")
+            results_data_frame.to_csv(f"{file_name_base}.csv", engine='python')
             # Writing the .csv file
             logger.info("Finished writing results to files")
             self.write_nexus_file(results_data_frame, to_be_tested_tree, file_name_base)
@@ -525,8 +524,11 @@ class Satute:
             newick_string = to_be_tested_tree.write(format=1, features=["apriori"])
             newick_string = map_values_to_newick(newick_string, results_data_frame)
             tree_file.write("#NEXUS")
+            tree_file.write("\n")
             tree_file.write("BEGIN TREES;")
+            tree_file.write("\n")
             tree_file.write(f"Tree tree1 = {newick_string}")
+            tree_file.write("\n")
             tree_file.write("END TREES;")
 
     def run(self):
