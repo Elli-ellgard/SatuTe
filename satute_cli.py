@@ -377,10 +377,11 @@ class Satute:
             if number_rates > 1:
                 extra_arguments = extra_arguments + ["-wspr"]
 
+
             logger.info("Used IQ-TREE options:")
             logger.info(" ".join(arguments_dict["arguments"]))
             logger.info(" ".join(extra_arguments))
-
+            
             self.iqtree_handler.run_iqtree_with_arguments(
                 arguments=arguments_dict["arguments"], extra_arguments=extra_arguments
             )

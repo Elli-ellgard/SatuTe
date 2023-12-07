@@ -30,21 +30,21 @@ def map_values_to_newick(newick, df):
         escaped_target_node = re.escape(target_node)
 
         # Adjusting the metadata as per the requirements
-        meta_data = f"&delta={row['delta']}, &c_s={row['c_s']}, &p_value={row['p_value']}, &result_test={row['result_test']}"
+        meta_data = f"&delta={row['delta']}, c_s={row['c_s']}, p_value={row['p_value']}, result_test={row['result_test']}"
 
         # Check for existing square brackets after the node
+        # Use raw string notation for regex patterns
         pattern_with_brackets = re.compile(
-            f"({escaped_target_node}:\d+(\.\d+)?(e-?\d+)?)\[([^\]]+)\]"
+            rf"({escaped_target_node}:\d+(\.\d+)?(e-?\d+)?)\[([^\]]+)\]"
         )
         pattern_without_brackets = re.compile(
-            f"({escaped_target_node}:\d+(\.\d+)?(e-?\d+)?)"
+            rf"({escaped_target_node}:\d+(\.\d+)?(e-?\d+)?)"
         )
 
         # If square brackets are present, append the metadata inside those brackets
         if pattern_with_brackets.search(newick):
-            newick = pattern_with_brackets.sub(f"\\1[\\4,{meta_data}]", newick)
+            newick = pattern_with_brackets.sub(rf"\1[\4,{meta_data}]", newick)
         else:
             # If no square brackets, add them and insert the metadata
-            newick = pattern_without_brackets.sub(f"\\1[{meta_data}]", newick)
-
+            newick = pattern_without_brackets.sub(rf"\1[{meta_data}]", newick)
     return newick
