@@ -1,7 +1,11 @@
 import pandas as pd
+from logging import Logger
+import logging
+from Bio import AlignIO
 
-
-def write_results_for_category_rates(results, input_args, map_values_to_newick, logger):
+def write_results_for_category_rates(
+    results, input_args, map_values_to_newick, logger: Logger
+):
     """
     Writes the results for category rates to appropriate files.
 
@@ -90,6 +94,12 @@ def write_results_for_single_rate(
                 map_values_to_newick,
                 logger,
             )
+            # Create a FileHandler
+            # log_file = f"{input_args.msa.resolve()}_{input_args.alpha}.satute.log"
+            # file_handler = logger.FileHandler(log_file)
+            # # Add the FileHandler to the logger
+            # logger.addHandler(file_handler)
+
 
 def write_nexus_file(
     newick_string, file_name, results_data_frame, map_values_to_newick, logger
@@ -122,3 +132,31 @@ def write_nexus_file(
         logger.info(f"Nexus file written successfully: {file_name}")
     except Exception as e:
         logger.error(f"Error writing Nexus file: {e}")
+
+
+def write_alignment_and_indices(per_rate_category_alignment, categorized_sites, input_args):
+    """
+    Writes MultipleSeqAlignment objects and indices to files.
+    Parameters:
+    - per_rate_category_alignment (dict): A dictionary mapping rates to MultipleSeqAlignment objects.
+    - categorized_sites (dict): A dictionary mapping rates to lists of integers (indices).
+    Returns:
+    - None
+    """
+    try:
+        for rate in per_rate_category_alignment.keys():
+            file_path = f"{input_args.msa.resolve()}.{rate}.phy.rate.indices"
+            with open(file_path, "w") as file:
+                if (
+                    rate in per_rate_category_alignment
+                    and rate in categorized_sites
+                ):
+                    # Convert MultipleSeqAlignment to string in FASTA format
+                    AlignIO.write(per_rate_category_alignment[rate], file, "phylip")
+                    file.write(",".join([str(i) for i in categorized_sites[rate]]))
+    except TypeError as e:
+        print(f"TypeError: {e}")
+    except IOError as e:
+        print(f"IOError: {e}")
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")

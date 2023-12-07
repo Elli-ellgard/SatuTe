@@ -24,11 +24,12 @@ from satute_categories import (
 )
 from file_handler import FileHandler, IqTreeHandler
 from satute_trees_and_subtrees import map_values_to_newick
-from Bio import AlignIO
 from satute_ostream import (
     write_results_for_category_rates,
     write_results_for_single_rate,
+    write_nexus_file,
 )
+from satute_ostream import write_alignment_and_indices
 
 
 # Configure the logging settings (optional)
@@ -373,15 +374,14 @@ class Satute:
                 "--quiet",
                 "--keep-ident",
             ]
-            
+
             if number_rates > 1:
                 extra_arguments = extra_arguments + ["-wspr"]
-
 
             logger.info("Used IQ-TREE options:")
             logger.info(" ".join(arguments_dict["arguments"]))
             logger.info(" ".join(extra_arguments))
-            
+
             self.iqtree_handler.run_iqtree_with_arguments(
                 arguments=arguments_dict["arguments"], extra_arguments=extra_arguments
             )
@@ -504,10 +504,14 @@ class Satute:
         # Parsing and checking input arguments and constructing IQ-TREE command-line arguments
         self.parse_input()
         self.check_input()
-
         arguments_dict = self.construct_arguments()
-        self.run_iqtree_workflow(arguments_dict)
 
+        log_file = f"{self.input_args.msa.resolve()}_{self.input_args.alpha}.satute.log"
+        file_handler = logging.FileHandler(log_file)
+        # Add the FileHandler to the logger
+        logger.addHandler(file_handler)
+
+        self.run_iqtree_workflow(arguments_dict)
         # ======== Tree File Handling =========
         to_be_tested_tree = self.tree_handling()
 
@@ -516,10 +520,8 @@ class Satute:
         iq_tree_file_path = f"{arguments_dict['msa_file'].resolve()}.iqtree"
         satute_iq_tree_parser = IqTreeParser(iq_tree_file_path)
         substitution_model = satute_iq_tree_parser.load_substitution_model()
-
         ## Convert representation of rate_matrix
         RATE_MATRIX = RateMatrix(substitution_model.rate_matrix)
-
         ## Calculation of the spectral decomposition of the rate matrix
         (
             array_left_eigenvectors,
@@ -528,7 +530,6 @@ class Satute:
         ) = spectral_decomposition(
             substitution_model.rate_matrix, substitution_model.phi_matrix
         )
-
         ## Get number of rate categories in case of a +G or +R model
         # Consider a specific rate category
         rate_category = "all"
@@ -541,10 +542,8 @@ class Satute:
                 raise ValueError("Chosen category of interest is out of range.")
             else:
                 rate_category = str(self.input_args.category)
-
         # ======== Multiple Sequence Alignment
         alignment = read_alignment_file(arguments_dict["msa_file"].resolve())
-
         # ========  Test for Branch Saturation =========
         logger.info(
             f"""
@@ -594,8 +593,8 @@ class Satute:
 
             categorized_sites = build_categories_by_sub_tables(site_probability)
 
-            self.write_alignment_and_indices(
-                per_rate_category_alignment, categorized_sites
+            write_alignment_and_indices(
+                per_rate_category_alignment, categorized_sites, self.input_args
             )
 
             for rate in per_rate_category_alignment.keys():
@@ -619,37 +618,6 @@ class Satute:
             write_results_for_category_rates(
                 results, self.input_args, map_values_to_newick, logger
             )
-
-    def write_alignment_and_indices(
-        self, per_rate_category_alignment, categorized_sites
-    ):
-        """
-        Writes MultipleSeqAlignment objects and indices to files.
-
-        Parameters:
-        - per_rate_category_alignment (dict): A dictionary mapping rates to MultipleSeqAlignment objects.
-        - categorized_sites (dict): A dictionary mapping rates to lists of integers (indices).
-
-        Returns:
-        - None
-        """
-        try:
-            for rate in per_rate_category_alignment.keys():
-                file_path = f"{self.input_args.msa.resolve()}.{rate}.phy.rate.indices"
-                with open(file_path, "w") as file:
-                    if (
-                        rate in per_rate_category_alignment
-                        and rate in categorized_sites
-                    ):
-                        # Convert MultipleSeqAlignment to string in FASTA format
-                        AlignIO.write(per_rate_category_alignment[rate], file, "phylip")
-                        file.write(",".join([str(i) for i in categorized_sites[rate]]))
-        except TypeError as e:
-            print(f"TypeError: {e}")
-        except IOError as e:
-            print(f"IOError: {e}")
-        except Exception as e:
-            print(f"An unexpected error occurred: {e}")
 
     def rename_internal_nodes(self, t: Tree) -> Tree:
         """
