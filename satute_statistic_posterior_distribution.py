@@ -174,5 +174,3 @@ def calculate_test_statistic_posterior_distribution(
         result_test_tip2tip = "InfoT2T"
 
     return delta, c_s, c_s_two_sequence, p_value, result_test, result_test_tip2tip
-
-

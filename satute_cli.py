@@ -3,7 +3,6 @@ import argparse
 import os
 import logging
 from pathlib import Path
-import pandas as pd
 from ete3 import Tree
 from satute_repository import (
     parse_substitution_model,
@@ -11,7 +10,6 @@ from satute_repository import (
     parse_file_to_data_frame,
     IqTreeParser,
 )
-
 from satute_exception import InvalidDirectoryError, NoAlignmentFileError
 from satute_util import spectral_decomposition
 from partial_likelihood import (
@@ -27,6 +25,10 @@ from satute_categories import (
 from file_handler import FileHandler, IqTreeHandler
 from satute_trees_and_subtrees import map_values_to_newick
 from Bio import AlignIO
+from satute_ostream import (
+    write_results_for_category_rates,
+    write_results_for_single_rate,
+)
 
 
 # Configure the logging settings (optional)
@@ -371,7 +373,7 @@ class Satute:
                 "--quiet",
                 "--keep-ident",
             ]
-
+            
             if number_rates > 1:
                 extra_arguments = extra_arguments + ["-wspr"]
 
@@ -478,7 +480,6 @@ class Satute:
                 # Assign new node names based on the preorder traversal index.
                 node.name = f"Node{idx}*"
                 idx += 1
-
         return t
 
     def tree_handling(self):
@@ -494,42 +495,6 @@ class Satute:
         """
         to_be_tested_tree = self.extract_tree()
         return self.modify_tree(to_be_tested_tree)
-
-    def write_results_for_single_rate(self, results, to_be_tested_tree):
-        """
-        Writes the results for single rate to appropriate files.
-        Args:
-        - results (dict): Dictionary containing the results data.
-        - to_be_tested_tree (Tree): The tree object containing the data to be written.
-        """
-        for key, results_set in results.items():
-            file_name_base = (
-                f"{self.input_args.msa.resolve()}_{self.input_args.alpha}.satute"
-            )
-
-            # Append the edge information to the file name if provided
-            if self.input_args.edge:
-                file_name_base += f"_{self.input_args.edge}"
-
-            results_data_frame = pd.DataFrame(results_set)
-            # Writing the .csv file
-            results_data_frame.to_csv(f"{file_name_base}.csv", engine='python')
-            # Writing the .csv file
-            logger.info("Finished writing results to files")
-            self.write_nexus_file(results_data_frame, to_be_tested_tree, file_name_base)
-
-    def write_nexus_file(self, results_data_frame, to_be_tested_tree, file_name_base):
-        # Writing the .tree file
-        with open(f"{file_name_base}.nex", "w") as tree_file:
-            newick_string = to_be_tested_tree.write(format=1, features=["apriori"])
-            newick_string = map_values_to_newick(newick_string, results_data_frame)
-            tree_file.write("#NEXUS")
-            tree_file.write("\n")
-            tree_file.write("BEGIN TREES;")
-            tree_file.write("\n")
-            tree_file.write(f"Tree tree1 = {newick_string}")
-            tree_file.write("\n")
-            tree_file.write("END TREES;")
 
     def run(self):
         """
@@ -609,7 +574,14 @@ class Satute:
                 self.input_args.edge,
             )
 
-            self.write_results_for_single_rate(results, to_be_tested_tree)
+            write_results_for_single_rate(
+                results,
+                self.input_args,
+                to_be_tested_tree,
+                map_values_to_newick,
+                logger,
+            )
+
         else:
             site_probability = parse_file_to_data_frame(
                 f"{self.input_args.msa.resolve()}.siteprob"
@@ -643,7 +615,9 @@ class Satute:
                 self.input_args.edge,
             )
 
-            self.write_results_for_category_rates(results)
+            write_results_for_category_rates(
+                results, self.input_args, map_values_to_newick, logger
+            )
 
     def write_alignment_and_indices(
         self, per_rate_category_alignment, categorized_sites
@@ -700,39 +674,6 @@ class Satute:
                 node.name = f"Node{idx}*"
                 idx += 1
         return t
-
-    def write_results_for_category_rates(self, results):
-        """
-        Writes the results for category rates to appropriate files.
-
-        Args:
-        - results (dict): Dictionary containing the results data.
-        """
-        for key, results_set in results.items():
-            file_name = (
-                f"{self.input_args.msa.resolve()}_{key}_{self.input_args.alpha}.satute"
-            )
-
-            # Append the edge information to the file name if provided
-            if self.input_args.edge:
-                file_name = file_name + f"_{self.input_args.edge}"
-
-            results_data_frame = pd.DataFrame(results_set["result_list"])
-
-            if "rescaled_tree" in results_set and "result_list" in results_set:
-                with open(f"{file_name}.nex", "w") as tree_file_writer:
-                    newick_string = results_set["rescaled_tree"].write(format=1)
-                    newick_string = map_values_to_newick(
-                        newick_string, results_data_frame
-                    )
-                    # Writing the .tree file
-                    tree_file_writer.write("#NEXUS\n")
-                    tree_file_writer.write("BEGIN TREES;\n")
-                    tree_file_writer.write(f"Tree tree1 = {newick_string}\n")
-                    tree_file_writer.write("END TREES;\n")
-
-                results_data_frame.to_csv(f"{file_name}.csv")
-        logger.info("Finished writing results for category rates to files")
 
     def handle_number_rates(self):
         number_rates = 1
@@ -833,7 +774,6 @@ class Satute:
 
             self.number_rates = self.handle_number_rates()
 
-            # TODO Test when there is no site probabilities file in the directory
             # How apply iqtree just to get the site probabilities file without --redo
             if self.number_rates > 1:
                 self.site_probabilities_file = self.file_handler.find_file_by_suffix(
