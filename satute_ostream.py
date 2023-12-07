@@ -1,5 +1,6 @@
 import pandas as pd
 
+
 def write_results_for_category_rates(results, input_args, map_values_to_newick, logger):
     """
     Writes the results for category rates to appropriate files.
@@ -24,9 +25,7 @@ def write_results_for_category_rates(results, input_args, map_values_to_newick, 
             if hasattr(input_args, "edge") and input_args.edge:
                 file_name = f"{file_name}_{input_args.edge}"
 
-            results_data_frame = pd.DataFrame(
-                results_set["result_list"]
-            )
+            results_data_frame = pd.DataFrame(results_set["result_list"])
 
             if "rescaled_tree" in results_set:
                 tree_file_name = f"{file_name}.nex"
@@ -41,7 +40,7 @@ def write_results_for_category_rates(results, input_args, map_values_to_newick, 
 
             csv_file_name = f"{file_name}.csv"
             try:
-                results_data_frame.to_csv(csv_file_name, engine="python")
+                results_data_frame.to_csv(csv_file_name)
             except Exception as e:
                 logger.error(f"Error writing CSV file {csv_file_name}: {e}")
 
@@ -75,7 +74,7 @@ def write_results_for_single_rate(
         # Writing the .csv file
         csv_file_name = f"{file_name_base}.csv"
         try:
-            results_data_frame.to_csv(csv_file_name, engine="python")
+            results_data_frame.to_csv(csv_file_name)
             logger.info(f"Finished writing CSV file: {csv_file_name}")
         except Exception as e:
             logger.error(f"Error writing CSV file {csv_file_name}: {e}")
@@ -85,9 +84,12 @@ def write_results_for_single_rate(
             tree_file_name = file_name_base
             newick_string = to_be_tested_tree.write(format=1)
             write_nexus_file(
-                newick_string, tree_file_name, results_data_frame, map_values_to_newick, logger
+                newick_string,
+                tree_file_name,
+                results_data_frame,
+                map_values_to_newick,
+                logger,
             )
-
 
 def write_nexus_file(
     newick_string, file_name, results_data_frame, map_values_to_newick, logger
