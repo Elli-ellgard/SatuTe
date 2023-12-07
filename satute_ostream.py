@@ -25,7 +25,7 @@ def write_results_for_category_rates(results, input_args, map_values_to_newick, 
                 file_name = f"{file_name}_{input_args.edge}"
 
             results_data_frame = pd.DataFrame(
-                results_set["result_list"], engine="python"
+                results_set["result_list"]
             )
 
             if "rescaled_tree" in results_set:
@@ -41,7 +41,7 @@ def write_results_for_category_rates(results, input_args, map_values_to_newick, 
 
             csv_file_name = f"{file_name}.csv"
             try:
-                results_data_frame.to_csv(csv_file_name)
+                results_data_frame.to_csv(csv_file_name, engine="python")
             except Exception as e:
                 logger.error(f"Error writing CSV file {csv_file_name}: {e}")
 
@@ -75,7 +75,7 @@ def write_results_for_single_rate(
         # Writing the .csv file
         csv_file_name = f"{file_name_base}.csv"
         try:
-            results_data_frame.to_csv(csv_file_name)
+            results_data_frame.to_csv(csv_file_name, engine="python")
             logger.info(f"Finished writing CSV file: {csv_file_name}")
         except Exception as e:
             logger.error(f"Error writing CSV file {csv_file_name}: {e}")
