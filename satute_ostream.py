@@ -1,6 +1,5 @@
 import pandas as pd
 from logging import Logger
-import logging
 from Bio import AlignIO
 
 def write_results_for_category_rates(
