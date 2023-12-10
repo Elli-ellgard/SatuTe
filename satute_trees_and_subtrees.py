@@ -142,3 +142,28 @@ def map_values_to_newick(newick, df):
             newick = pattern_without_brackets.sub(f"\\1[{meta_data}]", newick)
 
     return newick
+
+
+def modify_tree(t):
+    """
+    Modify the input tree by naming its nodes using a preorder traversal.
+    Nodes are named as "NodeX*" where X is an incremental number.
+    If a node name is purely numeric, it is preserved as 'apriorism' feature of the node.
+    Args:
+        t (Tree): The input tree to be modified.
+    Returns:
+        Tree: The modified tree with updated node names.
+    """
+    idx = 1
+    for node in t.traverse("preorder"):
+        if not node.is_leaf():
+            # If a node name already starts with "Node", no further modification is required.
+            if node.name.startswith("Node"):
+                return t
+            # Preserve numeric node names as 'apriori' for reference.
+            if node.name.isdigit():
+                node.add_features(apriori=node.name)
+            # Assign new node names based on the preorder traversal index.
+            node.name = f"Node{idx}*"
+            idx += 1
+    return t

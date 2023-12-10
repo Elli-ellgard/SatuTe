@@ -15,6 +15,7 @@ from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 from concurrent.futures import ProcessPoolExecutor
 from graph import Graph, Node
+<<<<<<< Updated upstream:satute_direction_based_saturation_test.py
 from rate_matrix import RateMatrix
 
 
@@ -40,6 +41,11 @@ NUCLEOTIDE_CODE_VECTOR = {
 
 RATE_MATRIX = np.array([[-3, 1, 1, 1], [1, -3, 1, 1], [1, 1, -3, 1], [1, 1, 1, -3]])
 
+=======
+from nucleotide_code_vector import NUCLEOTIDE_CODE_VECTOR
+import ete3
+from rate_matrix import RateMatrix
+>>>>>>> Stashed changes:partial_likelihood.py
 
 @cache
 def partial_likelihood(tree, node, coming_from, rate_matrix, factor=0):
@@ -88,14 +94,9 @@ def partial_likelihood(tree, node, coming_from, rate_matrix, factor=0):
 
 
 @cache
-def calculate_exponential_matrix(rate_matrix, branch_length):
+def calculate_exponential_matrix(rate_matrix: RateMatrix, branch_length: float) -> np.ndarray:
     """
-    Calculate the matrix exponential of a rate matrix scaled by a given branch length.
-
-    This function computes the matrix exponential of a rate matrix, which represents
-    the instantaneous rate of nucleotide substitutions between different states.
-    The exponential matrix is calculated by exponentiation the rate matrix scaled by
-    the given branch length, which represents the time interval of evolution along a branch.
+    Calculates the matrix exponential of a rate matrix scaled by a given branch length.
 
     Args:
         rate_matrix (RateMatrix): The rate matrix representing nucleotide substitution rates.
@@ -103,16 +104,20 @@ def calculate_exponential_matrix(rate_matrix, branch_length):
                               the matrix exponential.
 
     Returns:
-        np.array: The resulting matrix exponential of the scaled rate matrix.
+        np.ndarray: The resulting matrix exponential of the scaled rate matrix.
 
     Notes:
-        - The @cache decorator is used for memoization, storing previously computed results.
+        - The `@cache` decorator is used for memoization, storing previously computed results.
         - The resulting matrix describes the transition probabilities over the given time interval.
         - The matrix exponential plays a fundamental role in modeling evolutionary processes.
 
     Warning:
         Ensure that the rate matrix and branch length are appropriately defined for accurate results.
     """
+
+    # Check if the branch length is a positive value
+    if not isinstance(branch_length, float) or branch_length < 0:
+        raise ValueError("Branch length must be a positive float")
 
     return expm(rate_matrix.rate_matrix * branch_length)
 
@@ -268,29 +273,55 @@ def update_partial_likelihood_storage(storage, edge_name, likelihood_data):
 
 
 def calculate_partial_likelihoods_for_sites(
-    tree, alignment, rate_matrix, focused_edge=None
+    tree: ete3.Tree, alignment: np.ndarray, rate_matrix: RateMatrix, focused_edge=None
 ):
-    """... [Same docstring as before] ..."""
+    """Calculates the partial likelihoods of each site in a multiple sequence alignment across a given phylogeny.
+
+    Args:
+        tree: The phylogenetic tree represented as an ete3 Tree object.
+        alignment: The multiple sequence alignment represented as a NumPy array.
+        rate_matrix: The rate matrix governing nucleotide substitution probabilities.
+        focused_edge: (Optional) A tuple indicating the specific edge to focus on for partial likelihood calculations.
+
+    Returns:
+        dict: A dictionary containing partial likelihood data for each edge and site.
+    """
+
+    # Create a lookup table for efficient sequence indexing
     alignment_look_up_table = get_alignment_look_up_table(alignment)
+
+    # Initialize a storage dictionary for partial likelihood data
     partial_likelihood_per_site_storage = {}
 
+    # Iterate over each site in the alignment
     for i in range(0, len(alignment[0].seq), 1):
+        # Convert the alignment column for the current site into a NumPy array
+        msa_column = alignment[:, (i + 1) - 1 : (i + 1)]
+
+        # Convert the ETE3 tree to a directed acyclic graph (DAG) for the current site
         graph = convert_ete3_tree_to_directed_acyclic_graph(
-            tree, alignment[:, (i + 1) - 1 : (i + 1)], alignment_look_up_table
+            tree, msa_column, alignment_look_up_table
         )
 
+        # If a specific edge is focused on, filter the graph to only include that edge
         if focused_edge:
             filter_graph_edges_by_focus(graph, focused_edge)
 
+        # Calculate the partial likelihoods for each edge in the graph
         for edge in graph.get_edges():
+            # Extract edge information
             right, left, branch_length = edge
 
+            # Calculate partial likelihoods for both directions of the edge
             p1, p1_factor = partial_likelihood(graph, left, right, rate_matrix)
             p2, p2_factor = partial_likelihood(graph, right, left, rate_matrix)
 
+            # Create a dictionary containing partial likelihood data for the edge and site
             likelihood_data = get_partial_likelihood_dict(
                 (left, right), p1, p2, i, branch_length
             )
+
+            # Store partial likelihood data in the dictionary
             edge_name = f"({left.name}, {right.name})"
             update_partial_likelihood_storage(
                 partial_likelihood_per_site_storage, edge_name, likelihood_data

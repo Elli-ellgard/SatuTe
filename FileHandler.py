@@ -15,7 +15,7 @@ class FileHandler:
         """
         self.base_directory = base_directory
 
-    def find_file_by_suffix(self, suffixes):
+    def find_file_by_suffix(self, suffixes: list):
         """
         Locate a file in the base directory based on its suffixes.
 

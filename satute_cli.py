@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 import argparse
-import os
 import logging
 from pathlib import Path
 import pandas as pd
@@ -12,9 +11,14 @@ from satute_repository import (
     parse_rate_from_model,
     parse_file_to_data_frame,
 )
+<<<<<<< Updated upstream
 from satute_exception import InvalidDirectoryError, NoAlignmentFileError
 from satute_util_new import spectral_decomposition
 from satute_direction_based_saturation_test import (
+=======
+from satute_util import spectral_decomposition
+from partial_likelihood import (
+>>>>>>> Stashed changes
     single_rate_analysis,
     multiple_rate_analysis,
 )
@@ -26,6 +30,16 @@ from satute_rate_categories_and_alignments import (
 from satute_rate_categories_and_alignments import parse_category_rates
 from FileHandler import FileHandler, IqTreeHandler
 from satute_trees_and_subtrees import map_values_to_newick
+<<<<<<< Updated upstream
+=======
+from satute_ostream import (
+    write_results_for_category_rates,
+    write_results_for_single_rate,
+    write_alignment_and_indices,
+)
+from satute_arguments import ARGUMENT_LIST
+from satute_trees_and_subtrees import modify_tree
+>>>>>>> Stashed changes
 
 # Configure the logging settings (optional)
 logging.basicConfig(
@@ -40,7 +54,6 @@ class Satute:
     def __init__(
         self,
         iqtree=None,
-        input_dir=None,
         model=None,
         nr=None,
         output_prefix=None,
@@ -53,10 +66,7 @@ class Satute:
         self.iqtree_handler = None
 
         # Directories and paths
-        self.input_dir = None
-        self.tree = None
         self.msa = None
-        self.site_probabilities_file = None
         self.active_directory = None
 
         # Model and testing parameters
@@ -72,6 +82,7 @@ class Satute:
         self.input_args_dict = {}
         self.number_rates = 1
 
+<<<<<<< Updated upstream
         # Command-line argument configurations
         self.arguments = self._initialize_arguments()
 
@@ -177,36 +188,52 @@ class Satute:
             },
         ]
 
+=======
+>>>>>>> Stashed changes
     def parse_input(self):
         """
-        Parse command-line arguments.
+        Parse command-line arguments using the argparse module. It dynamically
+        adds arguments to the parser based on a predefined list of argument
+        configurations, ensuring flexibility and ease of updates.
         """
         parser = argparse.ArgumentParser(description="Satute")
-        for argument in self.arguments:
-            flag = argument["flag"]
-            argument.pop("flag")
-            parser.add_argument(flag, **argument)
+        for argument in ARGUMENT_LIST:
+            # Unpack the dictionary directly without modifying the original list
+            parser.add_argument(
+                argument["flag"], **{k: v for k, v in argument.items() if k != "flag"}
+            )
         self.input_args = parser.parse_args()
         self.input_args_dict = vars(self.input_args)
 
-    def check_input(self):
+    def validate_satute_input_options(self):
         """
-        Check allowed option combinations.
+        Validates the combinations of input arguments for Satute analysis.
+
+        This function ensures that:
+        - The -dir option is not used with specific other options (like -msa, -tree).
+        - The -msa option is provided if -dir is not used.
+        - The -tree option, if used, must be accompanied by a -model option.
+        - The -ufboot or -boot options are not used with a specific combination of options.
+        - The chosen category (if provided) is within a valid range.
+
+        Raises:
+            ValueError: If an invalid combination of arguments is provided.
         """
-        if self.input_args.dir is not None:
-            error_str = "The option -dir is for specifying a path to an existing directory containing IQ-TREE output files and cannot be run with the options msa, tree, model, nr, ufboot, boot."
-            if self.input_args.msa is not None:
-                logger.error(f"{error_str}")
-                raise ValueError("Cannot run Satute with option -dir and -msa.")
+        self.validate_dir_conflicts()
+        self.validate_msa_presence()
+        self.validate_tree_and_model()
+        self.validate_boot_options()
+        self.validate_category_range()        
 
-            if self.input_args.tree is not None:
-                logger.error(f"{error_str}")
-                raise ValueError("Cannot run Satute with option -dir and -tree.")
+    def validate_dir_conflicts(self):
+        if self.input_args.dir and any(getattr(self.input_args, opt) for opt in ["msa", "tree", "model", "ufboot", "boot"]):
+            raise ValueError("Cannot run Satute with -dir option combined with -msa, -tree, -model, -ufboot, or -boot.")
 
-            if self.input_args.model is not None:
-                logger.error(f"{error_str}")
-                raise ValueError("Cannot run Satute with option -dir and -model.")
+    def validate_msa_presence(self):
+        if not self.input_args.dir and not self.input_args.msa:
+            raise ValueError("MSA file is required when -dir is not used.")
 
+<<<<<<< Updated upstream
             if self.input_args.nr is not None:
                 logger.error(f"{error_str}")
                 raise ValueError("Cannot run Satute with option -dir and -nr.")
@@ -250,6 +277,21 @@ class Satute:
                             raise ValueError(
                                 "Cannot run the Satute modi msa+model+tree with otpion -boot."
                             )
+=======
+    def validate_tree_and_model(self):
+        if self.input_args.tree and not self.input_args.model:
+            raise ValueError("Model must be specified when using a tree file.")
+
+    def validate_boot_options(self):
+        if self.input_args.tree and (self.input_args.ufboot or self.input_args.boot):
+            raise ValueError("Cannot use -ufboot or -boot with -tree.")
+
+    def validate_category_range(self):
+        if self.input_args.model and self.input_args.category:
+            self.number_rates = self.handle_number_rates()
+            if not (1 <= self.input_args.category <= self.number_rates):
+                raise ValueError("Chosen category of interest is out of range.")
+>>>>>>> Stashed changes
 
     def run_iqtree_workflow(self, arguments_dict):
         if arguments_dict["option"] == "dir":
@@ -265,16 +307,26 @@ class Satute:
             logger.info(
                 "IQ-TREE will be needed for the site probabilities for the corresponding rate categories."
             )
+<<<<<<< Updated upstream
             number_rates = self.handle_number_rates()
+=======
+>>>>>>> Stashed changes
 
             iqtree_args = [
                 "-m",
                 self.input_args.model,
                 "--redo",
+<<<<<<< Updated upstream
                 "--tree-fix",
                 "-n 0",
                 "-wspr",
                 "--quiet",
+=======
+                "-blfix",
+                "-wspr",
+                "--quiet",
+                "--keep-ident",
+>>>>>>> Stashed changes
             ]
 
             logger.info("Used IQ-TREE options:")
@@ -285,16 +337,13 @@ class Satute:
                 arguments_dict["arguments"], iqtree_args
             )
 
-        elif arguments_dict["option"] == "msa":
-            logger.info("Running IQ-TREE with constructed arguments")
+        if arguments_dict["option"] == "msa":
             logger.info(
-                "If no model is specified in input arguments, best-fit model will be extracted from log file."
+                "Running IQ-TREE with constructed arguments. Note: If no model is specified in input arguments, "
+                "the best-fit model will be extracted from the log file."
             )
             logger.warning(
-                "Please consider for the analysis that IQ-Tree will be running with default options."
-            )
-            logger.warning(
-                "If specific options are required for the analysis, please run IQ-Tree separately."
+                "IQ-TREE will run with default options. For specific options required in the analysis, please run IQ-TREE separately."
             )
 
             extra_arguments = [
@@ -316,8 +365,14 @@ class Satute:
                 f"{arguments_dict['msa_file']}.iqtree"
             )
 
+<<<<<<< Updated upstream
             self.input_args.model = substitution_model
             number_rates = self.handle_number_rates()
+=======
+            iq_tree_parser = IqTreeParser(f"{arguments_dict['msa_file']}.iqtree")
+            self.input_args.model = iq_tree_parser.parse_substitution_model()
+            self.number_rates = self.handle_number_rates()
+>>>>>>> Stashed changes
 
             # Validate and append ufboot and boot parameters to extra_arguments
             bb_arguments = self.iqtree_handler.validate_and_append_boot_arguments(
@@ -331,7 +386,7 @@ class Satute:
                 "--quiet",
             ]
 
-            if number_rates > 1:
+            if self.number_rates > 1:
                 extra_arguments = extra_arguments + ["-wspr"]
 
             logger.info("Used IQ-TREE options for final run:")
@@ -342,7 +397,7 @@ class Satute:
                 arguments=arguments_dict["arguments"], extra_arguments=extra_arguments
             )
 
-        elif arguments_dict["option"] == "msa + model":
+        if arguments_dict["option"] == "msa + model":
             logger.info("Running IQ-TREE with constructed arguments")
             logger.warning(
                 "Please consider for the analysis that IQ-Tree will be running with default options."
@@ -351,7 +406,7 @@ class Satute:
                 "If specific options are required for the analysis, please run IQ-Tree separately."
             )
 
-            number_rates = self.handle_number_rates()
+            self.number_rates = self.handle_number_rates()
             bb_arguments = self.iqtree_handler.validate_and_append_boot_arguments(
                 self.input_args.ufboot, self.input_args.boot
             )
@@ -362,7 +417,7 @@ class Satute:
                 "--quiet",
             ]
 
-            if number_rates > 1:
+            if self.number_rates > 1:
                 extra_arguments = extra_arguments + ["-wspr"]
 
             logger.info("Used IQ-TREE options:")
@@ -370,37 +425,32 @@ class Satute:
             logger.info(" ".join(extra_arguments))
 
             self.iqtree_handler.run_iqtree_with_arguments(
-                arguments=arguments_dict["arguments"], extra_arguments=extra_arguments
+                arguments_dict["arguments"], extra_arguments
             )
-
-        # elif arguments_dict["option"] == "msa + tree":
-        #     logger.error(
-        #         "Cannot run Satute with only a tree file and MSA file. The model must be specified."
-        #     )
-        #     raise ValueError(
-        #         "Cannot run Satute with only a tree file and MSA file. The model must be specified."
-        #     )
 
         if arguments_dict["option"] == "msa + tree + model":
             logger.info("Running IQ-TREE with constructed arguments")
             logger.warning(
-                "Please consider for the analysis that IQ-Tree will be running with default options."
+                """Please consider for the analysis that IQ-Tree will be running with default options.
+                If specific options are required for the analysis, please run IQ-Tree separately."""
             )
-            logger.warning(
-                "If specific options are required for the analysis, please run IQ-Tree separately."
-            )
-            number_rates = self.handle_number_rates()
+            self.number_rates = self.handle_number_rates()
 
             iqtree_args = [
                 "-m",
                 self.input_args.model,
                 "--quiet",
+<<<<<<< Updated upstream
                 "--tree-fix",
                 "-n 0",
+=======
+                "-blfix",
+                "--keep-ident",
+>>>>>>> Stashed changes
             ]
 
             # Add the '-wspr' option if number_rates > 1
-            if number_rates > 1:
+            if self.number_rates > 1:
                 iqtree_args.append("-wspr")
 
             logger.info("Used IQ-TREE options:")
@@ -414,32 +464,34 @@ class Satute:
 
     def extract_tree(self):
         """
-        Extract the Newick representation of a tree from a specified file or directory.
+        Extracts the Newick representation of a tree from either a specified file or a directory.
 
-        If a specific tree file is provided via the input arguments, it uses that file.
-        Otherwise, it attempts to retrieve the tree from the specified directory.
+        This method first checks if a specific tree file is provided via input arguments.
+        If so, it extracts the Newick representation from that file. Otherwise, it attempts
+        to find and extract the Newick string from a tree file within the specified directory.
+
+        After obtaining the Newick string, the method then modifies the tree to ensure
+        unique naming of the nodes based on a preorder traversal strategy.
 
         Returns:
-            Tree: An ETE Tree object constructed from the Newick representation.
+            Tree: An ETE Tree object constructed and potentially modified from the Newick representation.
 
         Raises:
-            ValueError: If no tree file is found in the directory.
+            ValueError: If no suitable tree file is found in the specified directory or provided via arguments.
         """
-        if self.input_args.tree:
-            logger.info(f"Using the already defined tree: {self.input_args.tree}")
-            with open(self.input_args.tree, "r") as file:
-                tree_string = ""
-                for line in file:
-                    tree_string += line.strip()
-                    if ";" in line:  # Check for the end of the Newick representation
-                        break
-                return Tree(tree_string, format=1)
-        else:
-            newick_string = self.file_handler.get_newick_string_from_args()
-            if newick_string is None:
-                raise ValueError("No tree file found in directory")
-            return Tree(newick_string, format=1)
+        try:
+            if self.input_args.tree:
+                logger.info(f"Using the user-defined tree: {self.input_args.tree}")
+                newick_string = self.file_handler.get_newick_string(
+                    self.input_args.tree
+                )
+            else:
+                newick_string = self.file_handler.get_newick_string_from_args()
+        except (FileNotFoundError, ValueError) as e:
+            logger.error(str(e))
+            raise ValueError(f"Error extracting tree: {e}")
 
+<<<<<<< Updated upstream
     def modify_tree(self, t):
         """
         Modify the input tree by naming its nodes using a preorder traversal.
@@ -527,8 +579,55 @@ class Satute:
 
         # ======== Tree File Handling =========
         to_be_tested_tree = self.tree_handling()
+=======
+        return modify_tree(Tree(newick_string, format=1))
 
+    def initialise_logger(self):
+        log_file = f"{self.input_args.msa.resolve()}_{self.input_args.alpha}.satute.log"
+        file_handler = logging.FileHandler(log_file)
+        # Add the FileHandler to the logger
+        logger.addHandler(file_handler)
+
+    def validate_and_set_rate_category(self, input_category, number_rates):
+        """
+        Validates the input category against the number of rates and sets the rate category.
+>>>>>>> Stashed changes
+
+        Args:
+        - input_category (int): The category input from the user.
+        - number_rates (int): The number of rates from the substitution model.
+
+        Returns:
+        - str: The validated and set rate category.
+
+        Raises:
+        - ValueError: If the input category is out of the valid range.
+        """
+        if not 1 <= input_category <= number_rates:
+            logger.error("Chosen category of interest is out of range.")
+            raise ValueError("Chosen category of interest is out of range.")
+
+        return str(input_category)
+
+    def run(self):
+        """
+        Main entry point for running the Satute command-line tool.
+        """
+        # ======== Input =====================
+        self.parse_input()
+        # ======== Validation ================
+        self.validate_satute_input_options()
+        # ======== Arguments =================
+        iq_parser_arguments_dict = self.construct_iq_tree_arguments()
+        msa_file = iq_parser_arguments_dict["msa_file"]
+        # ======== Logger ====================
+        self.initialise_logger()
+        # ======== IQ-Tree ===================
+        self.run_iqtree_workflow(iq_parser_arguments_dict)
+        # ======== Tree File Handling ========
+        to_be_tested_tree = self.extract_tree()
         # ======== Model parameter ===========
+<<<<<<< Updated upstream
         ## Get dictionary for stationary distribution and diagonal matrix of the stationary distribution
         state_frequencies, psi_matrix = parse_state_frequencies_from_file(
             f"{arguments_dict['msa_file'].resolve()}.iqtree"
@@ -543,10 +642,21 @@ class Satute:
         RATE_MATRIX = RateMatrix(rate_matrix)
 
         ## Calculation of the spectral decomposition of the rate matrix
+=======
+
+        # Get dictionary for stationary distribution and diagonal matrix of the stationary distribution
+        iqtree_file = f"{msa_file.resolve()}.iqtree"
+        satute_iq_tree_parser = IqTreeParser(iqtree_file)
+        substitution_model = satute_iq_tree_parser.load_substitution_model()
+        RATE_MATRIX = RateMatrix(substitution_model.rate_matrix)
+
+        # Calculation of the spectral decomposition of the rate matrix
+>>>>>>> Stashed changes
         (
             array_left_eigenvectors,
             array_right_eigenvectors,
             multiplicity,
+<<<<<<< Updated upstream
         ) = spectral_decomposition(RATE_MATRIX.rate_matrix, psi_matrix)
 
         ## Get number of rate categories in case of a +G or +R model
@@ -556,22 +666,51 @@ class Satute:
         alignment = read_alignment_file(arguments_dict["msa_file"].resolve())
 
         # ========  Test for Branch Saturation =========
+=======
+        ) = spectral_decomposition(
+            substitution_model.rate_matrix, substitution_model.phi_matrix
+        )
+        # Get number of rate categories in case of a +G or +R model
+        # Consider a specific rate category
+        
+        rate_category = "all"
+        if self.input_args.category:
+            rate_category = self.validate_and_set_rate_category(
+                self.input_args.category, substitution_model.number_rates
+            )
+            
+        # ======== Logger ====================            
+>>>>>>> Stashed changes
         logger.info(
             f"""
             Running tests and initial IQ-Tree with configurations:
-            Mode {arguments_dict['option']}
+            Mode {iq_parser_arguments_dict['option']}
             Model: {self.input_args.model}
             Alpha: {self.input_args.alpha}
+<<<<<<< Updated upstream
             Running Saturation Test on file: {arguments_dict['msa_file'].resolve()}
             Number of rate categories: {number_rates}
             Options for Initial IQ-Tree run: {arguments_dict['option']}
+=======
+            Running Saturation Test on file: {msa_file.resolve()}
+            Number of rate categories: {substitution_model.number_rates}
+            Considered rate category: {rate_category}
+            Options for Initial IQ-Tree run: {iq_parser_arguments_dict['option']}
+>>>>>>> Stashed changes
             Multiplicity: {multiplicity}
             Run test for saturation for each branch and category with {number_rates} rate categories
             Results will be written to the directory:{self.active_directory.name}
             """
         )
 
+<<<<<<< Updated upstream
         if number_rates == 1:
+=======
+        # ======== Multiple Sequence Alignment =========
+        alignment = read_alignment_file(msa_file)
+        # ========  Test for Branch Saturation =========        
+        if substitution_model.number_rates == 1:
+>>>>>>> Stashed changes
             results = single_rate_analysis(
                 to_be_tested_tree,
                 alignment,
@@ -586,11 +725,23 @@ class Satute:
 
             self.write_results_for_single_rate(results, to_be_tested_tree)
         else:
+<<<<<<< Updated upstream
             site_probability = parse_file_to_data_frame(
                 f"{self.input_args.msa.resolve()}.siteprob"
             )
             per_rate_category_alignment = split_msa_into_rate_categories_in_place(
                 site_probability, alignment
+=======
+            site_probability_file = f"{msa_file.resolve()}.siteprob"
+            site_probability = parse_file_to_data_frame(site_probability_file)
+            per_rate_category_alignment = split_msa_into_rate_categories_in_place(
+                site_probability, alignment, rate_category
+            )
+            categorized_sites = build_categories_by_sub_tables(site_probability)
+
+            write_alignment_and_indices(
+                per_rate_category_alignment, categorized_sites, self.input_args
+>>>>>>> Stashed changes
             )
 
             for rate in per_rate_category_alignment.keys():
@@ -617,6 +768,7 @@ class Satute:
 
             self.write_results_for_category_rates(results)
 
+<<<<<<< Updated upstream
     def rename_internal_nodes(self, t: Tree) -> Tree:
         """
         Rename the internal nodes of the tree to a standardized format.
@@ -703,7 +855,15 @@ class Satute:
             path_value = getattr(self.input_args, path_key)
             if path_value:
                 setattr(self.input_args, path_key, Path(path_value))
+=======
+    def handle_number_rates(self):
+        self.number_rates = 1
+        if self.input_args.model:
+            self.number_rates = parse_rate_from_model(self.input_args.model)
+        return self.number_rates
+>>>>>>> Stashed changes
 
+    def initialize_working_context(self):
         if self.input_args.msa:
             self.active_directory = self.input_args.msa.parent
         elif self.input_args.dir:
@@ -716,16 +876,7 @@ class Satute:
         self.file_handler = FileHandler(self.active_directory)
         self.iqtree_handler = IqTreeHandler(self.input_args.iqtree)
 
-    def validate_directory(self):
-        """
-        Validate the input directory.
-        """
-        if not self.input_args.dir.is_dir():
-            raise InvalidDirectoryError("Input directory does not exist")
-        if not os.listdir(self.input_args.dir):
-            raise InvalidDirectoryError("Input directory is empty")
-
-    def construct_arguments(self):
+    def construct_iq_tree_arguments(self):
         """
         Validate and process input arguments.
 
@@ -740,51 +891,30 @@ class Satute:
         msa_file_types = {".fasta", ".nex", ".phy", ".txt"}
         tree_file_types = {".treefile", ".nex", ".nwk"}
 
-        self.convert_paths_to_objects()
+        self.initialize_working_context()
         self.initialize_handlers()
 
         argument_option = {}
 
         if self.input_args.dir:
             self.active_directory = self.input_args.dir
-
-            # Check if the input directory exists
-            self.validate_directory()
-
-            # Find msa file in the directory
-            self.input_args.msa_file = self.file_handler.find_file_by_suffix(
-                msa_file_types
+            self.input_args.msa = Path(
+                self.file_handler.find_file_by_suffix(msa_file_types)
             )
 
-            # Check if a sequence alignment file was found
-            if self.input_args.msa_file:
-                self.input_args.msa = Path(self.input_args.msa_file)
-                argument_option = {
-                    "option": "dir",
-                    "msa_file": self.input_args.msa,
-                    "arguments": ["-s", str(self.input_args.msa.resolve())],
-                }
-            else:
-                raise NoAlignmentFileError("No multiple sequence alignment file found")
+            argument_option = {
+                "option": "dir",
+                "msa_file": self.input_args.msa,
+                "arguments": ["-s", str(self.input_args.msa.resolve())],
+            }
 
             # Find the tree file in the directory
             tree_file = self.file_handler.find_file_by_suffix(tree_file_types)
-
-            # Check if a tree file was found
-            if tree_file:
-                argument_option["arguments"].extend(["-te", str(tree_file)])
-            else:
-                raise FileNotFoundError("No tree file found in directory")
+            argument_option["arguments"].extend(["-te", str(tree_file)])
 
             # Find .iqtree file in the directory
             self.iqtree_tree_file = self.file_handler.find_file_by_suffix({".iqtree"})
-            # Check if iqtree file was found
-            if self.iqtree_tree_file:
-                substitution_model = parse_substitution_model(self.iqtree_tree_file)
-                self.input_args.model = substitution_model
-            else:
-                raise FileNotFoundError("No iqtree file found in directory")
-
+            self.input_args.model = parse_substitution_model(self.iqtree_tree_file)
             self.number_rates = self.handle_number_rates()
 
             # TODO Test when there is no site probabilities file in the directory
@@ -793,11 +923,15 @@ class Satute:
                 self.site_probabilities_file = self.file_handler.find_file_by_suffix(
                     {".siteprob"}
                 )
+                
                 if not self.site_probabilities_file:
                     argument_option["option"] += " + site_probabilities"
             return argument_option
+        
         else:
+            
             if self.input_args.msa:
+                
                 argument_option = {
                     "option": "msa",
                     "msa_file": self.input_args.msa,
@@ -805,7 +939,9 @@ class Satute:
                 }
 
             if self.input_args.tree:
+                
                 argument_option["option"] = "msa + tree"
+                
                 argument_option["arguments"].extend(
                     ["-te", str(self.input_args.tree.resolve())]
                 )
@@ -819,14 +955,12 @@ class Satute:
                     argument_option["model_arguments"].extend(["-wspr"])
 
         # Return the constructed argument options
-
         return argument_option
-
-        # If tree argument is provided, get newick string directly
 
 
 if __name__ == "__main__":
     # Instantiate the Satute class with your desired arguments
+<<<<<<< Updated upstream
     iqtree_path = "iqtree2"
     input_directory = None
     output_prefix = None
@@ -846,4 +980,7 @@ if __name__ == "__main__":
         boot=boot_replicates,
     )
     # Run the tool
+=======
+    satute = Satute()
+>>>>>>> Stashed changes
     satute.run()
