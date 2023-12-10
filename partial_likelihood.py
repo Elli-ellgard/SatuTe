@@ -8,12 +8,8 @@ from satute_statistic_posterior_distribution import (
 )
 from graph import Graph, Node
 from nucleotide_code_vector import NUCLEOTIDE_CODE_VECTOR
-
-=======
-from nucleotide_code_vector import NUCLEOTIDE_CODE_VECTOR
-import ete3
 from rate_matrix import RateMatrix
->>>>>>> Stashed changes:partial_likelihood.py
+import ete3
 
 @cache
 def partial_likelihood(tree, node, coming_from, rate_matrix, factor=0):

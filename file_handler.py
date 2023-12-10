@@ -15,20 +15,23 @@ class FileHandler:
         """
         self.base_directory = base_directory
 
-    def find_file_by_suffix(self, suffixes: list):
+    def find_file_by_suffix(self, suffixes):
         """
-        Locate a file in the base directory based on its suffixes.
+        Locate a file in the base directory based on its suffixes, ignoring files containing 'satute'.
 
         Args:
-        - suffixes (list): List of file extensions to search for.
+        - suffixes (List[str]): List of file extensions to search for.
 
         Returns:
-        - str: Full path to the file if found, None otherwise.
+        - Optional[str]: Full path to the file if found, None otherwise.
         """
         # Iterate through the base directory and its subdirectories
         for root, dirs, files in os.walk(self.base_directory):
             # Check each file to see if it ends with any of the specified suffixes
             for file in files:
+                if "satute" in file:
+                    # Skip files containing 'satute'
+                    continue
                 if any(file.endswith(suffix) for suffix in suffixes):
                     # Return the full path of the file if a match is found
                     return os.path.join(root, file)
