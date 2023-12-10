@@ -453,7 +453,7 @@ if [ -e $DIR/${msa}.iqtree ]; then
     mkdir $DIR
     mv $PDIR/$msa $DIR
 fi
-$python satute_cli.py -msa $DIR/$msa -model JC+G4 -category 5
+$python satute_cli.py -msa $DIR/$msa -model JC+G4 -category 5 -iqtree=$iqtree
 echo ""
 
 
@@ -469,7 +469,7 @@ if [ -e $DIR/${msa}.iqtree ]; then
     mkdir $DIR
     mv $PDIR/$msa $DIR
 fi
-$python satute_cli.py -msa $DIR/$msa -model JC+G4 -category 2
+$python satute_cli.py -msa $DIR/$msa -model JC+G4 -category 2 -iqtree=$iqtree
 echo ""
 
 echo ""
@@ -484,7 +484,7 @@ if [ -e $DIR/${msa}.iqtree ]; then
     mkdir $DIR
     mv $PDIR/$msa $DIR
 fi
-$python satute_cli.py -msa $DIR/$msa -model JC+G4 -category 3
+$python satute_cli.py -msa $DIR/$msa -model JC+G4 -category 3 -iqtree=$iqtree
 echo ""
 
 echo ""
@@ -500,12 +500,12 @@ if [ -e $DIR/${msa}.iqtree ]; then
     mv $PDIR/$msa $DIR
 fi
 #create output
-$python satute_cli.py -msa $DIR/$msa -model GTR
+$python satute_cli.py -msa $DIR/$msa -model GTR -iqtree=$iqtree
 PDIR=$(dirname $DIR)
 if [ -e $DIR/${msa}*satute.tree ]; then
     rm -r $DIR/${msa}*satute*
 fi
-$python satute_cli.py -dir $DIR -category 4
+$python satute_cli.py -dir $DIR -category 4 -iqtree=$iqtree
 echo ""
 
 
@@ -522,12 +522,12 @@ if [ -e $DIR/${msa}.iqtree ]; then
     mv $PDIR/$msa $DIR
 fi
 #create output
-$python satute_cli.py -msa $DIR/$msa -model GTR+G6
+$python satute_cli.py -msa $DIR/$msa -model GTR+G6 -iqtree=$iqtree
 PDIR=$(dirname $DIR)
 if [ -e $DIR/${msa}*satute.tree ]; then
     rm -r $DIR/${msa}*satute*
 fi
-$python satute_cli.py -dir $DIR -category 1
+$python satute_cli.py -dir $DIR -category 1 -iqtree=$iqtree
 echo ""
 
 #cd visualisation
