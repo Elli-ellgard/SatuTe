@@ -1,4 +1,0 @@
-#NEXUS
-BEGIN TREES;
-Tree tree1 = (seq1:1.774e-06[&delta=1.3307417287519205, &c_s=0.139128917593593, &p_value=4.512954300724648e-56, &result_test=Informative],seq2:1.774e-06[&delta=1.3307417287519205, &c_s=0.139128917593593, &p_value=4.512954300724648e-56, &result_test=Informative],(long1:1.774e-06[&delta=1.2359515934473577, &c_s=0.13408223777068914, &p_value=3.1542447992156562e-52, &result_test=Informative],long2:1.774e-06[&delta=1.2359515934473577, &c_s=0.13408223777068914, &p_value=3.1542447992156562e-52, &result_test=Informative])Node2:16.8329[&delta=-0.7961112445871145, &c_s=0.13912908805169624, &p_value=1.0, &result_test=Saturated]);
-END TREES;
