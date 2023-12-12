@@ -790,7 +790,7 @@ if __name__ == "__main__":
     ufboot_replicates = None
     boot_replicates = None
     alpha = None
-
+    
     satute = Satute(
         iqtree=iqtree_path,
         input_dir=input_directory,

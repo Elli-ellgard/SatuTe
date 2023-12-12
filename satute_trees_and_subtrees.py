@@ -25,14 +25,10 @@ def get_target_node(edge):
 def map_values_to_newick(newick, df):
     for index, row in df.iterrows():
         target_node = get_target_node(row["edge"])
-
         # Escape any special characters in target node for regex
         escaped_target_node = re.escape(target_node)
-
         # Adjusting the metadata as per the requirements
-        meta_data = f"&delta={row['delta']}, c_s={row['c_s']}, p_value={row['p_value']}, result_test={row['result_test']}"
-
-        # Check for existing square brackets after the node
+        meta_data = f"&delta={row['delta']},c_s={row['c_s']},p_value={row['p_value']},result_test={row['result_test']}"
         # Use raw string notation for regex patterns
         pattern_with_brackets = re.compile(
             rf"({escaped_target_node}:\d+(\.\d+)?(e-?\d+)?)\[([^\]]+)\]"

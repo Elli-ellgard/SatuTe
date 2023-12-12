@@ -2,6 +2,8 @@ import pandas as pd
 from logging import Logger
 import logging
 from Bio import AlignIO
+from ete3 import Tree
+
 
 def write_results_for_category_rates(
     results, input_args, map_values_to_newick, logger: Logger
@@ -33,7 +35,9 @@ def write_results_for_category_rates(
 
             if "rescaled_tree" in results_set:
                 tree_file_name = f"{file_name}.nex"
-                newick_string = results_set["rescaled_tree"].write(format=1)
+                newick_string = results_set["rescaled_tree"].write(
+                    format=1, format_root_node=True
+                )
                 write_nexus_file(
                     newick_string,
                     tree_file_name,
@@ -55,7 +59,7 @@ def write_results_for_category_rates(
 
 
 def write_results_for_single_rate(
-    results, input_args, to_be_tested_tree, map_values_to_newick, logger
+    results, input_args, to_be_tested_tree: Tree, map_values_to_newick, logger
 ):
     """
     Writes the results for single rate to appropriate files.
@@ -86,7 +90,7 @@ def write_results_for_single_rate(
         # Writing the Nexus file
         if to_be_tested_tree:
             tree_file_name = file_name_base
-            newick_string = to_be_tested_tree.write(format=1)
+            newick_string = to_be_tested_tree.write(format=1, format_root_node=True)
             write_nexus_file(
                 newick_string,
                 tree_file_name,
@@ -134,7 +138,9 @@ def write_nexus_file(
         logger.error(f"Error writing Nexus file: {e}")
 
 
-def write_alignment_and_indices(per_rate_category_alignment, categorized_sites, input_args):
+def write_alignment_and_indices(
+    per_rate_category_alignment, categorized_sites, input_args
+):
     """
     Writes MultipleSeqAlignment objects and indices to files.
     Parameters:
@@ -147,10 +153,7 @@ def write_alignment_and_indices(per_rate_category_alignment, categorized_sites, 
         for rate in per_rate_category_alignment.keys():
             file_path = f"{input_args.msa.resolve()}.{rate}.phy.rate.indices"
             with open(file_path, "w") as file:
-                if (
-                    rate in per_rate_category_alignment
-                    and rate in categorized_sites
-                ):
+                if rate in per_rate_category_alignment and rate in categorized_sites:
                     # Convert MultipleSeqAlignment to string in FASTA format
                     AlignIO.write(per_rate_category_alignment[rate], file, "phylip")
                     file.write(",".join([str(i) for i in categorized_sites[rate]]))
