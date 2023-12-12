@@ -1,4 +1,4 @@
-iqtree=iqtree2
+iqtree=iqtree
 python=python3
 
 ##  Test cases from Clemens
@@ -43,19 +43,19 @@ echo "---------------------------------------------------------"
 $python satute_cli.py -iqtree $iqtree -msa $DIR/$msa  -alpha 0.05
 echo ""
 
-echo ""
-echo "---------------------------------------------------------"
-echo "TEST 1b: only msa, ufboot"
-echo "---------------------------------------------------------"
-PDIR=$(dirname $DIR)
-if [ -e $DIR/${msa}.iqtree ]; then
-    mv $DIR/$msa $PDIR
-    rm -r $DIR
-    mkdir $DIR
-    mv $PDIR/$msa $DIR
-fi
-$python satute_cli.py -iqtree $iqtree -msa $DIR/$msa -ufboot 1000 -alpha 0.05
-echo ""
+# echo ""
+# echo "---------------------------------------------------------"
+# echo "TEST 1b: only msa, ufboot"
+# echo "---------------------------------------------------------"
+# PDIR=$(dirname $DIR)
+# if [ -e $DIR/${msa}.iqtree ]; then
+#     mv $DIR/$msa $PDIR
+#     rm -r $DIR
+#     mkdir $DIR
+#     mv $PDIR/$msa $DIR
+# fi
+# $python satute_cli.py -iqtree $iqtree -msa $DIR/$msa -ufboot 1000 -alpha 0.05
+# echo ""
 
 # echo ""
 # echo "---------------------------------------------------------"

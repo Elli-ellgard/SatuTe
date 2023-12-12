@@ -76,8 +76,8 @@ def calculate_test_statistic_posterior_distribution(
     posterior_probabilities_left_subtree = []
     posterior_probabilities_right_subtree = []
 
-    freq = np.array(list(state_frequencies.values()))
-    diag = np.diag(list(state_frequencies.values()))
+    freq = np.array(list(state_frequencies))
+    diag = np.diag(list(state_frequencies))
 
     site_likelihood_left_subtree = []
     site_likelihood_right_subtree = []

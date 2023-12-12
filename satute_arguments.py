@@ -5,7 +5,7 @@ import os
 
 def valid_directory(path):
     """
-    Custom type function for argparse - checks if the provided path is a valid directory, 
+    Custom type function for argparse - checks if the provided path is a valid directory,
     is not empty, and contains a .iqtree file and at least one file with specified suffixes.
 
     Args:
@@ -15,28 +15,45 @@ def valid_directory(path):
     - pathlib.Path: Validated Path object.
 
     Raises:
-    - argparse.ArgumentTypeError: If the provided path is not a directory, is empty, 
+    - argparse.ArgumentTypeError: If the provided path is not a directory, is empty,
       or does not contain the required files (.iqtree and one of the specified suffixes).
     """
     msa_file_types = {".fasta", ".nex", ".phy", ".txt"}
+    tree_file_types = {".treefile", ".nex", ".nwk"}
 
     if not os.path.isdir(path):
         raise argparse.ArgumentTypeError(f"{path} is not a valid directory")
-    
+
     directory_files = os.listdir(path)
     if not directory_files:
         raise argparse.ArgumentTypeError(f"{path} directory is empty")
 
     # Check for the presence of a .iqtree file in the directory
     if not any(file.endswith(".iqtree") for file in directory_files):
-        raise argparse.ArgumentTypeError(f"No .iqtree file found in the directory {path}")
+        raise argparse.ArgumentTypeError(
+            f"No .iqtree file found in the directory {path}"
+        )
 
     # Check for the presence of at least one file with a specified suffix
-    if not any(file.endswith(suffix) for suffix in msa_file_types for file in directory_files):
-        suffixes_str = ', '.join(msa_file_types)
-        raise argparse.ArgumentTypeError(f"No file with suffixes {suffixes_str} found in the directory {path}")
+    if not any(
+        file.endswith(suffix) for suffix in msa_file_types for file in directory_files
+    ):
+        suffixes_str = ", ".join(msa_file_types)
+        raise argparse.ArgumentTypeError(
+            f"No file with suffixes {suffixes_str} found in the directory {path}"
+        )
+
+    # Check for the presence of at least one file with a specified suffix
+    if not any(
+        file.endswith(suffix) for suffix in tree_file_types for file in directory_files
+    ):
+        suffixes_str = ", ".join(tree_file_types)
+        raise argparse.ArgumentTypeError(
+            f"No file with suffixes {suffixes_str} found in the directory {path}"
+        )
 
     return pathlib.Path(path)
+
 
 def valid_file(path):
     """
@@ -139,5 +156,13 @@ ARGUMENT_LIST = [
         ),
         "type": str,
         "metavar": "<edge_name>",
+    },
+    {
+        "flag": "-additional",
+        "help": (
+            "Specify a branch or edge name to focus the analysis on. Useful when you want to check saturation on a specific branch."
+        ),
+        "type": str,
+        "metavar": "<additional_option>",
     },
 ]

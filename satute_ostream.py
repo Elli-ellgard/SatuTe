@@ -1,17 +1,23 @@
 import pandas as pd
 from logging import Logger
 from Bio import AlignIO
+import re
 
-def write_results_for_category_rates(
-    results, input_args, map_values_to_newick, logger: Logger
-):
+
+# New function to format float columns
+def format_float_columns(data_frame):
+    for col in data_frame.columns:
+        if data_frame[col].dtype == float:
+            data_frame[col] = data_frame[col].apply(lambda x: round(x, 4))
+
+
+def write_results_for_category_rates(results, msa_file, alpha, edge, logger: Logger):
     """
     Writes the results for category rates to appropriate files.
 
     Args:
     - results (dict): Dictionary containing the results data.
     - input_args (object): Object containing input arguments.
-    - map_values_to_newick (function): Function to map values from DataFrame to the Newick string.
     """
     if not isinstance(results, dict):
         logger.error("Invalid input: results should be a dictionary.")
@@ -22,13 +28,14 @@ def write_results_for_category_rates(
             continue
 
         try:
-            file_name = f"{input_args.msa.resolve()}_{key}_{input_args.alpha}.satute"
+            file_name = f"{msa_file}_{key}_{alpha}.satute"
 
             # Append the edge information to the file name if provided
-            if hasattr(input_args, "edge") and input_args.edge:
-                file_name = f"{file_name}_{input_args.edge}"
+            if edge:
+                file_name = f"{file_name}_{edge}"
 
             results_data_frame = pd.DataFrame(results_set["result_list"])
+            format_float_columns(results_data_frame)
 
             if "rescaled_tree" in results_set:
                 tree_file_name = f"{file_name}.nex"
@@ -37,7 +44,6 @@ def write_results_for_category_rates(
                     newick_string,
                     tree_file_name,
                     results_data_frame,
-                    map_values_to_newick,
                     logger,
                 )
 
@@ -54,7 +60,7 @@ def write_results_for_category_rates(
 
 
 def write_results_for_single_rate(
-    results, input_args, to_be_tested_tree, map_values_to_newick, logger
+    results, msa_file, to_be_tested_tree, alpha, edge, logger
 ):
     """
     Writes the results for single rate to appropriate files.
@@ -63,16 +69,16 @@ def write_results_for_single_rate(
     - results (dict): Dictionary containing the results data.
     - input_args (object): Object containing input arguments.
     - to_be_tested_tree (Tree): The tree object containing the data to be written.
-    - map_values_to_newick (function): Function to map values from DataFrame to the Newick string.
     """
     for key, results_set in results.items():
-        file_name_base = f"{input_args.msa.resolve()}_{input_args.alpha}.satute"
+        file_name_base = f"{msa_file.resolve()}_{alpha}.satute"
 
         # Append the edge information to the file name if provided
-        if hasattr(input_args, "edge") and input_args.edge:
-            file_name_base += f"_{input_args.edge}"
+        if edge:
+            file_name_base += f"_{edge}"
 
         results_data_frame = pd.DataFrame(results_set)
+        format_float_columns(results_data_frame)
 
         # Writing the .csv file
         csv_file_name = f"{file_name_base}.csv"
@@ -90,27 +96,49 @@ def write_results_for_single_rate(
                 newick_string,
                 tree_file_name,
                 results_data_frame,
-                map_values_to_newick,
                 logger,
             )
-            # Create a FileHandler
-            # log_file = f"{input_args.msa.resolve()}_{input_args.alpha}.satute.log"
-            # file_handler = logger.FileHandler(log_file)
-            # # Add the FileHandler to the logger
-            # logger.addHandler(file_handler)
 
 
-def write_nexus_file(
-    newick_string, file_name, results_data_frame, map_values_to_newick, logger
-):
+def get_target_node(edge):
+    return edge.split(",")[0].replace("(", "").strip()
+
+
+def map_values_to_newick(newick, df):
+    for index, row in df.iterrows():
+        target_node = get_target_node(row["edge"])
+
+        # Escape any special characters in target node for regex
+        escaped_target_node = re.escape(target_node)
+
+        # Adjusting the metadata as per the requirements
+        meta_data = f"&delta={row['delta']},c_s={row['c_s']},p_value={row['p_value']},result_test={row['result_test']}"
+
+        # Check for existing square brackets after the node
+        # Use raw string notation for regex patterns
+        pattern_with_brackets = re.compile(
+            rf"({escaped_target_node}:\d+(\.\d+)?(e-?\d+)?)\[([^\]]+)\]"
+        )
+        pattern_without_brackets = re.compile(
+            rf"({escaped_target_node}:\d+(\.\d+)?(e-?\d+)?)"
+        )
+
+        # If square brackets are present, append the metadata inside those brackets
+        if pattern_with_brackets.search(newick):
+            newick = pattern_with_brackets.sub(rf"\1[\4,{meta_data}]", newick)
+        else:
+            # If no square brackets, add them and insert the metadata
+            newick = pattern_without_brackets.sub(rf"\1[{meta_data}]", newick)
+    return newick
+
+
+def write_nexus_file(newick_string, file_name, results_data_frame, logger):
     """
     Writes the given Newick string as a Nexus file after mapping values.
-
     Args:
     - newick_string (str): Newick formatted string representing the tree.
     - file_name (str): Name of the file to write.
     - results_data_frame (DataFrame): DataFrame with the data to map onto the Newick string.
-    - map_values_to_newick (function): Function to map values from DataFrame to the Newick string.
     """
     try:
         # Validate input
@@ -133,7 +161,9 @@ def write_nexus_file(
         logger.error(f"Error writing Nexus file: {e}")
 
 
-def write_alignment_and_indices(per_rate_category_alignment, categorized_sites, input_args):
+def write_alignment_and_indices(
+    per_rate_category_alignment, categorized_sites, input_args
+):
     """
     Writes MultipleSeqAlignment objects and indices to files.
     Parameters:
@@ -146,10 +176,7 @@ def write_alignment_and_indices(per_rate_category_alignment, categorized_sites, 
         for rate in per_rate_category_alignment.keys():
             file_path = f"{input_args.msa.resolve()}.{rate}.phy.rate.indices"
             with open(file_path, "w") as file:
-                if (
-                    rate in per_rate_category_alignment
-                    and rate in categorized_sites
-                ):
+                if rate in per_rate_category_alignment and rate in categorized_sites:
                     # Convert MultipleSeqAlignment to string in FASTA format
                     AlignIO.write(per_rate_category_alignment[rate], file, "phylip")
                     file.write(",".join([str(i) for i in categorized_sites[rate]]))

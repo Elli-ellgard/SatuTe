@@ -1,14 +1,23 @@
 import numpy as np
 from ete3 import Tree
 from satute_categories import read_alignment_file
-from satute_trees_and_subtrees import parse_newick_file
-from satute_repository import parse_rate_matrices_from_file
+from satute_trees_and_subtrees import collapse_tree, renameInternalNodesPreOrder
+from file_handler import FileHandler
+from satute_repository import IqTreeParser
 from satute_util import spectral_decomposition
 from Bio.Align import MultipleSeqAlignment
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 from graph import Graph, Node
 from rate_matrix import RateMatrix
+from satute_rate_analysis import single_rate_analysis
+import numpy as np
+import pandas as pd
+from partial_likelihood import (
+    get_initial_likelihood_vector,
+    partial_likelihood,
+    calculate_partial_likelihoods_for_sites,
+)
 
 RATE_MATRIX = np.array([[-3, 1, 1, 1], [1, -3, 1, 1], [1, 1, -3, 1], [1, 1, 1, -3]])
 
@@ -28,11 +37,6 @@ def parse_newick_file(file_path):
 
     except FileNotFoundError:
         raise Exception("File not found: " + file_path)
-
-
-"""
-    ======= Tests =======
-"""
 
 
 def name_nodes_by_level_order(tree):
@@ -80,14 +84,18 @@ def test_three():
 def test_two():
     alignment_file = "./Clemens/example_3/sim-JC+G-AC1-AG1-AT1-CG1-CT1-GT1-alpha1.2-taxa64-len1000bp-bla0.01-blb0.8-blc0.2-rep01.fasta"
     alignment = read_alignment_file(alignment_file)
-    t = parse_newick_file(
+    file_handler = FileHandler()
+    newick_string = file_handler.get_newick_string_from_file(
         "./Clemens/example_3/sim-JC+G-AC1-AG1-AT1-CG1-CT1-GT1-alpha1.2-taxa64-len1000bp-bla0.01-blb0.8-blc0.2-rep01.fasta.treefile"
     )
-    t = name_nodes_by_level_order(t)
+    t = Tree(newick_string, format=1)
 
-    RATE_MATRIX, psi_matrix = parse_rate_matrices_from_file(
+    t = name_nodes_by_level_order(t)
+    iq_tree_parser = IqTreeParser()
+
+    RATE_MATRIX, psi_matrix = iq_tree_parser.parse_rate_matrices(
         4,
-        "./Clemens/example_3/sim-JC+G-AC1-AG1-AT1-CG1-CT1-GT1-alpha1.2-taxa64-len1000bp-bla0.01-blb0.8-blc0.2-rep01.fasta",
+        "./Clemens/example_3/sim-JC+G-AC1-AG1-AT1-CG1-CT1-GT1-alpha1.2-taxa64-len1000bp-bla0.01-blb0.8-blc0.2-rep01.fasta.iqtree",
     )
     rate_matrix = RateMatrix(RATE_MATRIX)
 
@@ -98,23 +106,137 @@ def test_two():
     ) = spectral_decomposition(RATE_MATRIX, psi_matrix)
 
 
+def calculate_stationary_distribution(rate_matrix):
+    """
+    Calculate the stationary distribution of a rate matrix.
+
+    Args:
+    rate_matrix (np.array): A square numpy array representing the rate matrix.
+
+    Returns:
+    np.array: The stationary distribution as a numpy array.
+    """
+    # Ensure the matrix is square
+    if rate_matrix.shape[0] != rate_matrix.shape[1]:
+        raise ValueError("Rate matrix must be square")
+
+    # Find eigenvalues and eigenvectors
+    eigenvalues, eigenvectors = np.linalg.eig(rate_matrix.T)
+
+    # Find the eigenvector corresponding to the eigenvalue closest to zero
+    stationary_vector = eigenvectors[:, np.isclose(eigenvalues, 0)].real
+
+    # Normalize the stationary vector so its elements sum up to 1
+    stationary_distribution = stationary_vector / stationary_vector.sum()
+
+    return stationary_distribution.ravel()
+
+
+def dict_to_alignment(sequence_dict):
+    """
+    Convert a dictionary of sequences to a MultipleSeqAlignment object.
+
+    Args:
+    sequence_dict (dict): A dictionary with sequence identifiers as keys and sequence strings as values.
+
+    Returns:
+    MultipleSeqAlignment: The corresponding MultipleSeqAlignment object.
+    """
+    alignment_list = []
+    for id, sequence in sequence_dict.items():
+        seq_record = SeqRecord(Seq(sequence), id=id)
+        alignment_list.append(seq_record)
+
+    return MultipleSeqAlignment(alignment_list)
+
+
 def test_one():
-    # Create SeqRecord objects for your sequences
-    seq1 = SeqRecord(Seq("AGTATA"), id="A")
-    seq2 = SeqRecord(Seq("CGTATG"), id="B")
-    seq3 = SeqRecord(Seq("GGTATG"), id="C")
-    seq4 = SeqRecord(Seq("GGTACG"), id="D")
+    # Step 1: Create SeqRecord objects for your sequences
+    seq_records = [
+        SeqRecord(Seq("ACGTAT"), id="A"),
+        SeqRecord(Seq("ACGTAT"), id="AB"),
+        SeqRecord(Seq("ACGTAT"), id="B"),
+        SeqRecord(Seq("GGTATG"), id="C"),
+        SeqRecord(Seq("GGTATG"), id="E"),        
+        SeqRecord(Seq("GGTACG"), id="D"),
+    ]
 
-    # Create a MultipleSeqAlignment object
-    alignment = MultipleSeqAlignment([seq1, seq2, seq3, seq4])
-    newick_string = "((A:0.2, B:0.4):0.3, (C:0.5,D:0.2):2);"
-    t = Tree(newick_string, format=1)
-    t = name_nodes_by_level_order(t)
+    # Step 2: Create a MultipleSeqAlignment object from the SeqRecord objects
+    alignment = MultipleSeqAlignment(seq_records)
 
-    print(t.get_ascii(attributes=["name", "dist"]))
+    # Step 3: Create a phylogenetic tree from a Newick string
+    newick_string = "(((A:0.2, B:0.4):0.3,AB:1),(C:0.5,D:0.2, E:0.1):2);"
+    tree = Tree(newick_string, format=1)
 
-    rate_matrix = RateMatrix(RATE_MATRIX)
+    # Step 4: Rename internal nodes in a preorder traversal
+    renameInternalNodesPreOrder(tree)
+    print(tree.get_ascii(show_internal=True))
 
-    partial_likelihood_per_site_storage = calculate_partial_likelihoods_for_sites(
-        t, alignment, rate_matrix
+    # Step 5: Create a dictionary to access sequences by their ID
+    sequence_dict = {record.id: str(record.seq) for record in alignment}
+
+    # Creating a deep copy of the tree for manipulation
+    collapsed_tree_one = tree.copy("deepcopy")
+
+    # Step 6: Process the tree to collapse nodes with identical sequences
+    sequence_dict, twin_dictionary, sibling_dictionary = collapse_tree(
+        collapsed_tree_one, sequence_dict
     )
+
+    # Step 7: Create a rate matrix and calculate stationary distribution
+    rate_matrix = RateMatrix(RATE_MATRIX)
+    state_frequencies = calculate_stationary_distribution(rate_matrix.rate_matrix)
+    phi_matrix = np.diag(state_frequencies)
+
+    # Step 8: Perform spectral decomposition
+    (
+        array_left_eigenvectors,
+        array_right_eigenvectors,
+        multiplicity,
+    ) = spectral_decomposition(rate_matrix.rate_matrix, phi_matrix)
+
+    print(collapsed_tree_one.get_ascii(show_internal=True))
+
+    # Step 9: Convert the sequence dictionary back to a MultipleSeqAlignment object
+    alignment = dict_to_alignment(sequence_dict)
+
+    # Step 10: Print the rate matrix
+    print("Rate Matrix:\n", rate_matrix.rate_matrix)
+
+    # Step 11: Perform single rate analysis
+    results = single_rate_analysis(
+        collapsed_tree_one,
+        alignment,
+        rate_matrix,
+        state_frequencies,
+        array_left_eigenvectors,
+        array_right_eigenvectors,
+        multiplicity,
+        0.05,
+        None,
+    )
+
+    # Step 12: Append additional data to results for twin nodes
+    for parent, value in twin_dictionary.items():
+        for child in value:
+            results["single_rate"].append(
+                {
+                    "edge": f"({parent}, {child})",
+                    "delta": "Nan",
+                    "c_s": "Nan",
+                    "c_sTwoSequence": "Nan",
+                    "p_value": "Nan",
+                    "result_test": "Nan",
+                    "result_test_tip2tip": "Nan",
+                    "category_rate": 1,
+                    "branch_length": tree.get_distance(parent, child),
+                }
+            )
+
+    # Step 13: Convert results to a pandas DataFrame
+    pandas_data_frame = pd.DataFrame.from_dict(results["single_rate"])
+    pandas_data_frame.to_csv("satute_test_one.csv")
+
+
+if __name__ == "__main__":
+    test_one()
