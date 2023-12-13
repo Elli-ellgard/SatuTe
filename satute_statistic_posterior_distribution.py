@@ -65,8 +65,6 @@ def calculate_test_statistic_posterior_distribution(
     partial_likelihood_left_subtree,
     partial_likelihood_right_subtree,
     dimension,
-    number_tips_left_subtree,
-    number_tips_right_subtree,
     branch_type="external",
     alpha=0.05,
 ):
@@ -145,6 +143,8 @@ def calculate_test_statistic_posterior_distribution(
         factors_left_subtree,
         factors_right_subtree,
         number_sites,
+        number_tips_left_subtree,
+        number_tips_right_subtree,
         branch_type,
     )
     variance = variance / number_sites
