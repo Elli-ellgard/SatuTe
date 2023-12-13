@@ -67,6 +67,8 @@ def calculate_test_statistic_posterior_distribution(
     dimension,
     number_tips_left_subtree,
     number_tips_right_subtree,
+    number_branches_left_subtree,
+    number_branches_right_subtree,
     branch_type="external",
     alpha=0.05,
 ):
@@ -167,6 +169,7 @@ def calculate_test_statistic_posterior_distribution(
 
     # decision of the statistical test
     # computing the critical value
+    decision_test = ""
     if variance < 0:
         c_s = 999999999
     else: 
@@ -176,6 +179,7 @@ def calculate_test_statistic_posterior_distribution(
     else:
         decision_test = "Informative"
 
+    decision_corrected_test_tips = ""
     # decision of the test using Bonferroni correction 
     # using number of tips of the considered subtrees
     corrected_alpha_tips= 1 - (1 - alpha)**(1/(number_tips_left_subtree*number_tips_right_subtree))
@@ -185,25 +189,21 @@ def calculate_test_statistic_posterior_distribution(
         decision_corrected_test_tips = "Saturated"
     else:
         decision_corrected_test_tips = "Informative" 
-
+    decision_corrected_test_branches = ""
     # using number of branch combinations
-    number_branches_left_subtree = 2 * number_branches_left_subtree - 1
-    number_branches_right_subtree = 2 * number_branches_right_subtree - 1
-    corrected_alpha_branches= 1 - (1 - alpha)**(1/(number_branches_left_subtree*number_branches_right_subtree))
-    corrected_z_branches = st.norm.ppf(1 - corrected_alpha_branches)
-    corrected_c_s_branches = corrected_z_branches * np.sqrt(variance)
-    if corrected_c_s_branches > delta:
-        decision_corrected_test_branches = "Saturated"
-    else:
-        decision_corrected_test_branches = "Informative" 
-    
-       
+    # number_branches_left_subtree = 2 * number_branches_left_subtree - 1
+    # number_branches_right_subtree = 2 * number_branches_right_subtree - 1
+    # corrected_alpha_branches= 1 - (1 - alpha)**(1/(number_branches_left_subtree*number_branches_right_subtree))
+    # corrected_z_branches = st.norm.ppf(1 - corrected_alpha_branches)
+    # corrected_c_s_branches = corrected_z_branches * np.sqrt(variance)
+    # if corrected_c_s_branches > delta:
+    #     decision_corrected_test_branches = "Saturated"
+    # else:
+    #     decision_corrected_test_branches = "Informative" 
     # computing the saturation coherence between two sequences
     c_s_two_sequence = np.sqrt(multiplicity) * z_alpha / np.sqrt(number_sites)
-
     if c_s_two_sequence > delta:
         decision_test_tip2tip = "SatuT2T"
     else:
         decision_test_tip2tip = "InfoT2T"
-
     return delta, p_value, decision_test, decision_corrected_test_tips, decision_corrected_test_branches, decision_test_tip2tip
