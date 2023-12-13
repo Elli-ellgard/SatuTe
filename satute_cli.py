@@ -27,6 +27,7 @@ from satute_trees_and_subtrees import map_values_to_newick
 from satute_ostream import (
     write_results_for_category_rates,
     write_results_for_single_rate,
+    write_nexus_file,
 )
 from satute_ostream import write_alignment_and_indices
 
@@ -789,7 +790,7 @@ if __name__ == "__main__":
     ufboot_replicates = None
     boot_replicates = None
     alpha = None
-
+    
     satute = Satute(
         iqtree=iqtree_path,
         input_dir=input_directory,
