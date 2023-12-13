@@ -33,13 +33,13 @@ def write_results_for_category_rates(results, msa_file, alpha, edge, logger: Log
             # Append the edge information to the file name if provided
             if edge:
                 file_name = f"{file_name}_{edge}"
-
+                
             results_data_frame = pd.DataFrame(results_set["result_list"])
             format_float_columns(results_data_frame)
 
             if "rescaled_tree" in results_set:
                 tree_file_name = f"{file_name}.nex"
-                newick_string = results_set["rescaled_tree"].write(format=1)
+                newick_string = results_set["rescaled_tree"].write(format=1, format_root_node=True)
                 write_nexus_file(
                     newick_string,
                     tree_file_name,
