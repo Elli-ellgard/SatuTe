@@ -263,38 +263,35 @@ def count_and_nodes_branches_nodes(tree, node, coming_from):
 
 
 def count_leaves_and_branches_for_subtrees(tree: Tree, alignment, focused_edges=None):
+    # Create a lookup table for alignment
     alignment_look_up_table = get_alignment_look_up_table(alignment)
 
+    # Convert the given tree to a directed acyclic graph
     count_graph = convert_ete3_tree_to_directed_acyclic_graph(
         tree, alignment[:, 1:2], alignment_look_up_table
     )
 
+    # Filter the graph edges if focused edges are provided
     if focused_edges:
         filter_graph_edges_by_focus(count_graph, focused_edges)
 
+    # Initialize a dictionary to store counts
     edge_subtree_count_dict = {}
+
+    # Iterate over the edges of the graph
     for edge in count_graph.get_edges():
         right, left, branch_length = edge
 
-        (
-            count_graph_nodes_left,
-            count_graph_branches_left,
-        ) = count_and_nodes_branches_nodes(tree, left, right)
-        print("\n")
-        print(
-            f"Left:, {left.name},Leaves:{count_graph_nodes_left},Branch: {count_graph_branches_left}"
-        )
-        (
-            count_graph_nodes_right,
-            count_graph_branches_right,
-        ) = count_and_nodes_branches_nodes(tree, right, left)
-        print(
-            f"Right: {right.name},Leaves:{count_graph_nodes_right},Branch: {count_graph_branches_right}"
-        )
-        print("\n")
+        # Count nodes and branches on the left side
+        count_graph_nodes_left, count_graph_branches_left = count_and_nodes_branches_nodes(tree, left, right)
+        print(f"\nLeft: {left.name}, Leaves: {count_graph_nodes_left}, Branch: {count_graph_branches_left}")
 
+        # Count nodes and branches on the right side
+        count_graph_nodes_right, count_graph_branches_right = count_and_nodes_branches_nodes(tree, right, left)
+        print(f"Right: {right.name}, Leaves: {count_graph_nodes_right}, Branch: {count_graph_branches_right}\n")
+
+        # Formulate the edge name and store the counts in the dictionary
         edge_name = f"({left.name}, {right.name})"
-
         edge_subtree_count_dict[edge_name] = {
             "left": {
                 "leave_count": count_graph_nodes_left,
