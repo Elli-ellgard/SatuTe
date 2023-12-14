@@ -4,7 +4,15 @@ from scipy.sparse.linalg import expm
 
 """## CALCULATION OF THE SAMPLE COHERENCE """
 
-
+def get_number_of_branches(number_tips):
+    if number_tips == 1 or number_tips == 2:
+        number_branches = 1
+    elif number_tips == 3:
+        number_branches = 3
+    else:
+        number_branches =  2 * number_tips - 3
+    return(number_branches)
+    
 # get transition matrix using matrix exponential
 def get_transition_matrix(rate_matrix, branch_length):
     return expm(rate_matrix * branch_length)
@@ -152,15 +160,11 @@ def calculate_test_statistic_posterior_distribution(
     variance = variance / number_sites
 
     """ Results of the statistcal tests"""
-    # quantiles of the standard normal distribution
-    z_alpha = st.norm.ppf(1 - alpha)
-
     
     if variance < 0:
         print(
             "VARIANCE ESTIMATION IS NEGATIVE - CONSIDER INCREASING THE NUMBER OF STANDARD DEVIATIONS (number_standard_deviations) (CONFIDENCE INTERVAL)"
         )
-        c_s = 999999999
         p_value = -1
     else:
         # computing the p-value
@@ -168,20 +172,25 @@ def calculate_test_statistic_posterior_distribution(
 
 
     # decision of the statistical test
+    # quantiles of the standard normal distribution
+    z_alpha = st.norm.ppf(1 - alpha)
     # computing the critical value
-    decision_test = ""
+   
     if variance < 0:
         c_s = 999999999
     else: 
         c_s = z_alpha * np.sqrt(variance)
+    # decision
+    decision_test = ""   
     if c_s > delta:
         decision_test = "Saturated"
     else:
         decision_test = "Informative"
 
-    decision_corrected_test_tips = ""
+    
     # decision of the test using Bonferroni correction 
     # using number of tips of the considered subtrees
+    decision_corrected_test_tips = ""
     corrected_alpha_tips= 1 - (1 - alpha)**(1/(number_tips_left_subtree*number_tips_right_subtree))
     corrected_z_tips = st.norm.ppf(1 - corrected_alpha_tips)
     corrected_c_s_tips = corrected_z_tips * np.sqrt(variance)
@@ -189,17 +198,19 @@ def calculate_test_statistic_posterior_distribution(
         decision_corrected_test_tips = "Saturated"
     else:
         decision_corrected_test_tips = "Informative" 
-    decision_corrected_test_branches = ""
+    
     # using number of branch combinations
-    # number_branches_left_subtree = 2 * number_branches_left_subtree - 1
-    # number_branches_right_subtree = 2 * number_branches_right_subtree - 1
-    # corrected_alpha_branches= 1 - (1 - alpha)**(1/(number_branches_left_subtree*number_branches_right_subtree))
-    # corrected_z_branches = st.norm.ppf(1 - corrected_alpha_branches)
-    # corrected_c_s_branches = corrected_z_branches * np.sqrt(variance)
-    # if corrected_c_s_branches > delta:
-    #     decision_corrected_test_branches = "Saturated"
-    # else:
-    #     decision_corrected_test_branches = "Informative" 
+    number_branches_left_subtree = get_number_of_branches(number_tips_left_subtree)
+    number_branches_right_subtree =get_number_of_branches(number_tips_right_subtree)
+    corrected_alpha_branches= 1 - (1 - alpha)**(1/(number_branches_left_subtree*number_branches_right_subtree))
+    corrected_z_branches = st.norm.ppf(1 - corrected_alpha_branches)
+    corrected_c_s_branches = corrected_z_branches * np.sqrt(variance)
+    decision_corrected_test_branches = ""
+    if corrected_c_s_branches > delta:
+        decision_corrected_test_branches = "Saturated"
+    else:
+        decision_corrected_test_branches = "Informative" 
+    
     # computing the saturation coherence between two sequences
     c_s_two_sequence = np.sqrt(multiplicity) * z_alpha / np.sqrt(number_sites)
     if c_s_two_sequence > delta:
