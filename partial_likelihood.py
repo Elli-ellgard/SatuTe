@@ -417,8 +417,6 @@ def multiple_rate_analysis(
                 right_partial_likelihood,
                 number_leaves_left_subtree,
                 number_leaves_right_subtree,
-                number_branches_left_subtree,
-                number_branches_right_subtree,
                 branch_type,
                 alpha,
             )
@@ -503,8 +501,6 @@ def single_rate_analysis(
             right_partial_likelihood,
             number_leaves_left_subtree,
             number_leaves_right_subtree,
-            number_branches_left_subtree,
-            number_branches_right_subtree,
             branch_type,
             alpha,
         )
@@ -539,8 +535,6 @@ def process_test_statistics_posterior(
     right_partial_likelihood,
     number_leaves_left_subtree,
     number_leaves_right_subtree,
-    number_branches_left_subtree,
-    number_branches_right_subtree,
     branch_type,
     alpha,
 ):
@@ -562,8 +556,6 @@ def process_test_statistics_posterior(
         4,
         number_leaves_left_subtree,
         number_leaves_right_subtree,
-        number_branches_left_subtree,
-        number_branches_right_subtree,
         branch_type,
         alpha,
     )

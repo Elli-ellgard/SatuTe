@@ -4,7 +4,7 @@ from scipy.sparse.linalg import expm
 
 """## CALCULATION OF THE SAMPLE COHERENCE """
 
-def get_number_of_branches(number_tips):
+def get_number_of_branch_insertions(number_tips):
     if number_tips == 1 or number_tips == 2:
         number_branches = 1
     elif number_tips == 3:
@@ -75,8 +75,6 @@ def calculate_test_statistic_posterior_distribution(
     dimension,
     number_tips_left_subtree,
     number_tips_right_subtree,
-    number_branches_left_subtree,
-    number_branches_right_subtree,
     branch_type="external",
     alpha=0.05,
 ):
@@ -160,7 +158,6 @@ def calculate_test_statistic_posterior_distribution(
     variance = variance / number_sites
 
     """ Results of the statistcal tests"""
-    
     if variance < 0:
         print(
             "VARIANCE ESTIMATION IS NEGATIVE - CONSIDER INCREASING THE NUMBER OF STANDARD DEVIATIONS (number_standard_deviations) (CONFIDENCE INTERVAL)"
@@ -200,9 +197,9 @@ def calculate_test_statistic_posterior_distribution(
         decision_corrected_test_tips = "Informative" 
     
     # using number of branch combinations
-    number_branches_left_subtree = get_number_of_branches(number_tips_left_subtree)
-    number_branches_right_subtree =get_number_of_branches(number_tips_right_subtree)
-    corrected_alpha_branches= 1 - (1 - alpha)**(1/(number_branches_left_subtree*number_branches_right_subtree))
+    number_branch_insertion_left_subtree = get_number_of_branch_insertions(number_tips_left_subtree)
+    number_branch_insertion_right_subtree = get_number_of_branch_insertions(number_tips_right_subtree)
+    corrected_alpha_branches= 1 - (1 - alpha)**(1/(number_branch_insertion_left_subtree*number_branch_insertion_right_subtree))
     corrected_z_branches = st.norm.ppf(1 - corrected_alpha_branches)
     corrected_c_s_branches = corrected_z_branches * np.sqrt(variance)
     decision_corrected_test_branches = ""
