@@ -10,7 +10,6 @@ from graph import Graph, Node
 from nucleotide_code_vector import NUCLEOTIDE_CODE_VECTOR
 from ete3 import Tree
 
-
 @cache
 def partial_likelihood(tree, node, coming_from, rate_matrix, factor=0):
     """
@@ -263,33 +262,15 @@ def count_and_nodes_branches_nodes(tree, node, coming_from):
     return leaf_count, branch_count
 
 
-def combine_likelihood_and_subtree_counts(
-    partial_likelihood_storage, subtree_count_dict
-):
-    for edge_name in partial_likelihood_storage:
-        subtree_counts = subtree_count_dict.get(edge_name, {})
-
-        # Assign the subtree counts directly to the likelihood storage
-        partial_likelihood_storage[edge_name]["left"].update(
-            subtree_counts.get("left", {})
-        )
-        partial_likelihood_storage[edge_name]["right"].update(
-            subtree_counts.get("right", {})
-        )
-
-
-def calculate_partial_likelihoods_for_sites(
-    tree: Tree, alignment, rate_matrix, focused_edge=None
-):
-    """... [Same docstring as before] ..."""
+def count_leaves_and_branches_for_subtrees(tree: Tree, alignment, focused_edges=None):
     alignment_look_up_table = get_alignment_look_up_table(alignment)
-    partial_likelihood_per_site_storage = {}
-
-    print(tree.get_ascii(show_internal=True))
 
     count_graph = convert_ete3_tree_to_directed_acyclic_graph(
         tree, alignment[:, 1:2], alignment_look_up_table
     )
+
+    if focused_edges:
+        filter_graph_edges_by_focus(count_graph, focused_edges)
 
     edge_subtree_count_dict = {}
     for edge in count_graph.get_edges():
@@ -308,7 +289,7 @@ def calculate_partial_likelihoods_for_sites(
             count_graph_branches_right,
         ) = count_and_nodes_branches_nodes(tree, right, left)
         print(
-            f"Right: {right.name},Leaves:{count_graph_nodes_right},Branch: {count_graph_branches_left}"
+            f"Right: {right.name},Leaves:{count_graph_nodes_right},Branch: {count_graph_branches_right}"
         )
         print("\n")
 
@@ -324,6 +305,16 @@ def calculate_partial_likelihoods_for_sites(
                 "branch_count": count_graph_branches_right,
             },
         }
+
+    return edge_subtree_count_dict
+
+
+def calculate_partial_likelihoods_for_sites(
+    tree: Tree, alignment, rate_matrix, focused_edge=None
+):
+    """... [Same docstring as before] ..."""
+    alignment_look_up_table = get_alignment_look_up_table(alignment)
+    partial_likelihood_per_site_storage = {}
 
     for i in range(0, len(alignment[0].seq), 1):
         graph = convert_ete3_tree_to_directed_acyclic_graph(
@@ -344,10 +335,7 @@ def calculate_partial_likelihoods_for_sites(
             update_partial_likelihood_storage(
                 partial_likelihood_per_site_storage, edge_name, likelihood_data
             )
-
-    combine_likelihood_and_subtree_counts(
-        partial_likelihood_per_site_storage, edge_subtree_count_dict
-    )
+        
 
     return partial_likelihood_per_site_storage
 
@@ -405,15 +393,20 @@ def multiple_rate_analysis(
         partial_likelihood_per_site_storage = calculate_partial_likelihoods_for_sites(
             rescaled_copied_tree, alignment, rate_matrix, focused_edge
         )
+        
+        edge_subtree_count_dict = count_leaves_and_branches_for_subtrees(initial_tree, alignment, focused_edge)
 
         for edge, likelihoods in partial_likelihood_per_site_storage.items():
+            
             left_partial_likelihood = pd.DataFrame(likelihoods["left"]["likelihoods"])
             right_partial_likelihood = pd.DataFrame(likelihoods["right"]["likelihoods"])
 
-            number_leaves_left_subtree = likelihoods["left"]["leave_count"]
-            number_leaves_right_subtree = likelihoods["left"]["leave_count"]
-            number_branches_left_subtree = likelihoods["left"]["branch_count"]
-            number_branches_right_subtree = likelihoods["left"]["branch_count"]
+            number_leaves_left_subtree = edge_subtree_count_dict[edge]["left"]["leave_count"]
+            number_leaves_right_subtree = edge_subtree_count_dict[edge]["right"]["leave_count"]
+
+            number_branches_left_subtree = edge_subtree_count_dict[edge]["left"]["branch_count"]
+            number_branches_right_subtree = edge_subtree_count_dict[edge]["right"]["branch_count"]
+
 
             # Determine the type of branch (internal or external).
             branch_type = determine_branch_type(edge)
@@ -478,7 +471,10 @@ def single_rate_analysis(
     partial_likelihood_per_site_storage = calculate_partial_likelihoods_for_sites(
         initial_tree, alignment, rate_matrix, focused_edge
     )
-
+    
+    edge_subtree_count_dict = count_leaves_and_branches_for_subtrees(initial_tree, alignment, focused_edge)
+    
+    
     # Dictionary to store the results.
     result_test_dictionary = {}
     # List to accumulate the results for each edge.
@@ -486,15 +482,18 @@ def single_rate_analysis(
 
     # Iterate over each edge and the associated likelihoods.
     for edge, likelihoods in partial_likelihood_per_site_storage.items():
+
         # Convert the left and right likelihoods to dataframes for easier processing.
         left_partial_likelihood = pd.DataFrame(likelihoods["left"]["likelihoods"])
         right_partial_likelihood = pd.DataFrame(likelihoods["right"]["likelihoods"])
 
-        number_leaves_left_subtree = likelihoods["left"]["leave_count"]
-        number_leaves_right_subtree = likelihoods["left"]["leave_count"]
-        number_branches_left_subtree = likelihoods["left"]["branch_count"]
-        number_branches_right_subtree = likelihoods["left"]["branch_count"]
+        number_leaves_left_subtree = edge_subtree_count_dict[edge]["left"]["leave_count"]
+        number_leaves_right_subtree = edge_subtree_count_dict[edge]["right"]["leave_count"]
 
+        number_branches_left_subtree = edge_subtree_count_dict[edge]["left"]["branch_count"]
+        number_branches_right_subtree = edge_subtree_count_dict[edge]["right"]["branch_count"]
+
+        
         # Determine the type of branch (internal or external).
         branch_type = determine_branch_type(edge)
 
