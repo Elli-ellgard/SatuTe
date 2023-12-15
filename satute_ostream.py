@@ -91,7 +91,7 @@ def write_results_for_single_rate(
         # Writing the Nexus file
         if to_be_tested_tree:
             tree_file_name = file_name_base
-            newick_string = to_be_tested_tree.write(format=1)
+            newick_string = to_be_tested_tree.write(format=1, format_root_node=True)
             write_nexus_file(
                 newick_string,
                 tree_file_name,
