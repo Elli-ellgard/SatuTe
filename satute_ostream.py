@@ -3,7 +3,6 @@ from logging import Logger
 from Bio import AlignIO
 import re
 
-
 # New function to format float columns
 def format_float_columns(data_frame):
     for col in data_frame.columns:
@@ -33,13 +32,15 @@ def write_results_for_category_rates(results, msa_file, alpha, edge, logger: Log
             # Append the edge information to the file name if provided
             if edge:
                 file_name = f"{file_name}_{edge}"
-                
+
             results_data_frame = pd.DataFrame(results_set["result_list"])
             format_float_columns(results_data_frame)
 
             if "rescaled_tree" in results_set:
                 tree_file_name = f"{file_name}.nex"
-                newick_string = results_set["rescaled_tree"].write(format=1, format_root_node=True)
+                newick_string = results_set["rescaled_tree"].write(
+                    format=1, format_root_node=True
+                )
                 write_nexus_file(
                     newick_string,
                     tree_file_name,
@@ -104,6 +105,7 @@ def get_target_node(edge):
     return edge.split(",")[0].replace("(", "").strip()
 
 
+# TODO: Apply automatic header generation
 def map_values_to_newick(newick, df):
     for index, row in df.iterrows():
         target_node = get_target_node(row["edge"])
@@ -112,7 +114,7 @@ def map_values_to_newick(newick, df):
         escaped_target_node = re.escape(target_node)
 
         # Adjusting the metadata as per the requirements
-        meta_data = f"&delta={row['delta']},c_s={row['c_s']},p_value={row['p_value']},result_test={row['result_test']}"
+        meta_data = f"&delta={row['delta']},p_value={row['p_value']}"
 
         # Check for existing square brackets after the node
         # Use raw string notation for regex patterns
