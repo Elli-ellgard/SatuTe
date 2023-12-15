@@ -4,34 +4,7 @@ import numpy as np
 import logging
 
 
-def initialize_logger(log_file):
-    # Create a logger instance
-    logger = logging.getLogger("my_logger")
-    logger.setLevel(logging.DEBUG)
-
-    # Create a file handler and set its level to DEBUG
-    file_handler = logging.FileHandler(log_file)
-    file_handler.setLevel(logging.DEBUG)
-
-    # Create a console handler and set its level to INFO
-    console_handler = logging.StreamHandler()
-    console_handler.setLevel(logging.INFO)
-
-    # Create a formatter and set it for the handlers
-    formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
-    file_handler.setFormatter(formatter)
-    console_handler.setFormatter(formatter)
-
-    # Add the handlers to the logger
-    logger.addHandler(file_handler)
-    logger.addHandler(console_handler)
-
-    return logger
-
-
 """ ## SPECTRAL DECOMPOSITION OF THE RATE MATRIX"""
-
-
 def spectral_decomposition(rate_matrix, psi_matrix):
     """
     Then psi_matrix := Diag(pi). Recall that matrix Q is reversible iff M:= psi_matrix^1/2 x Q x psi_matrix^{-1/2} is symmetric.
