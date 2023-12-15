@@ -1,7 +1,7 @@
 import numpy as np
 from ete3 import Tree
 from satute_categories import read_alignment_file
-from satute_trees_and_subtrees import collapse_tree, renameInternalNodesPreOrder
+from satute_trees_and_subtrees import collapse_tree, rename_internal_nodes_preorder
 from file_handler import FileHandler
 from satute_repository import IqTreeParser
 from satute_util import spectral_decomposition
@@ -14,10 +14,10 @@ from satute_rate_analysis import single_rate_analysis
 import numpy as np
 import pandas as pd
 from partial_likelihood import (
-    get_initial_likelihood_vector,
     partial_likelihood,
     calculate_partial_likelihoods_for_sites,
 )
+from graph import get_initial_likelihood_vector
 
 RATE_MATRIX = np.array([[-3, 1, 1, 1], [1, -3, 1, 1], [1, 1, -3, 1], [1, 1, 1, -3]])
 
@@ -157,7 +157,7 @@ def test_one():
         SeqRecord(Seq("ACGTAT"), id="AB"),
         SeqRecord(Seq("ACGTAT"), id="B"),
         SeqRecord(Seq("GGTATG"), id="C"),
-        SeqRecord(Seq("GGTATG"), id="E"),        
+        SeqRecord(Seq("GGTATG"), id="E"),
         SeqRecord(Seq("GGTACG"), id="D"),
     ]
 
@@ -169,7 +169,7 @@ def test_one():
     tree = Tree(newick_string, format=1)
 
     # Step 4: Rename internal nodes in a preorder traversal
-    renameInternalNodesPreOrder(tree)
+    rename_internal_nodes_preorder(tree)
     print(tree.get_ascii(show_internal=True))
 
     # Step 5: Create a dictionary to access sequences by their ID

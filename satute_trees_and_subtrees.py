@@ -19,7 +19,7 @@ def rescale_branch_lengths(tree: Tree, rescale_factor: float):
             node.dist *= rescale_factor
 
 
-def renameInternalNodesPreOrder(tree: Tree):
+def rename_internal_nodes_preorder(tree: Tree):
     """
     Modify the input tree by naming its nodes using a preorder traversal.
     Nodes are named as "NodeX*" where X is an incremental number.
@@ -52,19 +52,16 @@ def has_duplicate_leaf_sequences(node, multiple_sequence_alignment):
 
 def collapse_tree(tree: Tree, multiple_sequence_alignment):
     twin_dictionary = {}
-    sibling_dictionary = {}
 
     for node in tree.traverse("postorder"):
         if not node.is_leaf():
-            
             leaf_sequences = [
                 multiple_sequence_alignment[leaf.name] for leaf in node.iter_leaves()
             ]
-
             if len(set(leaf_sequences)) == 1:  # All leaf sequences are identical
                 delete_children_nodes(node, twin_dictionary)
                 multiple_sequence_alignment[node.name] = leaf_sequences[0]
-    return multiple_sequence_alignment, twin_dictionary, sibling_dictionary
+    return multiple_sequence_alignment, twin_dictionary
 
 
 def has_only_leaf_children(node):
@@ -122,7 +119,7 @@ if __name__ == "__main__":
         "D": "ATGC",
         "E": "ATGC",
     }
-    renameInternalNodesPreOrder(tree)
+    rename_internal_nodes_preorder(tree)
     print_tree_with_inner_node_names(tree)
     collapse_tree(tree, multiple_sequence_alignment)
     print_tree_with_inner_node_names(tree)

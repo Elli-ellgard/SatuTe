@@ -1,7 +1,6 @@
 import scipy
 import scipy.linalg
 import numpy as np
-import logging
 
 
 """ ## SPECTRAL DECOMPOSITION OF THE RATE MATRIX"""

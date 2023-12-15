@@ -6,11 +6,11 @@ from ete3 import Tree
 from satute_util import spectral_decomposition
 from rate_matrix import RateMatrix
 from file_handler import FileHandler, IqTreeHandler
-from satute_trees_and_subtrees import renameInternalNodesPreOrder
+from satute_trees_and_subtrees import rename_internal_nodes_preorder
 from satute_arguments import ARGUMENT_LIST
 from satute_rate_analysis import (
-    single_rate_analysis,
     multiple_rate_analysis,
+    single_rate_analysis_collapsed_tree,
 )
 from satute_ostream import (
     write_results_for_category_rates,
@@ -287,7 +287,7 @@ class Satute:
         except (FileNotFoundError, ValueError) as e:
             self.logger.error(str(e))
             raise ValueError(f"Error extracting tree: {e}")
-        return renameInternalNodesPreOrder(Tree(newick_string, format=1))
+        return rename_internal_nodes_preorder(Tree(newick_string, format=1))
 
     def initialise_logger(self):
         log_file = f"{self.input_args.msa.resolve()}_{self.input_args.alpha}.satute.log"
@@ -418,7 +418,7 @@ class Satute:
         alpha,
         focused_edge,
     ):
-        results = single_rate_analysis(
+        results = single_rate_analysis_collapsed_tree(
             to_be_tested_tree,
             alignment,
             rate_matrix,

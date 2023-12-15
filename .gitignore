@@ -178,3 +178,4 @@ cython_debug/
 *.nex
 *.siteprob
 .DS_Store
+test/Clemens/small_example
