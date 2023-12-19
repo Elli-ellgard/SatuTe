@@ -470,8 +470,6 @@ class Satute:
             per_rate_category_alignment, categorized_sites, self.input_args
         )
 
-        print(to_be_tested_tree)
-
         results = multiple_rate_analysis(
             to_be_tested_tree,
             category_rates,
@@ -572,29 +570,64 @@ class Satute:
 
             return argument_option
         else:
+            argument_option = {}
             if self.input_args.msa:
-                argument_option = {
-                    "option": "msa",
-                    "msa_file": self.input_args.msa,
-                    "arguments": ["-s", str(self.input_args.msa.resolve())],
-                }
-
+                self.construct_arguments_for_msa(argument_option)
             if self.input_args.tree:
-                argument_option["option"] = "msa + tree"
-                argument_option["arguments"].extend(
-                    ["-te", str(self.input_args.tree.resolve())]
-                )
-
+                self.construct_argument_for_tree(argument_option)
             # If a model was specified in the input arguments, add it to the argument options
             if self.input_args.model:
-                argument_option["option"] += " + model"
-                argument_option["model_arguments"] = ["-m", self.input_args.model]
-                # If the model includes a Gamma distribution, add the corresponding argument
-                if "+G" in self.input_args.model or "+R" in self.input_args.model:
-                    argument_option["model_arguments"].extend(["-wspr"])
-
+                self.construct_argument_for_model(argument_option)
         # Return the constructed argument options
         return argument_option
+
+    def construct_arguments_for_msa(self, argument_option):
+        """
+        Constructs the arguments required for multiple sequence alignment (MSA).
+
+        Args:
+        argument_option (dict): The dictionary where MSA arguments are to be added.
+
+        Returns:
+        dict: Updated dictionary with MSA specific arguments.
+        """
+        # Specify the option type and MSA file path
+        argument_option["option"] = "msa"
+        argument_option["msa_file"] = self.input_args.msa
+
+        # Add MSA specific command-line arguments
+        argument_option["arguments"] = ["-s", str(self.input_args.msa.resolve())]
+        return argument_option
+
+    def construct_argument_for_tree(self, argument_option):
+        """
+        Appends tree-related arguments to the existing argument option.
+
+        Args:
+        argument_option (dict): The dictionary to which tree arguments are added.
+        """
+        # Specify that the option now includes tree data
+        argument_option["option"] = "msa + tree"
+
+        # Extend the existing arguments with tree specific command-line arguments
+        argument_option["arguments"].extend(["-te", str(self.input_args.tree.resolve())])
+
+    def construct_argument_for_model(self, argument_option):
+        """
+        Constructs the arguments required for the evolutionary model.
+
+        Args:
+        argument_option (dict): The dictionary where model arguments are to be added.
+        """
+        # Update the option to indicate inclusion of the model
+        argument_option["option"] += " + model"
+
+        # Add model specific command-line arguments
+        argument_option["model_arguments"] = ["-m", self.input_args.model]
+
+        # Add extra arguments if the model includes certain features
+        if "+G" in self.input_args.model or "+R" in self.input_args.model:
+            argument_option["model_arguments"].extend(["-wspr"])
 
 
 if __name__ == "__main__":

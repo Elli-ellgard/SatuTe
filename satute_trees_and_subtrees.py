@@ -19,7 +19,7 @@ def rescale_branch_lengths(tree: Tree, rescale_factor: float):
             node.dist *= rescale_factor
 
 
-def rename_internal_nodes_preorder(tree: Tree):
+def rename_internal_nodes_preorder(tree: Tree) -> Tree:
     """
     Modify the input tree by naming its nodes using a preorder traversal.
     Nodes are named as "NodeX*" where X is an incremental number.
@@ -44,6 +44,26 @@ def rename_internal_nodes_preorder(tree: Tree):
     return tree
 
 
+def is_bifurcating(tree) -> bool:
+    """
+    Checks if a given tree is strictly bifurcating.
+
+    Args:
+    tree (ete3.Tree): The tree to be checked.
+
+    Returns:
+    bool: True if the tree is strictly bifurcating, False otherwise.
+    """
+    for node in tree.traverse():
+        # Ignore leaf nodes
+        if not node.is_leaf():
+            # Check if the number of children is exactly two
+            print(node.name, [child.name for child in node.children])
+            if len(node.children) != 2:
+                return False
+    return True
+
+
 def has_duplicate_leaf_sequences(node, multiple_sequence_alignment):
     sequences = [multiple_sequence_alignment[leaf.name] for leaf in node.iter_leaves()]
     sequence_count = Counter(sequences)
@@ -51,49 +71,42 @@ def has_duplicate_leaf_sequences(node, multiple_sequence_alignment):
 
 
 def collapse_tree(tree: Tree, multiple_sequence_alignment):
+    """
+    Collapses a tree based on identical leaf sequences.
+
+    Args:
+    tree (Tree): The tree to be collapsed.
+    multiple_sequence_alignment: The multiple sequence alignment associated with the tree's leaves.
+
+    Returns:
+    tuple: A tuple containing the updated multiple sequence alignment and a dictionary of collapsed nodes (twins).
+    """
+    # Initialize a dictionary to track the collapsed nodes
     twin_dictionary = {}
 
+    # Traverse the tree in postorder
     for node in tree.traverse("postorder"):
+        # Check only internal (non-leaf) nodes
         if not node.is_leaf():
+            # Get sequences of all leaf nodes under the current internal node
             leaf_sequences = [
                 multiple_sequence_alignment[leaf.name] for leaf in node.iter_leaves()
             ]
-            if len(set(leaf_sequences)) == 1:  # All leaf sequences are identical
+
+            # Check if all leaf sequences under this node are identical
+            if len(set(leaf_sequences)) == 1:
+                # Delete the children nodes as they are identical and update the twin dictionary
                 delete_children_nodes(node, twin_dictionary)
+                # Update the multiple sequence alignment for the current node
                 multiple_sequence_alignment[node.name] = leaf_sequences[0]
+
+    # Return the updated multiple sequence alignment and twin dictionary
     return multiple_sequence_alignment, twin_dictionary
 
 
 def has_only_leaf_children(node):
     # Check if all children of the node are leaves
     return any(child.is_leaf() for child in node.children)
-
-
-def summarize_similar_leaves(node, multiple_sequence_alignment, sibling_dictionary):
-    seen_sequences = {}
-
-    for child in list(node.children):
-        if child.name in multiple_sequence_alignment:
-            if multiple_sequence_alignment[child.name] in seen_sequences:
-                sibling_dictionary[child.name] = seen_sequences[
-                    multiple_sequence_alignment[child.name]
-                ]
-
-                seen_sequences[multiple_sequence_alignment[child.name]].append(
-                    str(child.name)
-                )
-
-                child.delete()
-            else:
-                # Keep the first occurrence of each sequence
-                seen_sequences[multiple_sequence_alignment[child.name]] = [
-                    str(child.name)
-                ]
-
-    for child in list(node.children):
-        if child.name in multiple_sequence_alignment:
-            if multiple_sequence_alignment[child.name] in seen_sequences:
-                sibling_dictionary[child.name] = seen_sequences
 
 
 def delete_children_nodes(node: Tree, twin_dictionary: dict):

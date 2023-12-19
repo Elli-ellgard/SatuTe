@@ -153,9 +153,9 @@ def dict_to_alignment(sequence_dict):
 def test_one():
     # Step 1: Create SeqRecord objects for your sequences
     seq_records = [
-        SeqRecord(Seq("ACGTAT"), id="A"),
-        SeqRecord(Seq("ACGTAT"), id="AB"),
-        SeqRecord(Seq("ACGTAT"), id="B"),
+        SeqRecord(Seq("ACGTAT"), id="ACGTAT_1"),
+        SeqRecord(Seq("ACGTAT"), id="ACGTAT_2"),
+        SeqRecord(Seq("ACGTAT"), id="ACGTAT_3"),
         SeqRecord(Seq("GGTATG"), id="C"),
         SeqRecord(Seq("GGTATG"), id="E"),
         SeqRecord(Seq("GGTACG"), id="D"),
@@ -165,9 +165,11 @@ def test_one():
     alignment = MultipleSeqAlignment(seq_records)
 
     # Step 3: Create a phylogenetic tree from a Newick string
-    newick_string = "(((A:0.2, B:0.4):0.3,AB:1),(C:0.5,D:0.2, E:0.1):2);"
+    newick_string = "(((ACGTAT_1:0.2, ACGTAT_2:0.4):0.3,ACGTAT_3:1):1,(C:0.5,D:0.2, E:0.1):2);"
     tree = Tree(newick_string, format=1)
 
+    print(tree.write(format=1, format_root_node=True))    
+    
     # Step 4: Rename internal nodes in a preorder traversal
     rename_internal_nodes_preorder(tree)
     print(tree.get_ascii(show_internal=True))
@@ -179,9 +181,9 @@ def test_one():
     collapsed_tree_one = tree.copy("deepcopy")
 
     # Step 6: Process the tree to collapse nodes with identical sequences
-    sequence_dict, twin_dictionary, sibling_dictionary = collapse_tree(
-        collapsed_tree_one, sequence_dict
-    )
+    sequence_dict, twin_dictionary = collapse_tree(collapsed_tree_one, sequence_dict)
+    
+    print(collapsed_tree_one.write(format=1, format_root_node=True))    
 
     # Step 7: Create a rate matrix and calculate stationary distribution
     rate_matrix = RateMatrix(RATE_MATRIX)

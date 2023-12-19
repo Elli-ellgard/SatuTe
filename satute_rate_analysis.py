@@ -3,8 +3,9 @@ from satute_trees_and_subtrees import rescale_branch_lengths, collapse_tree
 from partial_likelihood import calculate_partial_likelihoods_for_sites
 from graph import count_leaves_and_branches_for_subtrees
 from satute_sequences import dict_to_alignment
-from satute_statistic_posterior_distribution import calculate_test_statistic_posterior_distribution
-
+from satute_statistic_posterior_distribution import (
+    calculate_test_statistic_posterior_distribution,
+)
 
 
 def determine_branch_type(edge):
