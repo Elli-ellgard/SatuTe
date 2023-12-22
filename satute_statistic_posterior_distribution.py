@@ -246,9 +246,9 @@ def calculate_test_statistic_posterior_distribution(
     variance = variance / number_sites
 
     """Calculation of the test-statistic"""
-    try:  
+    if variance > 0:
         test_statistic = delta / np.sqrt(variance)
-    except: ValueError("Test-statistic could not be calculated!")
+        
 
     """Calculation of the p-value"""
     if variance < 0:
