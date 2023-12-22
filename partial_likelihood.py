@@ -9,7 +9,6 @@ from satute_statistic_posterior_distribution import (
 from graph import Graph, Node
 from nucleotide_code_vector import NUCLEOTIDE_CODE_VECTOR
 
-
 @cache
 def partial_likelihood(tree, node, coming_from, rate_matrix, factor=0):
     """
@@ -231,13 +230,85 @@ def get_partial_likelihood_dict(edge, p1, p2, i, branch_length):
 def update_partial_likelihood_storage(storage, edge_name, likelihood_data):
     """Update the storage with new partial likelihood data."""
     if edge_name not in storage:
-        storage[edge_name] = {"left": [], "right": []}
-    storage[edge_name]["left"].append(likelihood_data["left"])
-    storage[edge_name]["right"].append(likelihood_data["right"])
+        storage[edge_name] = {
+            "left": {
+                "likelihoods": [],
+            },
+            "right": {
+                "likelihoods": [],
+            },
+        }
+    storage[edge_name]["left"]["likelihoods"].append(likelihood_data["left"])
+    storage[edge_name]["right"]["likelihoods"].append(likelihood_data["right"])
+
+
+def count_and_nodes_branches_nodes(tree, node, coming_from):
+    # If the current node is a leaf
+    if node.is_leaf():
+        return 1, 0
+
+    # Initialize leaf and branch counts
+    leaf_count, branch_count = 0, 0
+
+    # Iterate over children
+    for child in node.connected.keys():
+        if child != coming_from:
+            # Recursively count leaves and branches for each child
+            child_leaves, child_branches = count_and_nodes_branches_nodes(
+                tree, child, node
+            )
+            leaf_count += child_leaves
+            branch_count += child_branches + 1  # Include the branch to this child
+    # Print the count for the current node
+    return leaf_count, branch_count
+
+
+def count_leaves_and_branches_for_subtrees(tree: Tree, alignment, focused_edges=None):
+    # Create a lookup table for alignment
+    alignment_look_up_table = get_alignment_look_up_table(alignment)
+
+    # Convert the given tree to a directed acyclic graph
+    count_graph = convert_ete3_tree_to_directed_acyclic_graph(
+        tree, alignment[:, 1:2], alignment_look_up_table
+    )
+
+    # Filter the graph edges if focused edges are provided
+    if focused_edges:
+        filter_graph_edges_by_focus(count_graph, focused_edges)
+
+    # Initialize a dictionary to store counts
+    edge_subtree_count_dict = {}
+
+    # Iterate over the edges of the graph
+    for edge in count_graph.get_edges():
+        right, left, branch_length = edge
+
+        # Count nodes and branches on the left side
+        count_graph_nodes_left, count_graph_branches_left = count_and_nodes_branches_nodes(tree, left, right)
+        print(f"\nLeft: {left.name}, Leaves: {count_graph_nodes_left}, Branch: {count_graph_branches_left}")
+
+        # Count nodes and branches on the right side
+        count_graph_nodes_right, count_graph_branches_right = count_and_nodes_branches_nodes(tree, right, left)
+        print(f"Right: {right.name}, Leaves: {count_graph_nodes_right}, Branch: {count_graph_branches_right}\n")
+
+        # Formulate the edge name and store the counts in the dictionary
+        edge_name = f"({left.name}, {right.name})"
+        edge_subtree_count_dict[edge_name] = {
+            "left": {
+                "leave_count": count_graph_nodes_left,
+                "branch_count": count_graph_branches_left,
+            },
+            "right": {
+                "leave_count": count_graph_nodes_right,
+                "branch_count": count_graph_branches_right,
+            },
+        }
+
+    return edge_subtree_count_dict
 
 
 def calculate_partial_likelihoods_for_sites(
-    tree, alignment, rate_matrix, focused_edge=None
+    tree: Tree, alignment, rate_matrix, focused_edge=None
 ):
     """... [Same docstring as before] ..."""
     alignment_look_up_table = get_alignment_look_up_table(alignment)
@@ -264,6 +335,7 @@ def calculate_partial_likelihoods_for_sites(
             update_partial_likelihood_storage(
                 partial_likelihood_per_site_storage, edge_name, likelihood_data
             )
+        
 
     return partial_likelihood_per_site_storage
 
@@ -283,9 +355,7 @@ def store_test_results(edge, rate, left_partial_likelihood, results):
     """
     return {
         "edge": edge,
-        "delta": results.get("delta"),
-        "c_s": results.get("c_s"),
-        "c_sTwoSequence": results.get("c_s_two_sequence"),
+        "test_statistic": results.get("test_statistic"),
         "p_value": results.get("p_value"),
         "result_test": results.get("result_test"),
         "result_test_tip2tip": results.get("result_test_tip2tip"),
@@ -320,11 +390,20 @@ def multiple_rate_analysis(
         partial_likelihood_per_site_storage = calculate_partial_likelihoods_for_sites(
             rescaled_copied_tree, alignment, rate_matrix, focused_edge
         )
+        
+        edge_subtree_count_dict = count_leaves_and_branches_for_subtrees(initial_tree, alignment, focused_edge)
 
         for edge, likelihoods in partial_likelihood_per_site_storage.items():
-            left_partial_likelihood = pd.DataFrame(likelihoods["left"])
+            
+            left_partial_likelihood = pd.DataFrame(likelihoods["left"]["likelihoods"])
+            right_partial_likelihood = pd.DataFrame(likelihoods["right"]["likelihoods"])
 
-            right_partial_likelihood = pd.DataFrame(likelihoods["right"])
+            number_leaves_left_subtree = edge_subtree_count_dict[edge]["left"]["leave_count"]
+            number_leaves_right_subtree = edge_subtree_count_dict[edge]["right"]["leave_count"]
+
+            number_branches_left_subtree = edge_subtree_count_dict[edge]["left"]["branch_count"]
+            number_branches_right_subtree = edge_subtree_count_dict[edge]["right"]["branch_count"]
+
 
             branch_type = determine_branch_type(edge)
 
@@ -334,6 +413,8 @@ def multiple_rate_analysis(
                 state_frequencies,
                 left_partial_likelihood,
                 right_partial_likelihood,
+                number_leaves_left_subtree,
+                number_leaves_right_subtree,
                 branch_type,
                 alpha,
             )
@@ -383,7 +464,10 @@ def single_rate_analysis(
     partial_likelihood_per_site_storage = calculate_partial_likelihoods_for_sites(
         initial_tree, alignment, rate_matrix, focused_edge
     )
-
+    
+    edge_subtree_count_dict = count_leaves_and_branches_for_subtrees(initial_tree, alignment, focused_edge)
+    
+    
     # Dictionary to store the results.
     result_test_dictionary = {}
 
@@ -392,10 +476,18 @@ def single_rate_analysis(
 
     # Iterate over each edge and the associated likelihoods.
     for edge, likelihoods in partial_likelihood_per_site_storage.items():
-        # Convert the left and right likelihoods to dataframes for easier processing.
-        left_partial_likelihood = pd.DataFrame(likelihoods["left"])
-        right_partial_likelihood = pd.DataFrame(likelihoods["right"])
 
+        # Convert the left and right likelihoods to dataframes for easier processing.
+        left_partial_likelihood = pd.DataFrame(likelihoods["left"]["likelihoods"])
+        right_partial_likelihood = pd.DataFrame(likelihoods["right"]["likelihoods"])
+
+        number_leaves_left_subtree = edge_subtree_count_dict[edge]["left"]["leave_count"]
+        number_leaves_right_subtree = edge_subtree_count_dict[edge]["right"]["leave_count"]
+
+        number_branches_left_subtree = edge_subtree_count_dict[edge]["left"]["branch_count"]
+        number_branches_right_subtree = edge_subtree_count_dict[edge]["right"]["branch_count"]
+
+        
         # Determine the type of branch (internal or external).
         branch_type = determine_branch_type(edge)
 
@@ -406,6 +498,8 @@ def single_rate_analysis(
             state_frequencies,
             left_partial_likelihood,
             right_partial_likelihood,
+            number_leaves_left_subtree,
+            number_leaves_right_subtree,
             branch_type,
             alpha,
         )
@@ -440,6 +534,8 @@ def process_test_statistics_posterior(
     state_frequencies,
     left_partial_likelihood,
     right_partial_likelihood,
+    number_leaves_left_subtree,
+    number_leaves_right_subtree,
     branch_type,
     alpha,
 ):
@@ -459,14 +555,14 @@ def process_test_statistics_posterior(
         left_partial_likelihood,
         right_partial_likelihood,
         4,
+        number_leaves_left_subtree,
+        number_leaves_right_subtree,
         branch_type,
         alpha,
     )
 
     result_keys = [
-        "delta",
-        "c_s",
-        "c_s_two_sequence",
+        "test_statistic",
         "p_value",
         "result_test",
         "result_test_tip2tip",

@@ -27,9 +27,8 @@ from satute_trees_and_subtrees import map_values_to_newick
 from satute_ostream import (
     write_results_for_category_rates,
     write_results_for_single_rate,
-    write_nexus_file,
+    write_alignment_and_indices,
 )
-from satute_ostream import write_alignment_and_indices
 
 
 # Configure the logging settings (optional)

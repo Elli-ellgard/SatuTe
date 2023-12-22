@@ -28,7 +28,7 @@ def map_values_to_newick(newick, df):
         # Escape any special characters in target node for regex
         escaped_target_node = re.escape(target_node)
         # Adjusting the metadata as per the requirements
-        meta_data = f"&delta={row['delta']},c_s={row['c_s']},p_value={row['p_value']},result_test={row['result_test']}"
+        meta_data = f"&delta={row['test_statistic']},p_value={row['p_value']},decision_corrected_test_tips={row['decision_corrected_test_tips']}, decision_corrected_test_branches={row['decision_corrected_test_branches']}, decision_test_tip2tip={row['decision_test_tip2tip']}"
         # Use raw string notation for regex patterns
         pattern_with_brackets = re.compile(
             rf"({escaped_target_node}:\d+(\.\d+)?(e-?\d+)?)\[([^\]]+)\]"
