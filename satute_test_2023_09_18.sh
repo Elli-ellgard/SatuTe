@@ -57,6 +57,7 @@ fi
 $python satute_cli.py -iqtree $iqtree -msa $DIR/$msa -ufboot 1000 -alpha 0.05
 echo ""
 
+
 # echo ""
 # echo "---------------------------------------------------------"
 # echo "TEST 1c: only msa, boot"
@@ -243,32 +244,32 @@ echo " ============= MODI MSA+TREE ===================="
 
 echo " ============= MODI MSA+MODEL+TREE ===================="
 
-# echo ""
-# echo "---------------------------------------------------------"
-# echo "TEST 5: msa + model + tree"
-# echo "---------------------------------------------------------"
-# #clean folder
-# PDIR=$(dirname $DIR)
-# if [ -e $DIR/${msa}.iqtree ]; then
-#     mv $DIR/$msa $PDIR
-#     rm -r $DIR
-#     mkdir $DIR
-#     mv $PDIR/$msa $DIR
-# fi
-# #create output
-# $python satute_cli.py -msa $DIR/$msa
-# PDIR=$(dirname $DIR)
-# if [ -e $DIR/${msa}.iqtree ]; then
-#     mv $DIR/$msa $PDIR
-#     mv $DIR/${msa}.treefile $PDIR
-#     rm -r $DIR
-#     mkdir $DIR
-#     mv $PDIR/$msa $DIR
-#     mv $PDIR/${msa}.treefile $DIR
-# fi
-# $python satute_cli.py -msa $DIR/$msa -model JC+G4 -tree $DIR/${msa}.treefile
-# echo ""
-
+echo ""
+echo "---------------------------------------------------------"
+echo "TEST 5: msa + model + tree"
+echo "---------------------------------------------------------"
+#clean folder
+PDIR=$(dirname $DIR)
+if [ -e $DIR/${msa}.iqtree ]; then
+    mv $DIR/$msa $PDIR
+    rm -r $DIR
+    mkdir $DIR
+    mv $PDIR/$msa $DIR
+fi
+#create output
+$python satute_cli.py -msa $DIR/$msa
+PDIR=$(dirname $DIR)
+if [ -e $DIR/${msa}.iqtree ]; then
+    mv $DIR/$msa $PDIR
+    mv $DIR/${msa}.treefile $PDIR
+    rm -r $DIR
+    mkdir $DIR
+    mv $PDIR/$msa $DIR
+    mv $PDIR/${msa}.treefile $DIR
+fi
+$python satute_cli.py -msa $DIR/$msa -model JC+R5 -tree $DIR/${msa}.treefile
+echo ""
+exit
 # echo ""
 # echo "---------------------------------------------------------"
 # echo "TEST 5: msa + model + tree, option boot => error"
