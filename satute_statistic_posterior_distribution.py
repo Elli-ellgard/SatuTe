@@ -2,8 +2,23 @@ import scipy.stats as st
 import numpy as np
 from scipy.sparse.linalg import expm
 
-"""## CALCULATION """
+"""## CALCULATION OF POSTERIOR DISTRIBUTION """
 
+"""## CALCULATION OF FACTOR FOR C_1"""
+
+def scalar_product_eigenvector_posterior_probability(multiplicity, array_eigenvectors, posterior_probabilities, number_sites):
+    factors_subtree = []  # list of vectors
+    
+    for i in range(multiplicity):
+        v = array_eigenvectors[i]  # eigenvector v_i of the dominant non-zero eigenvalue
+        a = (
+            []
+        )  # vector to store all scalar products v_i * site_posterior_probabilities
+
+        for k in range(number_sites):
+            a.append(v @ np.asarray(posterior_probabilities[k]))
+        factors_subtree.append(a)
+    return factors_subtree
 
 
 
@@ -220,24 +235,8 @@ def calculate_test_statistic_posterior_distribution(
 
     """ Calculation of the factors for the coefficient C_1 (correspond to the dominant non-zero eigenvalue)"""
     # list of vectors of the scalar products between right eigenvector and posterior probability per site
-    factors_left_subtree = []  # list of vectors
-    factors_right_subtree = []
-
-    for i in range(multiplicity):
-        v = array_eigenvectors[i]  # eigenvector v_i of the dominant non-zero eigenvalue
-
-        a = (
-            []
-        )  # vector to store all scalar products v_i * site_posterior_probabilities_left_subtree
-        b = (
-            []
-        )  # vector to store all scalar products v_i * site_posterior_probabilities_right_subtree
-
-        for k in range(number_sites):
-            a.append(v @ np.asarray(posterior_probabilities_left_subtree[k]))
-            b.append(v @ np.asarray(posterior_probabilities_right_subtree[k]))
-        factors_right_subtree.append(b)
-        factors_left_subtree.append(a)
+    factors_left_subtree = scalar_product_eigenvector_posterior_probability(multiplicity, array_eigenvectors, posterior_probabilities_left_subtree, number_sites)
+    factors_right_subtree = scalar_product_eigenvector_posterior_probability(multiplicity, array_eigenvectors, posterior_probabilities_right_subtree, number_sites)
 
     """ Calculation of the dominant sample coherence """
     delta = calculate_sample_coherence(
