@@ -8,6 +8,7 @@ from satute_statistic_posterior_distribution import (
 )
 from graph import Graph, Node
 from nucleotide_code_vector import NUCLEOTIDE_CODE_VECTOR
+from ete3 import Tree
 
 @cache
 def partial_likelihood(tree, node, coming_from, rate_matrix, factor=0):
@@ -285,11 +286,11 @@ def count_leaves_and_branches_for_subtrees(tree: Tree, alignment, focused_edges=
 
         # Count nodes and branches on the left side
         count_graph_nodes_left, count_graph_branches_left = count_and_nodes_branches_nodes(tree, left, right)
-        print(f"\nLeft: {left.name}, Leaves: {count_graph_nodes_left}, Branch: {count_graph_branches_left}")
+        # print(f"\nLeft: {left.name}, Leaves: {count_graph_nodes_left}, Branch: {count_graph_branches_left}")
 
         # Count nodes and branches on the right side
         count_graph_nodes_right, count_graph_branches_right = count_and_nodes_branches_nodes(tree, right, left)
-        print(f"Right: {right.name}, Leaves: {count_graph_nodes_right}, Branch: {count_graph_branches_right}\n")
+        # print(f"Right: {right.name}, Leaves: {count_graph_nodes_right}, Branch: {count_graph_branches_right}\n")
 
         # Formulate the edge name and store the counts in the dictionary
         edge_name = f"({left.name}, {right.name})"
