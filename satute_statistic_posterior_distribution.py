@@ -8,7 +8,7 @@ def calculate_posterior_probabilities_subtree(dimension, state_frequencies, part
     posterior_probabilities_subtree = []
 
     #freq = np.array(list(state_frequencies.values()))
-    diag = np.diag(list(state_frequencies.values()))
+    diag = np.diag(list(state_frequencies))
     site_likelihood_subtree= []
     for k in range(number_sites):
         # sr = np.dot(
@@ -219,45 +219,8 @@ def calculate_test_statistic_posterior_distribution(
     number_sites = len(partial_likelihood_left_subtree["Site"].unique())
 
     """ Calculation of the posterior distributions """
-    posterior_probabilities_left_subtree = []
-    posterior_probabilities_right_subtree = []
-
-    freq = np.array(list(state_frequencies))
-    diag = np.diag(list(state_frequencies))
-
-    site_likelihood_left_subtree = []
-    site_likelihood_right_subtree = []
-
-    for k in range(number_sites):
-        sr = np.dot(
-            np.asarray(partial_likelihood_right_subtree.iloc[k, 3 : (3 + dimension)]),
-            freq,
-        )
-        sl = np.sum(
-            np.asarray(partial_likelihood_left_subtree.iloc[k, 3 : (3 + dimension)])
-            @ diag
-        )
-        site_likelihood_right_subtree.append(sr)
-        site_likelihood_left_subtree.append(sl)
-        posterior_probabilities_left_subtree.append(
-            np.array(
-                diag
-                @ np.asarray(
-                    partial_likelihood_left_subtree.iloc[k, 3 : (3 + dimension)]
-                )
-            )
-            / sl
-        )
-
-        posterior_probabilities_right_subtree.append(
-            np.array(
-                diag
-                @ np.asarray(
-                    partial_likelihood_right_subtree.iloc[k, 3 : (3 + dimension)]
-                )
-            )
-            / sr
-        )
+    posterior_probabilities_left_subtree = calculate_posterior_probabilities_subtree(dimension, state_frequencies, partial_likelihood_left_subtree, number_sites)
+    posterior_probabilities_right_subtree = calculate_posterior_probabilities_subtree(dimension, state_frequencies, partial_likelihood_right_subtree, number_sites)
 
     """ Calculation of the factors for the coefficient C_1 (correspond to the dominant non-zero eigenvalue)"""
     # list of vectors of the scalar products between right eigenvector and posterior probability per site
