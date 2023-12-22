@@ -114,14 +114,11 @@ def calculate_sample_variance(
 
 """## DECISION OF STATTISTICAL TEST """
 
-def decision_z_test(test_statistic, variance, alpha):
+def decision_z_test(test_statistic, alpha):
     # quantile of the standard normal distribution
     z_alpha = st.norm.ppf(1 - alpha)
     # calculate the critical value
-    if variance < 0:
-        c_s = 999999999
-    else: 
-        c_s = z_alpha 
+    c_s = z_alpha 
     # decision using critical value
     decision_test = ""   
     if c_s > test_statistic:
@@ -136,7 +133,7 @@ def decision_tip2tip(delta, number_sites, multiplicity, alpha):
     # calculate the critical value
     c_s_two_sequence = np.sqrt(multiplicity) * z_alpha / np.sqrt(number_sites)
     # decision using critcial value
-    decision_tip2tip = ""
+    decision_test_tip2tip = ""
     if c_s_two_sequence > delta:
         decision_test_tip2tip = "SatuT2T"
     else:
@@ -178,7 +175,7 @@ def bonferroni_test_correction_branches(p_value, number_tips_left_subtree, numbe
 
 def sidak_test_correction_tips(test_statistic, number_tips_left_subtree, number_tips_right_subtree, alpha):
     # calculate corrected critical value
-    corrected_alpha_tips= 1 - (1 - alpha)**(1/(number_tips_left_subtree*number_tips_right_subtree))
+    corrected_alpha_tips = 1 - (1 - alpha)**(1/(number_tips_left_subtree*number_tips_right_subtree))
     corrected_c_s_tips = st.norm.ppf(1 - corrected_alpha_tips)
     # decision using critical value
     decision_corrected_test_tips = ""
@@ -193,7 +190,7 @@ def sidak_test_correction_tips(test_statistic, number_tips_left_subtree, number_
     number_branch_insertion_left_subtree = get_number_of_branch_insertions(number_tips_left_subtree)
     number_branch_insertion_right_subtree = get_number_of_branch_insertions(number_tips_right_subtree)
     # calculate corrected critical value
-    corrected_alpha_branches= 1 - (1 - alpha)**(1/(number_branch_insertion_left_subtree*number_branch_insertion_right_subtree))
+    corrected_alpha_branches = 1 - (1 - alpha)**(1/(number_branch_insertion_left_subtree*number_branch_insertion_right_subtree))
     corrected_c_s_branches = st.norm.ppf(1 - corrected_alpha_branches)
     # decision using critical value  
     decision_corrected_test_branches = ""
@@ -230,7 +227,7 @@ def calculate_test_statistic_posterior_distribution(
     factors_left_subtree = scalar_product_eigenvector_posterior_probability(multiplicity, array_eigenvectors, posterior_probabilities_left_subtree, number_sites)
     factors_right_subtree = scalar_product_eigenvector_posterior_probability(multiplicity, array_eigenvectors, posterior_probabilities_right_subtree, number_sites)
 
-    """ Calculation of the dominant sample coherence """
+    """ Calculation of the sample mean of coefficient C_1 """
     delta = calculate_sample_coherence(
         multiplicity, factors_left_subtree, factors_right_subtree, number_sites
     )
@@ -245,33 +242,33 @@ def calculate_test_statistic_posterior_distribution(
     )
     variance = variance / number_sites
 
-    """Calculation of the test-statistic"""
+    """Calculation of the test-statistic and decision of the statistical tests """
     if variance > 0:
         test_statistic = delta / np.sqrt(variance)
-        
-
-    """Calculation of the p-value"""
-    if variance < 0:
-        print(
-            "VARIANCE ESTIMATION IS NEGATIVE - CONSIDER INCREASING THE NUMBER OF STANDARD DEVIATIONS (number_standard_deviations) (CONFIDENCE INTERVAL)"
-        )
-        p_value = -1
-    else:
-        # computing the p-value
+    
+        """Calculation of the p-value"""
         p_value = st.norm.sf(test_statistic)
 
-    """ Results of the statistcal tests"""
-    # decision of the statistical test
-    decision_test = decision_z_test(test_statistic, variance, alpha)
+        """ Results of the statistcal tests"""
+        # decision of the statistical test
+        decision_test = decision_z_test(test_statistic, alpha)
 
-    # decision of the test using Bonferroni correction 
-    # using number of tips of the considered subtrees
-    decision_corrected_test_tips = bonferroni_test_correction_tips(p_value, number_tips_left_subtree, number_tips_right_subtree, alpha)
-    
-    # using number of branch combinations
-    decision_corrected_test_branches = bonferroni_test_correction_branches(p_value, number_tips_left_subtree, number_tips_right_subtree, alpha)
-    
-    # computing the saturation coherence between two sequences
+        # decision of the test using Bonferroni correction 
+        # using number of tips of the considered subtrees
+        decision_corrected_test_tips = bonferroni_test_correction_tips(p_value, number_tips_left_subtree, number_tips_right_subtree, alpha)
+        
+        # using number of branch combinations
+        decision_corrected_test_branches = bonferroni_test_correction_branches(p_value, number_tips_left_subtree, number_tips_right_subtree, alpha)
+       
+    else: 
+        test_statistic = np.nan
+        p_value = np.nan
+        decision_test = np.nan
+        decision_corrected_test_tips = np.nan
+        decision_corrected_test_branches = np.nan
+
+    """ Calculation of the saturation coherence between two sequences """
     decision_test_tip2tip = decision_tip2tip(delta, number_sites, multiplicity, alpha)
+        
 
     return test_statistic, p_value, decision_test, decision_corrected_test_tips, decision_corrected_test_branches, decision_test_tip2tip
