@@ -271,7 +271,7 @@ def calculate_test_statistic_posterior_distribution(
 
     """ Results of the statistcal tests"""
     # decision of the statistical test
-    decision_test = decision_z_test(test_statistic, alpha)
+    decision_test = decision_z_test(test_statistic, variance, alpha)
 
     # decision of the test using Bonferroni correction 
     # using number of tips of the considered subtrees
@@ -281,6 +281,6 @@ def calculate_test_statistic_posterior_distribution(
     decision_corrected_test_branches = bonferroni_test_correction_branches(p_value, number_tips_left_subtree, number_tips_right_subtree, alpha)
     
     # computing the saturation coherence between two sequences
-    decision_test_tip2tip = decision_tip2tip(alpha)
+    decision_test_tip2tip = decision_tip2tip(delta, number_sites, multiplicity, alpha)
 
     return test_statistic, p_value, decision_test, decision_corrected_test_tips, decision_corrected_test_branches, decision_test_tip2tip
