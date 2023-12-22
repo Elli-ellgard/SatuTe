@@ -352,7 +352,7 @@ def store_test_results(edge, rate, left_partial_likelihood, results):
     """
     return {
         "edge": edge,
-        "delta": results.get("delta"),
+        "test_statistic": results.get("test_statistic"),
         "p_value": results.get("p_value"),
         "decision_corrected_test_tips": results.get("decision_corrected_test_tips"),
         "decision_corrected_test_branches": results.get(
@@ -561,7 +561,7 @@ def process_test_statistics_posterior(
     )
 
     result_keys = [
-        "delta",
+        "test_statistic",
         "p_value",
         "decision_corrected_test_tips",
         "decision_corrected_test_branches",
