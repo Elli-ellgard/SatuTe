@@ -482,6 +482,7 @@ class Satute:
             alpha,
             edge,
         )
+                
         write_results_for_category_rates(results, msa_file, alpha, edge, logger)
 
     def handle_number_rates(self):

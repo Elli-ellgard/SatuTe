@@ -167,6 +167,10 @@ def multiple_rate_analysis(
 
     # Iterate over each rate category and its corresponding alignment
     for rate, sub_alignment in per_rate_category_alignment.items():
+        
+        if sub_alignment.get_alignment_length() == 0:
+            return result_rate_dictionary
+                
         # Step 1: Map sequence IDs to their sequences from the alignment for easy access
         sequence_dict = {record.id: str(record.seq) for record in sub_alignment}
 
@@ -186,7 +190,8 @@ def multiple_rate_analysis(
 
         # Step 5: Convert the sequence dictionary back to a MultipleSeqAlignment object after collapsing nodes
         sub_alignment = dict_to_alignment(sequence_dict)
-
+        
+            
         # Step 6: Calculate partial likelihoods for all sites in the rescaled tree
         partial_likelihood_per_site_storage = calculate_partial_likelihoods_for_sites(
             collapsed_rescaled_tree_one, sub_alignment, rate_matrix, focused_edge

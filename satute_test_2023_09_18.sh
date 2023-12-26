@@ -245,6 +245,7 @@ echo " ============= MODI MSA+TREE ===================="
 
 echo " ============= MODI MSA+MODEL+TREE ===================="
 
+echo "######################################################"
 echo ""
 echo "---------------------------------------------------------"
 echo "TEST 5: msa + model + tree"
@@ -442,7 +443,6 @@ echo " ============= Option -edge ===================="
 #python3 satute_cli.py -iqtree $iqtree -msa $alignment -tree random_generated_tree.tree -model $model -alpha 0.05
 
 echo " ============= Option -category ===================="
-
 echo ""
 echo "---------------------------------------------------------"
 echo "TEST 10a: msa + model , option invalid category => error"
