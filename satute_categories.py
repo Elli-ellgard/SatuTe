@@ -173,7 +173,7 @@ def read_alignment_file(file_name):
     return alignment
 
 
-def cut_alignment_columns(alignment, columns):
+def cut_alignment_columns_optimized(alignment, columns):
     """
     Extracts specified columns from a given multiple sequence alignment.
 
@@ -185,29 +185,15 @@ def cut_alignment_columns(alignment, columns):
     - MultipleSeqAlignment: A new alignment containing only the specified columns.
     """
 
-    # Convert the alignment to a NumPy array for easy column slicing
-    alignment_array = np.array([list(rec) for rec in alignment], np.character)
+    # Create a new MultipleSeqAlignment from the list of SeqRecord objects, using list comprehension
+    selected_records = [
+        SeqRecord(Seq(''.join(rec.seq[column] for column in columns)), id=rec.id)
+        for rec in alignment
+    ]
 
-    # Select the specified columns from the alignment array
-    selected_columns = alignment_array[:, columns]
+    return MultipleSeqAlignment(selected_records)
 
-    # Initialize an empty list to hold the new SeqRecord objects
-    selected_records = []
-
-    # Iterate through the rows of the selected columns, constructing a new SeqRecord for each
-    for i, rec in enumerate(selected_columns):
-        # Create a new SeqRecord with the same ID as the original, but with the selected columns only
-        selected_records.append(
-            SeqRecord(Seq(rec.tobytes().decode()), id=alignment[i].id)
-        )
-
-    # Create a new MultipleSeqAlignment from the list of SeqRecord objects
-    selected_alignment = MultipleSeqAlignment(selected_records)
-
-    return selected_alignment
-
-
-def split_msa_into_rate_categories_in_place(site_probability, alignment, rate_category):
+def split_msa_into_rate_categories_in_place(site_probability, alignment, rate_category) -> dict[str, MultipleSeqAlignment]:
     """
     Splits a multiple sequence alignment into sub-alignments based on rate categories.
 
@@ -230,11 +216,11 @@ def split_msa_into_rate_categories_in_place(site_probability, alignment, rate_ca
     if rate_category == "all":
         # Iterate through each rate category and extract the corresponding columns
         for key, value in sub_category.items():
-            per_category_alignment_dict[key] = cut_alignment_columns(alignment, value)
+            per_category_alignment_dict[key] = cut_alignment_columns_optimized(alignment, value)
     else:
         # Extract only the specified rate category
         key = f"p{rate_category}"
-        per_category_alignment_dict[key] = cut_alignment_columns(
+        per_category_alignment_dict[key] = cut_alignment_columns_optimized(
             alignment, sub_category[key]
         )
 

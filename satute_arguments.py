@@ -158,11 +158,23 @@ ARGUMENT_LIST = [
         "metavar": "<edge_name>",
     },
     {
+        "flag": "-output_suffix",
+        "help": ("Specify an suffix for the output file."),
+        "type": str,
+        "metavar": "<output_suffix>",
+        "default": "",
+    },
+    {
         "flag": "-additional",
         "help": (
             "Specify a branch or edge name to focus the analysis on. Useful when you want to check saturation on a specific branch."
         ),
         "type": str,
         "metavar": "<additional_option>",
+    },
+    {
+        "flag": "-verbose",
+        "help": "Enable verbose logging",
+        "action": "store_true",
     },
 ]

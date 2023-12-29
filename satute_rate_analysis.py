@@ -166,11 +166,11 @@ def multiple_rate_analysis(
     result_rate_dictionary = {}
 
     # Iterate over each rate category and its corresponding alignment
-    for rate, sub_alignment in per_rate_category_alignment.items():
-        
+    for rate, sub_alignment in per_rate_category_alignment.items():        
         if sub_alignment.get_alignment_length() == 0:
-            return result_rate_dictionary
-                
+            print(f"Skipping rate {rate} because it has no sites")
+            continue            
+
         # Step 1: Map sequence IDs to their sequences from the alignment for easy access
         sequence_dict = {record.id: str(record.seq) for record in sub_alignment}
 

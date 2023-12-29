@@ -121,8 +121,10 @@ class Satute:
 
     def run_iqtree_workflow(self, arguments_dict):
         extra_arguments = []
-        # if input.args.additional:
-        #    extra_arguments.append(input.args.additional)
+
+        if self.input_args.additional:
+            extra_arguments.append(self.input_args.additional)
+
         if arguments_dict["option"] == "dir":
             self.logger.info(
                 "IQ-TREE will not to be needed the analysis will be done on the already existing iqtree files."
@@ -290,10 +292,32 @@ class Satute:
         return rename_internal_nodes_preorder(Tree(newick_string, format=1))
 
     def initialise_logger(self):
-        log_file = f"{self.input_args.msa.resolve()}_{self.input_args.alpha}.satute.log"
+        """
+        Initializes the logging system for the application.
+
+        Sets up two handlers:
+        1. A file handler that always logs at the DEBUG level.
+        2. A stream (console) handler that logs at the DEBUG level if verbose is true; otherwise, it logs at the WARNING level.
+
+        The log file is named using the MSA file name, alpha value, and an output suffix.
+        """
+        # Logger level is set to DEBUG to capture all logs for the file handler
+        self.logger.setLevel(logging.DEBUG)
+        msa_file = Path(self.find_msa_file())
+        # File Handler - always active at DEBUG level
+        log_file = f"{msa_file.resolve()}_{self.input_args.alpha}_{self.input_args.output_suffix}.satute.log"
         file_handler = logging.FileHandler(log_file)
-        # Add the FileHandler to the logger
+        file_format = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+        file_handler.setFormatter(file_format)
+        file_handler.setLevel(logging.DEBUG)  # Always log everything in file
         self.logger.addHandler(file_handler)
+
+        # Stream Handler - level depends on verbose flag
+        stream_level = logging.DEBUG if self.input_args.verbose else logging.WARNING
+        stream_handler = logging.StreamHandler()
+        stream_handler.setFormatter(file_format)
+        stream_handler.setLevel(stream_level)  # Set level based on verbose flag
+        self.logger.addHandler(stream_handler)
 
     def validate_and_set_rate_category(self, input_category, number_rates):
         """
@@ -319,15 +343,9 @@ class Satute:
         Main entry point for running the Satute command-line tool.
         """
         # Parsing and checking input arguments and constructing IQ-TREE command-line arguments
-        # ======== Input =====================
-        self.parse_input()
-        # ======== Validation ================
-        self.validate_satute_input_options()
         # ======== Arguments =================
         iq_arguments_dict = self.construct_iq_arguments()
         msa_file = iq_arguments_dict["msa_file"]
-        # ======== Logger ====================
-        self.initialise_logger()
         # ======== IQ-Tree ===================
         self.run_iqtree_workflow(iq_arguments_dict)
         # ======== Tree File Handling ========
@@ -387,7 +405,6 @@ class Satute:
                 self.input_args.alpha,
                 self.input_args.edge,
             )
-
         else:
             self.run_multiple_rate_analysis(
                 to_be_tested_tree,
@@ -430,8 +447,11 @@ class Satute:
             focused_edge,
         )
 
+        output_suffix = self.input_args.output_suffix
+
         write_results_for_single_rate(
             results,
+            output_suffix,
             msa_file,
             to_be_tested_tree,
             self.input_args.alpha,
@@ -466,10 +486,6 @@ class Satute:
 
         categorized_sites = build_categories_by_sub_tables(site_probability)
 
-        write_alignment_and_indices(
-            per_rate_category_alignment, categorized_sites, self.input_args
-        )
-
         results = multiple_rate_analysis(
             to_be_tested_tree,
             category_rates,
@@ -482,8 +498,13 @@ class Satute:
             alpha,
             edge,
         )
-                
-        write_results_for_category_rates(results, msa_file, alpha, edge, logger)
+
+        suffix = self.input_args.output_suffix
+        write_results_for_category_rates(results, suffix, msa_file, alpha, edge, logger)
+
+        write_alignment_and_indices(
+            per_rate_category_alignment, categorized_sites, self.input_args
+        )
 
     def handle_number_rates(self):
         self.number_rates = 1
@@ -504,6 +525,36 @@ class Satute:
         elif self.input_args.dir:
             self.active_directory = self.input_args.dir
 
+    def find_msa_file(self):
+        msa_file_types = {".fasta", ".nex", ".phy", ".txt"}
+        msa_file = self.file_handler.find_file_by_suffix(msa_file_types)
+        if not msa_file:
+            raise FileNotFoundError("No MSA file found in directory")
+        return msa_file
+
+    def find_tree_file(self):
+        tree_file_types = {".treefile", ".nex", ".nwk"}
+        tree_file = self.file_handler.find_file_by_suffix(tree_file_types)
+        if not tree_file:
+            raise FileNotFoundError("No tree file found in directory")
+        return tree_file
+
+    def find_iqtree_file(self):
+        iqtree_file = self.file_handler.find_file_by_suffix({".iqtree"})
+        if not iqtree_file:
+            raise FileNotFoundError("No .iqtree file found in directory")
+        return iqtree_file
+
+    def get_dir_argument_options(self, msa_file, tree_file):
+        argument_option = {
+            "option": "dir",
+            "msa_file": Path(msa_file),
+            "arguments": ["-s", str(Path(msa_file).resolve())],
+        }
+        if tree_file:
+            argument_option["arguments"].extend(["-te", str(tree_file)])
+        return argument_option
+
     def construct_iq_arguments(self):
         """
         Validate and process input arguments.
@@ -516,60 +567,26 @@ class Satute:
             A dictionary with keys 'option', 'msa_file', and 'arguments' that represents the argument options for the process.
         """
         # Define the acceptable file types for sequence alignments and trees
-        msa_file_types = {".fasta", ".nex", ".phy", ".txt"}
-        tree_file_types = {".treefile", ".nex", ".nwk"}
-        self.initialize_working_context()
-        self.initialize_handlers()
         argument_option = {}
-
         if self.input_args.dir:
             self.active_directory = self.input_args.dir
-
-            # Check if the input directory exists
-
-            # Find msa file in the directory
-            self.input_args.msa_file = self.file_handler.find_file_by_suffix(
-                msa_file_types
-            )
-
-            self.input_args.msa = Path(self.input_args.msa_file)
-
-            argument_option = {
-                "option": "dir",
-                "msa_file": self.input_args.msa,
-                "arguments": ["-s", str(self.input_args.msa.resolve())],
-            }
-
-            # Find the tree file in the directory
-            tree_file = self.file_handler.find_file_by_suffix(tree_file_types)
-
-            # Check if a tree file was found
-            if tree_file:
-                argument_option["arguments"].extend(["-te", str(tree_file)])
-            else:
-                raise FileNotFoundError("No tree file found in directory")
-
-            # Find .iqtree file in the directory
-            self.iqtree_tree_file = self.file_handler.find_file_by_suffix({".iqtree"})
-
-            # Check if iqtree file was found
-            if self.iqtree_tree_file:
-                substitution_model = parse_substitution_model(self.iqtree_tree_file)
-                self.input_args.model = substitution_model
-            else:
-                raise FileNotFoundError("No iqtree file found in directory")
-
+            self.input_args.msa_file = Path(self.find_msa_file())
+            tree_file = self.find_tree_file()
+            self.iqtree_tree_file = self.find_iqtree_file()
+            substitution_model = parse_substitution_model(self.iqtree_tree_file)
+            self.input_args.model = substitution_model
             self.handle_number_rates()
 
-            # How apply iqtree just to get the site probabilities file without --redo
+            # Check for site probabilities file
             if self.number_rates > 1:
                 self.site_probabilities_file = self.file_handler.find_file_by_suffix(
                     {".siteprob"}
                 )
                 if not self.site_probabilities_file:
-                    argument_option["option"] += " + site_probabilities"
-
-            return argument_option
+                    raise FileNotFoundError(
+                        "No site probabilities file found in directory"
+                    )
+            return self.get_dir_argument_options(self.input_args.msa_file, tree_file)
         else:
             argument_option = {}
             if self.input_args.msa:
@@ -611,7 +628,9 @@ class Satute:
         argument_option["option"] = "msa + tree"
 
         # Extend the existing arguments with tree specific command-line arguments
-        argument_option["arguments"].extend(["-te", str(self.input_args.tree.resolve())])
+        argument_option["arguments"].extend(
+            ["-te", str(self.input_args.tree.resolve())]
+        )
 
     def construct_argument_for_model(self, argument_option):
         """
@@ -632,13 +651,17 @@ class Satute:
 
 
 if __name__ == "__main__":
-    # Configure the logging settings (optional)
-    logging.basicConfig(
-        level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s"
-    )
+    # Instantiate the Satute class
     logger = logging.getLogger(__name__)
-    # Instantiate the Satute class with your desired arguments
-    iqtree_path = "iqtree2"
-    satute = Satute(iqtree=iqtree_path, logger=logger)
+    satute = Satute(iqtree="iqtree2", logger=logger)
+    # Parse input arguments and initialize logger
+    satute.parse_input()
+    # ======== Validation ================
+    satute.validate_satute_input_options()
+    satute.initialize_working_context()
+    satute.initialize_handlers()
+    iq_arguments_dict = satute.construct_iq_arguments()
+    satute.run_iqtree_workflow(iq_arguments_dict)
+    satute.initialise_logger()
     # Run the tool
     satute.run()

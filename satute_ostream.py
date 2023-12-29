@@ -2,15 +2,26 @@ import pandas as pd
 from logging import Logger
 from Bio import AlignIO
 import re
+from pathlib import Path
+from ete3 import Tree
+from pandas import DataFrame
+
 
 # New function to format float columns
-def format_float_columns(data_frame):
+def format_float_columns(data_frame: DataFrame):
     for col in data_frame.columns:
         if data_frame[col].dtype == float:
             data_frame[col] = data_frame[col].apply(lambda x: round(x, 4))
 
 
-def write_results_for_category_rates(results, msa_file, alpha, edge, logger: Logger):
+def write_results_for_category_rates(
+    results: dict,
+    output_suffix: str,
+    msa_file: Path,
+    alpha: float,
+    edge,
+    logger: Logger,
+):
     """
     Writes the results for category rates to appropriate files.
 
@@ -25,9 +36,11 @@ def write_results_for_category_rates(results, msa_file, alpha, edge, logger: Log
         if not isinstance(results_set, dict) or "result_list" not in results_set:
             logger.error(f"Invalid format for results_set under key '{key}'.")
             continue
-
         try:
-            file_name = f"{msa_file}_{key}_{alpha}.satute"
+            if output_suffix:                    
+                file_name = f"{msa_file}_{output_suffix}_{key}_{alpha}.satute"
+            else:
+                file_name = f"{msa_file}_{key}_{alpha}.satute"
 
             # Append the edge information to the file name if provided
             if edge:
@@ -41,6 +54,7 @@ def write_results_for_category_rates(results, msa_file, alpha, edge, logger: Log
                 newick_string = results_set["rescaled_tree"].write(
                     format=1, format_root_node=True
                 )
+        
                 write_nexus_file(
                     newick_string,
                     tree_file_name,
@@ -61,18 +75,23 @@ def write_results_for_category_rates(results, msa_file, alpha, edge, logger: Log
 
 
 def write_results_for_single_rate(
-    results, msa_file, to_be_tested_tree, alpha, edge, logger
+    results: dict,
+    output_suffix: str,
+    msa_file: Path,
+    to_be_tested_tree: Tree,
+    alpha: float,
+    edge: tuple,
+    logger: Logger,
 ):
     """
-    Writes the results for single rate to appropriate files.
-
+    Writes the results for single rate to appropriate files.s
     Args:
     - results (dict): Dictionary containing the results data.
     - input_args (object): Object containing input arguments.
     - to_be_tested_tree (Tree): The tree object containing the data to be written.
     """
     for key, results_set in results.items():
-        file_name_base = f"{msa_file.resolve()}_{alpha}.satute"
+        file_name_base = f"{msa_file.resolve()}_{output_suffix}_{alpha}.satute"
 
         # Append the edge information to the file name if provided
         if edge:
@@ -106,8 +125,8 @@ def get_target_node(edge):
 
 
 # TODO: Apply automatic header generation
-def map_values_to_newick(newick, df):
-    for index, row in df.iterrows():
+def map_values_to_newick(newick: str, results_per_branch: DataFrame):
+    for index, row in results_per_branch.iterrows():
         target_node = get_target_node(row["edge"])
 
         # Escape any special characters in target node for regex
@@ -134,7 +153,9 @@ def map_values_to_newick(newick, df):
     return newick
 
 
-def write_nexus_file(newick_string, file_name, results_data_frame, logger):
+def write_nexus_file(
+    newick_string: str, file_name: str, results_data_frame: dict, logger: Logger
+):
     """
     Writes the given Newick string as a Nexus file after mapping values.
     Args:
@@ -164,7 +185,9 @@ def write_nexus_file(newick_string, file_name, results_data_frame, logger):
 
 
 def write_alignment_and_indices(
-    per_rate_category_alignment, categorized_sites, input_args
+    per_rate_category_alignment: dict[str, AlignIO.MultipleSeqAlignment],
+    categorized_sites,
+    input_args,
 ):
     """
     Writes MultipleSeqAlignment objects and indices to files.
@@ -179,6 +202,8 @@ def write_alignment_and_indices(
             file_path = f"{input_args.msa.resolve()}.{rate}.phy.rate.indices"
             with open(file_path, "w") as file:
                 if rate in per_rate_category_alignment and rate in categorized_sites:
+                    if per_rate_category_alignment[rate].get_alignment_length() == 0:
+                        continue
                     # Convert MultipleSeqAlignment to string in FASTA format
                     AlignIO.write(per_rate_category_alignment[rate], file, "phylip")
                     file.write(",".join([str(i) for i in categorized_sites[rate]]))

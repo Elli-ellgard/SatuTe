@@ -4,6 +4,13 @@ iqtree=iqtree
 python=python3
 
 
+echo " ============= MODI MSA+MODEL+TREE ===================="
+echo "######################################################"
+echo ""
+echo "---------------------------------------------------------"
+echo "TEST 5: msa + model + tree"
+echo "---------------------------------------------------------"
+#clean folder
 PDIR=$(dirname $DIR)
 if [ -e $DIR/${msa}.iqtree ]; then
     mv $DIR/$msa $PDIR
@@ -11,10 +18,8 @@ if [ -e $DIR/${msa}.iqtree ]; then
     mkdir $DIR
     mv $PDIR/$msa $DIR
 fi
-
 #create output
-$python satute_cli.py -msa $DIR/$msa -iqtree iqtree
-
+$python satute_cli.py -msa $DIR/$msa -iqtree $iqtree
 PDIR=$(dirname $DIR)
 if [ -e $DIR/${msa}.iqtree ]; then
     mv $DIR/$msa $PDIR
@@ -24,6 +29,5 @@ if [ -e $DIR/${msa}.iqtree ]; then
     mv $PDIR/$msa $DIR
     mv $PDIR/${msa}.treefile $DIR
 fi
-
-$python satute_cli.py -msa $DIR/$msa -model JC+G4 -tree $DIR/${msa}.treefile -iqtree iqtree
+$python satute_cli.py -msa $DIR/$msa -model JC+G4 -tree $DIR/${msa}.treefile -iqtree $iqtree
 echo ""

@@ -1,10 +1,10 @@
 import scipy.stats as st
 import numpy as np
+from scipy.sparse.linalg import expm
 from satute_repository import (
     parse_state_frequencies,
     parse_rate_matrices_from_file,
 )
-from scipy.sparse.linalg import expm
 
 
 # get transition matrix using matrix exponential

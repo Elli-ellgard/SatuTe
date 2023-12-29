@@ -35,7 +35,6 @@ if [ -e $DIR/${msa}.iqtree ]; then
 fi
 
 echo " ============= MODI MSA ===================="
-
 echo ""
 echo "---------------------------------------------------------"
 echo "TEST 1a: only msa, iqtree exists"
@@ -56,7 +55,6 @@ echo ""
 # fi
 # $python satute_cli.py -iqtree $iqtree -msa $DIR/$msa -ufboot 1000 -alpha 0.05
 # echo ""
-
 
 # echo ""
 # echo "---------------------------------------------------------"
@@ -244,7 +242,6 @@ echo " ============= MODI MSA+TREE ===================="
 
 
 echo " ============= MODI MSA+MODEL+TREE ===================="
-
 echo "######################################################"
 echo ""
 echo "---------------------------------------------------------"
@@ -259,7 +256,7 @@ if [ -e $DIR/${msa}.iqtree ]; then
     mv $PDIR/$msa $DIR
 fi
 #create output
-$python satute_cli.py -msa $DIR/$msa
+$python satute_cli.py -msa $DIR/$msa -iqtree $iqtree
 PDIR=$(dirname $DIR)
 if [ -e $DIR/${msa}.iqtree ]; then
     mv $DIR/$msa $PDIR
@@ -269,9 +266,8 @@ if [ -e $DIR/${msa}.iqtree ]; then
     mv $PDIR/$msa $DIR
     mv $PDIR/${msa}.treefile $DIR
 fi
-$python satute_cli.py -msa $DIR/$msa -model JC+G4 -tree $DIR/${msa}.treefile
+$python satute_cli.py -msa $DIR/$msa -model JC+G4 -tree $DIR/${msa}.treefile -iqtree $iqtree
 echo ""
-exit
 # echo ""
 # echo "---------------------------------------------------------"
 # echo "TEST 5: msa + model + tree, option boot => error"

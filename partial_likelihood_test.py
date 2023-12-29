@@ -13,11 +13,12 @@ from rate_matrix import RateMatrix
 from satute_rate_analysis import single_rate_analysis
 import numpy as np
 import pandas as pd
+from graph import get_initial_likelihood_vector
 from partial_likelihood import (
     partial_likelihood,
     calculate_partial_likelihoods_for_sites,
 )
-from graph import get_initial_likelihood_vector
+
 
 RATE_MATRIX = np.array([[-3, 1, 1, 1], [1, -3, 1, 1], [1, 1, -3, 1], [1, 1, 1, -3]])
 
