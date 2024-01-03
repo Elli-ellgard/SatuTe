@@ -166,10 +166,10 @@ def multiple_rate_analysis(
     result_rate_dictionary = {}
 
     # Iterate over each rate category and its corresponding alignment
-    for rate, sub_alignment in per_rate_category_alignment.items():        
+    for rate, sub_alignment in per_rate_category_alignment.items():
         if sub_alignment.get_alignment_length() == 0:
             print(f"Skipping rate {rate} because it has no sites")
-            continue            
+            continue
 
         # Step 1: Map sequence IDs to their sequences from the alignment for easy access
         sequence_dict = {record.id: str(record.seq) for record in sub_alignment}
@@ -190,8 +190,7 @@ def multiple_rate_analysis(
 
         # Step 5: Convert the sequence dictionary back to a MultipleSeqAlignment object after collapsing nodes
         sub_alignment = dict_to_alignment(sequence_dict)
-        
-            
+
         # Step 6: Calculate partial likelihoods for all sites in the rescaled tree
         partial_likelihood_per_site_storage = calculate_partial_likelihoods_for_sites(
             collapsed_rescaled_tree_one, sub_alignment, rate_matrix, focused_edge
@@ -253,11 +252,6 @@ def multiple_rate_analysis(
                         "branch_length": initial_tree.get_distance(parent, child),
                     }
                 )
-
-        # Step 9: Augment the results with additional data for the 'twin' nodes
-        # augmented_results = augment_results_with_twin_data(
-        #    twin_dictionary, result_list, collapsed_rescaled_tree_one, rate=rate
-        # )
 
         # Step 10: Add the results for the current rate category to the main dictionary
         result_rate_dictionary[rate] = {
@@ -332,7 +326,7 @@ def single_rate_analysis_collapsed_tree(
     )
 
     # Step 6: Augment the results with additional data for the 'twin' nodes
-    results = augment_results_with_twin_data(
+    results = insert_results_for_identical_sequences(
         twin_dictionary, results, initial_tree, "single_rate"
     )
 
@@ -340,7 +334,9 @@ def single_rate_analysis_collapsed_tree(
     return results
 
 
-def augment_results_with_twin_data(twin_dictionary, results, initial_tree, rate):
+def insert_results_for_identical_sequences(
+    twin_dictionary, results, initial_tree, rate
+):
     """
     Augments the analysis results with additional data for the 'twin' nodes.
 

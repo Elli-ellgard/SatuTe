@@ -222,6 +222,7 @@ class Satute:
                 self.input_args.model,
                 "--quiet",
                 "--keep-ident",
+                "--redo",
             ]
 
             if self.number_rates > 1:
@@ -291,6 +292,12 @@ class Satute:
             raise ValueError(f"Error extracting tree: {e}")
         return rename_internal_nodes_preorder(Tree(newick_string, format=1))
 
+    def construct_log_file_name(self, msa_file):
+        log_file = f"{msa_file.resolve()}_{self.input_args.alpha}.satute.log"
+        if self.input_args.output_suffix:
+            log_file = f"{msa_file.resolve()}_{self.input_args.alpha}_{self.input_args.output_suffix}.satute.log"
+        return log_file
+
     def initialise_logger(self):
         """
         Initializes the logging system for the application.
@@ -303,9 +310,9 @@ class Satute:
         """
         # Logger level is set to DEBUG to capture all logs for the file handler
         self.logger.setLevel(logging.DEBUG)
-        msa_file = Path(self.find_msa_file())
         # File Handler - always active at DEBUG level
-        log_file = f"{msa_file.resolve()}_{self.input_args.alpha}_{self.input_args.output_suffix}.satute.log"
+        log_file = self.construct_log_file_name(Path(self.find_msa_file()))
+
         file_handler = logging.FileHandler(log_file)
         file_format = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
         file_handler.setFormatter(file_format)
@@ -500,7 +507,14 @@ class Satute:
         )
 
         suffix = self.input_args.output_suffix
-        write_results_for_category_rates(results, suffix, msa_file, alpha, edge, logger)
+
+        write_results_for_category_rates(
+            results, to_be_tested_tree, suffix, msa_file, alpha, edge, logger
+        )
+
+        self.logger.info(
+            f"Writing alignment and indices to {self.active_directory.name}"
+        )
 
         write_alignment_and_indices(
             per_rate_category_alignment, categorized_sites, self.input_args
