@@ -3,28 +3,9 @@ import dataclasses
 import numpy as np
 from ete3 import Tree
 from nucleotide_code_vector import NUCLEOTIDE_CODE_VECTOR
-
-
-class Graph:
-    """Class representing a directed acyclic graph (DAG) of interconnected nodes."""
-
-    def __init__(self, edges):
-        """Initialize the DAG with a list of directed edges."""
-        for left, right, branch_length in edges:
-            left.connect(right, branch_length)
-            right.connect(left, branch_length)
-        self.edges = edges
-
-    def get_edges(self):
-        """Return the list of edges in the DAG."""
-        return self.edges
-
-    def set_edges(self, edges):
-        self.edges = edges
-
-    def get_branch_length(self, edge):
-        """Return the branch length of a given edge in the DAG."""
-        return self.branch_lengths[edge]
+from Bio.Align import MultipleSeqAlignment
+from typing import List, Tuple, Optional, Dict
+from functools import cache
 
 
 class Node:
@@ -34,7 +15,7 @@ class Node:
     state: Optional[np.array] = dataclasses.field(default_factory=lambda: None)
     connected: dict = dataclasses.field(default_factory=dict)
 
-    def __init__(self, name, state=None, connected=None):
+    def __init__(self, name: str, state=None, connected=None):
         """Initialize a Node with a name, optional state vector, and optional connections."""
         self.name = name
         self.state = state
@@ -48,82 +29,269 @@ class Node:
         """Check if two nodes are equal."""
         return self is other
 
-    def connect(self, other_node, branch_length):
+    def connect(self, other_node: "Node", branch_length):
         """Connect the current node to another node with a given branch length."""
         self.connected[other_node] = branch_length
 
-    def is_leaf(self):
+    def is_leaf(self) -> bool:
         """Check if the node is a leaf (has a state vector)."""
-        return self.state is not None
+        return len(self.connected.keys()) <= 1
 
     def __repr__(self):
         """Return the string representation of the Node."""
         return f"Node({self.name})"
 
 
-def get_initial_likelihood_vector(state):
+class Graph:
+    """Class representing a directed acyclic graph (DAG) of interconnected nodes."""
+
+    def __init__(self, edges: List[Tuple[Node, Node, float]]):
+        """Initialize the DAG with a list of directed edges."""
+        for left, right, branch_length in edges:
+            left.connect(right, branch_length)
+            right.connect(left, branch_length)
+        self.edges = edges
+
+    def get_edges(self) -> List[Tuple[Node, Node, float]]:
+        """Return the list of edges in the DAG."""
+        return self.edges
+
+    def set_edges(self, edges: List[Tuple[Node, Node, float]]):
+        self.edges = edges
+
+    def get_branch_length(self, edge: Tuple[Node, Node, float]) -> float:
+        """Return the branch length of a given edge in the DAG."""
+        return self.branch_lengths[edge]
+
+
+def get_initial_likelihood_vector(state) -> np.array:
     """Get the initial likelihood vector for a given nucleotide state."""
     return np.array(NUCLEOTIDE_CODE_VECTOR[state]).T
 
 
-def convert_ete3_tree_to_directed_acyclic_graph(
-    tree, msa_column, alignment_look_up_table
-):
+def convert_tree_to_graph(tree: Tree) -> Graph:
     """
-    Convert an ETE3 tree to a DirectedAcyclicGraph representation.
+    Convert an ETE3 tree to a Directed Acyclic Graph (DAG) representation.
 
-    This function transforms an ETE3 tree into a directed acyclic graph (DAG) representation
-    by creating Node objects for each node in the tree and establishing connections between
-    them based on the tree structure. Leaf nodes are initialized with initial likelihood vectors
-    derived from the sequence alignment data.
+    This function transforms an ETE3 tree into a DAG by creating Node objects for each node in the tree
+    and establishing connections between them based on the tree's hierarchical relationships. Each edge in the
+    DAG corresponds to a parent-child relationship in the tree, along with the branch length.
 
     Args:
         tree (Tree): An ETE3 tree object representing the phylogenetic tree.
-        msa_column (np.array): A single column of the multiple sequence alignment for a site.
-        alignment_look_up_table (dict): A lookup table mapping sequence IDs to alignment indices.
 
     Returns:
-        DirectedAcyclicGraph: A directed acyclic graph representation of the phylogenetic tree.
-
-    Note:
-        - The ETE3 tree should be properly constructed and rooted.
-        - The msa_column parameter provides data for a specific site in the alignment.
-        - The alignment_look_up_table aids quick retrieval of alignment record indices.
-        - The function creates Node and DirectedAcyclicGraph objects to represent the graph structure.
+        Graph: A DAG representation of the phylogenetic tree, with nodes corresponding to tree nodes and
+               edges representing parent-child relationships.
     """
+
     node_dictionary = {}
-
-    # Create nodes for each node in the ETE3 tree using a level-order traversal.
-    for node in tree.traverse("levelorder"):
-        if node.is_leaf():
-            # Initialize leaf nodes with initial likelihood vectors from the alignment.
-            node_dictionary[node.name] = Node(
-                node.name,
-                get_initial_likelihood_vector(
-                    msa_column[alignment_look_up_table[node.name]].seq
-                ),
-            )
-        else:
-            # Non-leaf nodes are initialized with empty states.
-            node_dictionary[node.name] = Node(node.name)
-
     edge_list = []
-    # Create edges between nodes based on the tree's hierarchical relationships.
-    for node in tree.traverse("levelorder"):
-        for child_node in node.children:
-            edge_list.append(
-                (
-                    node_dictionary[node.name],
-                    node_dictionary[child_node.name],
-                    child_node.dist,
-                )
+
+    # Traverse the tree in level-order
+    for ete_node in tree.traverse("levelorder"):
+        # Retrieve or create the Node object for the current ETE node
+        parent_node_obj = node_dictionary.setdefault(ete_node.name, Node(ete_node.name))
+
+        # Create edges from the parent node to each of its children
+        for child_node in ete_node.children:
+            # Retrieve or create the Node object for the child
+            child_node_obj = node_dictionary.setdefault(
+                child_node.name, Node(child_node.name)
             )
 
-    # Return a DirectedAcyclicGraph representation of the tree using the constructed edges.
+            # Create an edge and add it to the edge list
+            edge_list.append((parent_node_obj, child_node_obj, child_node.dist))
+
+    # Create and return the Graph object using the constructed edges
     return Graph(edge_list)
 
 
-def count_and_nodes_branches_nodes(tree, node, coming_from):
+def convert_tree_to_state_graph(
+    tree: Tree, msa_column: MultipleSeqAlignment, alignment_look_up_table: dict
+) -> Graph:
+    """
+    Convert an ETE3 tree to a Directed Acyclic Graph (DAG) with state information.
+
+    Args:
+        tree (Tree): An ETE3 tree object representing the phylogenetic tree.
+        msa_column (MultipleSeqAlignment): A single column of the multiple sequence alignment.
+        alignment_look_up_table (dict): Maps sequence IDs to alignment indices.
+
+    Returns:
+        Graph: A DAG representation of the phylogenetic tree. Nodes represent tree nodes,
+               and edges represent parent-child relationships. Leaf nodes contain likelihood vectors.
+    """
+
+    node_dictionary = {}
+    edge_list = []
+
+    # Traverse the tree and create Node objects and edges
+    for ete_node in tree.traverse("levelorder"):
+        node = create_or_get_node(
+            ete_node, msa_column, alignment_look_up_table, node_dictionary
+        )
+        add_child_edges(
+            ete_node,
+            node,
+            msa_column,
+            alignment_look_up_table,
+            node_dictionary,
+            edge_list,
+        )
+
+    return Graph(edge_list)
+
+
+def create_or_get_node(
+    ete_node: Tree,
+    msa_column: MultipleSeqAlignment,
+    alignment_look_up_table: dict,
+    node_dictionary: Dict[str, Node],
+) -> Node:
+    """
+    Retrieve an existing Node object or create a new one for an ETE node.
+
+    Args:
+        ete_node: An individual node from an ETE tree.
+        msa_column: The multiple sequence alignment column.
+        alignment_look_up_table: Maps sequence IDs to alignment indices.
+        node_dictionary: Dictionary holding created Node objects.
+
+    Returns:
+        Node: The retrieved or newly created Node object.
+    """
+    if ete_node.is_leaf():
+        likelihood_vector = get_initial_likelihood_vector(
+            msa_column[alignment_look_up_table[ete_node.name]].seq
+        )
+        return node_dictionary.setdefault(
+            ete_node.name, Node(ete_node.name, likelihood_vector)
+        )
+    else:
+        return node_dictionary.setdefault(ete_node.name, Node(ete_node.name))
+
+
+def add_child_edges(
+    parent_ete_node: Tree,
+    parent_node: Node,
+    msa_column: MultipleSeqAlignment,
+    alignment_look_up_table: dict,
+    node_dictionary: Dict[str, Node],
+    edges: List[Tuple[Node, Node, float]],
+):
+    """
+    Create and add edges from a parent node to its children.
+
+    Args:
+        parent_ete_node: The current ETE node being processed.
+        parent_node: The corresponding Node object for the parent ETE node.
+        msa_column: The multiple sequence alignment column.
+        alignment_look_up_table: Maps sequence IDs to alignment indices.
+        node_dictionary: Dictionary holding created Node objects.
+        edge_list: List to which new edges are added.
+    """
+    for child_ete_node in parent_ete_node.children:
+        child_node = create_or_get_node(
+            child_ete_node, msa_column, alignment_look_up_table, node_dictionary
+        )
+        edges.append((parent_node, child_node, child_ete_node.dist))
+
+
+def edge_type(left: Node, right: Node) -> str:
+    """
+    Determine whether an edge in a tree is internal or external.
+
+    Args:
+        left (Node): The left node of the edge.
+        right (Node): The right node of the edge.
+
+    Returns:
+        str: "external" if either node is a leaf, otherwise "internal".
+    """
+    return "external" if left.is_leaf() or right.is_leaf() else "internal"
+
+
+def calculate_subtree_edge_metrics(
+    tree: Tree, focused_edges
+) -> Dict[str, Dict[str, int]]:
+    """
+    Calculate the number of leaves and branches for each subtree edge within a given tree.
+
+    This function transforms the tree into a directed acyclic graph (DAG) and calculates
+    the number of leaves and branches for each subtree defined by the edges of the tree.
+    It optionally focuses on specific edges if provided.
+
+    Args:
+        tree (Tree): The tree to analyze.
+        focused_edges (Optional[List[Tuple[Node, Node]]]): Specific edges to focus on.
+            If None, all edges in the tree are considered.
+
+    Returns:
+        Dict[str, Dict[str, int]]: A dictionary where each key is an edge represented as
+            a string "(left.name, right.name)". Each value is another dictionary containing
+            the counts of leaves and branches on both sides of the edge, along with the
+            branch length and type.
+    """
+
+    count_graph = convert_tree_to_graph(tree)
+    edge_metrics = {}
+
+    if focused_edges:
+        filter_graph_edges_by_focus(count_graph, focused_edges)
+
+    for edge in count_graph.get_edges():
+        right, left, branch_length = edge
+        edge_name = f"({left.name}, {right.name})"
+        _type = edge_type(right, left)
+
+        left_metrics = count_and_nodes_edges(left, right)
+        right_metrics = count_and_nodes_edges(right, left)
+
+        edge_metrics[edge_name] = {
+            "left": {
+                "leave_count": left_metrics[0],
+                "branch_count": left_metrics[1],
+            },
+            "right": {
+                "leave_count": right_metrics[0],
+                "branch_count": right_metrics[1],
+            },
+            "length": branch_length,
+            "type": _type,
+        }
+
+    return edge_metrics
+
+
+@cache
+def count_and_nodes_edges(node: Node, coming_from: Node):
+    """
+    Recursively counts the number of leaf nodes and branches in a subtree defined by a given node in a tree.
+
+    This function is designed to work with a tree structure where each node maintains a list of connected nodes.
+    It starts from a specified node ('node') and traverses the subtree, counting the number of leaf nodes and branches.
+    The traversal avoids backtracking to the 'coming_from' node to prevent double counting.
+
+    Args:
+        node (Node): The node from which the subtree counting begins. This node acts as the root of the subtree.
+        coming_from (Node): The node from which the traversal to the current 'node' occurred. This is used to
+                            prevent the traversal from moving back up the tree, thereby avoiding the branch
+                            that was used to reach the 'node'.
+
+    Returns:
+        tuple: A tuple (leaf_count, branch_count) representing the count of leaf nodes and branches within the subtree.
+               leaf_count (int): The number of leaf nodes in the subtree rooted at 'node'.
+               branch_count (int): The number of branches in the subtree rooted at 'node', excluding the branch
+                                   from 'coming_from' to 'node'.
+
+    Note:
+        - The function assumes that each node has an attribute 'connected', which is a dictionary with keys
+          representing connected child nodes.
+        - It is primarily used for traversing phylogenetic trees or similar hierarchical structures where each node
+          can have multiple children.
+        - The function is recursive and may not be suitable for extremely large trees due to Python's recursion limit.
+    """
     # If the current node is a leaf
     if node.is_leaf():
         return 1, 0
@@ -135,62 +303,14 @@ def count_and_nodes_branches_nodes(tree, node, coming_from):
     for child in node.connected.keys():
         if child != coming_from:
             # Recursively count leaves and branches for each child
-            child_leaves, child_branches = count_and_nodes_branches_nodes(
-                tree, child, node
-            )
+            child_leaves, child_branches = count_and_nodes_edges(child, node)
             leaf_count += child_leaves
             branch_count += child_branches + 1  # Include the branch to this child
     # Print the count for the current node
     return leaf_count, branch_count
 
 
-def count_leaves_and_branches_for_subtrees(tree: Tree, alignment, focused_edges=None):
-    # Create a lookup table for alignment
-    alignment_look_up_table = get_alignment_look_up_table(alignment)
-
-    # Convert the given tree to a directed acyclic graph
-    count_graph = convert_ete3_tree_to_directed_acyclic_graph(
-        tree, alignment[:, 1:2], alignment_look_up_table
-    )
-
-    # Filter the graph edges if focused edges are provided
-    if focused_edges:
-        filter_graph_edges_by_focus(count_graph, focused_edges)
-
-    # Initialize a dictionary to store counts
-    edge_subtree_count_dict = {}
-
-    # Iterate over the edges of the graph
-    for edge in count_graph.get_edges():
-        right, left, branch_length = edge
-
-        # Count nodes and branches on the left side
-        (
-            count_graph_nodes_left,
-            count_graph_branches_left,
-        ) = count_and_nodes_branches_nodes(tree, left, right)
-        # Count nodes and branches on the right side
-        (
-            count_graph_nodes_right,
-            count_graph_branches_right,
-        ) = count_and_nodes_branches_nodes(tree, right, left)
-        # Formulate the edge name and store the counts in the dictionary
-        edge_name = f"({left.name}, {right.name})"
-        edge_subtree_count_dict[edge_name] = {
-            "left": {
-                "leave_count": count_graph_nodes_left,
-                "branch_count": count_graph_branches_left,
-            },
-            "right": {
-                "leave_count": count_graph_nodes_right,
-                "branch_count": count_graph_branches_right,
-            },
-        }
-
-    return edge_subtree_count_dict
-
-
-def filter_graph_edges_by_focus(graph, focused_edge):
+def filter_graph_edges_by_focus(graph: Graph, focused_edge):
     """Filter the graph edges based on the focused edge.
 
     Args:
@@ -219,7 +339,7 @@ def filter_graph_edges_by_focus(graph, focused_edge):
     graph.set_edges(filtered_edges)
 
 
-def get_alignment_look_up_table(alignment):
+def get_alignment_look_up_table(alignment: MultipleSeqAlignment) -> dict:
     """
     Create a lookup table for quick retrieval of alignment record indices.
 

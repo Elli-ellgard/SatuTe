@@ -1,7 +1,7 @@
 import numpy as np
 from ete3 import Tree
 from satute_categories import read_alignment_file
-from satute_trees_and_subtrees import collapse_tree, rename_internal_nodes_preorder
+from satute_trees import collapse_tree, rename_internal_nodes_preorder
 from file_handler import FileHandler
 from satute_repository import IqTreeParser
 from satute_util import spectral_decomposition

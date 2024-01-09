@@ -173,6 +173,16 @@ ARGUMENT_LIST = [
         "metavar": "<additional_option>",
     },
     {
+        "flag": "-asr",
+        "help": "Write ancestral sequences(by empirical Bayesian method)for all nodes of the tree to .asr.csv file.",
+        "action": "store_true",
+      },
+    {
+        "flag": "-rateidx",
+        "help": "Write the indices for rates into separate files",
+        "action": "store_true",
+      },    
+    {
         "flag": "-verbose",
         "help": "Enable verbose logging",
         "action": "store_true",

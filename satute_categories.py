@@ -1,13 +1,11 @@
 from Bio import AlignIO
 from Bio.Align import MultipleSeqAlignment
-import numpy as np
 from Bio.SeqRecord import SeqRecord
 from Bio.Seq import Seq
+from pandas import DataFrame
 import os
 
 """ ## RATE CATEGORIES  """
-
-
 def get_column_names_with_prefix(data_frame, prefix):
     # Filter the columns using the specified prefix
     columns_with_prefix = data_frame.columns[
@@ -16,7 +14,7 @@ def get_column_names_with_prefix(data_frame, prefix):
     return columns_with_prefix
 
 
-def build_categories_by_sub_tables(data_frame):
+def build_categories_by_sub_tables(data_frame: DataFrame):
     rate_category_dictionary = {}
 
     # Assuming you already have a dataframe called 'dataframe'
@@ -76,8 +74,6 @@ def parse_category_rates(log_file, number_rates):
 
 
 """ ## HANDLE ALIGNMENTS  """
-
-
 def filter_alignment_by_ids(alignment, ids):
     """
     Filter a MultipleSeqAlignment object to include only sequences with specific IDs.
@@ -128,7 +124,7 @@ def change_states_to_allowed(alignment):
     return alignment
 
 
-def read_alignment_file(file_name):
+def read_alignment_file(file_name) -> MultipleSeqAlignment:
     """
     Reads an alignment file and returns the alignment object.
 
@@ -187,13 +183,16 @@ def cut_alignment_columns_optimized(alignment, columns):
 
     # Create a new MultipleSeqAlignment from the list of SeqRecord objects, using list comprehension
     selected_records = [
-        SeqRecord(Seq(''.join(rec.seq[column] for column in columns)), id=rec.id)
+        SeqRecord(Seq("".join(rec.seq[column] for column in columns)), id=rec.id)
         for rec in alignment
     ]
 
     return MultipleSeqAlignment(selected_records)
 
-def split_msa_into_rate_categories_in_place(site_probability, alignment, rate_category) -> dict[str, MultipleSeqAlignment]:
+
+def split_msa_into_rate_categories_in_place(
+    site_probability, alignment, rate_category
+) -> dict[str, MultipleSeqAlignment]:
     """
     Splits a multiple sequence alignment into sub-alignments based on rate categories.
 
@@ -216,7 +215,9 @@ def split_msa_into_rate_categories_in_place(site_probability, alignment, rate_ca
     if rate_category == "all":
         # Iterate through each rate category and extract the corresponding columns
         for key, value in sub_category.items():
-            per_category_alignment_dict[key] = cut_alignment_columns_optimized(alignment, value)
+            per_category_alignment_dict[key] = cut_alignment_columns_optimized(
+                alignment, value
+            )
     else:
         # Extract only the specified rate category
         key = f"p{rate_category}"

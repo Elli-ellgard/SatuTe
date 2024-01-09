@@ -3,7 +3,7 @@ from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 
 
-def dict_to_alignment(sequence_dict):
+def dict_to_alignment(sequence_dict: dict) -> MultipleSeqAlignment:
     """
     Convert a dictionary of sequences to a MultipleSeqAlignment object.
 

@@ -70,19 +70,19 @@ def has_duplicate_leaf_sequences(node, multiple_sequence_alignment):
     return any(count > 1 for count in sequence_count.values())
 
 
-def collapse_tree(tree: Tree, multiple_sequence_alignment):
+def collapse_identical_leaf_sequences(tree: Tree, multiple_sequence_alignment: dict):
     """
-    Collapses a tree based on identical leaf sequences.
+    Collapses a tree by merging nodes with identical leaf sequences.
 
     Args:
     tree (Tree): The tree to be collapsed.
     multiple_sequence_alignment: The multiple sequence alignment associated with the tree's leaves.
 
     Returns:
-    tuple: A tuple containing the updated multiple sequence alignment and a dictionary of collapsed nodes (twins).
+    tuple: A tuple containing the updated multiple sequence alignment and a dictionary of collapsed nodes.
     """
     # Initialize a dictionary to track the collapsed nodes
-    twin_dictionary = {}
+    collapsed_nodes_dict = {}
 
     # Traverse the tree in postorder
     for node in tree.traverse("postorder"):
@@ -95,13 +95,13 @@ def collapse_tree(tree: Tree, multiple_sequence_alignment):
 
             # Check if all leaf sequences under this node are identical
             if len(set(leaf_sequences)) == 1:
-                # Delete the children nodes as they are identical and update the twin dictionary
-                delete_children_nodes(node, twin_dictionary)
+                # Delete the children nodes as they are identical and update the collapsed nodes dictionary
+                delete_children_nodes(node, collapsed_nodes_dict)
                 # Update the multiple sequence alignment for the current node
                 multiple_sequence_alignment[node.name] = leaf_sequences[0]
 
-    # Return the updated multiple sequence alignment and twin dictionary
-    return multiple_sequence_alignment, twin_dictionary
+    # Return the updated multiple sequence alignment and collapsed nodes dictionary
+    return multiple_sequence_alignment, collapsed_nodes_dict
 
 
 def has_only_leaf_children(node):
@@ -117,7 +117,7 @@ def delete_children_nodes(node: Tree, twin_dictionary: dict):
         child.detach()
 
 
-def print_tree_with_inner_node_names(tree):
+def print_tree_with_inner_node_names(tree: Tree):
     print(tree.get_ascii(show_internal=True))
 
 

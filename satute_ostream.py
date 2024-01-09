@@ -6,6 +6,7 @@ from pathlib import Path
 from ete3 import Tree
 from pandas import DataFrame
 from typing import Dict, Any
+import numpy as np
 
 
 # New function to format float columns
@@ -71,6 +72,32 @@ def write_results_for_category_rates(
         )
 
 
+def write_posterior_probabilities_for_rates(
+    results: Dict[str, Any],
+    state_frequencies: list,
+    output_file: Path,
+    output_suffix: str,
+    alpha: float,
+    edge,
+):
+    """
+    Writes the posterior probabilities to a file.
+
+    Args:
+    - results (dict): Dictionary containing the results data.
+    - output_file (str): Path to the output file where results will be saved.
+    """
+
+    for key, results_set in results.items():
+        base_file_name = construct_file_name(
+            output_file, output_suffix, key, alpha, edge
+        )
+
+        calculate_and_write_posterior_probabilities(
+            results_set["partial_likelihoods"], state_frequencies, base_file_name
+        )
+
+
 def process_rate_category(
     rate: str,
     results_set: Dict[str, Any],
@@ -133,30 +160,6 @@ def write_results_to_files(
     write_to_csv(results_data_frame, file_name, logger)
 
 
-def write_results_for_single_rate(
-    results: dict,
-    output_suffix: str,
-    msa_file: Path,
-    to_be_tested_tree: Tree,
-    alpha: float,
-    edge: tuple,
-    logger: Logger,
-):
-    """
-    Writes the results for single rate to appropriate files.
-    Args:
-    - results (dict): Dictionary containing the results data.
-    - input_args (object): Object containing input arguments.
-    - to_be_tested_tree (Tree): The tree object containing the data to be written.
-    """
-    for key, results_set in results.items():
-        file_name_base = construct_file_name(msa_file, output_suffix, key, alpha, edge)
-        results_data_frame = pd.DataFrame(results_set)
-        format_float_columns(results_data_frame)
-        write_to_csv(results_data_frame, file_name_base, logger)
-        write_nexus_file(to_be_tested_tree, file_name_base, results_data_frame, logger)
-
-
 def get_target_node(edge):
     return edge.split(",")[0].replace("(", "").strip()
 
@@ -174,7 +177,6 @@ def map_values_to_newick(newick: str, results_per_branch: DataFrame) -> str:
     """
     for index, row in results_per_branch.iterrows():
         newick = update_node_metadata(newick, row, results_per_branch.columns)
-
     return newick
 
 
@@ -270,8 +272,8 @@ def write_nexus_file(
 
 def write_alignment_and_indices(
     per_rate_category_alignment: dict[str, AlignIO.MultipleSeqAlignment],
-    categorized_sites,
-    input_args,
+    categorized_sites: dict,
+    msa_file: Path,
 ):
     """
     Writes MultipleSeqAlignment objects and indices to files.
@@ -283,7 +285,7 @@ def write_alignment_and_indices(
     """
     try:
         for rate in per_rate_category_alignment.keys():
-            file_path = f"{input_args.msa.resolve()}.{rate}.phy.rate.indices"
+            file_path = f"{msa_file.resolve()}.{rate}.phy.rate.indices"
             with open(file_path, "w") as file:
                 if rate in per_rate_category_alignment and rate in categorized_sites:
                     if per_rate_category_alignment[rate].get_alignment_length() == 0:
@@ -297,3 +299,91 @@ def write_alignment_and_indices(
         print(f"IOError: {e}")
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
+
+
+import pandas as pd
+
+
+def calculate_and_write_posterior_probabilities(
+    partial_likelihood_per_site_storage: dict, state_frequencies: list, output_file: str
+):
+    """
+    Calculate and write posterior probabilities for left and right likelihoods for each edge.
+
+    Args:
+    - partial_likelihood_per_site_storage (dict): Storage containing left and right likelihoods for each edge.
+    - state_frequencies (list or array): State frequencies used in probability calculations.
+    - output_file (str): Path to the output file where results will be saved.
+    """
+
+    all_posterior_probabilities = pd.DataFrame()
+
+    for edge, likelihoods in partial_likelihood_per_site_storage.items():
+        left_partial_likelihood = pd.DataFrame(likelihoods["left"]["likelihoods"])
+        right_partial_likelihood = pd.DataFrame(likelihoods["right"]["likelihoods"])
+        
+                # Calculate left and right posterior probabilities
+        left_posterior_probabilities = calculate_posterior_probabilities_subtree_df(
+            4, state_frequencies, left_partial_likelihood
+        )
+        right_posterior_probabilities = calculate_posterior_probabilities_subtree_df(
+            4, state_frequencies, right_partial_likelihood
+        )
+        
+        # left_posterior_probabilities["Site"] = left_partial_likelihood["Site"]
+        left_posterior_probabilities["Node"] = left_partial_likelihood["Node"]
+        # left_posterior_probabilities["Edge"] = edge
+        right_posterior_probabilities["Site"] = right_partial_likelihood["Site"]
+        right_posterior_probabilities["Node"] = right_partial_likelihood["Node"]
+        right_posterior_probabilities["Edge"] = edge        
+
+        # Rename columns with suffixes _left and _right
+        left_posterior_probabilities = left_posterior_probabilities.add_suffix("_left")
+        right_posterior_probabilities = right_posterior_probabilities.add_suffix(
+            "_right"
+        )
+
+        # Ensure 'Site', 'Node', and 'Edge' columns are not suffixed
+        for col in ["Site", "Edge"]:
+            if col + "_left" in left_posterior_probabilities.columns:
+                left_posterior_probabilities[col] = left_posterior_probabilities[
+                    col + "_left"
+                ]
+                left_posterior_probabilities.drop(col + "_left", axis=1, inplace=True)
+            if col + "_right" in right_posterior_probabilities.columns:
+                right_posterior_probabilities[col] = right_posterior_probabilities[
+                    col + "_right"
+                ]
+                right_posterior_probabilities.drop(col + "_right", axis=1, inplace=True)
+
+        # Concatenate left and right posterior probabilities horizontally
+        edge_posterior_probabilities = pd.concat(
+            [left_posterior_probabilities, right_posterior_probabilities], axis=1
+        )
+
+        # Add the concatenated data to the master DataFrame
+        all_posterior_probabilities = pd.concat(
+            [all_posterior_probabilities, edge_posterior_probabilities],
+            ignore_index=True,
+        )
+
+    # Write to the output file
+    all_posterior_probabilities.to_csv(f"{output_file}.asr.csv", index=False)
+
+
+def calculate_posterior_probabilities_subtree_df(
+    dimension: int, state_frequencies: list, partial_likelihood_df: pd.DataFrame
+):
+    diag = np.diag(list(state_frequencies))
+
+    # Selecting the relevant columns for likelihoods
+    likelihood_cols = partial_likelihood_df.iloc[:, 3 : (3 + dimension)]
+
+    # Calculate the site likelihood for each site (row)
+    site_likelihoods = likelihood_cols @ diag
+    site_likelihoods_sum = site_likelihoods.sum(axis=1)
+
+    # Calculate the posterior probabilities for each site
+    posterior_probabilities = site_likelihoods.divide(site_likelihoods_sum, axis=0)
+
+    return posterior_probabilities

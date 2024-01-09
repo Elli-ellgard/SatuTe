@@ -1,10 +1,18 @@
 from functools import cache
 from scipy.sparse.linalg import expm
 from ete3 import Tree
-from graph import convert_ete3_tree_to_directed_acyclic_graph, filter_graph_edges_by_focus, get_alignment_look_up_table
+from rate_matrix import RateMatrix
+from Bio.Align import MultipleSeqAlignment
+from graph import (
+    filter_graph_edges_by_focus,
+    get_alignment_look_up_table,
+    convert_tree_to_state_graph,
+    Node,
+)
+
 
 @cache
-def partial_likelihood(tree, node, coming_from, rate_matrix, factor=0):
+def partial_likelihood(node, coming_from: Node, rate_matrix: RateMatrix, factor=0):
     """
     Compute the partial likelihood of a given node in a directed acyclic graph (DAG) tree.
 
@@ -36,7 +44,7 @@ def partial_likelihood(tree, node, coming_from, rate_matrix, factor=0):
         if child != coming_from:
             # Calculate the exponential matrix and partial likelihood for the child node.
             e = calculate_exponential_matrix(rate_matrix, node.connected[child])
-            p, factor = partial_likelihood(tree, child, node, rate_matrix, factor)
+            p, factor = partial_likelihood(child, node, rate_matrix, factor)
             # Update the results by multiplying with the exponential matrix and partial likelihood.
             results = results * (e @ p)
 
@@ -48,7 +56,7 @@ def partial_likelihood(tree, node, coming_from, rate_matrix, factor=0):
 
 
 @cache
-def calculate_exponential_matrix(rate_matrix, branch_length):
+def calculate_exponential_matrix(rate_matrix: RateMatrix, branch_length: float):
     """
     Calculate the matrix exponential of a rate matrix scaled by a given branch length.
 
@@ -102,7 +110,7 @@ def get_partial_likelihood_dict(edge, p1, p2, i, branch_length):
     }
 
 
-def update_partial_likelihood_storage(storage, edge_name, likelihood_data):
+def update_partial_likelihood_storage(storage: dict, edge_name, likelihood_data):
     """Update the storage with new partial likelihood data."""
     if edge_name not in storage:
         storage[edge_name] = {
@@ -118,7 +126,10 @@ def update_partial_likelihood_storage(storage, edge_name, likelihood_data):
 
 
 def calculate_partial_likelihoods_for_sites(
-    tree: Tree, alignment, rate_matrix, focused_edge=None
+    tree: Tree,
+    alignment: MultipleSeqAlignment,
+    rate_matrix: RateMatrix,
+    focused_edge=None,
 ):
     """Calculates the partial likelihoods of each site in a multiple sequence alignment across a given phylogeny.
 
@@ -139,14 +150,12 @@ def calculate_partial_likelihoods_for_sites(
     partial_likelihood_per_site_storage = {}
 
     # Iterate over each site in the alignment
-    for i in range(0, len(alignment[0].seq), 1):
+    for site_idx in range(0, alignment.get_alignment_length(), 1):
         # Convert the alignment column for the current site into a NumPy array
-        msa_column = alignment[:, (i + 1) - 1 : (i + 1)]
+        msa_column = alignment[:, (site_idx + 1) - 1 : (site_idx + 1)]
 
         # Convert the ETE3 tree to a directed acyclic graph (DAG) for the current site
-        graph = convert_ete3_tree_to_directed_acyclic_graph(
-            tree, msa_column, alignment_look_up_table
-        )
+        graph = convert_tree_to_state_graph(tree, msa_column, alignment_look_up_table)
 
         # If a specific edge is focused on, filter the graph to only include that edge
         if focused_edge:
@@ -154,25 +163,19 @@ def calculate_partial_likelihoods_for_sites(
 
         # Calculate the partial likelihoods for each edge in the graph
         for edge in graph.get_edges():
-            # Extract edge information
-            right, left, branch_length = edge
-            p1, p1_factor = partial_likelihood(graph, left, right, rate_matrix)
-            p2, p2_factor = partial_likelihood(graph, right, left, rate_matrix)
+            right, left, length = edge
+            p1, p1_factor = partial_likelihood(left, right, rate_matrix)
+            p2, p2_factor = partial_likelihood(right, left, rate_matrix)
+
             likelihood_data = get_partial_likelihood_dict(
-                (left, right), p1, p2, i, branch_length
+                (left, right), p1, p2, site_idx, length
             )
 
             # Store partial likelihood data in the dictionary
             edge_name = f"({left.name}, {right.name})"
+
             update_partial_likelihood_storage(
                 partial_likelihood_per_site_storage, edge_name, likelihood_data
             )
 
     return partial_likelihood_per_site_storage
-
-
-
-
-
-
-

@@ -188,6 +188,26 @@ class FileHandler:
             self.find_file_by_suffix({".iqtree"})
         )
 
+    def find_msa_file(self):
+        msa_file_types = {".fasta", ".nex", ".phy", ".txt"}
+        msa_file = self.find_file_by_suffix(msa_file_types)
+        if not msa_file:
+            raise FileNotFoundError("No MSA file found in directory")
+        return msa_file
+
+    def find_tree_file(self):
+        tree_file_types = {".treefile", ".nex", ".nwk"}
+        tree_file = self.find_file_by_suffix(tree_file_types)
+        if not tree_file:
+            raise FileNotFoundError("No tree file found in directory")
+        return tree_file
+
+    def find_iqtree_file(self):
+        iqtree_file = self.find_file_by_suffix({".iqtree"})
+        if not iqtree_file:
+            raise FileNotFoundError("No .iqtree file found in directory")
+        return iqtree_file
+
 
 class IqTreeNotFoundError(Exception):
     """Exception raised when IQ-TREE is not found at the given path."""

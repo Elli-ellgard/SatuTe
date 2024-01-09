@@ -1,35 +1,28 @@
 import pandas as pd
-from satute_trees_and_subtrees import rescale_branch_lengths, collapse_tree
+from pandas import DataFrame
 from partial_likelihood import calculate_partial_likelihoods_for_sites
-from graph import count_leaves_and_branches_for_subtrees
+from graph import calculate_subtree_edge_metrics
 from satute_sequences import dict_to_alignment
+from ete3 import Tree
+from Bio.Align import MultipleSeqAlignment
+from rate_matrix import RateMatrix
 from satute_statistic_posterior_distribution import (
     calculate_test_statistic_posterior_distribution,
 )
-
-
-def determine_branch_type(edge):
-    """
-    Determine the type of the branch based on the edge.
-
-    Args:
-        edge (tuple): Edge details.
-
-    Returns:
-        str: 'internal' if the edge is internal, 'external' otherwise.
-    """
-    return "internal" if "Node" in edge[1] and "Node" in edge[0] else "external"
+from satute_trees import (
+    rescale_branch_lengths,
+    collapse_identical_leaf_sequences,
+)
 
 
 def single_rate_analysis(
-    initial_tree,
-    alignment,
-    rate_matrix,
-    state_frequencies,
-    array_left_eigenvectors,
-    array_right_eigenvectors,
-    multiplicity,
-    alpha=0.05,
+    initial_tree: Tree,
+    alignment: MultipleSeqAlignment,
+    rate_matrix: RateMatrix,
+    state_frequencies: list,
+    array_right_eigenvectors: list,
+    multiplicity: int,
+    alpha: float = 0.05,
     focused_edge=None,
 ):
     """
@@ -49,16 +42,13 @@ def single_rate_analysis(
     Returns:
     A dictionary containing the results of the test for each edge.
     """
-
     # Calculate partial likelihoods for all sites
     partial_likelihood_per_site_storage = calculate_partial_likelihoods_for_sites(
         initial_tree, alignment, rate_matrix, focused_edge
     )
 
     # Count leaves and branches for subtrees
-    edge_subtree_count_dict = count_leaves_and_branches_for_subtrees(
-        initial_tree, alignment, focused_edge
-    )
+    edge_subtree_count_dict = calculate_subtree_edge_metrics(initial_tree, focused_edge)
 
     # Initialize a dictionary and a list to store results
     result_test_dictionary = {}
@@ -66,7 +56,7 @@ def single_rate_analysis(
 
     # Iterate over each edge and process likelihoods
     for edge, likelihoods in partial_likelihood_per_site_storage.items():
-        # Convert left and right likelihoods to dataframes
+        # Convert left and right likelihoods to data frames
         left_partial_likelihood = pd.DataFrame(likelihoods["left"]["likelihoods"])
         right_partial_likelihood = pd.DataFrame(likelihoods["right"]["likelihoods"])
 
@@ -78,8 +68,7 @@ def single_rate_analysis(
             "leave_count"
         ]
 
-        # Determine branch type (internal or external)
-        branch_type = determine_branch_type(edge)
+        _type = edge_subtree_count_dict[edge]["type"]
 
         # Calculate test statistics using the posterior distribution
         results = process_test_statistics_posterior(
@@ -90,7 +79,7 @@ def single_rate_analysis(
             right_partial_likelihood,
             number_leaves_left_subtree,
             number_leaves_right_subtree,
-            branch_type,
+            _type,
             alpha,
         )
 
@@ -100,20 +89,74 @@ def single_rate_analysis(
         )
 
     # Add all results to the main result dictionary
-    result_test_dictionary["single_rate"] = result_list
+    result_test_dictionary["single_rate"] = {
+        "result_list": result_list,
+        "rescaled_tree": initial_tree,
+        "partial_likelihoods": partial_likelihood_per_site_storage,
+    }
+
     return result_test_dictionary
 
 
+def single_rate_analysis_collapsed_tree(
+    initial_tree: Tree,
+    alignment: MultipleSeqAlignment,
+    rate_matrix: RateMatrix,
+    state_frequencies: list,
+    array_right_eigenvectors: list,
+    multiplicity: int,
+    alpha: float = 0.05,
+    focused_edge=None,
+):
+    # Step 1: Map sequence IDs to their sequences from the alignment for easy access
+    sequence_dict = {record.id: str(record.seq) for record in alignment}
+
+    # Step 2: Create a deep copy of the initial tree to modify without altering the original
+    collapsed_tree_one = initial_tree.copy("deepcopy")
+
+    # Step 3: Collapse nodes in the tree with identical sequences to simplify the tree structure
+    sequence_dict, collapsed_nodes = collapse_identical_leaf_sequences(
+        collapsed_tree_one, sequence_dict
+    )
+
+    # Step 4: Convert the sequence dictionary back to a MultipleSeqAlignment object after collapsing nodes
+    alignment = dict_to_alignment(sequence_dict)
+
+    # Step 5: Carry out single rate analysis using the collapsed tree and updated alignment
+    results = single_rate_analysis(
+        collapsed_tree_one,
+        alignment,
+        rate_matrix,
+        state_frequencies,
+        array_right_eigenvectors,
+        multiplicity,
+        alpha,
+        focused_edge,
+    )
+
+    # Step 6: Augment the results with additional data for the 'twin' nodes
+    insert_nan_values_for_identical_taxa(
+        results["single_rate"]["result_list"],
+        collapsed_nodes,
+        initial_tree,
+        "single_rate",
+        focused_edge,
+    )
+
+    # Step 7: Compile all the results into a dictionary and return it
+    return results
+
+
 def process_test_statistics_posterior(
-    multiplicity,
+    multiplicity: int,
     array_right_eigenvectors,
-    state_frequencies,
-    left_partial_likelihood,
-    right_partial_likelihood,
-    number_leaves_left_subtree,
-    number_leaves_right_subtree,
-    branch_type,
-    alpha,
+    state_frequencies: list,
+    left_partial_likelihood: DataFrame,
+    right_partial_likelihood: DataFrame,
+    number_leaves_left_subtree: int,
+    number_leaves_right_subtree: int,
+    branch_type: str,
+    alpha: type,
 ):
     """
     Calculate test statistics for posterior distribution and store results in a dictionary.
@@ -149,17 +192,15 @@ def process_test_statistics_posterior(
     return {key: value for key, value in zip(result_keys, results)}
 
 
-# TODO: Generate leave count, edge dictionary only once
 def multiple_rate_analysis(
-    initial_tree,
+    initial_tree: Tree,
     category_rates_factors,
-    rate_matrix,
-    state_frequencies,
-    array_left_eigenvectors,
-    array_right_eigenvectors,
-    multiplicity,
-    per_rate_category_alignment,
-    alpha=0.05,
+    rate_matrix: RateMatrix,
+    state_frequencies: list,
+    array_right_eigenvectors: list,
+    multiplicity: int,
+    per_rate_category_alignment: dict[str, MultipleSeqAlignment],
+    alpha: float = 0.05,
     focused_edge=None,
 ):
     # Initialize a dictionary to store results for each rate category
@@ -182,7 +223,7 @@ def multiple_rate_analysis(
 
         # Step 3: Create a deep copy of the initial tree and collapse nodes with identical sequences
         collapsed_rescaled_tree_one = initial_tree.copy("deepcopy")
-        sequence_dict, twin_dictionary = collapse_tree(
+        sequence_dict, collapsed_nodes = collapse_identical_leaf_sequences(
             collapsed_rescaled_tree_one, sequence_dict
         )
         # Step 4: Rescale branch lengths according to the relative rate
@@ -191,78 +232,76 @@ def multiple_rate_analysis(
         # Step 5: Convert the sequence dictionary back to a MultipleSeqAlignment object after collapsing nodes
         sub_alignment = dict_to_alignment(sequence_dict)
 
-        # Step 6: Calculate partial likelihoods for all sites in the rescaled tree
-        partial_likelihood_per_site_storage = calculate_partial_likelihoods_for_sites(
-            collapsed_rescaled_tree_one, sub_alignment, rate_matrix, focused_edge
-        )
-
-        # Step 7: Count leaves and branches for subtrees in the rescaled tree
-        edge_subtree_count_dict = count_leaves_and_branches_for_subtrees(
-            initial_tree, sub_alignment, focused_edge
-        )
-
-        # Step 8: Process each edge and its associated likelihoods
-        for edge, likelihoods in partial_likelihood_per_site_storage.items():
-            # Convert left and right likelihoods to dataframes
-            left_partial_likelihood = pd.DataFrame(likelihoods["left"]["likelihoods"])
-            right_partial_likelihood = pd.DataFrame(likelihoods["right"]["likelihoods"])
-
-            # Get the number of leaves in the left and right subtree
-            number_leaves_left_subtree = edge_subtree_count_dict[edge]["left"][
-                "leave_count"
-            ]
-            number_leaves_right_subtree = edge_subtree_count_dict[edge]["right"][
-                "leave_count"
-            ]
-
-            # Determine the branch type (internal or external)
-            branch_type = determine_branch_type(edge)
-
-            # Calculate test statistics using the posterior distribution
-            results = process_test_statistics_posterior(
-                multiplicity,
-                array_right_eigenvectors,
-                state_frequencies,
-                left_partial_likelihood,
-                right_partial_likelihood,
-                number_leaves_left_subtree,
-                number_leaves_right_subtree,
-                branch_type,
-                alpha,
+        if sub_alignment.get_alignment_length() != 0:
+            # Step 6: Calculate partial likelihoods for all sites in the rescaled tree
+            partial_likelihood_per_site_storage = (
+                calculate_partial_likelihoods_for_sites(
+                    collapsed_rescaled_tree_one,
+                    sub_alignment,
+                    rate_matrix,
+                    focused_edge,
+                )
             )
 
-            # Store the results of the test for the given edge
-            result_list.append(
-                store_test_results(edge, rate, left_partial_likelihood, results)
+            # Step 7: Count leaves and branches for subtrees in the rescaled tree
+            edge_subtree_metrics = calculate_subtree_edge_metrics(
+                initial_tree, focused_edge
             )
 
-        for parent, value in twin_dictionary.items():
-            for child in value:
-                result_list.append(
-                    {
-                        "edge": f"({parent},{child})",
-                        "delta": "Nan",
-                        "p_value": "Nan",
-                        "decision_corrected_test_tips": "Nan",
-                        "decision_corrected_test_branches": "Nan",
-                        "decision_test_tip2tip": "Nan",
-                        "result_test": "Nan",
-                        "result_test_tip2tip": "Nan",
-                        "category_rate": rate,
-                        "branch_length": initial_tree.get_distance(parent, child),
-                    }
+            # Step 8: Process each edge and its associated likelihoods
+            for edge, likelihoods in partial_likelihood_per_site_storage.items():
+                # Convert left and right likelihoods to data frames
+                left_partial_likelihood = pd.DataFrame(
+                    likelihoods["left"]["likelihoods"]
+                )
+                right_partial_likelihood = pd.DataFrame(
+                    likelihoods["right"]["likelihoods"]
                 )
 
-        # Step 10: Add the results for the current rate category to the main dictionary
-        result_rate_dictionary[rate] = {
-            "result_list": result_list,
-            "rescaled_tree": collapsed_rescaled_tree_one,
-        }
+                # Get the number of leaves in the left and right subtree
+                number_leaves_left_subtree = edge_subtree_metrics[edge]["left"][
+                    "leave_count"
+                ]
+
+                number_leaves_right_subtree = edge_subtree_metrics[edge]["right"][
+                    "leave_count"
+                ]
+
+                # Calculate test statistics using the posterior distribution
+                results = process_test_statistics_posterior(
+                    multiplicity,
+                    array_right_eigenvectors,
+                    state_frequencies,
+                    left_partial_likelihood,
+                    right_partial_likelihood,
+                    number_leaves_left_subtree,
+                    number_leaves_right_subtree,
+                    edge_subtree_metrics[edge]["type"],
+                    alpha,
+                )
+
+                # Store the results of the test for the given edge
+                result_list.append(
+                    store_test_results(edge, rate, left_partial_likelihood, results)
+                )
+
+            insert_nan_values_for_identical_taxa(
+                result_list, collapsed_nodes, initial_tree, rate, focused_edge
+            )
+
+            # Step 10: Add the results for the current rate category to the main dictionary
+            result_rate_dictionary[rate] = {
+                "result_list": result_list,
+                "rescaled_tree": collapsed_rescaled_tree_one,
+                "partial_likelihoods": partial_likelihood_per_site_storage,
+            }
 
     return result_rate_dictionary
 
 
-def store_test_results(edge, rate, left_partial_likelihood, results):
+def store_test_results(
+    edge, rate: str, left_partial_likelihood: DataFrame, results: dict
+):
     """
     Store the test results in a structured dictionary format.
 
@@ -289,79 +328,45 @@ def store_test_results(edge, rate, left_partial_likelihood, results):
     }
 
 
-def single_rate_analysis_collapsed_tree(
-    initial_tree,
-    alignment,
-    rate_matrix,
-    state_frequencies,
-    array_left_eigenvectors,
-    array_right_eigenvectors,
-    multiplicity,
-    alpha=0.05,
+def insert_nan_values_for_identical_taxa(
+    result_list: list,
+    collapsed_nodes: dict,
+    initial_tree: Tree,
+    rate: str,
     focused_edge=None,
 ):
-    # Step 1: Map sequence IDs to their sequences from the alignment for easy access
-    sequence_dict = {record.id: str(record.seq) for record in alignment}
-
-    # Step 2: Create a deep copy of the initial tree to modify without altering the original
-    collapsed_tree_one = initial_tree.copy("deepcopy")
-
-    # Step 3: Collapse nodes in the tree with identical sequences to simplify the tree structure
-    sequence_dict, twin_dictionary = collapse_tree(collapsed_tree_one, sequence_dict)
-
-    # Step 4: Convert the sequence dictionary back to a MultipleSeqAlignment object after collapsing nodes
-    alignment = dict_to_alignment(sequence_dict)
-
-    # Step 5: Carry out single rate analysis using the collapsed tree and updated alignment
-    results = single_rate_analysis(
-        collapsed_tree_one,
-        alignment,
-        rate_matrix,
-        state_frequencies,
-        array_left_eigenvectors,
-        array_right_eigenvectors,
-        multiplicity,
-        alpha,
-        focused_edge,
-    )
-
-    # Step 6: Augment the results with additional data for the 'twin' nodes
-    results = insert_results_for_identical_sequences(
-        twin_dictionary, results, initial_tree, "single_rate"
-    )
-
-    # Step 7: Compile all the results into a dictionary and return it
-    return results
-
-
-def insert_results_for_identical_sequences(
-    twin_dictionary, results, initial_tree, rate
-):
     """
-    Augments the analysis results with additional data for the 'twin' nodes.
+    Insert NaN values into the result list for edges consisting of identical taxa.
+
+    This function updates a result list by appending NaN values for specific metrics associated
+    with edges between identical taxa. The function can focus on a specific edge if provided.
 
     Args:
-    twin_dictionary (dict): A dictionary mapping parent nodes to their 'twin' children.
-    results (dict): The results dictionary where augmented data will be appended.
-    initial_tree (Tree): The initial tree used in the analysis for calculating distances.
+        result_list (list): The list to which the NaN values are to be appended.
+        collapsed_nodes (dict): A dictionary of parent nodes mapping to their child nodes.
+        initial_tree (Tree): The initial phylogenetic tree used for distance calculation.
+        rate (str): The category rate associated with the edge.
+        focused_edge: A specific edge to focus on. If None,
+            the function processes all edges in `collapsed_nodes`.
 
-    Returns:
-    dict: The augmented results dictionary.
     """
-    for parent, value in twin_dictionary.items():
-        for child in value:
-            results[rate].append(
-                {
+    nan_values_dict = {
+        "delta": "Nan",
+        "p_value": "Nan",
+        "decision_corrected_test_tips": "Nan",
+        "decision_corrected_test_branches": "Nan",
+        "decision_test_tip2tip": "Nan",
+        "result_test": "Nan",
+        "result_test_tip2tip": "Nan",
+        "category_rate": rate,
+    }
+
+    for parent, children in collapsed_nodes.items():
+        for child in children:
+            if not focused_edge or (parent in focused_edge and child in focused_edge):
+                edge_info = {
                     "edge": f"({parent},{child})",
-                    "delta": "Nan",
-                    "p_value": "Nan",
-                    "decision_corrected_test_tips": "Nan",
-                    "decision_corrected_test_branches": "Nan",
-                    "decision_test_tip2tip": "Nan",
-                    "result_test": "Nan",
-                    "result_test_tip2tip": "Nan",
-                    "category_rate": "single_rate_analysis",
                     "branch_length": initial_tree.get_distance(parent, child),
+                    **nan_values_dict,
                 }
-            )
-    return results
+                result_list.append(edge_info)
