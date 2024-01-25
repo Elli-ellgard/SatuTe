@@ -2,6 +2,53 @@ import os
 import numpy as np
 import pandas as pd
 import re
+from enum import Enum
+from amino_acid_models import get_aa_state_frequency_substitution_models
+
+
+class ModelType(Enum):
+    DNA = "DNA"
+    PROTEIN = "Protein"
+
+
+amino_acid_substitution_models = [
+    "Blosum62",  # BLOcks SUbstitution Matrix (Henikoff and Henikoff, 1992)
+    "cpREV",  # Chloroplast matrix (Adachi et al., 2000)
+    "Dayhoff",  # General matrix (Dayhoff et al., 1978)
+    "DCMut",  # Revised Dayhoff matrix (Kosiol and Goldman, 2005)
+    "FLAVI",  # Flavivirus (Le and Vinh, 2020)
+    "FLU",  # Influenza virus (Dang et al., 2010)
+    "GTR20",  # General time reversible models with 190 rate parameters
+    "HIVb",  # HIV between-patient matrix HIV-Bm (Nickle et al., 2007)
+    "HIVw",  # HIV within-patient matrix HIV-Wm (Nickle et al., 2007)
+    "JTT",  # General matrix (Jones et al., 1992)
+    "JTTDCMut",  # Revised JTT matrix (Kosiol and Goldman, 2005)
+    "LG",  # General matrix (Le and Gascuel, 2008)
+    "mtART",  # Mitochondrial Arthropoda (Abascal et al., 2007)
+    "mtMAM",  # Mitochondrial Mammalia (Yang et al., 1998)
+    "mtREV",  # Mitochondrial Vertebrate (Adachi and Hasegawa, 1996)
+    "mtZOA",  # Mitochondrial Metazoa (Animals) (Rota-Stabelli et al., 2009)
+    "mtMet",  # Mitochondrial Metazoa (Vinh et al., 2017)
+    "mtVer",  # Mitochondrial Vertebrate (Vinh et al., 2017)
+    "mtInv",  # Mitochondrial Invertebrate (Vinh et al., 2017)
+    "NQ.bird",  # Non-reversible Q matrix for birds (Dang et al., 2022)
+    "NQ.insect",  # Non-reversible Q matrix for insects (Dang et al., 2022)
+    "NQ.mammal",  # Non-reversible Q matrix for mammals (Dang et al., 2022)
+    "NQ.pfam",  # General non-reversible Q matrix from Pfam database (Dang et al., 2022)
+    "NQ.plant",  # Non-reversible Q matrix for plants (Dang et al., 2022)
+    "NQ.yeast",  # Non-reversible Q matrix for yeasts (Dang et al., 2022)
+    "Poisson",  # Equal amino-acid exchange rates and frequencies
+    "PMB",  # Probability Matrix from Blocks (Veerassamy et al., 2004)
+    "Q.bird",  # Q matrix for birds (Minh et al., 2021)
+    "Q.insect",  # Q matrix for insects (Minh et al., 2021)
+    "Q.mammal",  # Q matrix for mammals (Minh et al., 2021)
+    "Q.pfam",  # General Q matrix from Pfam database (Minh et al., 2021)
+    "Q.plant",  # Q matrix for plants (Minh et al., 2021)
+    "Q.yeast",  # Q matrix for yeasts (Minh et al., 2021)
+    "rtREV",  # Retrovirus (Dimmic et al., 2002)
+    "VT",  # General ‘Variable Time’ matrix (Mueller and Vingron, 2000)
+    "WAG",  # General matrix (Whelan and Goldman, 2001)
+]
 
 
 def parse_substitution_model(file_path: str) -> str:
@@ -187,24 +234,49 @@ class IqTreeParser:
         - SubstitutionModel: An object containing the parsed details of the substitution model.
         """
 
-        # Ensure the iqtree file content is loaded
+        current_substitution_model = self.parse_substitution_model()
+        check_model_aa_mode = self.check_model_aa_mode(current_substitution_model)
         self.load_iqtree_file_content()
-        # Parse the required components from the file content
-        state_frequencies, phi_matrix = self.parse_state_frequencies()
-        rate_matrix = self.parse_rate_matrices(state_frequencies)
-        model = self.parse_substitution_model()
-        number_rates = self.parse_number_rate_categories()
-        category_rates = self.parse_category_rates() if number_rates > 1 else None
 
-        # Return the constructed SubstitutionModel object
-        return SubstitutionModel(
-            model=model,
-            state_frequencies=state_frequencies,
-            phi_matrix=phi_matrix,
-            rate_matrix=rate_matrix,
-            number_rates=number_rates,
-            category_rates=category_rates,
-        )
+        if check_model_aa_mode == ModelType.DNA:
+            # Parse the required components from the file content
+            state_frequencies, phi_matrix = self.parse_state_frequencies()
+            rate_matrix = self.parse_rate_matrices(state_frequencies)
+            number_rates = self.parse_number_rate_categories()
+            category_rates = self.parse_category_rates() if number_rates > 1 else None
+
+            return SubstitutionModel(
+                model=current_substitution_model,
+                state_frequencies=state_frequencies,
+                phi_matrix=phi_matrix,
+                rate_matrix=rate_matrix,
+                number_rates=number_rates,
+                category_rates=category_rates,
+            )
+        else:
+            # Parse the required components from the file content
+            state_frequencies, phi_matrix = get_aa_state_frequency_substitution_models(
+                substitution_model=current_substitution_model
+            )
+            rate_matrix = self.parse_aa_rate_matrix()
+            number_rates = self.parse_number_rate_categories()
+            category_rates = self.parse_category_rates() if number_rates > 1 else None
+
+            return SubstitutionModel(
+                model=current_substitution_model,
+                state_frequencies=state_frequencies,
+                phi_matrix=phi_matrix,
+                rate_matrix=rate_matrix,
+                number_rates=number_rates,
+                category_rates=category_rates,
+            )
+
+    def check_model_aa_mode(self, model: str) -> ModelType:
+        for amino_acid_substitution_model in amino_acid_substitution_models:
+            if amino_acid_substitution_model in model:
+                return ModelType.PROTEIN
+            else:
+                return ModelType.DNA
 
     def parse_rate_parameters(self, dimension, model="GTR"):
         """
@@ -399,6 +471,53 @@ class IqTreeParser:
 
         return rate_matrix
 
+    def parse_aa_rate_matrix(self) -> np.matrix:
+        """
+        Parses the amino acid rate matrix from the file content.
+
+        This function searches through the file content for a specific line
+        that indicates the start of the rate matrix ("Rate matrix Q:").
+        It then parses the following lines as the matrix, converting the
+        values to floats and constructing a 2D numpy matrix. If the resulting
+        matrix is not 20x20, a ValueError is raised.
+
+        Raises:
+            ValueError: If the "Rate matrix Q:" line is not found in the file.
+            ValueError: If the resulting matrix is not 20x20.
+
+        Returns:
+            np.matrix: A 2D numpy matrix representing the parsed rate matrix.
+        """
+
+        # Find the line where the rate matrix starts
+        start = None
+        for i, line in enumerate(self.file_content):
+            if line.startswith("Rate matrix Q:"):
+                start = i + 2
+                break
+
+        if start is None:
+            raise ValueError("Rate matrix Q not found in file.")
+
+        # Parse the matrix using a list comprehension
+        matrix = []
+        for line in self.file_content[start:]:
+            if line.strip() == "":
+                break
+            row = line.split(maxsplit=1)[1].split()
+            matrix.append([float(x) for x in row])
+
+        # Convert to numpy matrix and check its shape
+        matrix = np.matrix(matrix, dtype=float)
+        if matrix.shape != (20, 20):
+            raise ValueError(
+                "The rate matrix is not 20x20. Its shape is {}".format(matrix.shape)
+            )
+
+        # Return the numpy matrix
+        print
+        return matrix
+
     def parse_number_rate_categories(self):
         """
         Parse the number of rate categories from the substitution model string.
@@ -498,11 +617,9 @@ class IqTreeParser:
             # Check if the line contains any of the keywords
             if any(keyword in line for keyword in keywords):
                 model_string = line.split(":")[1].strip()
-
                 # If a valid model string is found, return it
                 if model_string:
                     return model_string
-
         # If the loop completes without returning, raise an error
         raise ValueError("Substitution model not found in the file content.")
 
@@ -557,12 +674,11 @@ class IqTreeParser:
 
 
 if __name__ == "__main__":
-    iq_tree_parser = IqTreeParser(
-        "./test/Clemens/example_3/sim-JC+G-AC1-AG1-AT1-CG1-CT1-GT1-alpha1.2-taxa64-len1000bp-bla0.01-blb0.8-blc0.2-rep01.fasta.iqtree"
-    )
-    substitution_model = iq_tree_parser.load_substitution_model_from_iqtree_file()
+    iq_tree_parser = IqTreeParser("./test/amino_acids/alignment_aa.phy.iqtree")
 
-    print(substitution_model.model)
-    print(substitution_model.state_frequencies)
-    print(substitution_model.phi_matrix)
-    print(substitution_model.rate_matrix)
+    substitution_model = iq_tree_parser.load_substitution_model()
+
+    # print(substitution_model.model)
+    # print(substitution_model.state_frequencies)
+    # print(substitution_model.phi_matrix)
+    # print(substitution_model.rate_matrix)

@@ -9,6 +9,7 @@ from graph import (
     convert_tree_to_state_graph,
     Node,
 )
+from amino_acid_models import AMINO_ACIDS
 
 
 @cache
@@ -85,28 +86,22 @@ def calculate_exponential_matrix(rate_matrix: RateMatrix, branch_length: float):
     return expm(rate_matrix.rate_matrix * branch_length)
 
 
-def get_partial_likelihood_dict(edge, p1, p2, i, branch_length):
-    """Construct the partial likelihood dictionary for a specific edge and site."""
+def get_partial_likelihood_dict(edge, p1, p2, i, branch_length, states):
+    """Construct the partial likelihood dictionary for a specific edge and site with dynamic states."""
     left, right = edge
+
+    # Helper function to create the likelihood dictionary for a node
+    def create_likelihood_dict(node_name, probabilities):
+        return {
+            "Node": node_name,
+            "Site": i,
+            "branch_length": branch_length,
+            **{f"p_{state}": prob for state, prob in zip(states, probabilities)},
+        }
+
     return {
-        "left": {
-            "Node": left.name,
-            "Site": i,
-            "branch_length": branch_length,
-            "p_A": p1[0],
-            "p_C": p1[1],
-            "p_G": p1[2],
-            "p_T": p1[3],
-        },
-        "right": {
-            "Node": right.name,
-            "Site": i,
-            "branch_length": branch_length,
-            "p_A": p2[0],
-            "p_C": p2[1],
-            "p_G": p2[2],
-            "p_T": p2[3],
-        },
+        "left": create_likelihood_dict(left.name, p1),
+        "right": create_likelihood_dict(right.name, p2),
     }
 
 
@@ -143,6 +138,13 @@ def calculate_partial_likelihoods_for_sites(
         dict: A dictionary containing partial likelihood data for each edge and site.
     """
 
+    state_type = "nucleotide"
+    states = ["A", "C", "G", "T"]
+
+    if rate_matrix.rate_matrix.shape != (4, 4):
+        state_type = "amino_acid"
+        states = AMINO_ACIDS
+
     # Create a lookup table for efficient sequence indexing
     alignment_look_up_table = get_alignment_look_up_table(alignment)
 
@@ -155,7 +157,12 @@ def calculate_partial_likelihoods_for_sites(
         msa_column = alignment[:, (site_idx + 1) - 1 : (site_idx + 1)]
 
         # Convert the ETE3 tree to a directed acyclic graph (DAG) for the current site
-        graph = convert_tree_to_state_graph(tree, msa_column, alignment_look_up_table)
+        graph = convert_tree_to_state_graph(
+            tree=tree,
+            msa_column=msa_column,
+            alignment_look_up_table=alignment_look_up_table,
+            state_type=state_type,
+        )
 
         # If a specific edge is focused on, filter the graph to only include that edge
         if focused_edge:
@@ -168,7 +175,7 @@ def calculate_partial_likelihoods_for_sites(
             p2, p2_factor = partial_likelihood(right, left, rate_matrix)
 
             likelihood_data = get_partial_likelihood_dict(
-                (left, right), p1, p2, site_idx, length
+                (left, right), p1, p2, site_idx, length, states
             )
 
             # Store partial likelihood data in the dictionary

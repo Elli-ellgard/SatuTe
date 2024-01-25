@@ -3,6 +3,11 @@ from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 
 
+# Define these sets at a global level to avoid re-creation
+DNA_CHARACTERS = set("ACGT")
+PROTEIN_CHARACTERS = set("ARNDCQEGHILKMFPSTWYV")
+
+
 def dict_to_alignment(sequence_dict: dict) -> MultipleSeqAlignment:
     """
     Convert a dictionary of sequences to a MultipleSeqAlignment object.

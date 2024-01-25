@@ -2,10 +2,12 @@ from typing import Optional
 import dataclasses
 import numpy as np
 from ete3 import Tree
-from nucleotide_code_vector import NUCLEOTIDE_CODE_VECTOR
 from Bio.Align import MultipleSeqAlignment
 from typing import List, Tuple, Optional, Dict
 from functools import cache
+
+from nucleotide_code_vector import NUCLEOTIDE_CODE_VECTOR
+from amino_acid_models import AMINO_ACID_CODE_VECTOR
 
 
 class Node:
@@ -64,9 +66,15 @@ class Graph:
         return self.branch_lengths[edge]
 
 
-def get_initial_likelihood_vector(state) -> np.array:
-    """Get the initial likelihood vector for a given nucleotide state."""
-    return np.array(NUCLEOTIDE_CODE_VECTOR[state]).T
+def get_initial_likelihood_vector(state: str, state_type: str) -> np.array:
+    print("#" * 100)
+    print(state_type)
+    if state_type == "nucleotide":
+        """Get the initial likelihood vector for a given nucleotide state."""
+        return np.array(NUCLEOTIDE_CODE_VECTOR[state]).T
+    elif state_type == "amino_acid":
+        """Get the initial likelihood vector for a given amino acid state."""
+        return np.array(AMINO_ACID_CODE_VECTOR[state]).T
 
 
 def convert_tree_to_graph(tree: Tree) -> Graph:
@@ -108,7 +116,10 @@ def convert_tree_to_graph(tree: Tree) -> Graph:
 
 
 def convert_tree_to_state_graph(
-    tree: Tree, msa_column: MultipleSeqAlignment, alignment_look_up_table: dict
+    tree: Tree,
+    msa_column: MultipleSeqAlignment,
+    alignment_look_up_table: dict,
+    state_type: str,
 ) -> Graph:
     """
     Convert an ETE3 tree to a Directed Acyclic Graph (DAG) with state information.
@@ -126,11 +137,20 @@ def convert_tree_to_state_graph(
     node_dictionary = {}
     edge_list = []
 
+    print(convert_tree_to_graph.__name__)
+    print(state_type)
+
     # Traverse the tree and create Node objects and edges
     for ete_node in tree.traverse("levelorder"):
+        
         node = create_or_get_node(
-            ete_node, msa_column, alignment_look_up_table, node_dictionary
+            ete_node=ete_node,
+            msa_column=msa_column,
+            alignment_look_up_table=alignment_look_up_table,
+            node_dictionary=node_dictionary,
+            state_type=state_type
         )
+
         add_child_edges(
             ete_node,
             node,
@@ -138,6 +158,7 @@ def convert_tree_to_state_graph(
             alignment_look_up_table,
             node_dictionary,
             edge_list,
+            state_type
         )
 
     return Graph(edge_list)
@@ -148,6 +169,7 @@ def create_or_get_node(
     msa_column: MultipleSeqAlignment,
     alignment_look_up_table: dict,
     node_dictionary: Dict[str, Node],
+    state_type: str,
 ) -> Node:
     """
     Retrieve an existing Node object or create a new one for an ETE node.
@@ -163,8 +185,10 @@ def create_or_get_node(
     """
     if ete_node.is_leaf():
         likelihood_vector = get_initial_likelihood_vector(
-            msa_column[alignment_look_up_table[ete_node.name]].seq
+            state=msa_column[alignment_look_up_table[ete_node.name]].seq,
+            state_type=state_type,
         )
+
         return node_dictionary.setdefault(
             ete_node.name, Node(ete_node.name, likelihood_vector)
         )
@@ -179,6 +203,7 @@ def add_child_edges(
     alignment_look_up_table: dict,
     node_dictionary: Dict[str, Node],
     edges: List[Tuple[Node, Node, float]],
+    state_type: str,
 ):
     """
     Create and add edges from a parent node to its children.
@@ -193,7 +218,7 @@ def add_child_edges(
     """
     for child_ete_node in parent_ete_node.children:
         child_node = create_or_get_node(
-            child_ete_node, msa_column, alignment_look_up_table, node_dictionary
+            child_ete_node, msa_column, alignment_look_up_table, node_dictionary,state_type=state_type
         )
         edges.append((parent_node, child_node, child_ete_node.dist))
 
