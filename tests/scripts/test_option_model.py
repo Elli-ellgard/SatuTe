@@ -1,4 +1,4 @@
-from satute_test import (
+from satute_test_utils import (
     run_external_command,
     print_test_name, 
     create_destination_dir,
@@ -13,7 +13,7 @@ from pathlib import Path
 
 
 def test_1(source_path, msa, iqtree, python, satute):
-    suffix = "TEST 1: only model"
+    suffix = "MODEL TEST 1: only model"
     print_test_name(suffix)
     print(f"IQ-Tree executeable path: {iqtree}")
 
@@ -37,6 +37,7 @@ def test_1(source_path, msa, iqtree, python, satute):
             "JC",
             "-alpha",
             "0.05",
+            "-asr",
             "-iqtree",
             iqtree,
         ]
@@ -44,13 +45,13 @@ def test_1(source_path, msa, iqtree, python, satute):
 
     # check the files   
     if not check_iqtree_files_exist(msa, dest_dir_path, [] )  and  not check_satute_files(msa, dest_dir_path, categories, alpha, asr):
-        print_colored_message("TEST 1 was successful", "32" )
+        print_colored_message(f"{suffix} was successful", "32" )
     else: 
-        print_colored_message("TEST 1 failed", "31" )
+        print_colored_message(f"{suffix} failed", "31" )
 
 
 def test_2(source_path, msa, iqtree, python, satute):
-    suffix = "TEST 2: msa model no heterogeneity"
+    suffix = "MODEL TEST 2: msa model no heterogeneity"
     print_test_name(suffix)
 
     # create output directory
@@ -83,9 +84,9 @@ def test_2(source_path, msa, iqtree, python, satute):
     
     # check the files   
     if check_iqtree_files_exist(msa, dest_dir_path, []) and  check_satute_files(msa, dest_dir_path, categories, alpha, asr):
-        print_colored_message("TEST 2 was successful", "32" )
+        print_colored_message(f"{suffix} was successful", "32" )
     else: 
-        print_colored_message("TEST 2 failed", "31" )
+        print_colored_message(f"{suffix} failed", "31" )
 
 
 
@@ -94,7 +95,7 @@ def test_2(source_path, msa, iqtree, python, satute):
 def test_option_model(path_iqtree, path_python, path_satute, source_path, msa, results_path):
 
     print("")
-    print(" ============= MODI MODEL.... ====================")
+    print_colored_message(" ============= MODI MODEL....====================", "36")
     print("")
 
 

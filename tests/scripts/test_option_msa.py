@@ -1,4 +1,4 @@
-from satute_test import (
+from satute_test_utils import (
     run_external_command,
     print_test_name, 
     create_destination_dir,
@@ -9,15 +9,12 @@ from satute_test import (
     
 )
 import os
-import shutil
-import subprocess
-import glob
 from pathlib import Path
 
 
 
-def test_1a(source_path, msa, iqtree, python, satute):
-    suffix = "TEST 1a: only msa iqtree exists"
+def test_1(source_path, msa, iqtree, python, satute):
+    suffix = "MSA TEST 1: only msa iqtree exists"
     print_test_name(suffix)
 
     # create output directory
@@ -48,13 +45,13 @@ def test_1a(source_path, msa, iqtree, python, satute):
 
     # check the files   
     if check_iqtree_files_exist(msa, dest_dir_path, ["m"] )  and check_satute_files(msa, dest_dir_path, categories, alpha, asr):
-        print_colored_message("TEST 1a was successful", "32" )
+        print_colored_message(f"{suffix} was successful", "32" )
     else: 
-        print_colored_message("TEST 1a failed", "31" )
+        print_colored_message(f"{suffix} failed", "31" )
 
 
-def test_1b(source_path, msa, iqtree, python, satute):
-    suffix = "TEST 1b: only msa ufboot"
+def test_2(source_path, msa, iqtree, python, satute):
+    suffix = "MSA TEST 2: only msa ufboot"
     print_test_name(suffix)
 
     # create output directory
@@ -87,13 +84,13 @@ def test_1b(source_path, msa, iqtree, python, satute):
     
     # check the files   
     if check_iqtree_files_exist(msa, dest_dir_path, ["ufboot","m"]) and check_satute_files(msa, dest_dir_path, categories, alpha, asr):
-        print_colored_message("TEST 1b was successful", "32" )
+        print_colored_message(f"{suffix} was successful", "32" )
     else: 
-        print_colored_message("TEST 1b failed", "31" )
+        print_colored_message(f"{suffix} failed", "31" )
 
 
-def test_1c(source_path, msa, iqtree, python, satute):
-    suffix = "TEST 1c: only msa boot"
+def test_3(source_path, msa, iqtree, python, satute):
+    suffix = "MSA TEST 3: only msa boot"
     print_test_name(suffix)
 
     # create output directory
@@ -104,7 +101,7 @@ def test_1c(source_path, msa, iqtree, python, satute):
     copy_files_to_dest_dir(source_path, dest_dir_path, files_to_copy)
 
     categories = []
-    alpha = str(2.0)
+    alpha = str(0.02)
     asr = True
 
 
@@ -126,21 +123,21 @@ def test_1c(source_path, msa, iqtree, python, satute):
 
     # check the files   
     if check_iqtree_files_exist(msa, dest_dir_path, ["boot","m"])  and    check_satute_files(msa, dest_dir_path, categories, alpha, asr):
-        print_colored_message("TEST 1c was successful", "32" )
+        print_colored_message(f"{suffix} was successful", "32" )
     else: 
-        print_colored_message("TEST 1d failed", "31" )
+        print_colored_message(f"{suffix} failed", "31" )
 
 
 def test_option_msa(path_iqtree, path_python, path_satute, source_path, msa, results_path):
 
     print("")
-    print(" ============= MODI MSA ====================")
+    print_colored_message(" ============= MODI MSA....====================", "36")
     print("")
 
 
-    test_1a(source_path, msa, path_iqtree, path_python, path_satute)
-    test_1b(source_path, msa, path_iqtree, path_python, path_satute)
-    test_1c(source_path, msa, path_iqtree, path_python, path_satute)
+    test_1(source_path, msa, path_iqtree, path_python, path_satute)
+    test_2(source_path, msa, path_iqtree, path_python, path_satute)
+    test_3(source_path, msa, path_iqtree, path_python, path_satute)
 
 
 if __name__ == "__main__":
