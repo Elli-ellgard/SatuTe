@@ -132,7 +132,7 @@ def test_other_options(path_iqtree, path_python, path_satute, source_path, msa, 
     print("")
 
 
-    test_1(source_path, msa, path_iqtree, path_python, path_satute)
+    test_1(source_path, msa, "/home/elgert/IQ-TREE/build2/iqtree2", path_python, path_satute)
     test_2(source_path, msa, "iqtree8", path_python, path_satute)
     test_3(source_path, msa, path_iqtree, path_python, path_satute)
     print("")
@@ -140,7 +140,7 @@ def test_other_options(path_iqtree, path_python, path_satute, source_path, msa, 
 
 if __name__ == "__main__":
     # set paths to IQ-TREE and Python executable
-    path_iqtree = "/home/elgert/IQ-TREE/build2/iqtree2"
+    path_iqtree = "iqtree2"
     path_python = "python3"
     path_satute = "../../satute_cli.py"
 
