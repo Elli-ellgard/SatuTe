@@ -47,7 +47,7 @@ def test_1a(source_path, msa, iqtree, python, satute):
    )
 
     # check the files   
-    if check_iqtree_files_exist(msa, dest_dir_path, [] )  and check_satute_files(msa, dest_dir_path, categories, alpha, asr):
+    if check_iqtree_files_exist(msa, dest_dir_path, ["m"] )  and check_satute_files(msa, dest_dir_path, categories, alpha, asr):
         print_colored_message("TEST 1a was successful", "32" )
     else: 
         print_colored_message("TEST 1a failed", "31" )
@@ -86,7 +86,7 @@ def test_1b(source_path, msa, iqtree, python, satute):
 
     
     # check the files   
-    if check_iqtree_files_exist(msa, dest_dir_path, ["ufboot"]) and check_satute_files(msa, dest_dir_path, categories, alpha, asr):
+    if check_iqtree_files_exist(msa, dest_dir_path, ["ufboot","m"]) and check_satute_files(msa, dest_dir_path, categories, alpha, asr):
         print_colored_message("TEST 1b was successful", "32" )
     else: 
         print_colored_message("TEST 1b failed", "31" )
@@ -125,7 +125,7 @@ def test_1c(source_path, msa, iqtree, python, satute):
     )
 
     # check the files   
-    if check_iqtree_files_exist(msa, dest_dir_path, ["boot"])  and    check_satute_files(msa, dest_dir_path, categories, alpha, asr):
+    if check_iqtree_files_exist(msa, dest_dir_path, ["boot","m"])  and    check_satute_files(msa, dest_dir_path, categories, alpha, asr):
         print_colored_message("TEST 1c was successful", "32" )
     else: 
         print_colored_message("TEST 1d failed", "31" )

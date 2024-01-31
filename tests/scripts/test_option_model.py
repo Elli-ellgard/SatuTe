@@ -12,9 +12,8 @@ import os
 from pathlib import Path
 
 
-
 def test_1(source_path, msa, iqtree, python, satute):
-    suffix = "TEST 1: only msa iqtree exists  path to executable"
+    suffix = "TEST 1: only model"
     print_test_name(suffix)
     print(f"IQ-Tree executeable path: {iqtree}")
 
@@ -34,27 +33,25 @@ def test_1(source_path, msa, iqtree, python, satute):
         [
             python,
             satute,
+            "-model",
+            "JC",
+            "-alpha",
+            "0.05",
             "-iqtree",
             iqtree,
-            "-msa",
-            os.path.join(dest_dir_path, msa),
-            "-alpha",
-            alpha,
-            "-asr",
         ]
-   )
+    )
 
     # check the files   
-    if check_iqtree_files_exist(msa, dest_dir_path, ["m"] )  and check_satute_files(msa, dest_dir_path, categories, alpha, asr):
+    if not check_iqtree_files_exist(msa, dest_dir_path, [] )  and  not check_satute_files(msa, dest_dir_path, categories, alpha, asr):
         print_colored_message("TEST 1 was successful", "32" )
     else: 
         print_colored_message("TEST 1 failed", "31" )
 
 
 def test_2(source_path, msa, iqtree, python, satute):
-    suffix = "TEST 2: only msa iqtree not exists"
+    suffix = "TEST 2: msa model no heterogeneity"
     print_test_name(suffix)
-    print(f"IQ-Tree executeable path: {iqtree}")
 
     # create output directory
     dest_dir_path = create_destination_dir(source_path, suffix)
@@ -72,69 +69,38 @@ def test_2(source_path, msa, iqtree, python, satute):
         [
             python,
             satute,
-            "-iqtree",
-            iqtree,
             "-msa",
             os.path.join(dest_dir_path, msa),
+            "-model",
+            "JC",
             "-alpha",
-            alpha,
-            "-asr",
+            "0.05",
+            "-iqtree",
+            iqtree,
         ]
-   )
+    )
 
     
     # check the files   
-    if not check_iqtree_files_exist(msa, dest_dir_path, ["m"]) and not check_satute_files(msa, dest_dir_path, categories, alpha, asr):
+    if check_iqtree_files_exist(msa, dest_dir_path, []) and  check_satute_files(msa, dest_dir_path, categories, alpha, asr):
         print_colored_message("TEST 2 was successful", "32" )
     else: 
         print_colored_message("TEST 2 failed", "31" )
 
 
-def test_3(source_path, msa, iqtree, python, satute):
-    suffix = "TEST 3: no msa no dir"
-    print_test_name(suffix)
-
-    # create output directory
-    dest_dir_path = create_destination_dir(source_path, suffix)
-
-    # copy msa file to output directory
-    files_to_copy = [msa]
-    copy_files_to_dest_dir(source_path, dest_dir_path, files_to_copy)
-
-    categories = []
-    alpha = str(2.0)
-    asr = True
 
 
-    run_external_command(
-        [
-            python,
-            satute,
-            "-iqtree",
-            iqtree,
-            "-alpha",
-            alpha,
-            "-asr",
-        ]
-    )
 
-    # check the files   
-    if not  check_satute_files(msa, dest_dir_path, categories, alpha, asr):
-        print_colored_message("TEST 3 was successful", "32" )
-    else: 
-        print_colored_message("TEST 3 failed", "31" )
-
-
-def test_other_options(path_iqtree, path_python, path_satute, source_path, msa, results_path):
+def test_option_model(path_iqtree, path_python, path_satute, source_path, msa, results_path):
 
     print("")
-    print(" ============= Other Options: IQ-Tree.... ====================")
+    print(" ============= MODI MODEL.... ====================")
     print("")
 
 
-    test_1(source_path, msa, "/home/elgert/IQ-TREE/build2/iqtree2", path_python, path_satute)
-    test_2(source_path, msa, "iqtree8", path_python, path_satute)
-    test_3(source_path, msa, path_iqtree, path_python, path_satute)
+    test_1(source_path, msa, path_iqtree, path_python, path_satute)
+    test_2(source_path, msa, path_iqtree, path_python, path_satute)
+    #test_3(source_path, msa, path_iqtree, path_python, path_satute)
     print("")
 
 
@@ -150,5 +116,5 @@ if __name__ == "__main__":
 
     output_dir_path =  "../test_results/"
 
-    test_other_options(path_iqtree, path_python, path_satute, data_dir_path, msa, output_dir_path)
+    test_option_model(path_iqtree, path_python, path_satute, data_dir_path, msa, output_dir_path)
     

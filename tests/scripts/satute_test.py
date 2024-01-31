@@ -82,10 +82,12 @@ def additional_iqtree_files(options):
         suffix.extend([".boottrees", ".contree"])
     elif "wspr" in options: 
         suffix.append(".siteprob")
+    elif "m" in options: 
+        suffix.append(".model.gz")
     return suffix
 
 def check_iqtree_files_exist(data_name, dest_dir_path, iqtree_options):
-    iqtree_files_endings = [".bionj",".ckp.gz",".iqtree",".log",  ".mldist", ".model.gz", ".treefile"]
+    iqtree_files_endings = [".bionj",".ckp.gz",".iqtree",".log",  ".mldist" , ".treefile"]
     if len(iqtree_options):
         iqtree_files_endings.extend(additional_iqtree_files(iqtree_options))
     files_to_check = [ data_name + suffix for suffix in iqtree_files_endings]
