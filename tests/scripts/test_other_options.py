@@ -9,9 +9,6 @@ from satute_test import (
     
 )
 import os
-import shutil
-import subprocess
-import glob
 from pathlib import Path
 
 
