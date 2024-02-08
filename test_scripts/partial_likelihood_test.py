@@ -1,15 +1,7 @@
 import numpy as np
 from ete3 import Tree
 import sys
-
-sys.path.append("..")
-
 from satute_categories import read_alignment_file
-from satute_trees import (
-    rename_internal_nodes_preorder,
-    collapse_identical_leaf_sequences,
-)
-from file_handler import FileHandler
 from satute_repository import IqTreeParser
 from satute_util import spectral_decomposition
 from Bio.Align import MultipleSeqAlignment
@@ -20,15 +12,20 @@ from rate_matrix import RateMatrix
 from amino_acid_models import POISSON_RATE_MATRIX, AA_STATE_FREQUENCIES
 from satute_rate_analysis import single_rate_analysis
 import numpy as np
-import pandas as pd
 from graph import get_initial_likelihood_vector
+from satute_sequences import dict_to_alignment
+from satute_trees import (
+    rename_internal_nodes_preorder,
+    collapse_identical_leaf_sequences,
+)
 from partial_likelihood import (
     partial_likelihood,
     calculate_partial_likelihoods_for_sites,
     calculate_exponential_matrix,
 )
-import pprint
-from scipy.sparse.linalg import expm
+
+sys.path.append("..")
+
 
 RATE_MATRIX = np.array([[-3, 1, 1, 1], [1, -3, 1, 1], [1, 1, -3, 1], [1, 1, 1, -3]])
 
@@ -126,7 +123,7 @@ def test_two():
     )
 
 
-def calculate_stationary_distribution(rate_matrix)->np.array:
+def calculate_stationary_distribution(rate_matrix) -> np.array:
     """
     Calculate the stationary distribution of a rate matrix.
 
@@ -136,20 +133,19 @@ def calculate_stationary_distribution(rate_matrix)->np.array:
     Returns:
     np.array: The stationary distribution as a numpy array.
     """
-    
-    
+
     # Ensure the matrix is square
     if rate_matrix.shape[0] != rate_matrix.shape[1]:
         raise ValueError("Rate matrix must be square")
 
     print("Calculating stationary distribution for rate matrix:")
-    
+
     # Find eigenvalues and eigenvectors
     eigenvalues, eigenvectors = np.linalg.eig(rate_matrix.T)
-    
+
     # print(eigenvalues)
     print(eigenvalues)
-        
+
     # Find the eigenvector corresponding to the eigenvalue closest to zero
     stationary_vector = eigenvectors[:, np.isclose(eigenvalues, 0)].real
 
@@ -213,8 +209,7 @@ def test_one():
 
     # Step 7: Create a rate matrix and calculate stationary distribution
     rate_matrix = RateMatrix(RATE_MATRIX)
-    
-    
+
     state_frequencies = calculate_stationary_distribution(rate_matrix.rate_matrix)
     phi_matrix = np.diag(state_frequencies)
 
@@ -302,27 +297,24 @@ def test_two():
 
     # Step 7: Create a rate matrix and calculate stationary distribution
     rate_matrix = RateMatrix(POISSON_RATE_MATRIX)
-    
-    state_frequencies = AA_STATE_FREQUENCIES['POISSON']
-    phi_matrix = np.diag(state_frequencies)    
-        
-        
-    # print(POISSON_RATE_MATRIX)        
+
+    state_frequencies = AA_STATE_FREQUENCIES["POISSON"]
+    phi_matrix = np.diag(state_frequencies)
+
+    # print(POISSON_RATE_MATRIX)
     # state_frequencies = calculate_stationary_distribution(rate_matrix.rate_matrix)
     # phi_matrix = np.diag(state_frequencies)
-    # 
+    #
     # Step 8: Perform spectral decomposition
-    # stationary_distribution = calculate_stationary_distribution(rate_matrix.rate_matrix)    
+    # stationary_distribution = calculate_stationary_distribution(rate_matrix.rate_matrix)
 
-    
     (
         array_left_eigenvectors,
         array_right_eigenvectors,
         multiplicity,
     ) = spectral_decomposition(rate_matrix.rate_matrix, phi_matrix)
-    
-    print(array_left_eigenvectors, array_right_eigenvectors, multiplicity)    
 
+    print(array_left_eigenvectors, array_right_eigenvectors, multiplicity)
 
     # Step 9: Convert the sequence dictionary back to a MultipleSeqAlignment object
     alignment = dict_to_alignment(sequence_dict)
@@ -336,10 +328,9 @@ def test_two():
         focused_edge=None,
     )
     """
-    
+
     # print(partial_likelihood_per_site_storage)
-    
-    
+
     # Step 11: Perform single rate analysis
     # results = single_rate_analysis(
     #     collapsed_tree_one,
