@@ -6,6 +6,8 @@ from pandas import DataFrame
 import os
 
 """ ## RATE CATEGORIES  """
+
+
 def get_column_names_with_prefix(data_frame, prefix):
     # Filter the columns using the specified prefix
     columns_with_prefix = data_frame.columns[
@@ -74,6 +76,8 @@ def parse_category_rates(log_file, number_rates):
 
 
 """ ## HANDLE ALIGNMENTS  """
+
+
 def filter_alignment_by_ids(alignment, ids):
     """
     Filter a MultipleSeqAlignment object to include only sequences with specific IDs.
@@ -94,7 +98,7 @@ def filter_alignment_by_ids(alignment, ids):
     return filtered_alignment
 
 
-def guess_alignment_format(file_name):
+def guess_alignment_format(file_name) -> str:
     with open(file_name, "r") as f:
         first_line = f.readline().strip()
 
@@ -169,7 +173,7 @@ def read_alignment_file(file_name) -> MultipleSeqAlignment:
     return alignment
 
 
-def cut_alignment_columns_optimized(alignment, columns):
+def cut_alignment_columns_optimized(alignment, columns) -> MultipleSeqAlignment:
     """
     Extracts specified columns from a given multiple sequence alignment.
 

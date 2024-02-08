@@ -196,7 +196,7 @@ class IqTreeParser:
         if self.file_path:
             self.load_iqtree_file_content()
 
-    def load_iqtree_file_content(self):
+    def load_iqtree_file_content(self) -> list[str]:
         """
         Loads the content of the .iqtree file into the class attribute 'file_content'.
 

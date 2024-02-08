@@ -1,3 +1,4 @@
+import numpy as np
 from functools import cache
 from scipy.sparse.linalg import expm
 from ete3 import Tree
@@ -13,7 +14,7 @@ from amino_acid_models import AMINO_ACIDS
 
 
 @cache
-def partial_likelihood(node, coming_from: Node, rate_matrix: RateMatrix, factor=0):
+def partial_likelihood(node: Node, coming_from: Node, rate_matrix: RateMatrix, factor=0):
     """
     Compute the partial likelihood of a given node in a directed acyclic graph (DAG) tree.
 
@@ -186,3 +187,5 @@ def calculate_partial_likelihoods_for_sites(
             )
 
     return partial_likelihood_per_site_storage
+
+

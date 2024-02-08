@@ -6,10 +6,10 @@ from ete3 import Tree
 from satute_util import spectral_decomposition
 from rate_matrix import RateMatrix
 from file_handler import FileHandler, IqTreeHandler
-from satute_trees import rename_internal_nodes_preorder
+from satute_trees import rename_internal_nodes_pre_order
 from satute_arguments import ARGUMENT_LIST
 from Bio.Align import MultipleSeqAlignment
-from satute_repository import SubstitutionModel
+from satute_repository import SubstitutionModel, IqTreeParser
 from satute_rate_analysis import (
     multiple_rate_analysis,
     single_rate_analysis_collapsed_tree,
@@ -28,7 +28,6 @@ from satute_repository import (
     parse_substitution_model,
     parse_rate_from_model,
     parse_file_to_data_frame,
-    IqTreeParser,
 )
 
 
@@ -292,7 +291,7 @@ class Satute:
         except (FileNotFoundError, ValueError) as e:
             self.logger.error(str(e))
             raise ValueError(f"Error extracting tree: {e}")
-        return rename_internal_nodes_preorder(Tree(newick_string, format=1))
+        return rename_internal_nodes_pre_order(Tree(newick_string, format=1))
 
     def construct_log_file_name(self, msa_file: Path):
         log_file = f"{msa_file.resolve()}_{self.input_args.alpha}.satute.log"
@@ -508,6 +507,10 @@ class Satute:
             edge,
             logger,
         )
+                        
+        for rate ,alignment in categorized_sites.items():
+            if len(alignment) == 0:
+                logger.warning(f"Will be skipping Rate category {rate}")
 
         self.logger.info(
             f"Writing alignment and indices to {self.active_directory.name}"

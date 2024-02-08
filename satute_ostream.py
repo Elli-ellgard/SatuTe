@@ -12,8 +12,9 @@ import numpy as np
 # New function to format float columns
 def format_float_columns(data_frame: DataFrame):
     for col in data_frame.columns:
-        if data_frame[col].dtype == float:
-            data_frame[col] = data_frame[col].apply(lambda x: round(x, 4))
+        if col != "branch_length":
+            if data_frame[col].dtype == float:
+                data_frame[col] = data_frame[col].apply(lambda x: round(x, 4))
 
 
 def construct_file_name(
@@ -248,6 +249,7 @@ def write_nexus_file(
     - file_name (str): Name of the file to write.
     - results_data_frame (DataFrame): DataFrame with the data to map onto the Newick string.
     """
+    
     try:
         newick_string = tree.write(format=1, format_root_node=True)
         # Validate input
@@ -259,12 +261,22 @@ def write_nexus_file(
         # Map values to Newick string
         mapped_newick_string = map_values_to_newick(newick_string, results_data_frame)
 
+        # Extract taxa names from the tree
+        taxa_names = [leaf.name for leaf in tree.iter_leaves()]
+        
         # Write the Nexus file
         with open(file_name, "w") as nexus_file:
             nexus_file.write("#NEXUS\n")
+            nexus_file.write("BEGIN TAXA;\n")
+            nexus_file.write(f"    DIMENSIONS NTAX={len(taxa_names)};\n")
+            nexus_file.write("    TAXLABELS\n")
+            for taxon in taxa_names:
+                nexus_file.write(f"        {taxon}\n")
+            nexus_file.write("    ;\n")
+            nexus_file.write("END;\n\n")
             nexus_file.write("BEGIN TREES;\n")
             nexus_file.write(f"Tree tree1 = {mapped_newick_string}\n")
-            nexus_file.write("END TREES;\n")
+            nexus_file.write("END;\n")
         logger.info(f"Nexus file written successfully: {file_name}")
     except Exception as e:
         logger.error(f"Error writing Nexus file: {e}")
@@ -301,8 +313,6 @@ def write_alignment_and_indices(
         print(f"An unexpected error occurred: {e}")
 
 
-import pandas as pd
-
 
 def calculate_and_write_posterior_probabilities(
     partial_likelihood_per_site_storage: dict, state_frequencies: list, output_file: str
@@ -330,9 +340,7 @@ def calculate_and_write_posterior_probabilities(
             4, state_frequencies, right_partial_likelihood
         )
         
-        # left_posterior_probabilities["Site"] = left_partial_likelihood["Site"]
         left_posterior_probabilities["Node"] = left_partial_likelihood["Node"]
-        # left_posterior_probabilities["Edge"] = edge
         right_posterior_probabilities["Site"] = right_partial_likelihood["Site"]
         right_posterior_probabilities["Node"] = right_partial_likelihood["Node"]
         right_posterior_probabilities["Edge"] = edge        

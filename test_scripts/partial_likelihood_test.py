@@ -15,7 +15,7 @@ from satute_util import spectral_decomposition
 from Bio.Align import MultipleSeqAlignment
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
-from graph import Graph, Node
+from graph import Graph, Node, get_initial_likelihood_vector
 from rate_matrix import RateMatrix
 from amino_acid_models import POISSON_RATE_MATRIX, AA_STATE_FREQUENCIES
 from satute_rate_analysis import single_rate_analysis
@@ -25,8 +25,10 @@ from graph import get_initial_likelihood_vector
 from partial_likelihood import (
     partial_likelihood,
     calculate_partial_likelihoods_for_sites,
+    calculate_exponential_matrix,
 )
-
+import pprint
+from scipy.sparse.linalg import expm
 
 RATE_MATRIX = np.array([[-3, 1, 1, 1], [1, -3, 1, 1], [1, 1, -3, 1], [1, 1, 1, -3]])
 
@@ -46,6 +48,11 @@ def parse_newick_file(file_path):
 
     except FileNotFoundError:
         raise Exception("File not found: " + file_path)
+
+
+"""
+======= Tests =======
+"""
 
 
 def name_nodes_by_level_order(tree):
@@ -91,28 +98,32 @@ def test_three():
 
 
 def test_two():
-    alignment_file = "./Clemens/example_3/sim-JC+G-AC1-AG1-AT1-CG1-CT1-GT1-alpha1.2-taxa64-len1000bp-bla0.01-blb0.8-blc0.2-rep01.fasta"
-    alignment = read_alignment_file(alignment_file)
-    file_handler = FileHandler()
-    newick_string = file_handler.get_newick_string_from_file(
-        "./Clemens/example_3/sim-JC+G-AC1-AG1-AT1-CG1-CT1-GT1-alpha1.2-taxa64-len1000bp-bla0.01-blb0.8-blc0.2-rep01.fasta.treefile"
+
+    alignment = read_alignment_file(
+        "./test/Clemens/toy_example_JC/toy_example_ntaxa_7_run_5-alignment.phy"
     )
-    t = Tree(newick_string, format=1)
+
+    t = parse_newick_file(
+        "./test/Clemens/toy_example_JC/toy_example_ntaxa_7_run_5-alignment.phy.treefile"
+    )
 
     t = name_nodes_by_level_order(t)
-    iq_tree_parser = IqTreeParser()
 
-    RATE_MATRIX, psi_matrix = iq_tree_parser.parse_rate_matrices(
-        4,
-        "./Clemens/example_3/sim-JC+G-AC1-AG1-AT1-CG1-CT1-GT1-alpha1.2-taxa64-len1000bp-bla0.01-blb0.8-blc0.2-rep01.fasta.iqtree",
+    iqtree_parser = IqTreeParser(
+        "./test/Clemens/toy_example_JC/toy_example_ntaxa_7_run_5-alignment.phy.iqtree"
     )
+
+    substitution_model = iqtree_parser.load_substitution_model()
+
     rate_matrix = RateMatrix(RATE_MATRIX)
 
     (
         array_left_eigenvectors,
         array_right_eigenvectors,
         multiplicity,
-    ) = spectral_decomposition(RATE_MATRIX, psi_matrix)
+    ) = spectral_decomposition(
+        substitution_model.rate_matrix, substitution_model.phi_matrix
+    )
 
 
 def calculate_stationary_distribution(rate_matrix)->np.array:
@@ -167,18 +178,14 @@ def dict_to_alignment(sequence_dict):
 
 
 def test_one():
-    # Step 1: Create SeqRecord objects for your sequences
-    seq_records = [
-        SeqRecord(Seq("ACGTAT"), id="ACGTAT_1"),
-        SeqRecord(Seq("ACGTAT"), id="ACGTAT_2"),
-        SeqRecord(Seq("ACGTAT"), id="ACGTAT_3"),
-        SeqRecord(Seq("GGTATG"), id="C"),
-        SeqRecord(Seq("GGTATG"), id="E"),
-        SeqRecord(Seq("GGTACG"), id="D"),
-    ]
+    # Create SeqRecord objects for your sequences
+    seq1 = SeqRecord(Seq("AA"), id="A")
+    seq2 = SeqRecord(Seq("CG"), id="B")
+    seq3 = SeqRecord(Seq("GG"), id="C")
+    seq4 = SeqRecord(Seq("GG"), id="D")
 
-    # Step 2: Create a MultipleSeqAlignment object from the SeqRecord objects
-    alignment = MultipleSeqAlignment(seq_records)
+    # Create a MultipleSeqAlignment object
+    alignment = MultipleSeqAlignment([seq1, seq2, seq3, seq4])
 
     # Step 3: Create a phylogenetic tree from a Newick string
     newick_string = (
@@ -192,8 +199,7 @@ def test_one():
     rename_internal_nodes_preorder(tree)
     print(tree.get_ascii(show_internal=True))
 
-    # Step 5: Create a dictionary to access sequences by their ID
-    sequence_dict = {record.id: str(record.seq) for record in alignment}
+    t = name_nodes_by_level_order(t)
 
     # Creating a deep copy of the tree for manipulation
     collapsed_tree_one = tree.copy("deepcopy")

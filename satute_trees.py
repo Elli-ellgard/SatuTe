@@ -19,9 +19,9 @@ def rescale_branch_lengths(tree: Tree, rescale_factor: float):
             node.dist *= rescale_factor
 
 
-def rename_internal_nodes_preorder(tree: Tree) -> Tree:
+def rename_internal_nodes_pre_order(tree: Tree) -> Tree:
     """
-    Modify the input tree by naming its nodes using a preorder traversal.
+    Modify the input tree by naming its nodes using a pre order traversal.
     Nodes are named as "NodeX*" where X is an incremental number.
     If a node name is purely numeric, it is preserved as 'apriorism' feature of the node.
     Args:
@@ -70,7 +70,9 @@ def has_duplicate_leaf_sequences(node, multiple_sequence_alignment):
     return any(count > 1 for count in sequence_count.values())
 
 
-def collapse_identical_leaf_sequences(tree: Tree, multiple_sequence_alignment: dict):
+def collapse_identical_leaf_sequences(
+    tree: Tree, multiple_sequence_alignment: dict
+) -> tuple[dict, dict]:
     """
     Collapses a tree by merging nodes with identical leaf sequences.
 
@@ -109,12 +111,56 @@ def has_only_leaf_children(node):
     return any(child.is_leaf() for child in node.children)
 
 
-def delete_children_nodes(node: Tree, twin_dictionary: dict):
-    twin_dictionary[node.name] = [leaf.name for leaf in node.iter_leaves()]
-    # Gather names of all leaf children for record-keeping
+def delete_children_nodes(node: Tree, collapsed_nodes_info: dict) -> dict:
+    """
+    Deletes the children nodes of a specified non-leaf node in a phylogenetic tree and updates a dictionary
+    with the names of all leaves that were under these nodes.
+
+    This function is primarily used in processes where it's necessary to simplify a tree by collapsing nodes
+    with identical sequences, and there's a need to keep track of the original leaf distribution for further analysis.
+
+    Args:
+        node (Tree): A non-leaf node from which children will be detached. This node must be part of a larger Tree structure.
+        collapsed_nodes_info (dict): A dictionary to be updated with information about the collapsed nodes. It maps node names
+                                     to lists containing the names of all leaf nodes that were under each collapsed node.
+
+    Returns:
+        dict: The updated dictionary reflecting the changes made to the tree structure, including the names of leaves
+              under the detached nodes.
+
+    Raises:
+        TypeError: If `node` is not an instance of `Tree` or `collapsed_nodes_info` is not a dictionary.
+        ValueError: If `node` is a leaf node, indicating it has no children to delete.
+
+    Example:
+        >>> from ete3 import Tree
+        >>> tree = Tree("((A:1,B:1)Node1:0.5,(C:1,D:1)Node2:0.5)Root;")
+        >>> collapsed_nodes_info = {}
+        >>> updated_info = delete_children_nodes(tree&"Node1", collapsed_nodes_info)
+        >>> print(tree)
+        ((C:1,D:1)Node2:0.5)Root;
+        >>> print(updated_info)
+        {'Node1': ['A', 'B']}
+
+    Note:
+        - The function modifies the input tree by detaching child nodes from the specified node. These child nodes are removed
+          from the tree but not deleted from memory.
+        - The function assumes the tree and the dictionary are correctly formatted and the node exists within the tree.
+    """
+    if not isinstance(node, Tree):
+        raise TypeError("The node must be an instance of ete3.Tree.")
+    if not isinstance(collapsed_nodes_info, dict):
+        raise TypeError("collapsed_nodes_info must be a dictionary.")
+    if node.is_leaf():
+        raise ValueError(
+            "The specified node is a leaf and does not have children to delete."
+        )
+
+    collapsed_nodes_info[node.name] = [leaf.name for leaf in node.iter_leaves()]
     for child in list(node.children):
-        # Delete the child node
         child.detach()
+
+    return collapsed_nodes_info
 
 
 def print_tree_with_inner_node_names(tree: Tree):
@@ -123,6 +169,7 @@ def print_tree_with_inner_node_names(tree: Tree):
 
 if __name__ == "__main__":
     tree = Tree("(((A:0.1,B:0.1):0.1,AB:1),(C:0.2,D:0.1,E:0.1):1);")
+
     multiple_sequence_alignment = {
         "A": "CATGC",
         "B": "CATGC",
@@ -132,7 +179,11 @@ if __name__ == "__main__":
         "D": "ATGC",
         "E": "ATGC",
     }
-    rename_internal_nodes_preorder(tree)
+
+    rename_internal_nodes_pre_order(tree)
+
     print_tree_with_inner_node_names(tree)
-    collapse_tree(tree, multiple_sequence_alignment)
+
+    collapse_identical_leaf_sequences(tree, multiple_sequence_alignment)
+
     print_tree_with_inner_node_names(tree)

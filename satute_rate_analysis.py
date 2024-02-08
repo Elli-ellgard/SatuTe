@@ -33,7 +33,6 @@ def single_rate_analysis(
     - alignment: The alignment data.
     - rate_matrix: The matrix of rates.
     - state_frequencies: Frequencies of different states.
-    - array_left_eigenvectors: Left eigenvectors array.
     - array_right_eigenvectors: Right eigenvectors array.
     - multiplicity: The multiplicity value.
     - alpha: The significance level for tests. Default is 0.05.
@@ -181,11 +180,13 @@ def process_test_statistics_posterior(
     )
 
     result_keys = [
+        "test_statistic",
         "delta",
+        "variance",
         "p_value",
+        "decision_test",
         "decision_corrected_test_tips",
         "decision_corrected_test_branches",
-        "result_test_tip2tip",
         "decision_test_tip2tip",
     ]
 
@@ -209,7 +210,6 @@ def multiple_rate_analysis(
     # Iterate over each rate category and its corresponding alignment
     for rate, sub_alignment in per_rate_category_alignment.items():
         if sub_alignment.get_alignment_length() == 0:
-            print(f"Skipping rate {rate} because it has no sites")
             continue
 
         # Step 1: Map sequence IDs to their sequences from the alignment for easy access
@@ -223,9 +223,11 @@ def multiple_rate_analysis(
 
         # Step 3: Create a deep copy of the initial tree and collapse nodes with identical sequences
         collapsed_rescaled_tree_one = initial_tree.copy("deepcopy")
+
         sequence_dict, collapsed_nodes = collapse_identical_leaf_sequences(
             collapsed_rescaled_tree_one, sequence_dict
         )
+
         # Step 4: Rescale branch lengths according to the relative rate
         rescale_branch_lengths(collapsed_rescaled_tree_one, relative_rate)
 
@@ -250,10 +252,12 @@ def multiple_rate_analysis(
 
             # Step 8: Process each edge and its associated likelihoods
             for edge, likelihoods in partial_likelihood_per_site_storage.items():
+
                 # Convert left and right likelihoods to data frames
                 left_partial_likelihood = pd.DataFrame(
                     likelihoods["left"]["likelihoods"]
                 )
+
                 right_partial_likelihood = pd.DataFrame(
                     likelihoods["right"]["likelihoods"]
                 )
@@ -314,17 +318,21 @@ def store_test_results(
     Returns:
         dict: Structured result entry.
     """
+
     return {
+        "test_statistic": results.get("test_statistic"),
         "edge": edge,
         "delta": results.get("delta"),
+        "variance": results.get("variance"),
         "p_value": results.get("p_value"),
+        "decision_test": results.get("decision_test"),
         "decision_corrected_test_tips": results.get("decision_corrected_test_tips"),
         "decision_corrected_test_branches": results.get(
             "decision_corrected_test_branches"
         ),
         "decision_test_tip2tip": results.get("decision_test_tip2tip"),
         "category_rate": rate,
-        "branch_length": left_partial_likelihood.get("branch_length", [None])[0],
+        "branch_length": left_partial_likelihood.get("branch_length")[0],
     }
 
 
@@ -351,13 +359,14 @@ def insert_nan_values_for_identical_taxa(
 
     """
     nan_values_dict = {
+        "test_statistic": "Nan",
         "delta": "Nan",
+        "variance": "Nan",
         "p_value": "Nan",
+        "decision_test": "Nan",
         "decision_corrected_test_tips": "Nan",
         "decision_corrected_test_branches": "Nan",
         "decision_test_tip2tip": "Nan",
-        "result_test": "Nan",
-        "result_test_tip2tip": "Nan",
         "category_rate": rate,
     }
 
