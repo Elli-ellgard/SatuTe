@@ -38,7 +38,7 @@ class FileHandler:
         # Return None if no file with the specified suffixes is found
         return None
 
-    def file_exists(self, filepath):
+    def file_exists(self, filepath) -> bool:
         """
         Check if a file exists.
 

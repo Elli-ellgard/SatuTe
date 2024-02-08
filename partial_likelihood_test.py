@@ -1,24 +1,20 @@
 import numpy as np
 from ete3 import Tree
 from satute_categories import read_alignment_file
-from satute_trees import collapse_tree, rename_internal_nodes_preorder
-from file_handler import FileHandler
 from satute_repository import IqTreeParser
 from satute_util import spectral_decomposition
 from Bio.Align import MultipleSeqAlignment
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
-from graph import Graph, Node
+from graph import Graph, Node, get_initial_likelihood_vector
 from rate_matrix import RateMatrix
-from satute_rate_analysis import single_rate_analysis
-import numpy as np
-import pandas as pd
-from graph import get_initial_likelihood_vector
 from partial_likelihood import (
     partial_likelihood,
     calculate_partial_likelihoods_for_sites,
+    calculate_exponential_matrix,
 )
-
+import pprint
+from scipy.sparse.linalg import expm
 
 RATE_MATRIX = np.array([[-3, 1, 1, 1], [1, -3, 1, 1], [1, 1, -3, 1], [1, 1, 1, -3]])
 
@@ -38,6 +34,11 @@ def parse_newick_file(file_path):
 
     except FileNotFoundError:
         raise Exception("File not found: " + file_path)
+
+
+"""
+======= Tests =======
+"""
 
 
 def name_nodes_by_level_order(tree):
@@ -83,163 +84,316 @@ def test_three():
 
 
 def test_two():
-    alignment_file = "./Clemens/example_3/sim-JC+G-AC1-AG1-AT1-CG1-CT1-GT1-alpha1.2-taxa64-len1000bp-bla0.01-blb0.8-blc0.2-rep01.fasta"
-    alignment = read_alignment_file(alignment_file)
-    file_handler = FileHandler()
-    newick_string = file_handler.get_newick_string_from_file(
-        "./Clemens/example_3/sim-JC+G-AC1-AG1-AT1-CG1-CT1-GT1-alpha1.2-taxa64-len1000bp-bla0.01-blb0.8-blc0.2-rep01.fasta.treefile"
+
+    alignment = read_alignment_file(
+        "./test/Clemens/toy_example_JC/toy_example_ntaxa_7_run_5-alignment.phy"
     )
-    t = Tree(newick_string, format=1)
+
+    t = parse_newick_file(
+        "./test/Clemens/toy_example_JC/toy_example_ntaxa_7_run_5-alignment.phy.treefile"
+    )
 
     t = name_nodes_by_level_order(t)
-    iq_tree_parser = IqTreeParser()
 
-    RATE_MATRIX, psi_matrix = iq_tree_parser.parse_rate_matrices(
-        4,
-        "./Clemens/example_3/sim-JC+G-AC1-AG1-AT1-CG1-CT1-GT1-alpha1.2-taxa64-len1000bp-bla0.01-blb0.8-blc0.2-rep01.fasta.iqtree",
+    iqtree_parser = IqTreeParser(
+        "./test/Clemens/toy_example_JC/toy_example_ntaxa_7_run_5-alignment.phy.iqtree"
     )
+
+    substitution_model = iqtree_parser.load_substitution_model()
+
     rate_matrix = RateMatrix(RATE_MATRIX)
 
     (
         array_left_eigenvectors,
         array_right_eigenvectors,
         multiplicity,
-    ) = spectral_decomposition(RATE_MATRIX, psi_matrix)
+    ) = spectral_decomposition(
+        substitution_model.rate_matrix, substitution_model.phi_matrix
+    )
 
 
-def calculate_stationary_distribution(rate_matrix):
-    """
-    Calculate the stationary distribution of a rate matrix.
-
-    Args:
-    rate_matrix (np.array): A square numpy array representing the rate matrix.
-
-    Returns:
-    np.array: The stationary distribution as a numpy array.
-    """
-    # Ensure the matrix is square
-    if rate_matrix.shape[0] != rate_matrix.shape[1]:
-        raise ValueError("Rate matrix must be square")
-
-    # Find eigenvalues and eigenvectors
-    eigenvalues, eigenvectors = np.linalg.eig(rate_matrix.T)
-
-    # Find the eigenvector corresponding to the eigenvalue closest to zero
-    stationary_vector = eigenvectors[:, np.isclose(eigenvalues, 0)].real
-
-    # Normalize the stationary vector so its elements sum up to 1
-    stationary_distribution = stationary_vector / stationary_vector.sum()
-
-    return stationary_distribution.ravel()
-
-
-def dict_to_alignment(sequence_dict):
-    """
-    Convert a dictionary of sequences to a MultipleSeqAlignment object.
-
-    Args:
-    sequence_dict (dict): A dictionary with sequence identifiers as keys and sequence strings as values.
-
-    Returns:
-    MultipleSeqAlignment: The corresponding MultipleSeqAlignment object.
-    """
-    alignment_list = []
-    for id, sequence in sequence_dict.items():
-        seq_record = SeqRecord(Seq(sequence), id=id)
-        alignment_list.append(seq_record)
-
-    return MultipleSeqAlignment(alignment_list)
+def print_beautifully(dictionary):
+    pprinter = pprint.PrettyPrinter(indent=4)
+    pprinter.pprint(dictionary)
 
 
 def test_one():
-    # Step 1: Create SeqRecord objects for your sequences
-    seq_records = [
-        SeqRecord(Seq("ACGTAT"), id="ACGTAT_1"),
-        SeqRecord(Seq("ACGTAT"), id="ACGTAT_2"),
-        SeqRecord(Seq("ACGTAT"), id="ACGTAT_3"),
-        SeqRecord(Seq("GGTATG"), id="C"),
-        SeqRecord(Seq("GGTATG"), id="E"),
-        SeqRecord(Seq("GGTACG"), id="D"),
-    ]
+    # Create SeqRecord objects for your sequences
+    seq1 = SeqRecord(Seq("AA"), id="A")
+    seq2 = SeqRecord(Seq("CG"), id="B")
+    seq3 = SeqRecord(Seq("GG"), id="C")
+    seq4 = SeqRecord(Seq("GG"), id="D")
 
-    # Step 2: Create a MultipleSeqAlignment object from the SeqRecord objects
-    alignment = MultipleSeqAlignment(seq_records)
+    # Create a MultipleSeqAlignment object
+    alignment = MultipleSeqAlignment([seq1, seq2, seq3, seq4])
 
-    # Step 3: Create a phylogenetic tree from a Newick string
-    newick_string = "(((ACGTAT_1:0.2, ACGTAT_2:0.4):0.3,ACGTAT_3:1):1,(C:0.5,D:0.2, E:0.1):2);"
-    tree = Tree(newick_string, format=1)
+    newick_string = "((A:0.2, B:0.4):0.3, (C:0.5,D:0.2):2);"
 
-    print(tree.write(format=1, format_root_node=True))    
-    
-    # Step 4: Rename internal nodes in a preorder traversal
-    rename_internal_nodes_preorder(tree)
-    print(tree.get_ascii(show_internal=True))
+    t = Tree(newick_string, format=1)
 
-    # Step 5: Create a dictionary to access sequences by their ID
-    sequence_dict = {record.id: str(record.seq) for record in alignment}
+    t = name_nodes_by_level_order(t)
 
-    # Creating a deep copy of the tree for manipulation
-    collapsed_tree_one = tree.copy("deepcopy")
-
-    # Step 6: Process the tree to collapse nodes with identical sequences
-    sequence_dict, twin_dictionary = collapse_tree(collapsed_tree_one, sequence_dict)
-    
-    print(collapsed_tree_one.write(format=1, format_root_node=True))    
-
-    # Step 7: Create a rate matrix and calculate stationary distribution
     rate_matrix = RateMatrix(RATE_MATRIX)
-    state_frequencies = calculate_stationary_distribution(rate_matrix.rate_matrix)
-    phi_matrix = np.diag(state_frequencies)
 
-    # Step 8: Perform spectral decomposition
-    (
-        array_left_eigenvectors,
-        array_right_eigenvectors,
-        multiplicity,
-    ) = spectral_decomposition(rate_matrix.rate_matrix, phi_matrix)
-
-    print(collapsed_tree_one.get_ascii(show_internal=True))
-
-    # Step 9: Convert the sequence dictionary back to a MultipleSeqAlignment object
-    alignment = dict_to_alignment(sequence_dict)
-
-    # Step 10: Print the rate matrix
-    print("Rate Matrix:\n", rate_matrix.rate_matrix)
-
-    # Step 11: Perform single rate analysis
-    results = single_rate_analysis(
-        collapsed_tree_one,
-        alignment,
-        rate_matrix,
-        state_frequencies,
-        array_left_eigenvectors,
-        array_right_eigenvectors,
-        multiplicity,
-        0.05,
-        None,
+    partial_likelihood_per_site_storage = calculate_partial_likelihoods_for_sites(
+        t, alignment, rate_matrix
     )
 
-    # Step 12: Append additional data to results for twin nodes
-    for parent, value in twin_dictionary.items():
-        for child in value:
-            results["single_rate"].append(
-                {
-                    "edge": f"({parent}, {child})",
-                    "delta": "Nan",
-                    "c_s": "Nan",
-                    "c_sTwoSequence": "Nan",
-                    "p_value": "Nan",
-                    "result_test": "Nan",
-                    "result_test_tip2tip": "Nan",
-                    "category_rate": 1,
-                    "branch_length": tree.get_distance(parent, child),
-                }
-            )
 
-    # Step 13: Convert results to a pandas DataFrame
-    pandas_data_frame = pd.DataFrame.from_dict(results["single_rate"])
-    pandas_data_frame.to_csv("satute_test_one.csv")
+def test_verify_partial_likelihoods_comprehensively():
+    # Setup with predefined sequences and phylogenetic tree
+    seq1 = SeqRecord(Seq("AA"), id="A")
+    seq2 = SeqRecord(Seq("CG"), id="B")
+    seq3 = SeqRecord(Seq("GG"), id="C")
+    seq4 = SeqRecord(Seq("GG"), id="D")
+    alignment = MultipleSeqAlignment([seq1, seq2, seq3, seq4])
+    newick_string = "((A:0.2, B:0.4):0.3, (C:0.5,D:0.2):2);"
+    t = Tree(newick_string, format=1)
+    t = name_nodes_by_level_order(t)
+    rate_matrix = RateMatrix(RATE_MATRIX)
+
+    # Calculate partial likelihoods for sites
+    partial_likelihood_per_site_storage = calculate_partial_likelihoods_for_sites(
+        t, alignment, rate_matrix
+    )
+
+    # Verify overall structure and correctness of the output
+    assert isinstance(
+        partial_likelihood_per_site_storage, dict
+    ), "Expected output to be a dictionary."
+    assert (
+        len(partial_likelihood_per_site_storage) == alignment.get_alignment_length()
+    ), "Mismatch in expected and actual number of sites."
+
+    # Detailed verification of likelihood values and structure
+    for edge_key, edge_data in partial_likelihood_per_site_storage.items():
+        for direction, data in edge_data.items():
+            likelihoods = data["likelihoods"]
+            for likelihood in likelihoods:
+                assert set(likelihood.keys()) >= {
+                    "Node",
+                    "Site",
+                    "branch_length",
+                    "p_A",
+                    "p_C",
+                    "p_G",
+                    "p_T",
+                }, "Likelihood entry missing required keys."
+                assert all(
+                    likelihood[nucleotide] >= 0
+                    for nucleotide in ["p_A", "p_C", "p_G", "p_T"]
+                ), "Found negative likelihood value."
+
+    # Asserting consistency for identical sequences
+    for site_index in range(alignment.get_alignment_length()):
+        # Ensure this logic matches your data structure; adjust as necessary
+        likelihoods = (
+            partial_likelihood_per_site_storage.get(
+                f"some_key_for_site_{site_index}", {}
+            )
+            .get("some_direction", {})
+            .get("likelihoods", [])
+        )
+        if likelihoods:  # If likelihoods for this site and direction exist
+            p_values = {
+                nucleotide: sum(
+                    likelihood.get(nucleotide, 0) for likelihood in likelihoods
+                )
+                for nucleotide in ["p_A", "p_C", "p_G", "p_T"]
+            }
+            total_p = sum(p_values.values())
+            # Example check: total likelihoods across nodes for a site could be compared to a model-specific expectation
+            assert (
+                total_p > 0
+            ), f"Total likelihood for site {site_index} should be positive."
+
+    print("Comprehensive verification of partial likelihoods passed successfully.")
+
+
+def test_calculate_exponential_matrix():
+    # Test 1: Basic functionality
+    rate_matrix = RateMatrix(np.array([[-1, 1], [1, -1]]))
+    branch_length = 1.0
+    expected = expm(rate_matrix.rate_matrix * branch_length)
+    np.testing.assert_array_almost_equal(
+        calculate_exponential_matrix(rate_matrix, branch_length), expected
+    )
+
+    # Test 2: Zero branch length (should return identity matrix)
+    branch_length_zero = 0.0
+    identity_matrix = np.eye(rate_matrix.rate_matrix.shape[0])
+    np.testing.assert_array_almost_equal(
+        calculate_exponential_matrix(rate_matrix, branch_length_zero), identity_matrix
+    )
+
+    # Test 3: Negative branch length (should still work theoretically, but check your model's assumptions)
+    branch_length_negative = -1.0
+    expected_negative = expm(rate_matrix.rate_matrix * branch_length_negative)
+    np.testing.assert_array_almost_equal(
+        calculate_exponential_matrix(rate_matrix, branch_length_negative),
+        expected_negative,
+    )
+
+    # Test 4: Caching - repeat a calculation to ensure it's using the cache
+    import time
+
+    start_time = time.time()
+    calculate_exponential_matrix(
+        rate_matrix, branch_length
+    )  # Assume this calculation is expensive
+    first_duration = time.time() - start_time
+
+    start_time = time.time()
+    calculate_exponential_matrix(
+        rate_matrix, branch_length
+    )  # This should be quicker due to caching
+    second_duration = time.time() - start_time
+
+    assert (
+        second_duration < first_duration
+    ), "Caching does not seem to be working correctly."
+
+
+def test_partial_likelihoods_output_structure_and_length():
+    # Include setup code here (same as in the first test)
+    seq1 = SeqRecord(Seq("AA"), id="A")
+    seq2 = SeqRecord(Seq("CG"), id="B")
+    seq3 = SeqRecord(Seq("GG"), id="C")
+    seq4 = SeqRecord(Seq("GG"), id="D")
+    alignment = MultipleSeqAlignment([seq1, seq2, seq3, seq4])
+    newick_string = "((A:0.2, B:0.4):0.3, (C:0.5,D:0.2):2);"
+    t = Tree(newick_string, format=1)
+    t = name_nodes_by_level_order(t)
+    rate_matrix = RateMatrix(RATE_MATRIX)
+
+    # Calculate partial likelihoods for sites
+    partial_likelihood_per_site_storage = calculate_partial_likelihoods_for_sites(
+        t, alignment, rate_matrix
+    )
+
+    # Assertions
+    assert isinstance(
+        partial_likelihood_per_site_storage, dict
+    ), "Expected output to be a dictionary."
+
+    # Check if the structure is as expected
+    for edge_key, edge_data in partial_likelihood_per_site_storage.items():
+        assert isinstance(edge_key, str), "Edge key should be a string."
+        assert isinstance(edge_data, dict), "Edge data should be a dictionary."
+        assert "left" in edge_data, "Left child node data is missing."
+        assert "right" in edge_data, "Right child node data is missing."
+
+        left_child = edge_data["left"]
+        right_child = edge_data["right"]
+
+        assert isinstance(
+            left_child, dict
+        ), "Left child node data should be a dictionary."
+        assert isinstance(
+            right_child, dict
+        ), "Right child node data should be a dictionary."
+
+        assert "likelihoods" in left_child, "Left child node likelihoods are missing."
+        assert "likelihoods" in right_child, "Right child node likelihoods are missing."
+
+        left_likelihoods = left_child["likelihoods"]
+        right_likelihoods = right_child["likelihoods"]
+
+        assert isinstance(left_likelihoods, list), "Left likelihoods should be a list."
+        assert isinstance(
+            right_likelihoods, list
+        ), "Right likelihoods should be a list."
+
+        assert len(left_likelihoods) == len(
+            right_likelihoods
+        ), "Mismatch in left and right likelihoods."
+
+        for likelihood in left_likelihoods + right_likelihoods:
+            assert isinstance(likelihood, dict), "Likelihood should be a dictionary."
+            assert set(likelihood.keys()) == {
+                "Node",
+                "Site",
+                "branch_length",
+                "p_A",
+                "p_C",
+                "p_G",
+                "p_T",
+            }, "Likelihood keys are incorrect."
+
+    # Check if the number of sites matches the alignment length
+    num_sites = len(
+        next(iter(partial_likelihood_per_site_storage.values()))["left"]["likelihoods"]
+    )
+    assert (
+        num_sites == alignment.get_alignment_length()
+    ), "Mismatch in expected and actual number of sites."
+
+
+def test_partial_likelihoods_values_integrity():
+    # Include setup code here (same as in the first test)
+    seq1 = SeqRecord(Seq("AA"), id="A")
+    seq2 = SeqRecord(Seq("CG"), id="B")
+    seq3 = SeqRecord(Seq("GG"), id="C")
+    seq4 = SeqRecord(Seq("GG"), id="D")
+    alignment = MultipleSeqAlignment([seq1, seq2, seq3, seq4])
+    newick_string = "((A:0.2, B:0.4):0.3, (C:0.5,D:0.2):2);"
+    t = Tree(newick_string, format=1)
+    t = name_nodes_by_level_order(t)
+    rate_matrix = RateMatrix(RATE_MATRIX)
+
+    # Calculate partial likelihoods for sites
+    partial_likelihood_per_site_storage = calculate_partial_likelihoods_for_sites(
+        t, alignment, rate_matrix
+    )
+
+    # Detailed verification of likelihood values and structure
+    for edge_data in partial_likelihood_per_site_storage.values():
+        for child_data in edge_data.values():
+            for likelihood in child_data["likelihoods"]:
+                assert all(
+                    likelihood[nucleotide] >= 0
+                    for nucleotide in ["p_A", "p_C", "p_G", "p_T"]
+                ), "Found negative likelihood value."
+
+
+def test_partial_likelihoods_consistency_for_identical_sequences():
+    # Include setup code here (same as in the first test)
+    seq1 = SeqRecord(Seq("AA"), id="A")
+    seq2 = SeqRecord(Seq("CG"), id="B")
+    seq3 = SeqRecord(Seq("GG"), id="C")
+    seq4 = SeqRecord(Seq("GG"), id="D")
+    alignment = MultipleSeqAlignment([seq1, seq2, seq3, seq4])
+    newick_string = "((A:0.2, B:0.4):0.3, (C:0.5,D:0.2):2);"
+    t = Tree(newick_string, format=1)
+    t = name_nodes_by_level_order(t)
+    rate_matrix = RateMatrix(RATE_MATRIX)
+
+    # Calculate partial likelihoods for sites
+    partial_likelihood_per_site_storage = calculate_partial_likelihoods_for_sites(
+        t, alignment, rate_matrix
+    )
+
+    # Asserting consistency for identical sequences
+    for site_index in range(alignment.get_alignment_length()):
+        p_values = {"p_A": 0, "p_C": 0, "p_G": 0, "p_T": 0}
+        for edge_data in partial_likelihood_per_site_storage.values():
+            for child_data in edge_data.values():
+                for likelihood in child_data["likelihoods"]:
+                    if likelihood["Site"] == site_index:
+                        p_values["p_A"] += likelihood["p_A"]
+                        p_values["p_C"] += likelihood["p_C"]
+                        p_values["p_G"] += likelihood["p_G"]
+                        p_values["p_T"] += likelihood["p_T"]
+
+        total_p = sum(p_values.values())
+        assert (
+            total_p > 0
+        ), f"Total likelihood for site {site_index} should be positive."
 
 
 if __name__ == "__main__":
     test_one()
+    test_calculate_exponential_matrix()
+    test_partial_likelihoods_consistency_for_identical_sequences()
+    test_partial_likelihoods_values_integrity()
+    test_partial_likelihoods_output_structure_and_length()

@@ -80,8 +80,6 @@ def calculate_sample_coherence(
 
 
 """## ESTIMATION OF THE SAMPLE VARIANCE """
-
-
 def calculate_sample_variance(
     multiplicity,
     factors_left_subtree,
@@ -262,6 +260,7 @@ def calculate_test_statistic_posterior_distribution(
         posterior_probabilities_left_subtree,
         number_sites,
     )
+    
     factors_right_subtree = scalar_product_eigenvector_posterior_probability(
         multiplicity,
         array_eigenvectors,
@@ -273,7 +272,7 @@ def calculate_test_statistic_posterior_distribution(
     delta = calculate_sample_coherence(
         multiplicity, factors_left_subtree, factors_right_subtree, number_sites
     )
-
+    
     """ Calculation of the sample variance """
     variance = calculate_sample_variance(
         multiplicity,
@@ -282,6 +281,7 @@ def calculate_test_statistic_posterior_distribution(
         number_sites,
         branch_type,
     )
+    
     variance = variance / number_sites
 
     """Calculation of the test-statistic and decision of the statistical tests """
@@ -315,12 +315,20 @@ def calculate_test_statistic_posterior_distribution(
 
     """ Calculation of the saturation coherence between two sequences """
     decision_test_tip2tip = decision_tip2tip(delta, number_sites, multiplicity, alpha)
-
+    
+    sites_delta= []
+    
     return (
         test_statistic,
+        delta,
+        variance,
         p_value,
         decision_test,
         decision_corrected_test_tips,
         decision_corrected_test_branches,
         decision_test_tip2tip,
+        sites_delta
     )
+
+
+
