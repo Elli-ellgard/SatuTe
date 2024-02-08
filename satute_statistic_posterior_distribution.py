@@ -2,6 +2,31 @@ import scipy.stats as st
 import numpy as np
 from scipy.sparse.linalg import expm
 
+
+
+
+class TestStatisticComponents:
+    def __init__(self, coefficients: list[float], variances: list[float]):
+        self.coefficients = coefficients
+        self.variances = variances
+
+   
+        
+
+class TestResultBranch:
+    """Class representing all results for the test for saturation."""
+
+    def __init__(self, **result):
+        self.result = result
+
+    def add_result(self, result_name, score):
+        self.results[result_name] = score
+
+    def get_result(self):
+        return self.result
+        
+
+
 """## CALCULATION OF POSTERIOR DISTRIBUTION """
 
 def calculate_posterior_probabilities_subtree(dimension, state_frequencies, partial_likelihood_subtree, number_sites):
@@ -78,8 +103,6 @@ def calculate_sample_coherence(
     delta = delta / number_sites
     return delta
 
-
-
 """## ESTIMATION OF THE SAMPLE VARIANCE """
 
 def calculate_sample_variance(
@@ -110,6 +133,91 @@ def calculate_sample_variance(
             variance += m_right * m_left
     return variance
 
+""" New calculation of test-statistic by excluding zeros"""
+
+
+def calculate_sample_coherence_for_each_site(
+    multiplicity, factors_left_subtree, factors_right_subtree, number_sites
+):
+    delta = np.zeros(number_sites)
+    for i in range(multiplicity):
+        delta += np.asarray(factors_left_subtree[i]) * np.asarray(factors_right_subtree[i])
+
+    return delta
+
+def calculate_sample_coherence_without_zeros():
+
+    result = 0
+    return result
+
+
+def calculate_components_of_test_statistic_for_each_site(
+    multiplicity,
+    factors_left_subtree,
+    factors_right_subtree,
+    number_sites,
+    branch_type,
+):
+    variance = np.zeros(number_sites)
+    delta = np.zeros(number_sites)
+    for i in range(multiplicity):
+        delta += np.asarray(factors_left_subtree[i]) * np.asarray(factors_right_subtree[i])
+        for j in range(multiplicity):
+            if branch_type == "internal":
+                m_left = (
+                    np.asarray(factors_left_subtree[i])
+                    * np.asarray(factors_left_subtree[j])
+                    
+                )
+            else:
+                if i == j:
+                    m_left = np.ones(number_sites)
+                else:
+                    m_left =np.zeros(number_sites)
+
+            m_right = (
+                np.asarray(factors_right_subtree[i])
+                * np.asarray(factors_right_subtree[j])
+            )
+            variance += m_right * m_left
+
+    return delta, variance
+
+
+def calculate_test_statistic_exlude_zeros(
+    coefficients,
+    variances,
+    number_sites,
+    branch_type,
+):
+    sample_mean_sum = 0
+    sample_variance_sum = 0
+    number_informative_sites =0
+    for i in range(number_sites):
+        if(coefficients[i] != 0):
+            sample_mean_sum += coefficients[i]
+            sample_variance_sum += variances[i]
+            number_informative_sites += 1
+    if number_informative_sites > 0:
+        sample_mean = sample_mean_sum/number_informative_sites
+    else:
+        sample_mean = np.nan
+    if sample_variance_sum > 0:
+        if branch_type == "internal":
+            test_statistic = sample_mean_sum/np.sqrt(sample_variance_sum/number_informative_sites)
+        else: 
+            test_statistic = sample_mean_sum/np.sqrt(sample_variance_sum)
+    else:
+        test_statistic = np.nan
+            
+    #print("delta new:", sample_mean)
+    # if branch_type == "internal":
+    #     sample_variance= sample_variance/number_informative_sites/number_informative_sites/number_informative_sites
+    # else: 
+    #     sample_variance= sample_variance/number_informative_sites/number_informative_sites
+    # #print("variance new:", sample_variance)
+    # test_statistic= sample_mean / np.sqrt(sample_variance)
+    return test_statistic, sample_mean, number_informative_sites
 
 
 """## DECISION OF STATTISTICAL TEST """
@@ -215,7 +323,7 @@ def calculate_test_statistic_posterior_distribution(
     number_tips_right_subtree,
     branch_type="external",
     alpha=0.05,
-):
+): #-> tuple [TestStatisticComponents, TestResultBranch]:
     # quantiles of the standard normal distribution
     z_alpha = st.norm.ppf(1 - alpha)
     number_sites = len(partial_likelihood_left_subtree["Site"].unique())
@@ -229,25 +337,77 @@ def calculate_test_statistic_posterior_distribution(
     factors_left_subtree = scalar_product_eigenvector_posterior_probability(multiplicity, array_eigenvectors, posterior_probabilities_left_subtree, number_sites)
     factors_right_subtree = scalar_product_eigenvector_posterior_probability(multiplicity, array_eigenvectors, posterior_probabilities_right_subtree, number_sites)
 
-    """ Calculation of the sample mean of coefficient C_1 """
-    delta = calculate_sample_coherence(
-        multiplicity, factors_left_subtree, factors_right_subtree, number_sites
-    )
+    # """ Calculation of the sample mean of coefficient C_1 """
+    # delta = calculate_sample_coherence(
+    #     multiplicity, factors_left_subtree, factors_right_subtree, number_sites
+    # )
 
-    """ calculation of the sample variance """
-    variance = calculate_sample_variance(
+    # """ calculation of the sample variance """
+    # variance = calculate_sample_variance(
+    #     multiplicity,
+    #     factors_left_subtree,
+    #     factors_right_subtree,
+    #     number_sites,
+    #     branch_type,
+    # )
+    # variance = variance / number_sites
+
+    # """Calculation of the test-statistic and decision of the statistical tests """
+    # if variance > 0:
+    #     test_statistic = delta / np.sqrt(variance)
+    
+    #     """Calculation of the p-value"""
+    #     p_value = st.norm.sf(test_statistic)
+
+    #     """ Results of the statistcal tests"""
+    #     # decision of the statistical test
+    #     decision_test = decision_z_test(test_statistic, alpha)
+
+    #     # decision of the test using Bonferroni correction 
+    #     # using number of tips of the considered subtrees
+    #     decision_corrected_test_tips = bonferroni_test_correction_tips(p_value, number_tips_left_subtree, number_tips_right_subtree, alpha)
+        
+    #     # using number of branch combinations
+    #     decision_corrected_test_branches = bonferroni_test_correction_branches(p_value, number_tips_left_subtree, number_tips_right_subtree, alpha)
+       
+    # else: 
+    #     test_statistic = np.nan
+    #     p_value = np.nan
+    #     decision_test = np.nan
+    #     decision_corrected_test_tips = np.nan
+    #     decision_corrected_test_branches = np.nan
+
+    # """ Calculation of the saturation coherence between two sequences """
+    # decision_test_tip2tip = decision_tip2tip(delta, number_sites, multiplicity, alpha)
+
+    (
+        coefficients,
+        variances
+    ) = calculate_components_of_test_statistic_for_each_site(
         multiplicity,
         factors_left_subtree,
         factors_right_subtree,
         number_sites,
         branch_type,
     )
-    variance = variance / number_sites
 
-    """Calculation of the test-statistic and decision of the statistical tests """
-    if variance > 0:
-        test_statistic = delta / np.sqrt(variance)
-    
+    components = TestStatisticComponents(
+        coefficients,
+        variances
+    )
+
+    (
+        test_statistic,
+        coefficient_value, 
+        number_informative_sites 
+    )= calculate_test_statistic_exlude_zeros( 
+        coefficients,
+        variances,
+        number_sites,
+        branch_type
+    )
+    if test_statistic != np.nan:
+
         """Calculation of the p-value"""
         p_value = st.norm.sf(test_statistic)
 
@@ -263,14 +423,26 @@ def calculate_test_statistic_posterior_distribution(
         decision_corrected_test_branches = bonferroni_test_correction_branches(p_value, number_tips_left_subtree, number_tips_right_subtree, alpha)
        
     else: 
-        test_statistic = np.nan
         p_value = np.nan
         decision_test = np.nan
         decision_corrected_test_tips = np.nan
         decision_corrected_test_branches = np.nan
 
-    """ Calculation of the saturation coherence between two sequences """
-    decision_test_tip2tip = decision_tip2tip(delta, number_sites, multiplicity, alpha)
-        
 
+    """ Calculation of the saturation coherence between two sequences """
+    decision_test_tip2tip = decision_tip2tip(coefficient_value, number_informative_sites, multiplicity, alpha)
+    
+    result = TestResultBranch( 
+        test_statistic = test_statistic,
+        number_informative_sites = number_informative_sites,
+        p_value = p_value,
+        decision_test = decision_test,
+        decision_corrected_test_tips= decision_corrected_test_tips,
+        decision_corrected_test_branches = decision_corrected_test_branches,
+        decision_test_tip2tip = decision_test_tip2tip
+    )
+
+    # return components, result
     return test_statistic, p_value, decision_test, decision_corrected_test_tips, decision_corrected_test_branches, decision_test_tip2tip
+
+
