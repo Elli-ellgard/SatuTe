@@ -15,7 +15,7 @@ from pathlib import Path
 """TODO: The following tests throw all errors, not checking the existence
  of output files but the standard output """
 
-def test_1(source_path, iqtree, python, satute):
+def test_1(source_path, msa, iqtree, python, satute):
     suffix = "TEST 1: no msa no dir"
     print_test_name(suffix)
 
@@ -180,7 +180,7 @@ def test_option_combis(path_iqtree, path_python, path_satute, source_path, msa, 
     print("")
 
 
-    test_1(source_path, path_iqtree, path_python, path_satute)
+    test_1(source_path, msa, path_iqtree, path_python, path_satute)
     test_2(source_path, msa, treefile, path_iqtree, path_python, path_satute)
     test_3(source_path, msa, treefile, path_iqtree, path_python, path_satute)
     test_4(source_path, msa, treefile, path_iqtree, path_python, path_satute)
@@ -196,7 +196,7 @@ if __name__ == "__main__":
     # smallest toy example
     data_dir_path = "../data/data_dna/toy_example_JC"
     msa = "toy_example_ntaxa_7_run_5-alignment.phy"
-    treefile="tree_plain.treefile"
+    treefile = "tree_plain.treefile"
 
     output_dir_path =  "../test_results/"
 
