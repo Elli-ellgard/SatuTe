@@ -243,7 +243,7 @@ def calculate_test_statistic_posterior_distribution(
     alpha=0.05,
 ):
     number_sites = len(partial_likelihood_left_subtree["Site"].unique())
-
+    
     """ Calculation of the posterior distributions """
     posterior_probabilities_left_subtree = calculate_posterior_probabilities_subtree(
         dimension, state_frequencies, partial_likelihood_left_subtree, number_sites

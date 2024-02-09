@@ -1,6 +1,41 @@
 import numpy as np
 from satute_util import spectral_decomposition
+import re
 
+AMINO_ACID_MODELS = [
+    "BLOSUM62",  # BLOcks SUbstitution Matrix (Henikoff and Henikoff, 1992)
+    "CPREV",  # Chloroplast matrix (Adachi et al., 2000)
+    "DAYHOFF",  # General matrix (Dayhoff et al., 1978)
+    "DCMUT",  # Revised Dayhoff matrix (Kosiol and Goldman, 2005)
+    "FLAVI",  # Flavivirus (Le and Vinh, 2020)
+    "FLU",  # Influenza virus (Dang et al., 2010)
+    "GTR20",  # General time reversible models with 190 rate parameters
+    "HIVB",  # HIV between-patient matrix HIV-Bm (Nickle et al., 2007)
+    "HIVW",  # HIV within-patient matrix HIV-Wm (Nickle et al., 2007)
+    "JTT",  # General matrix (Jones et al., 1992)
+    "JTTDCMUT",  # Revised JTT matrix (Kosiol and Goldman, 2005)
+    "LG",  # General matrix (Le and Gascuel, 2008)
+    "MTART",  # Mitochondrial Arthropoda (Abascal et al., 2007)
+    "MTMAM",  # Mitochondrial Mammalia (Yang et al., 1998)
+    "MTREV",  # Mitochondrial Vertebrate (Adachi and Hasegawa, 1996)
+    "MTZOA",  # Mitochondrial Metazoa (Animals) (Rota-Stabelli et al., 2009)
+    "MTMET",  # Mitochondrial Metazoa (Vinh et al., 2017)
+    "MTVER",  # Mitochondrial Vertebrate (Vinh et al., 2017)
+    "MTINV",  # Mitochondrial Invertebrate (Vinh et al., 2017)
+    "POISSON",  # Equal amino-acid exchange rates and frequencies
+    "PMB",  # Probability Matrix from Blocks (Veerassamy et al., 2004)
+    "Q.BIRD",  # Q matrix for birds (Minh et al., 2021)
+    "Q.INSECT",  # Q matrix for insects (Minh et al., 2021)
+    "Q.MAMMAL",  # Q matrix for mammals (Minh et al., 2021)
+    "Q.PFAM",  # General Q matrix from Pfam database (Minh et al., 2021)
+    "Q.PLANT",  # Q matrix for plants (Minh et al., 2021)
+    "Q.YEAST",  # Q matrix for yeasts (Minh et al., 2021)
+    "RTREV",  # Retrovirus (Dimmic et al., 2002)
+    "VT",  # General ‘Variable Time’ matrix (Mueller and Vingron, 2000)
+    "WAG",  # General matrix (Whelan and Goldman, 2001)
+]
+
+NOT_ACCEPTED_AA_MODELS = ['NQ.BIRD', 'NQ.INSECT', 'NQ.MAMMAL', 'NQ.PFAM', 'NQ.PLANT', 'NQ.YEAST']
 
 AMINO_ACID_RATE_MATRIX = {
     "POISSON": """1
@@ -1449,14 +1484,48 @@ def transform_to_rate_matrix(matrix):
     return rate_matrix
 
 
-def get_aa_state_frequency_substitution_models(substitution_model) -> tuple:
-    if substitution_model not in AA_STATE_FREQUENCIES:
-        raise ValueError("Invalid substitution model: {}".format(substitution_model))
+def get_aa_state_frequency_substitution_models(substitution_model: str) -> tuple:
+    """
+    Extracts the amino acid state frequencies and creates a diagonal matrix for a given substitution model.
+    
+    This function sanitizes the substitution model string to remove any model extensions or parameters denoted by "+" or "{",
+    then looks up the core model in the AA_STATE_FREQUENCIES dictionary to retrieve its state frequencies.
+    A diagonal matrix is constructed from these frequencies, which can be used for subsequent calculations.
+    
+    Parameters:
+    - substitution_model (str): The substitution model string which may include extensions or parameters.
+    
+    Returns:
+    - tuple: A tuple containing two elements:
+        1. A numpy array of state frequencies.
+        2. A diagonal numpy matrix constructed from these state frequencies.
+    
+    Raises:
+    - ValueError: If the core model cannot be extracted from the provided string or if the core model is not found in the
+                  AA_STATE_FREQUENCIES dictionary.
+    
+    Example usage:
+    >>> substitution_model = 'BLOSUM62+G{parameter}'
+    >>> frequencies, phi_matrix = get_aa_state_frequency_substitution_models(substitution_model)
+    >>> print(frequencies)
+    >>> print(phi_matrix)
+    """
+    # Regular expression to extract the core model name from the substitution model string
+    match = re.match(r"^[^\+\{]+", substitution_model)
+    if match:
+        core_model = match.group()
     else:
-        return AA_STATE_FREQUENCIES[substitution_model], np.diag(
-            np.array(AA_STATE_FREQUENCIES[substitution_model])
-        )
+        # If the core model can't be extracted, raise an error
+        raise ValueError(f"Could not extract core model from: {substitution_model}")
 
+    # Check if the core model is in the AA_STATE_FREQUENCIES dictionary
+    if core_model not in AA_STATE_FREQUENCIES:
+        # If not found, raise an error indicating the model is invalid
+        raise ValueError(f"Invalid substitution model: {substitution_model}")
+    else:
+        # Retrieve the frequencies for the core model and create a diagonal matrix
+        frequencies = np.array(AA_STATE_FREQUENCIES[core_model])
+        return frequencies, np.diag(frequencies)
 
 def create_rate_matrix_with_input(matrix_size, input_string: str):
     # Split the string into lines
@@ -1507,13 +1576,13 @@ if __name__ == "__main__":
         stationary_distribution = AA_STATE_FREQUENCIES[key]
         phi = np.diag(stationary_distribution)
         left, right, m = spectral_decomposition(np.array(matrix), phi)
-        
-            # Custom printing function
+
+        # Custom printing function
         def print_eigenvectors(vectors):
             for vec in vectors:
                 print(np.array_str(vec, precision=3, suppress_small=True))
 
-        print(key)        
+        print(key)
         # Print left and right eigenvectors
         print("Left Eigenvectors:")
         print_eigenvectors(left)

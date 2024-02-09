@@ -166,13 +166,16 @@ def process_test_statistics_posterior(
     Returns:
         dict: Dictionary containing calculated results.
     """
+    
+    dimension = len(state_frequencies)    
+    
     results = calculate_test_statistic_posterior_distribution(
         multiplicity,
         array_right_eigenvectors,
         state_frequencies,
         left_partial_likelihood,
         right_partial_likelihood,
-        4,
+        dimension,
         number_leaves_left_subtree,
         number_leaves_right_subtree,
         branch_type,

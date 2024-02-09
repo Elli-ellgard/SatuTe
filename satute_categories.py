@@ -124,7 +124,6 @@ def change_states_to_allowed(alignment):
         record.seq = record.seq.upper()
         record.seq = record.seq.replace(".", "-")
         record.seq = record.seq.replace("!", "-")
-
     return alignment
 
 

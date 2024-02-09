@@ -3,6 +3,7 @@ import argparse
 import logging
 from pathlib import Path
 from ete3 import Tree
+import numpy as np
 from satute_util import spectral_decomposition
 from rate_matrix import RateMatrix
 from file_handler import FileHandler, IqTreeHandler
@@ -29,6 +30,17 @@ from satute_repository import (
     parse_rate_from_model,
     parse_file_to_data_frame,
 )
+
+
+def format_matrix(matrix, precision=4):
+    """Format a matrix for pretty printing."""
+    formatted_matrix = "\n".join(["\t".join([f"{item:.{precision}f}" for item in row]) for row in matrix])
+    return formatted_matrix
+
+def format_array(array, precision=4):
+    """Format a 1D array for pretty printing."""
+    formatted_array = "\t".join([f"{item:.{precision}f}" for item in array])
+    return formatted_array
 
 
 class Satute:
@@ -391,7 +403,7 @@ class Satute:
                 test_tree,
                 alignment,
                 RATE_MATRIX,
-                substitution_model.state_frequencies.values(),
+                substitution_model.state_frequencies,
                 array_right_eigenvectors,
                 multiplicity,
                 msa_file,
@@ -403,7 +415,7 @@ class Satute:
                 test_tree,
                 substitution_model.category_rates,
                 RATE_MATRIX,
-                substitution_model.state_frequencies.values(),
+                substitution_model.state_frequencies,
                 array_right_eigenvectors,
                 multiplicity,
                 alignment,
@@ -507,8 +519,8 @@ class Satute:
             edge,
             logger,
         )
-                        
-        for rate ,alignment in categorized_sites.items():
+
+        for rate, alignment in categorized_sites.items():
             if len(alignment) == 0:
                 logger.warning(f"Will be skipping Rate category {rate}")
 
@@ -552,6 +564,16 @@ class Satute:
             msa_file (Path): Path to the MSA file being used.
             multiplicity: Multiplicity value from spectral decomposition.
         """
+            # Formatting the rate matrix for logging
+        rate_matrix_str = format_matrix(substitution_model.rate_matrix, precision=4)
+        # Formatting the state frequencies for logging
+        state_frequencies_str = format_array(np.array(list(substitution_model.state_frequencies)), precision=4)
+        # Logging the formatted rate matrix and state frequencies
+        self.logger.info(
+            f"Rate Matrix Q:\n{rate_matrix_str}\n\n"
+            f"State Frequencies:\n{state_frequencies_str}\n"
+        )
+    
         self.logger.info(
             f"""
             Running tests and initial IQ-Tree with configurations:

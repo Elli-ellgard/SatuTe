@@ -4,51 +4,17 @@ import pandas as pd
 import re
 from enum import Enum
 from amino_acid_models import get_aa_state_frequency_substitution_models
+from amino_acid_models import (
+    AMINO_ACID_RATE_MATRIX,
+    create_rate_matrix_with_input,
+    AMINO_ACID_MODELS,
+    NOT_ACCEPTED_AA_MODELS,
+)
 
 
 class ModelType(Enum):
     DNA = "DNA"
     PROTEIN = "Protein"
-
-
-amino_acid_substitution_models = [
-    "Blosum62",  # BLOcks SUbstitution Matrix (Henikoff and Henikoff, 1992)
-    "cpREV",  # Chloroplast matrix (Adachi et al., 2000)
-    "Dayhoff",  # General matrix (Dayhoff et al., 1978)
-    "DCMut",  # Revised Dayhoff matrix (Kosiol and Goldman, 2005)
-    "FLAVI",  # Flavivirus (Le and Vinh, 2020)
-    "FLU",  # Influenza virus (Dang et al., 2010)
-    "GTR20",  # General time reversible models with 190 rate parameters
-    "HIVb",  # HIV between-patient matrix HIV-Bm (Nickle et al., 2007)
-    "HIVw",  # HIV within-patient matrix HIV-Wm (Nickle et al., 2007)
-    "JTT",  # General matrix (Jones et al., 1992)
-    "JTTDCMut",  # Revised JTT matrix (Kosiol and Goldman, 2005)
-    "LG",  # General matrix (Le and Gascuel, 2008)
-    "mtART",  # Mitochondrial Arthropoda (Abascal et al., 2007)
-    "mtMAM",  # Mitochondrial Mammalia (Yang et al., 1998)
-    "mtREV",  # Mitochondrial Vertebrate (Adachi and Hasegawa, 1996)
-    "mtZOA",  # Mitochondrial Metazoa (Animals) (Rota-Stabelli et al., 2009)
-    "mtMet",  # Mitochondrial Metazoa (Vinh et al., 2017)
-    "mtVer",  # Mitochondrial Vertebrate (Vinh et al., 2017)
-    "mtInv",  # Mitochondrial Invertebrate (Vinh et al., 2017)
-    "NQ.bird",  # Non-reversible Q matrix for birds (Dang et al., 2022)
-    "NQ.insect",  # Non-reversible Q matrix for insects (Dang et al., 2022)
-    "NQ.mammal",  # Non-reversible Q matrix for mammals (Dang et al., 2022)
-    "NQ.pfam",  # General non-reversible Q matrix from Pfam database (Dang et al., 2022)
-    "NQ.plant",  # Non-reversible Q matrix for plants (Dang et al., 2022)
-    "NQ.yeast",  # Non-reversible Q matrix for yeasts (Dang et al., 2022)
-    "Poisson",  # Equal amino-acid exchange rates and frequencies
-    "PMB",  # Probability Matrix from Blocks (Veerassamy et al., 2004)
-    "Q.bird",  # Q matrix for birds (Minh et al., 2021)
-    "Q.insect",  # Q matrix for insects (Minh et al., 2021)
-    "Q.mammal",  # Q matrix for mammals (Minh et al., 2021)
-    "Q.pfam",  # General Q matrix from Pfam database (Minh et al., 2021)
-    "Q.plant",  # Q matrix for plants (Minh et al., 2021)
-    "Q.yeast",  # Q matrix for yeasts (Minh et al., 2021)
-    "rtREV",  # Retrovirus (Dimmic et al., 2002)
-    "VT",  # General ‘Variable Time’ matrix (Mueller and Vingron, 2000)
-    "WAG",  # General matrix (Whelan and Goldman, 2001)
-]
 
 
 def parse_substitution_model(file_path: str) -> str:
@@ -192,6 +158,7 @@ class IqTreeParser:
         """
 
         self.file_content = []
+        self.model_type = ModelType.DNA
         self.file_path = file_path
         if self.file_path:
             self.load_iqtree_file_content()
@@ -235,10 +202,10 @@ class IqTreeParser:
         """
 
         current_substitution_model = self.parse_substitution_model()
-        check_model_aa_mode = self.check_model_aa_mode(current_substitution_model)
+        self.model_type = self.check_model_aa_mode(current_substitution_model)
         self.load_iqtree_file_content()
 
-        if check_model_aa_mode == ModelType.DNA:
+        if self.model_type == ModelType.DNA:
             # Parse the required components from the file content
             state_frequencies, phi_matrix = self.parse_state_frequencies()
             rate_matrix = self.parse_rate_matrices(state_frequencies)
@@ -247,7 +214,7 @@ class IqTreeParser:
 
             return SubstitutionModel(
                 model=current_substitution_model,
-                state_frequencies=state_frequencies,
+                state_frequencies=state_frequencies.values(),
                 phi_matrix=phi_matrix,
                 rate_matrix=rate_matrix,
                 number_rates=number_rates,
@@ -256,10 +223,13 @@ class IqTreeParser:
         else:
             # Parse the required components from the file content
             state_frequencies, phi_matrix = get_aa_state_frequency_substitution_models(
-                substitution_model=current_substitution_model
+                current_substitution_model
             )
-            rate_matrix = self.parse_aa_rate_matrix()
+
+            rate_matrix = self.get_aa_rate_matrix(current_substitution_model)
+
             number_rates = self.parse_number_rate_categories()
+
             category_rates = self.parse_category_rates() if number_rates > 1 else None
 
             return SubstitutionModel(
@@ -272,11 +242,18 @@ class IqTreeParser:
             )
 
     def check_model_aa_mode(self, model: str) -> ModelType:
-        for amino_acid_substitution_model in amino_acid_substitution_models:
+        # First, check if the model is one of the not accepted models
+        if model in NOT_ACCEPTED_AA_MODELS:
+            # Raise an exception signaling that the model is not accepted
+            raise ValueError(f"The model '{model}' is not accepted for analysis.")
+
+        # If the model is not in the not accepted list, proceed to check if it's a protein model
+        for amino_acid_substitution_model in AMINO_ACID_MODELS:
             if amino_acid_substitution_model in model:
                 return ModelType.PROTEIN
-            else:
-                return ModelType.DNA
+
+        # Default to DNA if no conditions above are met
+        return ModelType.DNA
 
     def parse_rate_parameters(self, dimension, model="GTR"):
         """
@@ -471,6 +448,40 @@ class IqTreeParser:
 
         return rate_matrix
 
+    def get_aa_rate_matrix(self, current_substitution_model: str) -> np.ndarray:
+        """
+        Retrieves and constructs the amino acid rate matrix for a given substitution model.
+        
+        This method sanitizes the model name to remove potential model extensions or parameters
+        indicated by "+" or "{" symbols. It then looks up the core model in the
+        AMINO_ACID_RATE_MATRIX dictionary to obtain the parameters required to construct the
+        rate matrix. The matrix is constructed using these parameters and returned as a NumPy array.
+        
+        Parameters:
+        - current_substitution_model (str): The substitution model string, which may include extensions or parameters.
+        
+        Returns:
+        - np.ndarray: The amino acid rate matrix as a NumPy array.
+        
+        Raises:
+        - KeyError: If the core model name is not found in the AMINO_ACID_RATE_MATRIX dictionary.
+        """
+        # Regular expression to extract the core model name
+        core_model_match = re.match(r"^[^\+\{]+", current_substitution_model)
+        if core_model_match:
+            core_model = core_model_match.group()
+        else:
+            raise ValueError(f"Could not extract core model from: {current_substitution_model}")
+        
+        if core_model not in AMINO_ACID_RATE_MATRIX:
+            raise KeyError(f"Model '{core_model}' not found in AMINO_ACID_RATE_MATRIX.")
+        
+        # Retrieve the parameters for the rate matrix and construct it
+        rate_matrix_params = AMINO_ACID_RATE_MATRIX[core_model]
+        rate_matrix = create_rate_matrix_with_input(20, rate_matrix_params)
+        return np.array(rate_matrix)
+
+
     def parse_aa_rate_matrix(self) -> np.matrix:
         """
         Parses the amino acid rate matrix from the file content.
@@ -515,7 +526,6 @@ class IqTreeParser:
             )
 
         # Return the numpy matrix
-        print
         return matrix
 
     def parse_number_rate_categories(self):

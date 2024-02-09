@@ -1,6 +1,8 @@
+import sys
+sys.path.append("..")
+
 import numpy as np
 from ete3 import Tree
-import sys
 from satute_categories import read_alignment_file
 from satute_repository import IqTreeParser
 from satute_util import spectral_decomposition
@@ -15,7 +17,7 @@ import numpy as np
 from graph import get_initial_likelihood_vector
 from satute_sequences import dict_to_alignment
 from satute_trees import (
-    rename_internal_nodes_preorder,
+    rename_internal_nodes_pre_order,
     collapse_identical_leaf_sequences,
 )
 from partial_likelihood import (
@@ -24,7 +26,6 @@ from partial_likelihood import (
     calculate_exponential_matrix,
 )
 
-sys.path.append("..")
 
 
 RATE_MATRIX = np.array([[-3, 1, 1, 1], [1, -3, 1, 1], [1, 1, -3, 1], [1, 1, 1, -3]])
@@ -143,9 +144,6 @@ def calculate_stationary_distribution(rate_matrix) -> np.array:
     # Find eigenvalues and eigenvectors
     eigenvalues, eigenvectors = np.linalg.eig(rate_matrix.T)
 
-    # print(eigenvalues)
-    print(eigenvalues)
-
     # Find the eigenvector corresponding to the eigenvalue closest to zero
     stationary_vector = eigenvectors[:, np.isclose(eigenvalues, 0)].real
 
@@ -192,7 +190,7 @@ def test_one():
     print(tree.write(format=1, format_root_node=True))
 
     # Step 4: Rename internal nodes in a preorder traversal
-    rename_internal_nodes_preorder(tree)
+    rename_internal_nodes_pre_order(tree)
     print(tree.get_ascii(show_internal=True))
 
     t = name_nodes_by_level_order(t)
@@ -225,8 +223,6 @@ def test_one():
     # Step 9: Convert the sequence dictionary back to a MultipleSeqAlignment object
     alignment = dict_to_alignment(sequence_dict)
 
-    # Step 10: Print the rate matrix
-    print("Rate Matrix:\n", rate_matrix.rate_matrix)
 
     # Step 11: Perform single rate analysis
     results = single_rate_analysis(
@@ -264,13 +260,13 @@ def test_one():
 def test_two():
     # Step 1: Create SeqRecord objects for your sequences
     seq_records = [
-        SeqRecord(Seq("SEKSQCLIGVAHVSVNATIDYLRQDPTAHLMGDLYQGWIMESKAKP"), id="t7"),
-        SeqRecord(Seq("SEKSQCLIGVAHVSVNATIDYLRQDPTAHLMGDLYQGWIMESKAKP"), id="t3"),
-        SeqRecord(Seq("SEKSQCLIGVAHVSVNATIDYLRQDPTAHLMGDLYQGWIMESKAKP"), id="t6"),
-        SeqRecord(Seq("QQKTMALMAIPHVSANAAHEYLKSDVTKQRMGDPFQGQFVESKGKS"), id="t1"),
-        SeqRecord(Seq("FSERLAMNGFIRITVNIALEYIRSYPIAQRVGDSFKGDLTESKSIF"), id="t2"),
-        SeqRecord(Seq("SSRQQFLLAIAHVGINAATNYIRCDSTAYVTGDLYQGAVMEVQEKP"), id="t4"),
-        SeqRecord(Seq("SSRQQFLLAIAHVGINAATNYIRCDSTAYVTGDLYQGAVMEVQEKP"), id="t5"),
+        SeqRecord(Seq("SEKSQ"), id="t7"),
+        SeqRecord(Seq("SEKSQ"), id="t3"),
+        SeqRecord(Seq("SEKSQ"), id="t6"),
+        SeqRecord(Seq("QQKTM"), id="t1"),
+        SeqRecord(Seq("FSERL"), id="t2"),
+        SeqRecord(Seq("SSRQQ"), id="t4"),
+        SeqRecord(Seq("SSRQQ"), id="t5"),
     ]
 
     # Step 2: Create a MultipleSeqAlignment object from the SeqRecord objects
@@ -281,8 +277,7 @@ def test_two():
     tree = Tree(newick_string, format=1)
 
     # Step 4: Rename internal nodes in a preorder traversal
-    rename_internal_nodes_preorder(tree)
-    print(tree.get_ascii(show_internal=True))
+    rename_internal_nodes_pre_order(tree)
 
     # Step 5: Create a dictionary to access sequences by their ID
     sequence_dict = {record.id: str(record.seq) for record in alignment}
@@ -297,52 +292,30 @@ def test_two():
 
     # Step 7: Create a rate matrix and calculate stationary distribution
     rate_matrix = RateMatrix(POISSON_RATE_MATRIX)
-
-    state_frequencies = AA_STATE_FREQUENCIES["POISSON"]
-    phi_matrix = np.diag(state_frequencies)
-
-    # print(POISSON_RATE_MATRIX)
-    # state_frequencies = calculate_stationary_distribution(rate_matrix.rate_matrix)
-    # phi_matrix = np.diag(state_frequencies)
-    #
-    # Step 8: Perform spectral decomposition
-    # stationary_distribution = calculate_stationary_distribution(rate_matrix.rate_matrix)
+    psi_matrix = np.diag(AA_STATE_FREQUENCIES['POISSON'])
 
     (
         array_left_eigenvectors,
         array_right_eigenvectors,
         multiplicity,
-    ) = spectral_decomposition(rate_matrix.rate_matrix, phi_matrix)
-
-    print(array_left_eigenvectors, array_right_eigenvectors, multiplicity)
-
+    ) = spectral_decomposition(rate_matrix.rate_matrix, psi_matrix)
+    
+    
     # Step 9: Convert the sequence dictionary back to a MultipleSeqAlignment object
     alignment = dict_to_alignment(sequence_dict)
 
-    """
-    # Calculate partial likelihoods for all sites
-    partial_likelihood_per_site_storage = calculate_partial_likelihoods_for_sites(
-        tree=collapsed_tree_one,
-        alignment=alignment,
-        rate_matrix=rate_matrix,
-        focused_edge=None,
-    )
-    """
-
-    # print(partial_likelihood_per_site_storage)
-
     # Step 11: Perform single rate analysis
-    # results = single_rate_analysis(
-    #     collapsed_tree_one,
-    #     alignment,
-    #     rate_matrix,
-    #     state_frequencies,
-    #     array_left_eigenvectors,
-    #     array_right_eigenvectors,
-    #     multiplicity,
-    #     0.05,
-    #     None,
-    # )
+    results = single_rate_analysis(
+        collapsed_tree_one,
+        alignment,
+        rate_matrix,
+        np.array(AA_STATE_FREQUENCIES['POISSON']),
+        array_right_eigenvectors,
+        multiplicity,
+        0.05,
+        None,
+    )
+    
     # Step 12: Append additional data to results for twin nodes
     # for parent, value in twin_dictionary.items():
     #     for child in value:

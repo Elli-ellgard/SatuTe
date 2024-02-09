@@ -313,7 +313,6 @@ def write_alignment_and_indices(
         print(f"An unexpected error occurred: {e}")
 
 
-
 def calculate_and_write_posterior_probabilities(
     partial_likelihood_per_site_storage: dict, state_frequencies: list, output_file: str
 ):

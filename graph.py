@@ -67,8 +67,6 @@ class Graph:
 
 
 def get_initial_likelihood_vector(state: str, state_type: str) -> np.array:
-    print("#" * 100)
-    print(state_type)
     if state_type == "nucleotide":
         """Get the initial likelihood vector for a given nucleotide state."""
         return np.array(NUCLEOTIDE_CODE_VECTOR[state]).T
@@ -89,8 +87,7 @@ def convert_tree_to_graph(tree: Tree) -> Graph:
         tree (Tree): An ETE3 tree object representing the phylogenetic tree.
 
     Returns:
-        Graph: A DAG representation of the phylogenetic tree, with nodes corresponding to tree nodes and
-               edges representing parent-child relationships.
+        Graph: A DAG representation of the phylogenetic tree, with nodes corresponding to tree nodes and edges representing parent-child relationships.
     """
 
     node_dictionary = {}
@@ -136,9 +133,6 @@ def convert_tree_to_state_graph(
 
     node_dictionary = {}
     edge_list = []
-
-    print(convert_tree_to_graph.__name__)
-    print(state_type)
 
     # Traverse the tree and create Node objects and edges
     for ete_node in tree.traverse("levelorder"):
