@@ -13,7 +13,9 @@ from graph import (
 
 
 @cache
-def partial_likelihood(node: Node, coming_from: Node, rate_matrix: RateMatrix, factor=0):
+def partial_likelihood(
+    node: Node, coming_from: Node, rate_matrix: RateMatrix, factor=0
+):
     """
     Compute the partial likelihood of a given node in a directed acyclic graph (DAG) tree.
 
@@ -131,7 +133,7 @@ def calculate_partial_likelihoods_for_sites(
     alignment: MultipleSeqAlignment,
     rate_matrix: RateMatrix,
     focused_edge=None,
-):
+) -> dict:
     """Calculates the partial likelihoods of each site in a multiple sequence alignment across a given phylogeny.
 
     Args:
@@ -180,5 +182,3 @@ def calculate_partial_likelihoods_for_sites(
             )
 
     return partial_likelihood_per_site_storage
-
-

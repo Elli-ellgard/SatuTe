@@ -9,7 +9,7 @@ from file_handler import FileHandler, IqTreeHandler
 from satute_trees import rename_internal_nodes_pre_order
 from satute_arguments import ARGUMENT_LIST
 from Bio.Align import MultipleSeqAlignment
-from satute_repository import SubstitutionModel, IqTreeParser
+
 from satute_rate_analysis import (
     multiple_rate_analysis,
     single_rate_analysis_collapsed_tree,
@@ -28,6 +28,8 @@ from satute_repository import (
     parse_substitution_model,
     parse_rate_from_model,
     parse_file_to_data_frame,
+    SubstitutionModel,
+    IqTreeParser,
 )
 
 
@@ -507,8 +509,8 @@ class Satute:
             edge,
             logger,
         )
-                        
-        for rate ,alignment in categorized_sites.items():
+
+        for rate, alignment in categorized_sites.items():
             if len(alignment) == 0:
                 logger.warning(f"Will be skipping Rate category {rate}")
 
