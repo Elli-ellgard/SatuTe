@@ -142,7 +142,7 @@ def test_option_msa(path_iqtree, path_python, path_satute, source_path, msa, res
 
 if __name__ == "__main__":
     # set paths to IQ-TREE and Python executable
-    path_iqtree = "iqtree2"
+    path_iqtree = "iqtree"
     path_python = "python3"
     path_satute = "../../satute_cli.py"
 

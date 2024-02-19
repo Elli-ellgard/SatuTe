@@ -1,15 +1,13 @@
 from satute_test_utils import (
     run_external_command,
-    print_test_name, 
+    print_test_name,
     create_destination_dir,
     copy_files_to_dest_dir,
     check_iqtree_files_exist,
     check_satute_files,
-    print_colored_message
-    
+    print_colored_message,
 )
 import os
-from pathlib import Path
 
 
 def test_1(source_path, msa, iqtree, python, satute):
@@ -43,11 +41,13 @@ def test_1(source_path, msa, iqtree, python, satute):
         ]
     )
 
-    # check the files   
-    if not check_iqtree_files_exist(msa, dest_dir_path, [] )  and  not check_satute_files(msa, dest_dir_path, categories, alpha, asr):
-        print_colored_message(f"{suffix} was successful", "32" )
-    else: 
-        print_colored_message(f"{suffix} failed", "31" )
+    # check the files
+    if not check_iqtree_files_exist(msa, dest_dir_path, []) and not check_satute_files(
+        msa, dest_dir_path, categories, alpha, asr
+    ):
+        print_colored_message(f"{suffix} was successful", "32")
+    else:
+        print_colored_message(f"{suffix} failed", "31")
 
 
 def test_2(source_path, msa, iqtree, python, satute):
@@ -82,12 +82,14 @@ def test_2(source_path, msa, iqtree, python, satute):
         ]
     )
 
-    
-    # check the files   
-    if check_iqtree_files_exist(msa, dest_dir_path, []) and  check_satute_files(msa, dest_dir_path, categories, alpha, asr):
-        print_colored_message(f"{suffix} was successful", "32" )
-    else: 
-        print_colored_message(f"{suffix} failed", "31" )
+    # check the files
+    if check_iqtree_files_exist(msa, dest_dir_path, []) and check_satute_files(
+        msa, dest_dir_path, categories, alpha, asr
+    ):
+        print_colored_message(f"{suffix} was successful", "32")
+    else:
+        print_colored_message(f"{suffix} failed", "31")
+
 
 def test_3(source_path, msa, iqtree, python, satute):
     suffix = "MODEL TEST 3: msa model heterogeneity"
@@ -121,12 +123,13 @@ def test_3(source_path, msa, iqtree, python, satute):
         ]
     )
 
-    
-    # check the files   
-    if check_iqtree_files_exist(msa, dest_dir_path, []) and  check_satute_files(msa, dest_dir_path, categories, alpha, asr):
-        print_colored_message(f"{suffix} was successful", "32" )
-    else: 
-        print_colored_message(f"{suffix} failed", "31" )
+    # check the files
+    if check_iqtree_files_exist(msa, dest_dir_path, []) and check_satute_files(
+        msa, dest_dir_path, categories, alpha, asr
+    ):
+        print_colored_message(f"{suffix} was successful", "32")
+    else:
+        print_colored_message(f"{suffix} failed", "31")
 
 
 def test_4(source_path, msa, iqtree, python, satute):
@@ -140,7 +143,7 @@ def test_4(source_path, msa, iqtree, python, satute):
     files_to_copy = [msa]
     copy_files_to_dest_dir(source_path, dest_dir_path, files_to_copy)
 
-    categories = [1,2,3,4]
+    categories = [1, 2, 3, 4]
     alpha = str(0.05)
     asr = False
 
@@ -160,14 +163,14 @@ def test_4(source_path, msa, iqtree, python, satute):
         ]
     )
 
-    
-    # check the files   
-    if check_iqtree_files_exist(msa, dest_dir_path, []) and  check_satute_files(msa, dest_dir_path, categories, alpha, asr):
-        print_colored_message(f"{suffix} was successful", "32" )
-    else: 
-        print_colored_message(f"{suffix} failed", "31" )
+    # check the files
+    if check_iqtree_files_exist(msa, dest_dir_path, []) and check_satute_files(
+        msa, dest_dir_path, categories, alpha, asr
+    ):
+        print_colored_message(f"{suffix} was successful", "32")
+    else:
+        print_colored_message(f"{suffix} failed", "31")
         print_colored_message(f"Warnings are not written into the LOG file!!", "31")
-
 
 
 def test_5(source_path, msa, iqtree, python, satute):
@@ -201,12 +204,14 @@ def test_5(source_path, msa, iqtree, python, satute):
         ]
     )
 
-    
-    # check the files   
-    if check_iqtree_files_exist(msa, dest_dir_path, []) and  check_satute_files(msa, dest_dir_path, categories, alpha, asr):
-        print_colored_message(f"{suffix} was successful", "32" )
-    else: 
-        print_colored_message(f"{suffix} failed", "31" )
+    # check the files
+    if check_iqtree_files_exist(msa, dest_dir_path, []) and check_satute_files(
+        msa, dest_dir_path, categories, alpha, asr
+    ):
+        print_colored_message(f"{suffix} was successful", "32")
+    else:
+        print_colored_message(f"{suffix} failed", "31")
+
 
 def test_6(source_path, msa, iqtree, python, satute):
     suffix = "MODEL TEST 6: msa model with parameter gamma shape parameter"
@@ -219,7 +224,7 @@ def test_6(source_path, msa, iqtree, python, satute):
     files_to_copy = [msa]
     copy_files_to_dest_dir(source_path, dest_dir_path, files_to_copy)
 
-    categories = [1,2,3,4]
+    categories = [1, 2, 3, 4]
     alpha = str(0.05)
     asr = False
 
@@ -239,12 +244,14 @@ def test_6(source_path, msa, iqtree, python, satute):
         ]
     )
 
-    
-    # check the files   
-    if check_iqtree_files_exist(msa, dest_dir_path, []) and  check_satute_files(msa, dest_dir_path, categories, alpha, asr):
-        print_colored_message(f"{suffix} was successful", "32" )
-    else: 
-        print_colored_message(f"{suffix} failed", "31" )
+    # check the files
+    if check_iqtree_files_exist(msa, dest_dir_path, []) and check_satute_files(
+        msa, dest_dir_path, categories, alpha, asr
+    ):
+        print_colored_message(f"{suffix} was successful", "32")
+    else:
+        print_colored_message(f"{suffix} failed", "31")
+
 
 def test_7(source_path, msa, iqtree, python, satute):
     suffix = "MODEL TEST 7: msa model with parameter free rate"
@@ -257,7 +264,7 @@ def test_7(source_path, msa, iqtree, python, satute):
     files_to_copy = [msa]
     copy_files_to_dest_dir(source_path, dest_dir_path, files_to_copy)
 
-    categories = [1,2]
+    categories = [1, 2]
     alpha = str(0.05)
     asr = False
 
@@ -269,7 +276,7 @@ def test_7(source_path, msa, iqtree, python, satute):
             "-msa",
             os.path.join(dest_dir_path, msa),
             "-model",
-            " TIM2{4.39/5.30/12.1}+R2{0.7/0.1/0.3/0.9}",
+            "TIM2{4.39/5.30/12.1}+R2{0.7/0.1/0.3/0.9}",
             "-alpha",
             "0.05",
             "-iqtree",
@@ -277,12 +284,14 @@ def test_7(source_path, msa, iqtree, python, satute):
         ]
     )
 
-    
-    # check the files   
-    if check_iqtree_files_exist(msa, dest_dir_path, []) and  check_satute_files(msa, dest_dir_path, categories, alpha, asr):
-        print_colored_message(f"{suffix} was successful", "32" )
-    else: 
-        print_colored_message(f"{suffix} failed", "31" )
+    # check the files
+    if check_iqtree_files_exist(msa, dest_dir_path, []) and check_satute_files(
+        msa, dest_dir_path, categories, alpha, asr
+    ):
+        print_colored_message(f"{suffix} was successful", "32")
+    else:
+        print_colored_message(f"{suffix} failed", "31")
+
 
 def test_8(source_path, msa, iqtree, python, satute):
     suffix = "MODEL TEST 8: msa model boot"
@@ -317,13 +326,15 @@ def test_8(source_path, msa, iqtree, python, satute):
         ]
     )
 
-    
-    # check the files   
-    if check_iqtree_files_exist(msa, dest_dir_path, ["boot"]) and  check_satute_files(msa, dest_dir_path, categories, alpha, asr):
-        print_colored_message(f"{suffix} was successful", "32" )
-    else: 
-        print_colored_message(f"{suffix} failed", "31" )
-       
+    # check the files
+    if check_iqtree_files_exist(msa, dest_dir_path, ["boot"]) and check_satute_files(
+        msa, dest_dir_path, categories, alpha, asr
+    ):
+        print_colored_message(f"{suffix} was successful", "32")
+    else:
+        print_colored_message(f"{suffix} failed", "31")
+
+
 def test_9(source_path, msa, iqtree, python, satute):
     suffix = "MODEL TEST 9: msa model ufboot"
     print_test_name(suffix)
@@ -335,7 +346,7 @@ def test_9(source_path, msa, iqtree, python, satute):
     files_to_copy = [msa]
     copy_files_to_dest_dir(source_path, dest_dir_path, files_to_copy)
 
-    categories = [1,2]
+    categories = [1, 2]
     alpha = str(0.05)
     asr = False
 
@@ -357,12 +368,14 @@ def test_9(source_path, msa, iqtree, python, satute):
         ]
     )
 
-    
-    # check the files   
-    if check_iqtree_files_exist(msa, dest_dir_path, ["ufboot"]) and  check_satute_files(msa, dest_dir_path, categories, alpha, asr):
-        print_colored_message(f"{suffix} was successful", "32" )
-    else: 
-        print_colored_message(f"{suffix} failed", "31" )
+    # check the files
+    if check_iqtree_files_exist(msa, dest_dir_path, ["ufboot"]) and check_satute_files(
+        msa, dest_dir_path, categories, alpha, asr
+    ):
+        print_colored_message(f"{suffix} was successful", "32")
+    else:
+        print_colored_message(f"{suffix} failed", "31")
+
 
 def test_10(source_path, msa, iqtree, python, satute):
     suffix = "MODEL TEST 10: msa model category"
@@ -394,25 +407,26 @@ def test_10(source_path, msa, iqtree, python, satute):
             "3",
             "-iqtree",
             iqtree,
-            "-asr"
+            "-asr",
         ]
     )
 
-    
-    # check the files   
-    if check_iqtree_files_exist(msa, dest_dir_path, []) and  check_satute_files(msa, dest_dir_path, categories, alpha, asr):
-        print_colored_message(f"{suffix} was successful", "32" )
-    else: 
-        print_colored_message(f"{suffix} failed", "31" )
-       
+    # check the files
+    if check_iqtree_files_exist(msa, dest_dir_path, []) and check_satute_files(
+        msa, dest_dir_path, categories, alpha, asr
+    ):
+        print_colored_message(f"{suffix} was successful", "32")
+    else:
+        print_colored_message(f"{suffix} failed", "31")
 
 
-def test_option_model(path_iqtree, path_python, path_satute, source_path, msa, results_path):
+def test_option_model(
+    path_iqtree, path_python, path_satute, source_path, msa, results_path
+):
 
     print("")
     print_colored_message(" ============= MODI MODEL....====================", "36")
     print("")
-
 
     test_1(source_path, msa, path_iqtree, path_python, path_satute)
     test_2(source_path, msa, path_iqtree, path_python, path_satute)
@@ -429,7 +443,7 @@ def test_option_model(path_iqtree, path_python, path_satute, source_path, msa, r
 
 if __name__ == "__main__":
     # set paths to IQ-TREE and Python executable
-    path_iqtree = "iqtree2"
+    path_iqtree = "iqtree"
     path_python = "python3"
     path_satute = "../../satute_cli.py"
 
@@ -437,7 +451,8 @@ if __name__ == "__main__":
     data_dir_path = "../data/data_dna/toy_example_JC"
     msa = "toy_example_ntaxa_7_run_5-alignment.phy"
 
-    output_dir_path =  "../test_results/"
+    output_dir_path = "../test_results/"
 
-    test_option_model(path_iqtree, path_python, path_satute, data_dir_path, msa, output_dir_path)
-    
+    test_option_model(
+        path_iqtree, path_python, path_satute, data_dir_path, msa, output_dir_path
+    )

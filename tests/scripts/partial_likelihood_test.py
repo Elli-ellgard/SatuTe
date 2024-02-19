@@ -16,10 +16,12 @@ from satute_rate_analysis import single_rate_analysis
 import numpy as np
 from graph import get_initial_likelihood_vector
 from satute_sequences import dict_to_alignment
+
 from satute_trees import (
     rename_internal_nodes_pre_order,
     collapse_identical_leaf_sequences,
 )
+
 from partial_likelihood import (
     partial_likelihood,
     calculate_partial_likelihoods_for_sites,

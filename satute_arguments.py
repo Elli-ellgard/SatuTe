@@ -1,9 +1,10 @@
 import argparse
 import pathlib
+from pathlib import Path
 import os
 
 
-def valid_directory(path):
+def valid_directory(path: Path):
     """
     Custom type function for argparse - checks if the provided path is a valid directory,
     is not empty, and contains a .iqtree file and at least one file with specified suffixes.
@@ -55,7 +56,7 @@ def valid_directory(path):
     return pathlib.Path(path)
 
 
-def valid_file(path):
+def valid_file(path: Path):
     """
     Custom type function for argparse - checks if the provided path is a valid file.
 
@@ -71,6 +72,24 @@ def valid_file(path):
     if not os.path.isfile(path):
         raise argparse.ArgumentTypeError(f"{path} is not a valid file")
     return pathlib.Path(path)
+
+
+def valid_alpha(alpha: float):
+    """
+    Custom type function for argparse - checks if the provided path is a valid file.
+
+    Args:
+    - path (str): File path to be validated.
+
+    Returns:
+    - pathlib.Path: Validated Path object.
+
+    Raises:
+    - argparse.ArgumentTypeError: If the provided path is not a file.
+    """
+    if 0 > alpha and alpha >= 1:
+        raise argparse.ArgumentTypeError(f"{alpha} is not a valid file")
+    return alpha
 
 
 ARGUMENT_LIST = [
@@ -145,7 +164,7 @@ ARGUMENT_LIST = [
         "help": (
             "Significance level for the saturation test. A common threshold is `0.05`, indicating a 5% significance level. Lower values make the test more stringent."
         ),
-        "type": float,
+        "type": valid_alpha,
         "default": 0.05,
         "metavar": "<significance_level>",
     },
@@ -174,14 +193,14 @@ ARGUMENT_LIST = [
     },
     {
         "flag": "-asr",
-        "help": "Write ancestral sequences(by empirical Bayesian method)for all nodes of the tree to .asr.csv file.",
+        "help": "Write ancestral sequences(by empirical Bayesian method) for all nodes of the tree to .asr.csv file.",
         "action": "store_true",
-      },
+    },
     {
         "flag": "-rateidx",
         "help": "Write the indices for rates into separate files",
         "action": "store_true",
-      },    
+    },
     {
         "flag": "-verbose",
         "help": "Enable verbose logging",

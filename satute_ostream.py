@@ -80,6 +80,8 @@ def write_posterior_probabilities_for_rates(
     output_suffix: str,
     alpha: float,
     edge,
+    per_rate_category_alignment: dict,
+    categorized_sites: dict,
 ):
     """
     Writes the posterior probabilities to a file.
@@ -89,13 +91,17 @@ def write_posterior_probabilities_for_rates(
     - output_file (str): Path to the output file where results will be saved.
     """
 
-    for key, results_set in results.items():
+    for rate, results_set in results.items():
         base_file_name = construct_file_name(
-            output_file, output_suffix, key, alpha, edge
+            output_file, output_suffix, rate, alpha, edge
         )
 
         calculate_and_write_posterior_probabilities(
-            results_set["partial_likelihoods"], state_frequencies, base_file_name
+            results_set["partial_likelihoods"],
+            state_frequencies,
+            base_file_name,
+            per_rate_category_alignment,
+            categorized_sites[rate],
         )
 
 
@@ -249,7 +255,7 @@ def write_nexus_file(
     - file_name (str): Name of the file to write.
     - results_data_frame (DataFrame): DataFrame with the data to map onto the Newick string.
     """
-    
+
     try:
         newick_string = tree.write(format=1, format_root_node=True)
         # Validate input
@@ -263,7 +269,7 @@ def write_nexus_file(
 
         # Extract taxa names from the tree
         taxa_names = [leaf.name for leaf in tree.iter_leaves()]
-        
+
         # Write the Nexus file
         with open(file_name, "w") as nexus_file:
             nexus_file.write("#NEXUS\n")
@@ -314,7 +320,11 @@ def write_alignment_and_indices(
 
 
 def calculate_and_write_posterior_probabilities(
-    partial_likelihood_per_site_storage: dict, state_frequencies: list, output_file: str
+    partial_likelihood_per_site_storage: dict,
+    state_frequencies: list,
+    output_file: str,
+    per_rate_category_alignment: dict,
+    categorized_sites: dict,
 ):
     """
     Calculate and write posterior probabilities for left and right likelihoods for each edge.
@@ -327,40 +337,96 @@ def calculate_and_write_posterior_probabilities(
 
     all_posterior_probabilities = pd.DataFrame()
 
+    states = []  # Extend this list if dealing with amino acids
+    dimension = len(state_frequencies)
+    # Define state labels based on the dimension
+    if len(state_frequencies) == 4:
+        states = ["A", "C", "G", "T"]
+    elif len(state_frequencies) == 20:
+        states = [
+            "A",
+            "R",
+            "N",
+            "D",
+            "C",
+            "Q",
+            "E",
+            "G",
+            "H",
+            "I",
+            "L",
+            "K",
+            "M",
+            "F",
+            "P",
+            "S",
+            "T",
+            "W",
+            "Y",
+            "V",
+        ]
+    else:
+        raise ValueError(
+            "Unsupported state frequency dimension. Expected 4 (nucleotides) or 20 (amino acids)."
+        )
+
     for edge, likelihoods in partial_likelihood_per_site_storage.items():
+
         left_partial_likelihood = pd.DataFrame(likelihoods["left"]["likelihoods"])
+
         right_partial_likelihood = pd.DataFrame(likelihoods["right"]["likelihoods"])
-        
-                # Calculate left and right posterior probabilities
+
+        # Calculate left and right posterior probabilities
         left_posterior_probabilities = calculate_posterior_probabilities_subtree_df(
-            4, state_frequencies, left_partial_likelihood
+            dimension, state_frequencies, left_partial_likelihood
         )
+
         right_posterior_probabilities = calculate_posterior_probabilities_subtree_df(
-            4, state_frequencies, right_partial_likelihood
+            dimension, state_frequencies, right_partial_likelihood
         )
-        
+
         left_posterior_probabilities["Node"] = left_partial_likelihood["Node"]
-        right_posterior_probabilities["Site"] = right_partial_likelihood["Site"]
+
+        right_posterior_probabilities["Site"] = [
+            categorized_sites[i] for i in right_partial_likelihood["Site"]
+        ]
+
         right_posterior_probabilities["Node"] = right_partial_likelihood["Node"]
-        right_posterior_probabilities["Edge"] = edge        
+
+        right_posterior_probabilities["Edge"] = edge
+
+        # Map numerical indices to state names and add side suffix
+        state_columns_left = {i: "p" + state for i, state in enumerate(states)}
+        left_posterior_probabilities.rename(columns=state_columns_left, inplace=True)
+
+        # Map numerical indices to state names and add side suffix
+        state_columns_right = {i: "p" + state for i, state in enumerate(states)}
+        right_posterior_probabilities.rename(columns=state_columns_right, inplace=True)
 
         # Rename columns with suffixes _left and _right
         left_posterior_probabilities = left_posterior_probabilities.add_suffix("_left")
+
         right_posterior_probabilities = right_posterior_probabilities.add_suffix(
             "_right"
         )
 
         # Ensure 'Site', 'Node', and 'Edge' columns are not suffixed
         for col in ["Site", "Edge"]:
+
             if col + "_left" in left_posterior_probabilities.columns:
+
                 left_posterior_probabilities[col] = left_posterior_probabilities[
                     col + "_left"
                 ]
+
                 left_posterior_probabilities.drop(col + "_left", axis=1, inplace=True)
+
             if col + "_right" in right_posterior_probabilities.columns:
+
                 right_posterior_probabilities[col] = right_posterior_probabilities[
                     col + "_right"
                 ]
+
                 right_posterior_probabilities.drop(col + "_right", axis=1, inplace=True)
 
         # Concatenate left and right posterior probabilities horizontally

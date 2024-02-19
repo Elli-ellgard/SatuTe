@@ -1527,6 +1527,7 @@ def get_aa_state_frequency_substitution_models(substitution_model: str) -> tuple
         frequencies = np.array(AA_STATE_FREQUENCIES[core_model])
         return frequencies, np.diag(frequencies)
 
+
 def create_rate_matrix_with_input(matrix_size, input_string: str):
     # Split the string into lines
     # input_string = input_string.replace(" ", "")

@@ -10,7 +10,7 @@ from file_handler import FileHandler, IqTreeHandler
 from satute_trees import rename_internal_nodes_pre_order
 from satute_arguments import ARGUMENT_LIST
 from Bio.Align import MultipleSeqAlignment
-from satute_repository import SubstitutionModel, IqTreeParser
+
 from satute_rate_analysis import (
     multiple_rate_analysis,
     single_rate_analysis_collapsed_tree,
@@ -27,15 +27,20 @@ from satute_categories import (
 )
 from satute_repository import (
     parse_substitution_model,
-    parse_rate_from_model,
+    parse_rate_from_cli_input,
     parse_file_to_data_frame,
+    SubstitutionModel,
+    IqTreeParser,
 )
 
 
 def format_matrix(matrix, precision=4):
     """Format a matrix for pretty printing."""
-    formatted_matrix = "\n".join(["\t".join([f"{item:.{precision}f}" for item in row]) for row in matrix])
+    formatted_matrix = "\n".join(
+        ["\t".join([f"{item:.{precision}f}" for item in row]) for row in matrix]
+    )
     return formatted_matrix
+
 
 def format_array(array, precision=4):
     """Format a 1D array for pretty printing."""
@@ -238,8 +243,13 @@ class Satute:
                 "--redo",
             ]
 
-            if self.number_rates > 1:
-                extra_arguments = extra_arguments + ["-wspr"]
+            if isinstance(self.number_rates, int):
+                # Add the '-wspr' option if number_rates > 1
+                if self.number_rates > 1:
+                    extra_arguments.append("-wspr")
+            if isinstance(self.number_rates, str):
+                if self.number_rates == "AMBIGUOUS":
+                    extra_arguments.append("-wspr")
 
             self.iqtree_handler.run_iqtree_with_arguments(
                 arguments=arguments_dict["arguments"], extra_arguments=extra_arguments
@@ -264,9 +274,13 @@ class Satute:
                 "--keep-ident",
             ]
 
-            # Add the '-wspr' option if number_rates > 1
-            if self.number_rates > 1:
-                extra_arguments.append("-wspr")
+            if isinstance(self.number_rates, int):
+                # Add the '-wspr' option if number_rates > 1
+                if self.number_rates > 1:
+                    extra_arguments.append("-wspr")
+            if isinstance(self.number_rates, str):
+                if self.number_rates == "AMBIGUOUS":
+                    extra_arguments.append("-wspr")
 
             # Call IQ-TREE with the constructed arguments
             self.iqtree_handler.run_iqtree_with_arguments(
@@ -339,7 +353,7 @@ class Satute:
         stream_handler.setLevel(stream_level)  # Set level based on verbose flag
         self.logger.addHandler(stream_handler)
 
-    def validate_and_set_rate_category(self, input_category, number_rates):
+    def validate_and_set_rate_category(self, input_category: int, number_rates: int):
         """
         Validates the input category against the number of rates and sets the rate category.
 
@@ -383,19 +397,30 @@ class Satute:
         ) = spectral_decomposition(
             substitution_model.rate_matrix, substitution_model.phi_matrix
         )
+
         # Get number of rate categories in case of a +G or +R model
         # Consider a specific rate category
+
         rate_category = "all"
         if self.input_args.category:
             rate_category = self.validate_and_set_rate_category(
                 self.input_args.category, substitution_model.number_rates
             )
+
+        if self.number_rates == "AMBIGUOUS":
+            self.number_rates = substitution_model.number_rates
+
         # ======== Multiple Sequence Alignment
         alignment = read_alignment_file(msa_file.resolve())
         # ========  Test for Branch Saturation =========
 
         self.log_test_statistic_info(
-            iq_arguments_dict, substitution_model, rate_category, msa_file, multiplicity
+            iq_arguments_dict,
+            substitution_model,
+            rate_category,
+            msa_file,
+            multiplicity,
+            array_right_eigenvectors,
         )
 
         if substitution_model.number_rates == 1:
@@ -539,6 +564,8 @@ class Satute:
                 self.input_args.output_suffix,
                 self.input_args.alpha,
                 self.input_args.edge,
+                per_rate_category_alignment,
+                categorized_sites,
             )
 
         if self.input_args.rateidx:
@@ -553,6 +580,7 @@ class Satute:
         rate_category,
         msa_file: Path,
         multiplicity: int,
+        eigenvectors: list,
     ):
         """
         Logs information about the initial IQ-TREE run and tests being performed.
@@ -564,16 +592,25 @@ class Satute:
             msa_file (Path): Path to the MSA file being used.
             multiplicity: Multiplicity value from spectral decomposition.
         """
-            # Formatting the rate matrix for logging
+        # Formatting the rate matrix for logging
         rate_matrix_str = format_matrix(substitution_model.rate_matrix, precision=4)
         # Formatting the state frequencies for logging
-        state_frequencies_str = format_array(np.array(list(substitution_model.state_frequencies)), precision=4)
+        state_frequencies_str = format_array(
+            np.array(list(substitution_model.state_frequencies)), precision=4
+        )
+
         # Logging the formatted rate matrix and state frequencies
         self.logger.info(
             f"Rate Matrix Q:\n{rate_matrix_str}\n\n"
             f"State Frequencies:\n{state_frequencies_str}\n"
         )
-    
+
+        eigenvector_str = ""
+        for eigenvector in eigenvectors:
+            eigenvector_str += f"\n{format_array(list(eigenvector))}"
+
+        self.logger.info(f"Eigenvectors: {eigenvector_str}\n")
+
         self.logger.info(
             f"""
             Running tests and initial IQ-Tree with configurations:
@@ -593,7 +630,7 @@ class Satute:
     def handle_number_rates(self):
         self.number_rates = 1
         if self.input_args.model:
-            self.number_rates = parse_rate_from_model(self.input_args.model)
+            self.number_rates = parse_rate_from_cli_input(self.input_args.model)
         return self.number_rates
 
     def initialize_handlers(self):

@@ -60,12 +60,13 @@ def parse_substitution_model(file_path: str) -> str:
         raise ValueError("Could not read the file.")
 
 
-def parse_rate_from_model(model):
+def parse_rate_from_cli_input(model):
     # Find the index of '+G' and '+R' in the model string
     plus_g_index = model.find("+G")
     plus_r_index = model.find("+R")
 
     if plus_g_index != -1 and plus_r_index != -1:
+        
         raise ValueError("Cannot use +G and +R")
 
     if plus_g_index != -1:
@@ -84,11 +85,14 @@ def parse_rate_from_model(model):
             # e.g. +G{0.9} will fix the Gamma shape parameter (alpha)to 0.9
             # discrete Gamma model: default 4 rate categories
             rate = 4
+            return rate
         else:
-            # number of rate categories
-            rate = int(number)
-
-        return rate
+            if number and str(number).isnumeric():                
+                # number of rate categories
+                rate = int(number)
+                return rate
+            else:
+                return "AMBIGUOUS"
     except ValueError:
         # If '+G' is not found or the number after '+G' is not a valid integer
         # Return None or an appropriate value for error handling
@@ -480,7 +484,6 @@ class IqTreeParser:
         rate_matrix_params = AMINO_ACID_RATE_MATRIX[core_model]
         rate_matrix = create_rate_matrix_with_input(20, rate_matrix_params)
         return np.array(rate_matrix)
-
 
     def parse_aa_rate_matrix(self) -> np.matrix:
         """

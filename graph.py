@@ -5,7 +5,6 @@ from ete3 import Tree
 from Bio.Align import MultipleSeqAlignment
 from typing import List, Tuple, Optional, Dict
 from functools import cache
-
 from nucleotide_code_vector import NUCLEOTIDE_CODE_VECTOR
 from amino_acid_models import AMINO_ACID_CODE_VECTOR
 
@@ -136,13 +135,13 @@ def convert_tree_to_state_graph(
 
     # Traverse the tree and create Node objects and edges
     for ete_node in tree.traverse("levelorder"):
-        
+
         node = create_or_get_node(
             ete_node=ete_node,
             msa_column=msa_column,
             alignment_look_up_table=alignment_look_up_table,
             node_dictionary=node_dictionary,
-            state_type=state_type
+            state_type=state_type,
         )
 
         add_child_edges(
@@ -152,7 +151,7 @@ def convert_tree_to_state_graph(
             alignment_look_up_table,
             node_dictionary,
             edge_list,
-            state_type
+            state_type,
         )
 
     return Graph(edge_list)
@@ -212,7 +211,11 @@ def add_child_edges(
     """
     for child_ete_node in parent_ete_node.children:
         child_node = create_or_get_node(
-            child_ete_node, msa_column, alignment_look_up_table, node_dictionary,state_type=state_type
+            child_ete_node,
+            msa_column,
+            alignment_look_up_table,
+            node_dictionary,
+            state_type=state_type,
         )
         edges.append((parent_node, child_node, child_ete_node.dist))
 
