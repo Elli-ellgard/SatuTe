@@ -5,8 +5,10 @@ from Bio import AlignIO
 from pathlib import Path
 from ete3 import Tree
 from pandas import DataFrame
-from typing import Dict, Any
+from typing import Dict, Any, List
 import numpy as np
+from amino_acid_models import AMINO_ACIDS
+from satute_result import TestStatisticComponentsContainer
 
 
 # New function to format float columns
@@ -18,10 +20,21 @@ def format_float_columns(data_frame: DataFrame):
 
 
 def construct_file_name(
-    msa_file: Path, output_suffix: str, rate: str, alpha: float, edge
-):
+    msa_file: Path, output_suffix: str, rate: str, alpha: float, edge: str
+) -> str:
     """
-    Constructs a file name based on the given parameters.
+    Constructs a file name for saving analysis results, incorporating multiple parameters to generate a meaningful and unique file name.
+
+    The function constructs the file name by starting with the path of the MSA (Multiple Sequence Alignment) file, followed by the specified evolutionary rate, and the alpha value. These components are concatenated using underscores. If an output suffix is provided, it is inserted between the MSA file path and the rate. If edge information is provided, it is appended at the end. The resulting file name ends with a ".satute" extension.
+    Args:
+        msa_file (Path): The path to the MSA file, which forms the base of the file name.
+        output_suffix (str): An optional string to be included in the file name for additional context or differentiation.
+        rate (str): A string representing the evolutionary rate category, included in the file name to indicate the analysis's focus.
+        alpha (float): A float value representing the alpha parameter used in the analysis, included in the file name for specificity.
+        edge (str): An optional string representing edge information in the phylogenetic analysis, appended to the file name if provided.
+
+    Returns:
+        str: The constructed file name, incorporating the provided parameters for clear identification of the analysis results.
     """
     file_name = f"{msa_file.resolve()}_{rate}_{alpha}.satute"
     if output_suffix:
@@ -31,16 +44,88 @@ def construct_file_name(
     return file_name
 
 
-def write_to_csv(data_frame: DataFrame, file_name: str, logger: Logger):
+def write_components(
+    components: TestStatisticComponentsContainer,
+    msa_file: Path,
+    output_suffix: str,
+    rate: str,
+    alpha: float,
+    edge: str,
+    site_indices: List[int],
+): 
     """
-    Writes a DataFrame to a CSV file.
+    Writes the components' DataFrame to a CSV file, including the same site indices for each identifier.
+
+    Args:
+        components (TestStatisticComponentsContainer): The container of test statistic components.
+        msa_file (Path): Path to the MSA file, used for constructing the output file name.
+        output_suffix (str): Suffix for the output file name.
+        rate (str): Rate parameter for the file name.
+        alpha (float): Alpha parameter for the file name.
+        edge (str): Edge parameter for the file name.
+        site_indices (List[int]): List of site indices to be included in the DataFrame for each identifier.
+    """
+    file_name = construct_file_name(msa_file, output_suffix, rate, alpha, edge)
+    components_frame = components.to_dataframe()
+
+    # Repeat the site_indices for each row in the DataFrame based on the identifier
+    # Assuming every row/component should have an associated site index
+    expanded_site_indices = []
+    num_rows_per_identifier = len(site_indices)
+    
+    
+    for identifier in components_frame['Edge'].unique():
+        expanded_site_indices.extend(site_indices)
+
+    # Check to ensure the expanded list matches the DataFrame's length
+    # if len(expanded_site_indices) != len(components_frame):
+    #    raise ValueError("Expanded site indices do not match the DataFrame length.")
+
+    # Add the expanded site indices to the DataFrame
+    components_frame['Site'] = expanded_site_indices
+
+    # Write the DataFrame to a CSV file
+    components_frame.to_csv(f"{file_name}.components", index=False)
+
+
+def write_to_csv(data_frame: pd.DataFrame, file_name: str, logger: Logger) -> None:
+    """
+    Writes the content of a pandas DataFrame to a CSV file. This function constructs the CSV file name
+    by appending ".csv" to the provided file_name parameter. It attempts to save the DataFrame into this
+    CSV file and logs the outcome using the provided logger object.
+
+    Extended error handling includes catching specific exceptions related to file writing operations
+    and general exceptions, allowing for more granular logging and troubleshooting.
+
+    Args:
+        data_frame (pd.DataFrame): The DataFrame to be written to a CSV file.
+        file_name (str): The base name for the output CSV file, without the ".csv" extension.
+        logger (Logger): A logging.Logger object used for logging messages regarding the file writing operation.
+
+    Returns:
+        None
+
+    Raises:
+        IOError: If an I/O error occurs during file writing.
+        Exception: For catching other unexpected exceptions that may occur during the process.
     """
     try:
         csv_file_name = f"{file_name}.csv"
-        data_frame.to_csv(csv_file_name)
+        data_frame.to_csv(
+            csv_file_name, index=False
+        )  # Consider adding index=False to avoid writing row indices
         logger.info(f"Results saved to CSV file: {csv_file_name}")
+    except PermissionError as e:
+        logger.error(f"Permission denied when writing CSV file {csv_file_name}: {e}")
+        raise IOError(f"Permission denied when writing CSV file {csv_file_name}: {e}")
+    except IOError as e:
+        logger.error(f"I/O error when writing CSV file {csv_file_name}: {e}")
+        raise
     except Exception as e:
-        logger.error(f"Error writing CSV file {csv_file_name}: {e}")
+        logger.error(
+            f"Unexpected error occurred when writing CSV file {csv_file_name}: {e}"
+        )
+        raise
 
 
 def write_results_for_category_rates(
@@ -49,39 +134,113 @@ def write_results_for_category_rates(
     output_suffix: str,
     msa_file: Path,
     alpha: float,
-    edge,
+    edge: str,
     logger: Logger,
-):
+) -> None:
     """
-    Writes the results for category rates to appropriate files.
+    Iterates over a dictionary of results, organized by rate categories, and writes these results to files.
+    Each rate category's results are processed and saved using a dedicated function. This process includes
+    logging the original tree structure and handling results for each category rate by delegating to another
+    function designed for processing and saving those results.
+
+    This function serves as an orchestrator for writing the analysis results of different evolutionary rate
+    categories into separate files, each named according to the provided parameters to reflect the analysis's specifics.
 
     Args:
-    - results (dict): Dictionary containing the results data.
-    - to_be_tested_tree (Tree): Tree object to be tested.
-    - output_suffix (str): Suffix for output files.
-    - msa_file (Path): Path to the MSA file.
-    - alpha (float): Alpha value for calculations.
-    - edge: Edge information for tree processing.
-    - logger (Logger): Logger for logging events.
-    """
+        results (Dict[str, Any]): A dictionary where keys are rate categories (as strings) and values are the results
+        data (of any type) associated with those categories.
+        to_be_tested_tree (Tree): An ETE tree object that represents the phylogenetic tree to be tested or analyzed.
+        output_suffix (str): A suffix to be appended to the output files' names, providing context or distinguishing
+        between different analysis runs.
+        msa_file (Path): The file path to the multiple sequence alignment (MSA) file that was analyzed. This is used
+        as part of the basis for naming output files.
+        alpha (float): A parameter value used in the analysis, included in the output file names for reference.
+        edge (str): A string representing specific edge information in the phylogenetic tree, also included in the
+        output file names.
+        logger (Logger): A logging.Logger object used for logging informational messages and errors during the process.
 
-    log_original_tree(logger, to_be_tested_tree)
+    Returns:
+        None
+
+    Raises:
+        Exception: If an error occurs during the logging of the original tree or the processing of category rates,
+        exceptions are caught and logged. Specific handling or re-raising of exceptions should be implemented in the
+        functions `log_original_tree` and `process_rate_category`.
+    """
+    try:
+        log_original_tree(logger, to_be_tested_tree)
+    except Exception as e:
+        logger.error(f"Error logging original tree: {e}")
+        # Consider whether to continue execution or raise an exception based on your application's needs.
 
     for rate, results_set in results.items():
-        process_rate_category(
-            rate, results_set, msa_file, output_suffix, alpha, edge, logger
-        )
+        try:
+            process_rate_category(
+                rate, results_set, msa_file, output_suffix, alpha, edge, logger
+            )
+
+        except Exception as e:
+            logger.error(f"Error processing results for rate category '{rate}': {e}")
+            # Decide on continuation or halting based on the severity of the error and your application's requirements.
 
 
 def write_posterior_probabilities_for_rates(
     results: Dict[str, Any],
-    state_frequencies: list,
+    state_frequencies: List[float],
     output_file: Path,
     output_suffix: str,
     alpha: float,
-    edge,
-    per_rate_category_alignment: dict,
-    categorized_sites: dict,
+    edge: str,
+    categorized_sites: Dict[str, List[int]],
+) -> None:
+    """
+    Writes the posterior probabilities for different evolutionary rates to files. Each rate category in the results
+    dictionary will have its posterior probabilities calculated and written to a separate file. The file names are
+    constructed using the output_file path, output_suffix, the rate category, the alpha parameter, and the edge
+    information, ensuring unique and descriptive file names for each rate category.
+
+    Args:
+        results (Dict[str, Any]): A dictionary where keys are rate categories (as strings) and values are dictionaries
+            containing the results data for that rate, including "partial_likelihoods" which are necessary for
+            calculating posterior probabilities.
+        state_frequencies (List[float]): A list of state frequencies used in the calculation of posterior probabilities.
+            Each element in the list represents the frequency of a particular state (e.g., nucleotide or amino acid)
+            in the analyzed sequences.
+        output_file (Path): The base path for output files. The actual output file names will be constructed by
+            appending additional information to this base path.
+        output_suffix (str): A string to be appended to the base file name to help differentiate files from different
+            analyses or runs.
+        alpha (float): The alpha parameter used in the analysis, included in the file name for specificity.
+        edge (str): A string representing edge information in the phylogenetic tree, included in the file name if provided.
+        categorized_sites (Dict[str, List[int]]): A dictionary mapping rate categories to lists of site indices. Each
+            list contains integers that represent the positions (sites) in the sequence alignment associated with that rate.
+
+    Returns:
+        None
+    """
+    for rate, results_set in results.items():
+        # Construct the base file name for this rate category
+        base_file_name = construct_file_name(
+            output_file, output_suffix, rate, alpha, edge
+        )
+
+        # Calculate and write posterior probabilities for this rate category
+        calculate_and_write_posterior_probabilities(
+            results_set["partial_likelihoods"],
+            state_frequencies,
+            base_file_name,
+            categorized_sites[rate],
+        )
+
+
+def write_posterior_probabilities_single_rate(
+    results: Dict[str, Any],
+    state_frequencies: List[float],
+    output_file: Path,
+    output_suffix: str,
+    alpha: float,
+    edge: str,
+    number_sites: int,
 ):
     """
     Writes the posterior probabilities to a file.
@@ -91,18 +250,18 @@ def write_posterior_probabilities_for_rates(
     - output_file (str): Path to the output file where results will be saved.
     """
 
-    for rate, results_set in results.items():
-        base_file_name = construct_file_name(
-            output_file, output_suffix, rate, alpha, edge
-        )
+    base_file_name = construct_file_name(
+        output_file, output_suffix, "single_rate", alpha, edge
+    )
 
-        calculate_and_write_posterior_probabilities(
-            results_set["partial_likelihoods"],
-            state_frequencies,
-            base_file_name,
-            per_rate_category_alignment,
-            categorized_sites[rate],
-        )
+    categorized_site = [i for i in range(0, number_sites + 1, 1)]
+
+    calculate_and_write_posterior_probabilities(
+        results["single_rate"]["partial_likelihoods"],
+        state_frequencies,
+        base_file_name,
+        categorized_site,
+    )
 
 
 def process_rate_category(
@@ -111,7 +270,7 @@ def process_rate_category(
     msa_file: Path,
     output_suffix: str,
     alpha: float,
-    edge,
+    edge: str,
     logger: Logger,
 ):
     """
@@ -129,7 +288,7 @@ def process_rate_category(
     try:
         file_name = construct_file_name(msa_file, output_suffix, rate, alpha, edge)
         log_rate_info(logger, file_name, rate, results_set)
-        results_data_frame = pd.DataFrame(results_set["result_list"])
+        results_data_frame = pd.DataFrame(results_set["result_list"].to_dataframe())
         format_float_columns(results_data_frame)
         write_results_to_files(results_set, file_name, results_data_frame, logger)
     except Exception as e:
@@ -151,9 +310,9 @@ def log_rate_info(
 
 
 def write_results_to_files(
-    results_set: dict[str, Any],
+    results_set: Dict[str, Any],
     file_name: str,
-    results_data_frame: pd.DataFrame,
+    results_data_frame: DataFrame,
     logger: Logger,
 ):
     if "rescaled_tree" in results_set:
@@ -163,7 +322,7 @@ def write_results_to_files(
         logger.info(
             f"Saturation Test Results for rate category mapped to tree in Nexus file: {file_name}.nex"
         )
-
+    # write_to_components(results_set['components'], file_name, [])
     write_to_csv(results_data_frame, file_name, logger)
 
 
@@ -275,7 +434,7 @@ def write_nexus_file(
             nexus_file.write("#NEXUS\n")
             nexus_file.write("BEGIN TAXA;\n")
             nexus_file.write(f"    DIMENSIONS NTAX={len(taxa_names)};\n")
-            nexus_file.write("    TAXLABELS\n")
+            nexus_file.write("     TAXLABELS\n")
             for taxon in taxa_names:
                 nexus_file.write(f"        {taxon}\n")
             nexus_file.write("    ;\n")
@@ -289,8 +448,8 @@ def write_nexus_file(
 
 
 def write_alignment_and_indices(
-    per_rate_category_alignment: dict[str, AlignIO.MultipleSeqAlignment],
-    categorized_sites: dict,
+    per_rate_category_alignment: Dict[str, AlignIO.MultipleSeqAlignment],
+    categorized_sites: List,
     msa_file: Path,
 ):
     """
@@ -320,11 +479,10 @@ def write_alignment_and_indices(
 
 
 def calculate_and_write_posterior_probabilities(
-    partial_likelihood_per_site_storage: dict,
-    state_frequencies: list,
+    partial_likelihood_per_site_storage: Dict,
+    state_frequencies: List[float],
     output_file: str,
-    per_rate_category_alignment: dict,
-    categorized_sites: dict,
+    categorized_sites: List[int],
 ):
     """
     Calculate and write posterior probabilities for left and right likelihoods for each edge.
@@ -343,28 +501,7 @@ def calculate_and_write_posterior_probabilities(
     if len(state_frequencies) == 4:
         states = ["A", "C", "G", "T"]
     elif len(state_frequencies) == 20:
-        states = [
-            "A",
-            "R",
-            "N",
-            "D",
-            "C",
-            "Q",
-            "E",
-            "G",
-            "H",
-            "I",
-            "L",
-            "K",
-            "M",
-            "F",
-            "P",
-            "S",
-            "T",
-            "W",
-            "Y",
-            "V",
-        ]
+        states = AMINO_ACIDS
     else:
         raise ValueError(
             "Unsupported state frequency dimension. Expected 4 (nucleotides) or 20 (amino acids)."
@@ -445,7 +582,7 @@ def calculate_and_write_posterior_probabilities(
 
 
 def calculate_posterior_probabilities_subtree_df(
-    dimension: int, state_frequencies: list, partial_likelihood_df: pd.DataFrame
+    dimension: int, state_frequencies: List[float], partial_likelihood_df: pd.DataFrame
 ):
     diag = np.diag(list(state_frequencies))
 

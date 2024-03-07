@@ -5,8 +5,14 @@ from graph import calculate_subtree_edge_metrics
 from satute_sequences import dict_to_alignment
 from ete3 import Tree
 from Bio.Align import MultipleSeqAlignment
+from typing import List, Dict
 from rate_matrix import RateMatrix
-from satute_statistic_posterior_distribution import (
+from satute_result import (
+    TestResultsBranches,
+    TestResultBranch,
+    TestStatisticComponentsContainer,
+)
+from satute_statistic_posterior_distribution_components import (
     calculate_test_statistic_posterior_distribution,
 )
 from satute_trees import (
@@ -19,11 +25,11 @@ def single_rate_analysis(
     initial_tree: Tree,
     alignment: MultipleSeqAlignment,
     rate_matrix: RateMatrix,
-    state_frequencies: list,
+    state_frequencies: List[float],
     array_right_eigenvectors: list,
     multiplicity: int,
     alpha: float = 0.05,
-    focused_edge=None,
+    focused_edge: str = None,
 ):
     """
     Performs a single rate analysis on a phylogenetic tree.
@@ -51,7 +57,8 @@ def single_rate_analysis(
 
     # Initialize a dictionary and a list to store results
     result_test_dictionary = {}
-    result_list = []
+    results = TestResultsBranches()
+    components_container = TestStatisticComponentsContainer()
 
     # Iterate over each edge and process likelihoods
     for edge, likelihoods in partial_likelihood_per_site_storage.items():
@@ -69,29 +76,31 @@ def single_rate_analysis(
 
         _type = edge_subtree_count_dict[edge]["type"]
 
-        # Calculate test statistics using the posterior distribution
-        results = process_test_statistics_posterior(
+        dimension = len(state_frequencies)
+
+        components, result = calculate_test_statistic_posterior_distribution(
             multiplicity,
             array_right_eigenvectors,
             state_frequencies,
             left_partial_likelihood,
             right_partial_likelihood,
+            dimension,
             number_leaves_left_subtree,
             number_leaves_right_subtree,
             _type,
             alpha,
         )
 
+        components_container.add_component("edge", components)
         # Store the results for the given edge
-        result_list.append(
-            store_test_results(edge, "single_rate", left_partial_likelihood, results)
-        )
+        results.add_branch(edge, result)
 
     # Add all results to the main result dictionary
     result_test_dictionary["single_rate"] = {
-        "result_list": result_list,
+        "result_list": results,
         "rescaled_tree": initial_tree,
         "partial_likelihoods": partial_likelihood_per_site_storage,
+        "components": components_container,
     }
 
     return result_test_dictionary
@@ -105,7 +114,7 @@ def single_rate_analysis_collapsed_tree(
     array_right_eigenvectors: list,
     multiplicity: int,
     alpha: float = 0.05,
-    focused_edge=None,
+    focused_edge: str = None,
 ):
     # Step 1: Map sequence IDs to their sequences from the alignment for easy access
     sequence_dict = {record.id: str(record.seq) for record in alignment}
@@ -138,7 +147,6 @@ def single_rate_analysis_collapsed_tree(
         results["single_rate"]["result_list"],
         collapsed_nodes,
         initial_tree,
-        "single_rate",
         focused_edge,
     )
 
@@ -146,61 +154,11 @@ def single_rate_analysis_collapsed_tree(
     return results
 
 
-def process_test_statistics_posterior(
-    multiplicity: int,
-    array_right_eigenvectors,
-    state_frequencies: list,
-    left_partial_likelihood: DataFrame,
-    right_partial_likelihood: DataFrame,
-    number_leaves_left_subtree: int,
-    number_leaves_right_subtree: int,
-    branch_type: str,
-    alpha: type,
-):
-    """
-    Calculate test statistics for posterior distribution and store results in a dictionary.
-
-    Args:
-        ... [all the function arguments with their descriptions]
-
-    Returns:
-        dict: Dictionary containing calculated results.
-    """
-    
-    dimension = len(state_frequencies)    
-    
-    results = calculate_test_statistic_posterior_distribution(
-        multiplicity,
-        array_right_eigenvectors,
-        state_frequencies,
-        left_partial_likelihood,
-        right_partial_likelihood,
-        dimension,
-        number_leaves_left_subtree,
-        number_leaves_right_subtree,
-        branch_type,
-        alpha,
-    )
-
-    result_keys = [
-        "test_statistic",
-        "delta",
-        "variance",
-        "p_value",
-        "decision_test",
-        "decision_corrected_test_tips",
-        "decision_corrected_test_branches",
-        "decision_test_tip2tip",
-    ]
-
-    return {key: value for key, value in zip(result_keys, results)}
-
-
 def multiple_rate_analysis(
     initial_tree: Tree,
     category_rates_factors,
     rate_matrix: RateMatrix,
-    state_frequencies: list,
+    state_frequencies: List[float],
     array_right_eigenvectors: list,
     multiplicity: int,
     per_rate_category_alignment: dict[str, MultipleSeqAlignment],
@@ -222,7 +180,8 @@ def multiple_rate_analysis(
         relative_rate = category_rates_factors[rate]["Relative_rate"]
 
         # Initialize a list to store results for the current rate category
-        result_list = []
+        results_list = TestResultsBranches()
+        components_container = TestStatisticComponentsContainer()
 
         # Step 3: Create a deep copy of the initial tree and collapse nodes with identical sequences
         collapsed_rescaled_tree_one = initial_tree.copy("deepcopy")
@@ -274,111 +233,84 @@ def multiple_rate_analysis(
                     "leave_count"
                 ]
 
-                # Calculate test statistics using the posterior distribution
-                results = process_test_statistics_posterior(
-                    multiplicity,
-                    array_right_eigenvectors,
-                    state_frequencies,
-                    left_partial_likelihood,
-                    right_partial_likelihood,
-                    number_leaves_left_subtree,
-                    number_leaves_right_subtree,
-                    edge_subtree_metrics[edge]["type"],
-                    alpha,
+                dimension = len(state_frequencies)
+
+                test_components, test_result = (
+                    calculate_test_statistic_posterior_distribution(
+                        multiplicity,
+                        array_right_eigenvectors,
+                        state_frequencies,
+                        left_partial_likelihood,
+                        right_partial_likelihood,
+                        dimension,
+                        number_leaves_left_subtree,
+                        number_leaves_right_subtree,
+                        edge_subtree_metrics[edge]["type"],
+                        alpha,
+                    )
                 )
 
+                components_container.add_component(edge, test_components)
+
                 # Store the results of the test for the given edge
-                result_list.append(
-                    store_test_results(edge, rate, left_partial_likelihood, results)
+                results_list.add_branch(edge, test_result)
+
+                test_result.add_result(
+                    "branch_length", left_partial_likelihood.get("branch_length")[0]
                 )
 
             insert_nan_values_for_identical_taxa(
-                result_list, collapsed_nodes, initial_tree, rate, focused_edge
+                results_list, collapsed_nodes, initial_tree, focused_edge
             )
 
             # Step 10: Add the results for the current rate category to the main dictionary
             result_rate_dictionary[rate] = {
-                "result_list": result_list,
+                "result_list": results_list,
                 "rescaled_tree": collapsed_rescaled_tree_one,
+                "components": components_container,
                 "partial_likelihoods": partial_likelihood_per_site_storage,
             }
 
     return result_rate_dictionary
 
 
-def store_test_results(
-    edge, rate: str, left_partial_likelihood: DataFrame, results: dict
-):
-    """
-    Store the test results in a structured dictionary format.
-
-    Args:
-        edge (str): The edge identifier.
-        rate (float): The rate of the category.
-        left_partial_likelihood (dict): Contains partial likelihoods.
-        results (dict): Results from the test statistic calculation.
-
-    Returns:
-        dict: Structured result entry.
-    """
-
-    return {
-        "test_statistic": results.get("test_statistic"),
-        "edge": edge,
-        "delta": results.get("delta"),
-        "variance": results.get("variance"),
-        "p_value": results.get("p_value"),
-        "decision_test": results.get("decision_test"),
-        "decision_corrected_test_tips": results.get("decision_corrected_test_tips"),
-        "decision_corrected_test_branches": results.get(
-            "decision_corrected_test_branches"
-        ),
-        "decision_test_tip2tip": results.get("decision_test_tip2tip"),
-        "category_rate": rate,
-        "branch_length": left_partial_likelihood.get("branch_length")[0],
-    }
-
-
 def insert_nan_values_for_identical_taxa(
-    result_list: list,
+    test_results_branches: TestResultsBranches,
     collapsed_nodes: dict,
     initial_tree: Tree,
-    rate: str,
-    focused_edge=None,
+    focused_edge: str = None,
 ):
     """
-    Insert NaN values into the result list for edges consisting of identical taxa.
-
-    This function updates a result list by appending NaN values for specific metrics associated
-    with edges between identical taxa. The function can focus on a specific edge if provided.
+    Insert NaN values for edges consisting of identical taxa by creating TestResultBranch instances
+    with NaN values for specific metrics, and then add these instances to the TestResultsBranches container.
 
     Args:
-        result_list (list): The list to which the NaN values are to be appended.
+        test_results_branches (TestResultsBranches): The container to which the TestResultBranch instances are added.
         collapsed_nodes (dict): A dictionary of parent nodes mapping to their child nodes.
         initial_tree (Tree): The initial phylogenetic tree used for distance calculation.
-        rate (str): The category rate associated with the edge.
-        focused_edge: A specific edge to focus on. If None,
-            the function processes all edges in `collapsed_nodes`.
-
+        focused_edge: A specific edge to focus on. If None, the function processes all edges in `collapsed_nodes`.
     """
-    nan_values_dict = {
-        "test_statistic": "Nan",
-        "delta": "Nan",
-        "variance": "Nan",
-        "p_value": "Nan",
-        "decision_test": "Nan",
-        "decision_corrected_test_tips": "Nan",
-        "decision_corrected_test_branches": "Nan",
-        "decision_test_tip2tip": "Nan",
-        "category_rate": rate,
-    }
+
+    not_analyzed_constant = "duplicate sequence"
 
     for parent, children in collapsed_nodes.items():
         for child in children:
             if not focused_edge or (parent in focused_edge and child in focused_edge):
-                edge_info = {
-                    "edge": f"({parent},{child})",
+                # Prepare the nan_values_dict for this specific edge
+                nan_values_dict = {
+                    "test_statistic": not_analyzed_constant,
+                    "p_value": not_analyzed_constant,
+                    "decision_test": not_analyzed_constant,
+                    "decision_corrected_test_tips": not_analyzed_constant,
+                    "decision_corrected_test_branches": not_analyzed_constant,
+                    "decision_test_tip2tip": not_analyzed_constant,
+                    # Add the branch length directly to the dictionary
                     "branch_length": initial_tree.get_distance(parent, child),
-                    **nan_values_dict,
                 }
-                result_list.append(edge_info)
+
+                # Create a TestResultBranch instance with NaN values for this specific edge
+                edge_result = TestResultBranch(**nan_values_dict)
+                # Generate a unique branch name for this edge
+                branch_name = f"({parent},{child})"
+                # Add this TestResultBranch instance to the TestResultsBranches container
+                test_results_branches.add_branch(branch_name, edge_result)

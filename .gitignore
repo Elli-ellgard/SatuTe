@@ -17,6 +17,7 @@ __pycache__/
 *.phy.siteprob
 *.fasta.siteprob
 *.satute.tree
+*.components
 
 # C extensions
 *.so

@@ -114,7 +114,7 @@ def convert_tree_to_graph(tree: Tree) -> Graph:
 def convert_tree_to_state_graph(
     tree: Tree,
     msa_column: MultipleSeqAlignment,
-    alignment_look_up_table: dict,
+    alignment_look_up_table: Dict[str, str],
     state_type: str,
 ) -> Graph:
     """
@@ -127,11 +127,11 @@ def convert_tree_to_state_graph(
 
     Returns:
         Graph: A DAG representation of the phylogenetic tree. Nodes represent tree nodes,
-               and edges represent parent-child relationships. Leaf nodes contain likelihood vectors.
+        and edges represent parent-child relationships. Leaf nodes contain likelihood vectors.
     """
 
     node_dictionary = {}
-    edge_list = []
+    edge_list: List[Tuple[Node]] = []
 
     # Traverse the tree and create Node objects and edges
     for ete_node in tree.traverse("levelorder"):
@@ -160,7 +160,7 @@ def convert_tree_to_state_graph(
 def create_or_get_node(
     ete_node: Tree,
     msa_column: MultipleSeqAlignment,
-    alignment_look_up_table: dict,
+    alignment_look_up_table: Dict[str, str],
     node_dictionary: Dict[str, Node],
     state_type: str,
 ) -> Node:
@@ -235,7 +235,7 @@ def edge_type(left: Node, right: Node) -> str:
 
 
 def calculate_subtree_edge_metrics(
-    tree: Tree, focused_edges
+    tree: Tree, focused_edges: str
 ) -> Dict[str, Dict[str, int]]:
     """
     Calculate the number of leaves and branches for each subtree edge within a given tree.
@@ -303,13 +303,13 @@ def count_and_nodes_edges(node: Node, coming_from: Node):
 
     Returns:
         tuple: A tuple (leaf_count, branch_count) representing the count of leaf nodes and branches within the subtree.
-               leaf_count (int): The number of leaf nodes in the subtree rooted at 'node'.
-               branch_count (int): The number of branches in the subtree rooted at 'node', excluding the branch
-                                   from 'coming_from' to 'node'.
+        leaf_count (int): The number of leaf nodes in the subtree rooted at 'node'.
+        branch_count (int): The number of branches in the subtree rooted at 'node', excluding the branch
+        from 'coming_from' to 'node'.
 
     Note:
         - The function assumes that each node has an attribute 'connected', which is a dictionary with keys
-          representing connected child nodes.
+        representing connected child nodes.
         - It is primarily used for traversing phylogenetic trees or similar hierarchical structures where each node
           can have multiple children.
         - The function is recursive and may not be suitable for extremely large trees due to Python's recursion limit.
@@ -328,7 +328,6 @@ def count_and_nodes_edges(node: Node, coming_from: Node):
             child_leaves, child_branches = count_and_nodes_edges(child, node)
             leaf_count += child_leaves
             branch_count += child_branches + 1  # Include the branch to this child
-    # Print the count for the current node
     return leaf_count, branch_count
 
 
@@ -358,7 +357,7 @@ def filter_graph_edges_by_focus(graph: Graph, focused_edge):
         if edge[0].name in focused_edge and edge[1].name in focused_edge
     ]
 
-    graph.set_edges(filtered_edges)
+    return filtered_edges
 
 
 def get_alignment_look_up_table(alignment: MultipleSeqAlignment) -> dict:

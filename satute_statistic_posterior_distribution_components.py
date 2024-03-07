@@ -1,14 +1,23 @@
 import scipy.stats as st
 import numpy as np
 from scipy.sparse.linalg import expm
+from satute_result import TestResultBranch, TestStatisticComponents
+from pandas import DataFrame
+from typing import List
+import numpy as np
+
 
 """## CALCULATION OF POSTERIOR DISTRIBUTION """
 
 
 def calculate_posterior_probabilities_subtree(
-    dimension: int, state_frequencies, partial_likelihood_subtree, number_sites
+    dimension: int,
+    state_frequencies: List[float],
+    partial_likelihood_subtree: DataFrame,
+    number_sites: int,
 ):
     posterior_probabilities_subtree = []
+
     diag = np.diag(list(state_frequencies))
     site_likelihood_subtree = []
     for k in range(number_sites):
@@ -51,7 +60,7 @@ def scalar_product_eigenvector_posterior_probability(
 """## CALCULATION OF THE SAMPLE COHERENCE """
 
 
-def get_number_of_branch_insertions(number_tips):
+def get_number_of_branch_insertions(number_tips: int):
     if number_tips == 1 or number_tips == 2:
         number_branches = 1
     elif number_tips == 3:
@@ -62,12 +71,15 @@ def get_number_of_branch_insertions(number_tips):
 
 
 # get transition matrix using matrix exponential
-def get_transition_matrix(rate_matrix, branch_length):
+def get_transition_matrix(rate_matrix: np.array, branch_length: float):
     return expm(rate_matrix * branch_length)
 
 
 def calculate_sample_coherence(
-    multiplicity, factors_left_subtree, factors_right_subtree, number_sites
+    multiplicity: int,
+    factors_left_subtree: List[float],
+    factors_right_subtree: List[float],
+    number_sites: int,
 ):
     delta = 0
     for i in range(multiplicity):
@@ -80,12 +92,14 @@ def calculate_sample_coherence(
 
 
 """## ESTIMATION OF THE SAMPLE VARIANCE """
+
+
 def calculate_sample_variance(
-    multiplicity,
-    factors_left_subtree,
-    factors_right_subtree,
-    number_sites,
-    branch_type,
+    multiplicity: int,
+    factors_left_subtree: List[float],
+    factors_right_subtree: List[float],
+    number_sites: int,
+    branch_type: str,
 ):
     variance = 0
 
@@ -109,6 +123,108 @@ def calculate_sample_variance(
     return variance
 
 
+""" New calculation of test-statistic by excluding zeros"""
+
+
+def calculate_sample_coherence_for_each_site(
+    multiplicity, factors_left_subtree, factors_right_subtree, number_sites
+):
+    delta = np.zeros(number_sites)
+    for i in range(multiplicity):
+        delta += np.asarray(factors_left_subtree[i]) * np.asarray(
+            factors_right_subtree[i]
+        )
+    return delta
+
+
+def calculate_sample_coherence_without_zeros():
+
+    result = 0
+    return result
+
+
+def calculate_components_of_test_statistic_for_each_site(
+    multiplicity: int,
+    factors_left_subtree: list[list[float]],
+    factors_right_subtree: list[list[float]],
+    number_sites: int,
+    branch_type: str,
+):
+
+    variance = np.zeros(number_sites)
+
+    delta = np.zeros(number_sites)
+
+    for i in range(multiplicity):
+
+        delta += np.asarray(factors_left_subtree[i]) * np.asarray(
+            factors_right_subtree[i]
+        )
+
+        for j in range(multiplicity):
+
+            if branch_type == "internal":
+
+                m_left = np.asarray(factors_left_subtree[i]) * np.asarray(
+                    factors_left_subtree[j]
+                )
+
+            else:
+
+                if i == j:
+
+                    m_left = np.ones(number_sites)
+
+                else:
+
+                    m_left = np.zeros(number_sites)
+
+            m_right = np.asarray(factors_right_subtree[i]) * np.asarray(
+                factors_right_subtree[j]
+            )
+            variance += m_right * m_left
+
+    return delta, variance
+
+
+def calculate_test_statistic_exclude_zeros(
+    coefficients,
+    variances,
+    number_sites,
+    branch_type,
+):
+    sample_mean_sum = 0
+    sample_variance_sum = 0
+    number_informative_sites = 0
+    for i in range(number_sites):
+        if coefficients[i] != 0:
+            sample_mean_sum += coefficients[i]
+            sample_variance_sum += variances[i]
+            number_informative_sites += 1
+    if number_informative_sites > 0:
+        sample_mean = sample_mean_sum / number_informative_sites
+    else:
+        sample_mean = np.nan
+    if sample_variance_sum > 0:
+        if branch_type == "internal":
+            test_statistic = sample_mean_sum / np.sqrt(
+                sample_variance_sum / number_informative_sites
+            )
+        else:
+            test_statistic = sample_mean_sum / np.sqrt(sample_variance_sum)
+    else:
+        test_statistic = np.nan
+
+    # print("delta new:", sample_mean)
+    # if branch_type == "internal":
+    #     sample_variance= sample_variance/number_informative_sites/number_informative_sites/number_informative_sites
+    # else:
+    #     sample_variance= sample_variance/number_informative_sites/number_informative_sites
+    # #print("variance new:", sample_variance)
+    # test_statistic= sample_mean / np.sqrt(sample_variance)
+    return test_statistic, sample_mean, number_informative_sites
+
+
 """## DECISION OF STATISTICAL TEST """
 
 
@@ -127,11 +243,11 @@ def decision_z_test(test_statistic, alpha):
 
 
 def decision_tip2tip(delta, number_sites, multiplicity, alpha):
-    # quantiles of the standard normal distribution
+    # quantile of the standard normal distribution
     z_alpha = st.norm.ppf(1 - alpha)
     # calculate the critical value
     c_s_two_sequence = np.sqrt(multiplicity) * z_alpha / np.sqrt(number_sites)
-    # decision using critical value
+    # decision using critcial value
     decision_test_tip2tip = ""
     if c_s_two_sequence > delta:
         decision_test_tip2tip = "SatuT2T"
@@ -231,19 +347,20 @@ def sidak_test_correction_tips(
 
 
 def calculate_test_statistic_posterior_distribution(
-    multiplicity,
-    array_eigenvectors,
-    state_frequencies,
-    partial_likelihood_left_subtree,
-    partial_likelihood_right_subtree,
-    dimension,
-    number_tips_left_subtree,
-    number_tips_right_subtree,
-    branch_type="external",
-    alpha=0.05,
-):
+    multiplicity: int,
+    array_eigenvectors: List[List[float]],
+    state_frequencies: List[float],
+    partial_likelihood_left_subtree: DataFrame,
+    partial_likelihood_right_subtree: DataFrame,
+    dimension: int,
+    number_tips_left_subtree: int,
+    number_tips_right_subtree: int,
+    branch_type: str = "external",
+    alpha: float = 0.05,
+) -> tuple[TestStatisticComponents, TestResultBranch]:
+    # quantiles of the standard normal distribution
     number_sites = len(partial_likelihood_left_subtree["Site"].unique())
-    
+
     """ Calculation of the posterior distributions """
     posterior_probabilities_left_subtree = calculate_posterior_probabilities_subtree(
         dimension, state_frequencies, partial_likelihood_left_subtree, number_sites
@@ -260,7 +377,6 @@ def calculate_test_statistic_posterior_distribution(
         posterior_probabilities_left_subtree,
         number_sites,
     )
-    
     factors_right_subtree = scalar_product_eigenvector_posterior_probability(
         multiplicity,
         array_eigenvectors,
@@ -268,26 +384,23 @@ def calculate_test_statistic_posterior_distribution(
         number_sites,
     )
 
-    """ Calculation of the sample mean of coefficient C_1 """
-    delta = calculate_sample_coherence(
-        multiplicity, factors_left_subtree, factors_right_subtree, number_sites
-    )
-    
-    """ Calculation of the sample variance """
-    variance = calculate_sample_variance(
+    (coefficients, variances) = calculate_components_of_test_statistic_for_each_site(
         multiplicity,
         factors_left_subtree,
         factors_right_subtree,
         number_sites,
         branch_type,
     )
-    
-    variance = variance / number_sites
 
-    """Calculation of the test-statistic and decision of the statistical tests """
-    if variance > 0:
-        test_statistic = delta / np.sqrt(variance)
+    components = TestStatisticComponents(coefficients, variances)
 
+    (test_statistic, coefficient_value, number_informative_sites) = (
+        calculate_test_statistic_exclude_zeros(
+            coefficients, variances, number_sites, branch_type
+        )
+    )
+
+    if test_statistic != np.nan:
         """Calculation of the p-value"""
         p_value = st.norm.sf(test_statistic)
 
@@ -305,26 +418,25 @@ def calculate_test_statistic_posterior_distribution(
         decision_corrected_test_branches = bonferroni_test_correction_branches(
             p_value, number_tips_left_subtree, number_tips_right_subtree, alpha
         )
-
     else:
-        test_statistic = np.nan
         p_value = np.nan
         decision_test = np.nan
         decision_corrected_test_tips = np.nan
         decision_corrected_test_branches = np.nan
 
     """ Calculation of the saturation coherence between two sequences """
-    decision_test_tip2tip = decision_tip2tip(delta, number_sites, multiplicity, alpha)
-    
-    
-    return (
-        test_statistic,
-        p_value,
-        decision_test,
-        decision_corrected_test_tips,
-        decision_corrected_test_branches,
-        decision_test_tip2tip,
+    decision_test_tip2tip = decision_tip2tip(
+        coefficient_value, number_informative_sites, multiplicity, alpha
     )
 
+    result = TestResultBranch(
+        test_statistic=test_statistic,
+        number_informative_sites=number_informative_sites,
+        p_value=p_value,
+        decision_test=decision_test,
+        decision_corrected_test_tips=decision_corrected_test_tips,
+        decision_corrected_test_branches=decision_corrected_test_branches,
+        decision_test_tip2tip=decision_test_tip2tip,
+    )
 
-
+    return components, result

@@ -1,5 +1,5 @@
 import sys
-sys.path.append("..")
+sys.path.append("./../..")
 
 import numpy as np
 from ete3 import Tree
@@ -27,8 +27,8 @@ from partial_likelihood import (
     calculate_partial_likelihoods_for_sites,
     calculate_exponential_matrix,
 )
-
-
+import unittest
+import time
 
 RATE_MATRIX = np.array([[-3, 1, 1, 1], [1, -3, 1, 1], [1, 1, -3, 1], [1, 1, 1, -3]])
 
@@ -89,7 +89,7 @@ def test_three():
     alignment_file = "./Clemens/example_3/sim-JC+G-AC1-AG1-AT1-CG1-CT1-GT1-alpha1.2-taxa64-len1000bp-bla0.01-blb0.8-blc0.2-rep01.fasta"
     newick_string = "(((S1:1,S2:2),(S3:1,S4:1),S5:1))"
     t = Tree(newick_string, format=1)
-    t = name_nodes_by_level_order(t)
+    t = rename_internal_nodes_pre_order(t)
     alignment = read_alignment_file(alignment_file)
     rate_matrix = RateMatrix(RATE_MATRIX)
     partial_likelihood_per_site_storage = calculate_partial_likelihoods_for_sites(
@@ -340,6 +340,83 @@ def test_two():
     # pandas_data_frame.to_csv("satute_test_one.csv")
 
 
-if __name__ == "__main__":
-    # test_one()
-    test_two()
+class TestPartialLikelihoodCaching(unittest.TestCase):
+    def setUp(self):
+        """Set up test fixtures before each test method."""
+        # Create Nodes
+        self.node_a = Node("A")
+        self.node_b = Node("B")
+        self.node_c = Node("C")
+
+        # Connect nodes to form a simple graph
+        self.node_a.connect(self.node_b, 0.1)
+        self.node_b.connect(self.node_c, 0.2)
+
+        # Create a simple RateMatrix for the test
+        self.rate_matrix = RateMatrix(np.array([[-1, 1], [1, -1]]))
+
+    def test_partial_likelihood_caching(self):
+        """Test that partial_likelihood uses caching effectively."""
+        # First call to partial_likelihood
+        start_time = time.time()
+        partial_likelihood(self.node_a, self.node_b, self.rate_matrix)
+        first_call_duration = time.time() - start_time
+
+        # Second call to partial_likelihood with the same parameters
+        start_time = time.time()
+        partial_likelihood(self.node_a, self.node_b, self.rate_matrix)
+        second_call_duration = time.time() - start_time
+
+        # Assert that the second call was faster, indicating caching
+        self.assertLess(second_call_duration, first_call_duration, "Caching is not working as expected.")
+
+class TestPhylogeneticAnalysis(unittest.TestCase):
+    def setUp(self):
+        """Set up test fixtures."""
+        # Define your sequence records
+        self.seq_records = [
+            SeqRecord(Seq("SEKSQ"), id="t7"),
+            SeqRecord(Seq("SEKSQ"), id="t3"),
+            SeqRecord(Seq("SEKSQ"), id="t6"),
+            SeqRecord(Seq("QQKTM"), id="t1"),
+            SeqRecord(Seq("FSERL"), id="t2"),
+            SeqRecord(Seq("SSRQQ"), id="t4"),
+            SeqRecord(Seq("SSRQQ"), id="t5"),
+        ]
+        
+        # Create a MultipleSeqAlignment object
+        self.alignment = MultipleSeqAlignment(self.seq_records)
+        
+        # Define a newick string for your phylogenetic tree
+        self.newick_string = "(t7:0.0000010000,t3:0.0000010000,(t6:0.0000010000,((t1:0.3068411287,t4:1.2358829187)Node4:0.4797066442,(t2:0.0000010000,t5:0.0000010000)Node5:0.5990502849)Node3:0.0291780183)Node2:0.0000010000)Node1;"
+
+    def test_phylogenetic_analysis(self):
+        """Perform a comprehensive test on phylogenetic analysis."""
+        tree = Tree(self.newick_string, format=1)
+        rename_internal_nodes_pre_order(tree)
+        sequence_dict = {record.id: str(record.seq) for record in self.alignment}
+        collapsed_tree = tree.copy("deepcopy")
+        sequence_dict, twin_dictionary = collapse_identical_leaf_sequences(collapsed_tree, sequence_dict)
+        
+        rate_matrix = RateMatrix(POISSON_RATE_MATRIX)
+        psi_matrix = np.diag(AA_STATE_FREQUENCIES['POISSON'])
+        array_left_eigenvectors, array_right_eigenvectors, multiplicity = spectral_decomposition(rate_matrix.rate_matrix, psi_matrix)
+        
+        alignment = dict_to_alignment(sequence_dict)
+        results = single_rate_analysis(
+            collapsed_tree,
+            alignment,
+            rate_matrix,
+            np.array(AA_STATE_FREQUENCIES['POISSON']),
+            array_right_eigenvectors,
+            multiplicity,
+            0.05,
+            None,
+        )
+
+        # Here, add assertions to validate your results as needed
+        self.assertTrue(results)  # This is just a placeholder, customize it based on what `single_rate_analysis` returns
+
+
+if __name__ == '__main__':
+    unittest.main()

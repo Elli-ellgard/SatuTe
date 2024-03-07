@@ -4,10 +4,12 @@ import pandas as pd
 import re
 from enum import Enum
 from amino_acid_models import get_aa_state_frequency_substitution_models
+from typing import List
 from amino_acid_models import (
     AMINO_ACID_RATE_MATRIX,
     create_rate_matrix_with_input,
     AMINO_ACID_MODELS,
+    AA_STATE_FREQUENCIES,
     NOT_ACCEPTED_AA_MODELS,
 )
 
@@ -60,13 +62,13 @@ def parse_substitution_model(file_path: str) -> str:
         raise ValueError("Could not read the file.")
 
 
-def parse_rate_from_cli_input(model):
+def parse_rate_from_cli_input(model: str):
     # Find the index of '+G' and '+R' in the model string
     plus_g_index = model.find("+G")
     plus_r_index = model.find("+R")
 
     if plus_g_index != -1 and plus_r_index != -1:
-        
+
         raise ValueError("Cannot use +G and +R")
 
     if plus_g_index != -1:
@@ -87,7 +89,7 @@ def parse_rate_from_cli_input(model):
             rate = 4
             return rate
         else:
-            if number and str(number).isnumeric():                
+            if number and str(number).isnumeric():
                 # number of rate categories
                 rate = int(number)
                 return rate
@@ -259,7 +261,7 @@ class IqTreeParser:
         # Default to DNA if no conditions above are met
         return ModelType.DNA
 
-    def parse_rate_parameters(self, dimension, model="GTR"):
+    def parse_rate_parameters(self, dimension: int, model: str="GTR"):
         """
         Parse rate parameters from the file content to format the model string.
 
@@ -377,7 +379,7 @@ class IqTreeParser:
         phi_matrix = np.diag(list(frequencies.values()))
         return frequencies, phi_matrix
 
-    def parse_rate_matrices(self, state_frequencies):
+    def parse_rate_matrices(self, state_frequencies: List[float]):
         """
 
         Parse the rate parameters R  .iqtree file path and determine
@@ -455,18 +457,18 @@ class IqTreeParser:
     def get_aa_rate_matrix(self, current_substitution_model: str) -> np.ndarray:
         """
         Retrieves and constructs the amino acid rate matrix for a given substitution model.
-        
+
         This method sanitizes the model name to remove potential model extensions or parameters
         indicated by "+" or "{" symbols. It then looks up the core model in the
         AMINO_ACID_RATE_MATRIX dictionary to obtain the parameters required to construct the
         rate matrix. The matrix is constructed using these parameters and returned as a NumPy array.
-        
+
         Parameters:
         - current_substitution_model (str): The substitution model string, which may include extensions or parameters.
-        
+
         Returns:
         - np.ndarray: The amino acid rate matrix as a NumPy array.
-        
+
         Raises:
         - KeyError: If the core model name is not found in the AMINO_ACID_RATE_MATRIX dictionary.
         """
@@ -475,14 +477,21 @@ class IqTreeParser:
         if core_model_match:
             core_model = core_model_match.group()
         else:
-            raise ValueError(f"Could not extract core model from: {current_substitution_model}")
-        
+            raise ValueError(
+                f"Could not extract core model from: {current_substitution_model}"
+            )
+
         if core_model not in AMINO_ACID_RATE_MATRIX:
             raise KeyError(f"Model '{core_model}' not found in AMINO_ACID_RATE_MATRIX.")
-        
-        # Retrieve the parameters for the rate matrix and construct it
+
+        # THIS WILL LEAD TO A BUG
+
         rate_matrix_params = AMINO_ACID_RATE_MATRIX[core_model]
-        rate_matrix = create_rate_matrix_with_input(20, rate_matrix_params)
+        rate_matrix_eq = AA_STATE_FREQUENCIES[core_model]
+        rate_matrix = create_rate_matrix_with_input(
+            20, rate_matrix_params, rate_matrix_eq
+        )
+
         return np.array(rate_matrix)
 
     def parse_aa_rate_matrix(self) -> np.matrix:
@@ -572,7 +581,7 @@ class IqTreeParser:
 
         return number_rate_categories
 
-    def parse_rate_from_model(self, model):
+    def parse_rate_from_model(self, model: str):
         """
         Parse the number of rate categories from the substitution model string.
 

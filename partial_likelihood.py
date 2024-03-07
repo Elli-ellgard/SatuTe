@@ -5,6 +5,7 @@ from ete3 import Tree
 from rate_matrix import RateMatrix
 from Bio.Align import MultipleSeqAlignment
 from amino_acid_models import AMINO_ACIDS
+from typing import Dict, Any, List
 from graph import (
     filter_graph_edges_by_focus,
     get_alignment_look_up_table,
@@ -14,7 +15,9 @@ from graph import (
 
 
 @cache
-def partial_likelihood(node: Node, coming_from: Node, rate_matrix: RateMatrix, factor=0):
+def partial_likelihood(
+    node: Node, coming_from: Node, rate_matrix: RateMatrix, factor: float = 0
+):
     """
     Compute the partial likelihood of a given node in a directed acyclic graph (DAG) tree.
 
@@ -69,9 +72,7 @@ def calculate_exponential_matrix(rate_matrix: RateMatrix, branch_length: float):
 
     Args:
         rate_matrix (RateMatrix): The rate matrix representing nucleotide substitution rates.
-        branch_length (float): The length of the evolutionary branch for which to calculate
-                              the matrix exponential.
-
+        branch_length (float): The length of the evolutionary branch for which to calculate the matrix exponential.
     Returns:
         np.array: The resulting matrix exponential of the scaled rate matrix.
 
@@ -87,7 +88,14 @@ def calculate_exponential_matrix(rate_matrix: RateMatrix, branch_length: float):
     return expm(rate_matrix.rate_matrix * branch_length)
 
 
-def get_partial_likelihood_dict(edge, p1, p2, i, branch_length, states):
+def get_partial_likelihood_dict(
+    edge: str,
+    p1: List[float],
+    p2: List[float],
+    i: int,
+    branch_length: float,
+    states: List[str],
+):
     """Construct the partial likelihood dictionary for a specific edge and site with dynamic states."""
     left, right = edge
 
@@ -106,8 +114,40 @@ def get_partial_likelihood_dict(edge, p1, p2, i, branch_length, states):
     }
 
 
-def update_partial_likelihood_storage(storage: dict, edge_name, likelihood_data):
-    """Update the storage with new partial likelihood data."""
+def update_partial_likelihood_storage(
+    storage: Dict[str, Dict[str, Any]], edge_name: str, likelihood_data: Dict[str, Any]
+) -> None:
+    """
+    Updates a storage structure with new partial likelihood data for a specific edge in a phylogenetic analysis.
+
+    This function modifies the provided storage dictionary in-place by appending new likelihood data for a specified edge.
+    The structure of the storage dictionary is designed to hold separate lists of likelihood data for both 'left' and 'right'
+    directions of traversal along the edge, facilitating the organization and retrieval of computed partial likelihoods for further analysis.
+
+    Args:
+        storage (Dict[str, Dict[str, Any]]): The storage dictionary where the partial likelihood data is to be updated. Each key in this dictionary represents an edge name, and its value is another dictionary with 'left' and 'right' keys, each containing a list of likelihood data.
+        edge_name (str): The name of the edge for which the partial likelihood data is being updated. This acts as a key in the storage dictionary.
+        likelihood_data (Dict[str, Any]): A dictionary containing the new partial likelihood data to be added. This dictionary should have 'left' and 'right' keys, with the associated likelihood data for each.
+
+    Returns:
+        None: This function updates the storage dictionary in-place and does not return any value.
+
+    Example:
+        >>> storage = {}
+        >>> edge_name = "NodeA_to_NodeB"
+        >>> likelihood_data = {"left": {"Node": "NodeA", "Site": 1, "p_A": 0.1, "p_C": 0.2, "p_G": 0.3, "p_T": 0.4},
+        ...                    "right": {"Node": "NodeB", "Site": 1, "p_A": 0.2, "p_C": 0.3, "p_G": 0.4, "p_T": 0.1}}
+        >>> update_partial_likelihood_storage(storage, edge_name, likelihood_data)
+        >>> print(storage[edge_name])
+        {
+            'left': {'likelihoods': [{'Node': 'NodeA', 'Site': 1, 'p_A': 0.1, 'p_C': 0.2, 'p_G': 0.3, 'p_T': 0.4}]},
+            'right': {'likelihoods': [{'Node': 'NodeB', 'Site': 1, 'p_A': 0.2, 'p_C': 0.3, 'p_G': 0.4, 'p_T': 0.1}]}
+        }
+
+    Note:
+        - The function assumes the storage dictionary and the likelihood data dictionary are correctly formatted.
+        - The 'left' and 'right' distinctions in the likelihood data correspond to the direction of traversal in the phylogenetic tree analysis.
+    """
     if edge_name not in storage:
         storage[edge_name] = {
             "left": {
@@ -125,7 +165,7 @@ def calculate_partial_likelihoods_for_sites(
     tree: Tree,
     alignment: MultipleSeqAlignment,
     rate_matrix: RateMatrix,
-    focused_edge=None,
+    focused_edge: str = None,
 ):
     """Calculates the partial likelihoods of each site in a multiple sequence alignment across a given phylogeny.
 
@@ -167,10 +207,13 @@ def calculate_partial_likelihoods_for_sites(
 
         # If a specific edge is focused on, filter the graph to only include that edge
         if focused_edge:
-            filter_graph_edges_by_focus(graph, focused_edge)
+            filtered_edges = filter_graph_edges_by_focus(graph, focused_edge)
+            
+        else:
+            filtered_edges = graph.get_edges()
 
         # Calculate the partial likelihoods for each edge in the graph
-        for edge in graph.get_edges():
+        for edge in filtered_edges:
             right, left, length = edge
             p1, p1_factor = partial_likelihood(left, right, rate_matrix)
             p2, p2_factor = partial_likelihood(right, left, rate_matrix)
@@ -187,5 +230,3 @@ def calculate_partial_likelihoods_for_sites(
             )
 
     return partial_likelihood_per_site_storage
-
-

@@ -9,7 +9,6 @@ AMINO_ACID_MODELS = [
     "DCMUT",  # Revised Dayhoff matrix (Kosiol and Goldman, 2005)
     "FLAVI",  # Flavivirus (Le and Vinh, 2020)
     "FLU",  # Influenza virus (Dang et al., 2010)
-    "GTR20",  # General time reversible models with 190 rate parameters
     "HIVB",  # HIV between-patient matrix HIV-Bm (Nickle et al., 2007)
     "HIVW",  # HIV within-patient matrix HIV-Wm (Nickle et al., 2007)
     "JTT",  # General matrix (Jones et al., 1992)
@@ -35,7 +34,14 @@ AMINO_ACID_MODELS = [
     "WAG",  # General matrix (Whelan and Goldman, 2001)
 ]
 
-NOT_ACCEPTED_AA_MODELS = ['NQ.BIRD', 'NQ.INSECT', 'NQ.MAMMAL', 'NQ.PFAM', 'NQ.PLANT', 'NQ.YEAST']
+NOT_ACCEPTED_AA_MODELS = [
+    "NQ.BIRD",
+    "NQ.INSECT",
+    "NQ.MAMMAL",
+    "NQ.PFAM",
+    "NQ.PLANT",
+    "NQ.YEAST",
+]
 
 AMINO_ACID_RATE_MATRIX = {
     "POISSON": """1
@@ -57,6 +63,7 @@ AMINO_ACID_RATE_MATRIX = {
     1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
     1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
     1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1""",
+    # [ NOTE 2019-06-04: normalised from original Dayhoff freqs, which do not sum to 1.0 https://www.ebi.ac.uk/goldman-srv/dayhoff/dayhoff-dcmut.dat ]
     "DAYHOFF": """27
     98 32
     120 0 905
@@ -76,6 +83,7 @@ AMINO_ACID_RATE_MATRIX = {
     0 201 23 0 0 0 0 0 27 0 46 0 0 76 0 75 0
     24 8 95 0 96 0 22 0 127 37 28 13 0 698 0 34 42 61
     208 24 15 18 49 35 37 54 44 889 175 10 258 12 48 30 157 0 28""",
+    # [ NOTE 2019-06-04: normalised from original Dayhoff-DCMUT freqs, which do not sum to 1.0 https://www.ebi.ac.uk/goldman-srv/dayhoff/dayhoff-dcmut.dat ]
     "DCMUT": """26.7828
     98.4474 32.7059
     119.9805 0.0000 893.1515
@@ -115,6 +123,7 @@ AMINO_ACID_RATE_MATRIX = {
     11 20 70 46 209 24 7 8 573 32 24 8 18 536 10 63 21 71
     298 17 16 31 62 20 45 47 11 961 180 14 323 62 23 38 112 25 16
     """,
+    # [ NOTE 2019-06-04: The PI's used to sum to 0.999 and I (Z. Yang) changed one of the freq from 0.168 into 0.169 so that the sum is 1.  Prepared by Z. Yang ]
     "MTREV": """23.18
     26.95 13.24
     17.67 1.90 794.38
@@ -134,7 +143,9 @@ AMINO_ACID_RATE_MATRIX = {
     1.90 21.95 10.68 19.86 33.60 1.90 1.90 10.92 7.08 1.90 32.44 24.00 21.71 7.84 4.21 38.58 9.99
     6.48 1.90 191.36 21.21 254.77 38.82 13.12 3.21 670.14 25.01 44.15 51.17 39.96 465.58 16.21 64.92 38.73 26.25
     195.06 7.64 1.90 1.90 1.90 19.00 21.14 2.53 1.90 1222.94 91.67 1.90 387.54 6.35 8.23 1.90 204.54 5.37 1.90
-    """,
+    """
+    # [ NOTE 2019-06-04: The PI's used to sum to 0.999 and I (Z. Yang) changed one of the freq from 0.168 into 0.169 so that the sum is 1.  Prepared by Z. Yang ]
+    ,
     "WAG": """55.15710
     50.98480 63.53460
     73.89980 14.73040 542.94200
@@ -154,7 +165,9 @@ AMINO_ACID_RATE_MATRIX = {
     11.31330 116.39200 7.19167 12.97670 71.70700 21.57370 15.65570 33.69830 26.25690 21.24830 66.53090 13.75050 51.57060 152.96400 13.94050 52.37420 11.08640
     24.07350 38.15330 108.60000 32.57110 54.38330 22.77100 19.63030 10.36040 387.34400 42.01700 39.86180 13.32640 42.84370 645.42800 21.60460 78.69930 29.11480 248.53900
     200.60100 25.18490 19.62460 15.23350 100.21400 30.12810 58.87310 18.72470 11.83580 782.13000 180.03400 30.54340 205.84500 64.98920 31.48870 23.27390 138.82300 36.53690 31.47300
-    """,
+    """
+    # [ NOTE 2019-06-04: normalised from original WAG freqs, which do not sum to 1.0 ]
+    ,
     "RTREV": """34
     51 35
     10 30 384
@@ -271,6 +284,7 @@ AMINO_ACID_RATE_MATRIX = {
     0.180717 0.593607 0.045376 0.029890 0.670128 0.236199 0.077852 0.268491 0.597054 0.111660 0.619632 0.049906 0.696175 2.457121 0.095131 0.248862 0.140825
     0.218959 0.314440 0.612025 0.135107 1.165532 0.257336 0.120037 0.054679 5.306834 0.232523 0.299648 0.131932 0.481306 7.803902 0.089613 0.400547 0.245841 3.151815
     2.547870 0.170887 0.083688 0.037967 1.959291 0.210332 0.245034 0.076701 0.119013 10.649107 1.702745 0.185202 1.898718 0.654683 0.296501 0.098369 2.188158 0.189510 0.249313""",
+    # [ NOTE 2019-06-04: normalised from original LG freqs, which do not sum to 1.0 http://www.atgc-montpellier.fr/download/datasets/models/lg_LG.PAML.txt ]
     "MTART": """0.2
     0.2 0.2
     1.0 4.0 500.0
@@ -308,7 +322,9 @@ AMINO_ACID_RATE_MATRIX = {
     378.1 3.2 184.6 2.3 199.0 39.4 34.5 5.2 19.4 222.3 50.0 75.5 305.1 19.3 56.9 666.3
     3.1 16.9 6.4 0.2 36.1 6.1 3.5 12.3 4.5 9.7 27.2 6.6 48.7 58.2 1.3 10.3 3.6
     2.1 13.8 141.6 13.9 76.7 52.3 10.0 4.3 266.5 13.1 5.7 45.0 41.4 590.5 4.2 29.7 29.0 79.8
-    321.9 5.1 7.1 3.7 243.8 9.0 16.3 23.7 0.3 1710.6 126.1 11.1 279.6 59.6 17.9 49.5 396.4 13.7 15.6""",
+    321.9 5.1 7.1 3.7 243.8 9.0 16.3 23.7 0.3 1710.6 126.1 11.1 279.6 59.6 17.9 49.5 396.4 13.7 15.6"""
+    # [ NOTE 2019-06-04: original mtzoa freqs do not sum to 1.0, modified from PAML package ]
+    ,
     "PMB": """0.674995699
     0.589645178 1.189067034
     0.462499504 0.605460903 3.573373315
@@ -328,6 +344,7 @@ AMINO_ACID_RATE_MATRIX = {
     0.350110510 0.618778365 0.422407388 0.362495245 0.445669347 0.720384740 0.261258229 0.378748270 0.724367510 0.516260502 0.794797115 0.433409620 0.768395107 3.295193440 0.499869138 0.496334956 0.383723610
     0.573154753 0.628599063 0.720013799 0.436220437 0.556261630 0.728970584 0.507200030 0.284727562 2.210952064 0.570562395 0.811019594 0.664884513 0.932536060 5.894735673 0.433748126 0.593795813 0.523549536 2.996248013
     2.063050067 0.388680158 0.474418852 0.275658381 0.998911631 0.634408285 0.527640634 0.314700907 0.305792277 8.002789424 2.113077156 0.526184203 1.737356217 0.983844803 0.551333603 0.507506011 1.899650790 0.429570747 0.716795463""",
+    # [ NOTE 2019-06-04: normalised from original PMB freqs, which do not sum to 1.0: 0.0756 0.0538 0.0377 0.0447 0.0285 0.0339 0.0535 0.0780 0.0300 0.0599 0.0958 0.0520 0.0219 0.0450 0.0420 0.0682 0.0564 0.0157 0.0360 0.0715 ]
     "HIVB": """0.30750700
     0.00500000 0.29554300
     1.45504000 0.00500000 17.66120000
@@ -386,6 +403,7 @@ AMINO_ACID_RATE_MATRIX = {
     0.139492 0.235601 0.700693 0.453952 2.114852 0.254745 0.063452 0.052500 5.848400 0.303445 0.241094 0.087904 0.189870 5.484236 0.113850 0.628608 0.201094 0.747889
     2.924161 0.171995 0.164525 0.315261 0.621323 0.179771 0.465271 0.470140 0.121827 9.533943 1.761439 0.124066 3.038533 0.593478 0.211561 0.408532 1.143980 0.239697 0.165473
     """,
+    # [ NOTE 2019-06-04: normalised from original JTTDCMUTT freqs, which do not sum to 1.0 https://www.ebi.ac.uk/goldman-srv/dayhoff/jtt-dcmut.dat ]
     "FLU": """0.138658765
     0.053366579 0.161000889
     0.584852306 0.006771843 7.737392871
@@ -405,6 +423,7 @@ AMINO_ACID_RATE_MATRIX = {
     0.196000000 1.369429408 0.000536000 0.000014900 0.094106680 0.044000000 0.155245492 0.196486447 0.022400000 0.032132150 0.431277663 0.000049800 0.070460039 0.814753094 0.000431021 0.099835753 0.207066206
     0.018289288 0.099855497 0.373101927 0.525398543 0.601692431 0.072205935 0.104092870 0.074814997 6.448954446 0.273934263 0.340058468 0.012416222 0.874272175 5.393924245 0.000182000 0.392552240 0.124898020 0.427755430
     3.532005270 0.103964386 0.010257517 0.297123975 0.054904564 0.406697814 0.285047948 0.337229619 0.098631355 14.394052190 0.890598579 0.073127930 4.904842235 0.592587985 0.058971975 0.088256423 0.654109108 0.256900461 0.167581647""",
+    # [ NOTE 2019-06-04: normalised from FLU freqs in PhyML, which do not sum 1.0 ]
     "MTMET": """0.058078177576542
     0.032893910131824 0.141364232590718
     0.119156819252943 0.049700397089876 4.658418673473980
@@ -1487,23 +1506,23 @@ def transform_to_rate_matrix(matrix):
 def get_aa_state_frequency_substitution_models(substitution_model: str) -> tuple:
     """
     Extracts the amino acid state frequencies and creates a diagonal matrix for a given substitution model.
-    
+
     This function sanitizes the substitution model string to remove any model extensions or parameters denoted by "+" or "{",
     then looks up the core model in the AA_STATE_FREQUENCIES dictionary to retrieve its state frequencies.
     A diagonal matrix is constructed from these frequencies, which can be used for subsequent calculations.
-    
+
     Parameters:
     - substitution_model (str): The substitution model string which may include extensions or parameters.
-    
+
     Returns:
     - tuple: A tuple containing two elements:
         1. A numpy array of state frequencies.
         2. A diagonal numpy matrix constructed from these state frequencies.
-    
+
     Raises:
     - ValueError: If the core model cannot be extracted from the provided string or if the core model is not found in the
                   AA_STATE_FREQUENCIES dictionary.
-    
+
     Example usage:
     >>> substitution_model = 'BLOSUM62+G{parameter}'
     >>> frequencies, phi_matrix = get_aa_state_frequency_substitution_models(substitution_model)
@@ -1528,6 +1547,7 @@ def get_aa_state_frequency_substitution_models(substitution_model: str) -> tuple
         return frequencies, np.diag(frequencies)
 
 
+"""
 def create_rate_matrix_with_input(matrix_size, input_string: str):
     # Split the string into lines
     # input_string = input_string.replace(" ", "")
@@ -1546,6 +1566,37 @@ def create_rate_matrix_with_input(matrix_size, input_string: str):
     for i in range(matrix_size):
         for j in range(i):
             rate_matrix[j][i] = rate_matrix[i][j]
+
+    for i in range(matrix_size):
+        rate_matrix[i][i] = -np.sum(rate_matrix[i])
+
+    return np.array(rate_matrix)
+
+
+"""
+
+
+def create_rate_matrix_with_input(matrix_size, input_string: str, eq):
+    # Split the string into lines
+    # input_string = input_string.replace(" ", "")
+    lines = input_string.split("\n")
+
+    # Initialize a matrix with 1's for off-diagonal elements
+    rate_matrix = [
+        [0 if i != j else 0 for j in range(matrix_size)] for i in range(matrix_size)
+    ]
+
+    for i, row in enumerate(lines):
+        for j, col in enumerate(row.split()):
+            rate_matrix[i + 1][j] = float(col)
+
+    # Mirror the lower triangle to the upper triangle
+    for i in range(matrix_size):
+        for j in range(i):
+            rate_matrix[j][i] = rate_matrix[i][j]
+
+    # Multiply the rates by the equilibrium distribution
+    rate_matrix = rate_matrix @ np.diag(eq)
 
     for i in range(matrix_size):
         rate_matrix[i][i] = -np.sum(rate_matrix[i])

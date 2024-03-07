@@ -87,6 +87,7 @@ def valid_alpha(alpha: float):
     Raises:
     - argparse.ArgumentTypeError: If the provided path is not a file.
     """
+    alpha = float(alpha)
     if 0 > alpha and alpha >= 1:
         raise argparse.ArgumentTypeError(f"{alpha} is not a valid file")
     return alpha

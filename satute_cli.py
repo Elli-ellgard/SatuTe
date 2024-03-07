@@ -10,6 +10,7 @@ from file_handler import FileHandler, IqTreeHandler
 from satute_trees import rename_internal_nodes_pre_order
 from satute_arguments import ARGUMENT_LIST
 from Bio.Align import MultipleSeqAlignment
+from typing import Dict, List
 
 from satute_rate_analysis import (
     multiple_rate_analysis,
@@ -18,7 +19,9 @@ from satute_rate_analysis import (
 from satute_ostream import (
     write_results_for_category_rates,
     write_alignment_and_indices,
+    write_posterior_probabilities_single_rate,
     write_posterior_probabilities_for_rates,
+    write_components,
 )
 from satute_categories import (
     read_alignment_file,
@@ -34,7 +37,7 @@ from satute_repository import (
 )
 
 
-def format_matrix(matrix, precision=4):
+def format_matrix(matrix, precision: int = 4):
     """Format a matrix for pretty printing."""
     formatted_matrix = "\n".join(
         ["\t".join([f"{item:.{precision}f}" for item in row]) for row in matrix]
@@ -137,7 +140,7 @@ class Satute:
             )
         self.input_args = parser.parse_args()
 
-    def run_iqtree_workflow(self, arguments_dict: dict):
+    def run_iqtree_workflow(self, arguments_dict: Dict[str, List]):
         extra_arguments = []
 
         if self.input_args.additional:
@@ -173,12 +176,15 @@ class Satute:
 
         if arguments_dict["option"] == "msa":
             self.logger.info("Running IQ-TREE with constructed arguments")
+
             self.logger.info(
                 "If no model is specified in input arguments, best-fit model will be extracted from log file."
             )
+
             self.logger.warning(
                 "Please consider for the analysis that IQ-Tree will be running with default options."
             )
+
             self.logger.warning(
                 "If specific options are required for the analysis, please run IQ-Tree separately."
             )
@@ -456,12 +462,12 @@ class Satute:
         test_tree: Tree,
         alignment: MultipleSeqAlignment,
         rate_matrix: RateMatrix,
-        state_frequencies: list,
-        array_right_eigenvectors: list,
+        state_frequencies: List[float],
+        array_right_eigenvectors: List[np.array],
         multiplicity: int,
         msa_file: Path,
         alpha: float,
-        focused_edge,
+        focused_edge: str,
     ):
         results = single_rate_analysis_collapsed_tree(
             test_tree,
@@ -488,29 +494,41 @@ class Satute:
             self.logger.info(
                 f"Writing ancestral sequences to {self.active_directory.name}"
             )
-            write_posterior_probabilities_for_rates(
+
+            write_posterior_probabilities_single_rate(
                 results,
                 state_frequencies,
                 msa_file,
                 self.input_args.output_suffix,
                 self.input_args.alpha,
                 self.input_args.edge,
+                alignment.get_alignment_length(),
             )
+
+        write_components(
+            results["single_rate"]["components"],
+            msa_file,
+            self.input_args.output_suffix,
+            "single_rate",
+            self.input_args.alpha,
+            self.input_args.edge,
+            [i for i in range(0, alignment.get_alignment_length(), 1)],
+        )
 
     def run_multiple_rate_analysis(
         self,
         test_tree: Tree,
-        category_rates,
+        category_rates: Dict[str, Dict],
         rate_matrix: RateMatrix,
-        state_frequencies: list,
-        array_right_eigenvectors: list,
+        state_frequencies: List[float],
+        array_right_eigenvectors: List[np.array],
         multiplicity: int,
         alignment: MultipleSeqAlignment,
-        site_probability_file,
-        rate_category,
+        site_probability_file: str,
+        rate_category: str,
         msa_file: Path,
-        alpha=0.05,
-        edge=None,
+        alpha: float = 0.05,
+        edge: str = None,
     ):
         """
         Run the multiple rate analysis.
@@ -554,9 +572,11 @@ class Satute:
         )
 
         if self.input_args.asr:
+
             self.logger.info(
                 f"Writing ancestral sequences to {self.active_directory.name}"
             )
+
             write_posterior_probabilities_for_rates(
                 results,
                 state_frequencies,
@@ -564,7 +584,6 @@ class Satute:
                 self.input_args.output_suffix,
                 self.input_args.alpha,
                 self.input_args.edge,
-                per_rate_category_alignment,
                 categorized_sites,
             )
 
@@ -573,14 +592,26 @@ class Satute:
                 per_rate_category_alignment, categorized_sites, msa_file
             )
 
+        for rate, results_set in results.items():
+
+            write_components(
+                results_set["components"],
+                msa_file,
+                self.input_args.output_suffix,
+                rate,
+                self.input_args.alpha,
+                self.input_args.edge,
+                categorized_sites[rate],
+            )
+
     def log_test_statistic_info(
         self,
-        iq_arguments_dict: dict,
+        iq_arguments_dict: Dict,
         substitution_model: SubstitutionModel,
-        rate_category,
+        rate_category: str,
         msa_file: Path,
         multiplicity: int,
-        eigenvectors: list,
+        eigenvectors: List[np.array],
     ):
         """
         Logs information about the initial IQ-TREE run and tests being performed.
@@ -646,12 +677,14 @@ class Satute:
         elif self.input_args.dir:
             self.active_directory = self.input_args.dir
 
-    def get_dir_argument_options(self, msa_file: Path, tree_file):
+    def get_dir_argument_options(self, msa_file: Path, tree_file: str):
+
         argument_option = {
             "option": "dir",
             "msa_file": Path(msa_file),
             "arguments": ["-s", str(Path(msa_file).resolve())],
         }
+
         if tree_file:
             argument_option["arguments"].extend(["-te", str(tree_file)])
         return argument_option
@@ -700,7 +733,7 @@ class Satute:
         # Return the constructed argument options
         return argument_option
 
-    def construct_arguments_for_msa(self, argument_option: dict):
+    def construct_arguments_for_msa(self, argument_option: Dict):
         """
         Constructs the arguments required for multiple sequence alignment (MSA).
 
@@ -717,7 +750,7 @@ class Satute:
         argument_option["arguments"] = ["-s", str(self.input_args.msa.resolve())]
         return argument_option
 
-    def construct_argument_for_tree(self, argument_option: dict):
+    def construct_argument_for_tree(self, argument_option: Dict):
         """
         Appends tree-related arguments to the existing argument option.
 
@@ -732,7 +765,7 @@ class Satute:
             ["-te", str(self.input_args.tree.resolve())]
         )
 
-    def construct_argument_for_model(self, argument_option: dict):
+    def construct_argument_for_model(self, argument_option: Dict):
         """
         Constructs the arguments required for the evolutionary model.
 

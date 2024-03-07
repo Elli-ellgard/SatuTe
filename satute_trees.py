@@ -1,5 +1,6 @@
 from ete3 import Tree
 from collections import Counter
+from typing import Dict, List
 
 
 def rescale_branch_lengths(tree: Tree, rescale_factor: float):
@@ -21,27 +22,70 @@ def rescale_branch_lengths(tree: Tree, rescale_factor: float):
 
 def rename_internal_nodes_pre_order(tree: Tree) -> Tree:
     """
-    Modify the input tree by naming its nodes using a pre order traversal.
-    Nodes are named as "NodeX*" where X is an incremental number.
-    If a node name is purely numeric, it is preserved as 'apriorism' feature of the node.
+    Modifies the input tree in-place by naming its internal nodes using a pre-order traversal.
+    Internal nodes are named as "NodeX*" where X is an incremental number. This function skips renaming
+    for nodes that already start with "Node" to avoid redundancy and does not rename numeric node names,
+    considering them as not annotated.
+
     Args:
-        t (Tree): The input tree to be modified.
+        tree (Tree): The input tree to be modified.
+
     Returns:
-        Tree: The modified tree with updated node names.
+        Tree: The same tree instance with updated internal node names. Note that this function modifies the tree in-place.
     """
-    idx = 1
-    for node in tree.traverse("preorder"):
-        if not node.is_leaf():
-            # If a node name already starts with "Node", no further modification is required.
-            if node.name.startswith("Node"):
-                return tree
-            # Preserve numeric node names as 'apriori' for reference.
-            if node.name.isdigit():
-                node.add_features(apriori=node.name)
-            # Assign new node names based on the preorder traversal index.
-            node.name = f"Node{idx}*"
-            idx += 1
+    if not check_all_internal_nodes_annotated(tree):
+        idx = 1  # Start indexing for new names
+        for node in tree.traverse("preorder"):
+            if node.is_leaf() or node.name.startswith("Node"):
+                continue  # Skip leaf nodes and nodes already properly named
+
+            # Rename internal nodes with a placeholder name or numeric name
+            if not node.name or node.name.isdigit():
+                node.name = f"Node{idx}*"
+                idx += 1
+
+    # Optional: Check for any duplicate node names which could cause issues
+    check_and_raise_for_duplicate_nodes(tree)
+
     return tree
+
+
+def check_and_raise_for_duplicate_nodes(tree: Tree) -> None:
+    """
+    Checks the given tree for any duplicate node names and raises an exception if duplicates are found.
+    This ensures the tree structure is uniquely identifiable and consistent for downstream analysis.
+
+    Args:
+        tree (Tree): The tree to check for duplicate node names.
+
+    Raises:
+        ValueError: If a duplicate node name is found in the tree.
+    """
+    seen_names = set()
+    for node in tree.traverse("preorder"):
+        if node.name in seen_names:
+            raise ValueError(f"Duplicate node name found: '{node.name}'")
+        seen_names.add(node.name)
+
+
+def check_all_internal_nodes_annotated(tree: Tree) -> bool:
+    """
+    Checks if all internal nodes in the given tree are annotated, where an internal node is considered annotated
+    if it has a non-empty, non-numeric name and does not start with a generic prefix like "Node".
+
+    Args:
+        tree (Tree): The tree to check for annotated internal nodes.
+
+    Returns:
+        bool: True if all internal nodes are annotated, False otherwise.
+    """
+    for node in tree.traverse("preorder"):
+        if node.is_leaf():
+            continue  # Focus on internal nodes
+        # An internal node is unannotated if its name is empty, numeric, or a generic placeholder
+        if not node.name or node.name.isdigit() or not node.name.startswith("Node"):
+            return False
+    return True
 
 
 def is_bifurcating(tree) -> bool:
@@ -71,8 +115,8 @@ def has_duplicate_leaf_sequences(node, multiple_sequence_alignment):
 
 
 def collapse_identical_leaf_sequences(
-    tree: Tree, multiple_sequence_alignment: dict
-) -> tuple[dict, dict]:
+    tree: Tree, multiple_sequence_alignment: Dict[str, str]
+) -> tuple[Dict, Dict]:
     """
     Collapses a tree by merging nodes with identical leaf sequences.
 
@@ -106,12 +150,14 @@ def collapse_identical_leaf_sequences(
     return multiple_sequence_alignment, collapsed_nodes_dict
 
 
-def has_only_leaf_children(node):
+def has_only_leaf_children(node) -> bool:
     # Check if all children of the node are leaves
     return any(child.is_leaf() for child in node.children)
 
 
-def delete_children_nodes(node: Tree, collapsed_nodes_info: dict) -> dict:
+def delete_children_nodes(
+    node: Tree, collapsed_nodes_info: Dict[str, List[str]]
+) -> Dict:
     """
     Deletes the children nodes of a specified non-leaf node in a phylogenetic tree and updates a dictionary
     with the names of all leaves that were under these nodes.
@@ -122,11 +168,10 @@ def delete_children_nodes(node: Tree, collapsed_nodes_info: dict) -> dict:
     Args:
         node (Tree): A non-leaf node from which children will be detached. This node must be part of a larger Tree structure.
         collapsed_nodes_info (dict): A dictionary to be updated with information about the collapsed nodes. It maps node names
-                                     to lists containing the names of all leaf nodes that were under each collapsed node.
+        to lists containing the names of all leaf nodes that were under each collapsed node.
 
     Returns:
-        dict: The updated dictionary reflecting the changes made to the tree structure, including the names of leaves
-              under the detached nodes.
+        dict: The updated dictionary reflecting the changes made to the tree structure, including the names of leaves under the detached nodes.
 
     Raises:
         TypeError: If `node` is not an instance of `Tree` or `collapsed_nodes_info` is not a dictionary.
@@ -143,8 +188,7 @@ def delete_children_nodes(node: Tree, collapsed_nodes_info: dict) -> dict:
         {'Node1': ['A', 'B']}
 
     Note:
-        - The function modifies the input tree by detaching child nodes from the specified node. These child nodes are removed
-          from the tree but not deleted from memory.
+        - The function modifies the input tree by detaching child nodes from the specified node. These child nodes are removed from the tree but not deleted from memory.
         - The function assumes the tree and the dictionary are correctly formatted and the node exists within the tree.
     """
     if not isinstance(node, Tree):
