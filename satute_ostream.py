@@ -52,7 +52,7 @@ def write_components(
     alpha: float,
     edge: str,
     site_indices: List[int],
-): 
+):
     """
     Writes the components' DataFrame to a CSV file, including the same site indices for each identifier.
 
@@ -68,13 +68,14 @@ def write_components(
     file_name = construct_file_name(msa_file, output_suffix, rate, alpha, edge)
     components_frame = components.to_dataframe()
 
+    components_frame["rate"] = rate
+
     # Repeat the site_indices for each row in the DataFrame based on the identifier
     # Assuming every row/component should have an associated site index
     expanded_site_indices = []
     num_rows_per_identifier = len(site_indices)
-    
-    
-    for identifier in components_frame['Edge'].unique():
+
+    for identifier in components_frame["Edge"].unique():
         expanded_site_indices.extend(site_indices)
 
     # Check to ensure the expanded list matches the DataFrame's length
@@ -82,7 +83,7 @@ def write_components(
     #    raise ValueError("Expanded site indices do not match the DataFrame length.")
 
     # Add the expanded site indices to the DataFrame
-    components_frame['Site'] = expanded_site_indices
+    components_frame["Site"] = expanded_site_indices
 
     # Write the DataFrame to a CSV file
     components_frame.to_csv(f"{file_name}.components", index=False)
@@ -135,6 +136,7 @@ def write_results_for_category_rates(
     msa_file: Path,
     alpha: float,
     edge: str,
+    categorized_sites: List[int],
     logger: Logger,
 ) -> None:
     """
@@ -175,8 +177,17 @@ def write_results_for_category_rates(
 
     for rate, results_set in results.items():
         try:
+
+            
             process_rate_category(
-                rate, results_set, msa_file, output_suffix, alpha, edge, logger
+                rate,
+                results_set,
+                msa_file,
+                output_suffix,
+                alpha,
+                edge,
+                categorized_sites[rate],
+                logger,
             )
 
         except Exception as e:
@@ -271,6 +282,7 @@ def process_rate_category(
     output_suffix: str,
     alpha: float,
     edge: str,
+    for_categorized_rate_sites: List[int],
     logger: Logger,
 ):
     """
@@ -287,10 +299,22 @@ def process_rate_category(
     """
     try:
         file_name = construct_file_name(msa_file, output_suffix, rate, alpha, edge)
+                
         log_rate_info(logger, file_name, rate, results_set)
+        
         results_data_frame = pd.DataFrame(results_set["result_list"].to_dataframe())
+
+        results_data_frame["number_of_sites"] = len(for_categorized_rate_sites)
+
         format_float_columns(results_data_frame)
-        write_results_to_files(results_set, file_name, results_data_frame, logger)
+
+        write_results_to_files(
+            results_set,
+            file_name,
+            results_data_frame,
+            logger,
+        )
+        
     except Exception as e:
         logger.error(f"Error processing results for key '{rate}': {e}")
 
@@ -449,7 +473,7 @@ def write_nexus_file(
 
 def write_alignment_and_indices(
     per_rate_category_alignment: Dict[str, AlignIO.MultipleSeqAlignment],
-    categorized_sites: List,
+    categorized_sites: List[int],
     msa_file: Path,
 ):
     """

@@ -16,6 +16,7 @@ from satute_rate_analysis import (
     multiple_rate_analysis,
     single_rate_analysis_collapsed_tree,
 )
+
 from satute_ostream import (
     write_results_for_category_rates,
     write_alignment_and_indices,
@@ -23,11 +24,13 @@ from satute_ostream import (
     write_posterior_probabilities_for_rates,
     write_components,
 )
+
 from satute_categories import (
     read_alignment_file,
     split_msa_into_rate_categories_in_place,
     build_categories_by_sub_tables,
 )
+
 from satute_repository import (
     parse_substitution_model,
     parse_rate_from_cli_input,
@@ -480,6 +483,11 @@ class Satute:
             focused_edge,
         )
 
+        singe_rate_indices = [
+            i for i in range(1, alignment.get_alignment_length() + 1, 1)
+        ]
+        single_rate_category = {"single_rate": singe_rate_indices}
+
         write_results_for_category_rates(
             results,
             test_tree,
@@ -487,6 +495,7 @@ class Satute:
             msa_file,
             self.input_args.alpha,
             self.input_args.edge,
+            single_rate_category,
             logger,
         )
 
@@ -505,6 +514,10 @@ class Satute:
                 alignment.get_alignment_length(),
             )
 
+        self.logger.info(
+            f"Rate single_rate has {alignment.get_alignment_length()} Sites"
+        )
+
         write_components(
             results["single_rate"]["components"],
             msa_file,
@@ -512,7 +525,7 @@ class Satute:
             "single_rate",
             self.input_args.alpha,
             self.input_args.edge,
-            [i for i in range(0, alignment.get_alignment_length(), 1)],
+            singe_rate_indices,
         )
 
     def run_multiple_rate_analysis(
@@ -560,6 +573,7 @@ class Satute:
             msa_file,
             alpha,
             edge,
+            categorized_sites,
             logger,
         )
 
@@ -593,6 +607,7 @@ class Satute:
             )
 
         for rate, results_set in results.items():
+            self.logger.info(f"Rate {rate} has {len(categorized_sites[rate])} Sites")
 
             write_components(
                 results_set["components"],

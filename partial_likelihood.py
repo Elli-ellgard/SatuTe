@@ -208,7 +208,6 @@ def calculate_partial_likelihoods_for_sites(
         # If a specific edge is focused on, filter the graph to only include that edge
         if focused_edge:
             filtered_edges = filter_graph_edges_by_focus(graph, focused_edge)
-            
         else:
             filtered_edges = graph.get_edges()
 

@@ -3,7 +3,7 @@ import pandas as pd
 
 
 class TestStatisticComponents:
-    def __init__(self, coefficients: list[float], variances: list[float]):
+    def __init__(self, coefficients: List[float], variances: List[float]):
         """
         Initializes the TestStatisticComponents with coefficients and variances.
 
@@ -127,7 +127,7 @@ class TestResultBranch:
         """
         self.results: Dict[str, Any] = results
 
-    def add_result(self, result_name: str, score: float) -> None:
+    def add_result(self, result_name: str, score: Any) -> None:
         """
         Adds or updates a test result.
 
