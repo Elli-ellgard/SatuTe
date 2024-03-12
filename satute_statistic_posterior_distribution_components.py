@@ -377,6 +377,7 @@ def calculate_test_statistic_posterior_distribution(
         posterior_probabilities_left_subtree,
         number_sites,
     )
+
     factors_right_subtree = scalar_product_eigenvector_posterior_probability(
         multiplicity,
         array_eigenvectors,

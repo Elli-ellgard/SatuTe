@@ -43,6 +43,11 @@ class Node:
         return f"Node({self.name})"
 
 
+import dataclasses
+from typing import Optional, Dict
+import numpy as np
+
+
 class Graph:
     """Class representing a directed acyclic graph (DAG) of interconnected nodes."""
 

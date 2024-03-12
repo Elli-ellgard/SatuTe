@@ -1,11 +1,10 @@
 import pandas as pd
-from pandas import DataFrame
 from partial_likelihood import calculate_partial_likelihoods_for_sites
 from graph import calculate_subtree_edge_metrics
 from satute_sequences import dict_to_alignment
 from ete3 import Tree
 from Bio.Align import MultipleSeqAlignment
-from typing import List, Dict
+from typing import List
 from rate_matrix import RateMatrix
 from satute_result import (
     TestResultsBranches,

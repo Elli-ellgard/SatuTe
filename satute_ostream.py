@@ -178,7 +178,6 @@ def write_results_for_category_rates(
     for rate, results_set in results.items():
         try:
 
-            
             process_rate_category(
                 rate,
                 results_set,
@@ -299,9 +298,9 @@ def process_rate_category(
     """
     try:
         file_name = construct_file_name(msa_file, output_suffix, rate, alpha, edge)
-                
+
         log_rate_info(logger, file_name, rate, results_set)
-        
+
         results_data_frame = pd.DataFrame(results_set["result_list"].to_dataframe())
 
         results_data_frame["number_of_sites"] = len(for_categorized_rate_sites)
@@ -314,7 +313,7 @@ def process_rate_category(
             results_data_frame,
             logger,
         )
-        
+
     except Exception as e:
         logger.error(f"Error processing results for key '{rate}': {e}")
 
@@ -503,7 +502,7 @@ def write_alignment_and_indices(
 
 
 def calculate_and_write_posterior_probabilities(
-    partial_likelihood_per_site_storage: Dict,
+    partial_likelihood_per_site_storage: Dict[str, Dict],
     state_frequencies: List[float],
     output_file: str,
     categorized_sites: List[int],
@@ -538,13 +537,14 @@ def calculate_and_write_posterior_probabilities(
         right_partial_likelihood = pd.DataFrame(likelihoods["right"]["likelihoods"])
 
         # Calculate left and right posterior probabilities
-        left_posterior_probabilities = calculate_posterior_probabilities_subtree_df(
-            dimension, state_frequencies, left_partial_likelihood
+        left_posterior_probabilities = calculate_posterior_probabilities_subtree(
+            dimension, state_frequencies, left_partial_likelihood, len(left_partial_likelihood)
         )
 
-        right_posterior_probabilities = calculate_posterior_probabilities_subtree_df(
-            dimension, state_frequencies, right_partial_likelihood
+        right_posterior_probabilities = calculate_posterior_probabilities_subtree(
+            dimension, state_frequencies, right_partial_likelihood, len(right_partial_likelihood)
         )
+        
 
         left_posterior_probabilities["Node"] = left_partial_likelihood["Node"]
 
@@ -621,3 +621,29 @@ def calculate_posterior_probabilities_subtree_df(
     posterior_probabilities = site_likelihoods.divide(site_likelihoods_sum, axis=0)
 
     return posterior_probabilities
+
+
+def calculate_posterior_probabilities_subtree(
+    dimension: int,
+    state_frequencies: List[float],
+    partial_likelihood_subtree: DataFrame,
+    number_sites: int,
+) -> pd.DataFrame:
+
+    posterior_probabilities_subtree = []
+
+    diag = np.diag(list(state_frequencies))
+    site_likelihood_subtree = []
+    for k in range(number_sites):
+        sl = np.sum(
+            np.asarray(partial_likelihood_subtree.iloc[k, 3 : (3 + dimension)]) @ diag
+        )
+        site_likelihood_subtree.append(sl)
+        posterior_probabilities = np.array(
+                diag @ np.asarray(partial_likelihood_subtree.iloc[k, 3 : (3 + dimension)])
+            ) / sl
+        posterior_probabilities_subtree.append(posterior_probabilities)
+    
+    # Convert the list of arrays to a DataFrame
+    posterior_probabilities_df = pd.DataFrame(posterior_probabilities_subtree)
+    return posterior_probabilities_df
