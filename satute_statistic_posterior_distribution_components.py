@@ -136,13 +136,6 @@ def calculate_sample_coherence_for_each_site(
         )
     return delta
 
-
-def calculate_sample_coherence_without_zeros():
-
-    result = 0
-    return result
-
-
 def calculate_components_of_test_statistic_for_each_site(
     multiplicity: int,
     factors_left_subtree: list[list[float]],
