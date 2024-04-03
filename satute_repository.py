@@ -12,6 +12,7 @@ from amino_acid_models import (
     AA_STATE_FREQUENCIES,
     NOT_ACCEPTED_AA_MODELS,
 )
+from dna_model import NOT_ACCEPTED_DNA_MODELS
 
 
 class ModelType(Enum):
@@ -111,6 +112,17 @@ def parse_file_to_data_frame(file_path):
     except FileNotFoundError:
         raise Exception(f"File not found: {file_path}")
 
+def valid_stationary_distribution(frequencies):
+    sum_freqs = sum(frequencies.values())
+    if sum_freqs == 1:
+        # Valid sattionary distribution
+        return frequencies
+    else:
+        # Update frequencies dictionary with new values
+        keys = list(frequencies.keys())
+        for i in range(len(keys)):
+            frequencies[keys[i]] /= sum_freqs
+        return frequencies
 
 class SubstitutionModel:
     """
@@ -208,52 +220,49 @@ class IqTreeParser:
         """
 
         current_substitution_model = self.parse_substitution_model()
-        self.model_type = self.check_model_aa_mode(current_substitution_model)
+        self.check_model(current_substitution_model)
+        self.model_type = self.get_model_type(current_substitution_model)
         self.load_iqtree_file_content()
 
         if self.model_type == ModelType.DNA:
-            # Parse the required components from the file content
-            state_frequencies, phi_matrix = self.parse_state_frequencies()
+            # Parse the rate matrix and stationary distribution for the DNA Substitution Model
+            dict_state_frequencies, phi_matrix = self.parse_state_frequencies()
+            state_frequencies = dict_state_frequencies.values()
             rate_matrix = self.parse_rate_matrices(state_frequencies)
-            number_rates = self.parse_number_rate_categories()
-            category_rates = self.parse_category_rates() if number_rates > 1 else None
-
-            return SubstitutionModel(
-                model=current_substitution_model,
-                state_frequencies=state_frequencies.values(),
-                phi_matrix=phi_matrix,
-                rate_matrix=rate_matrix,
-                number_rates=number_rates,
-                category_rates=category_rates,
-            )
         else:
-            # Parse the required components from the file content
+            # Parse the rate matrix and stationary distribution for the Protein Substitution Model
             state_frequencies, phi_matrix = get_aa_state_frequency_substitution_models(
                 current_substitution_model
             )
-
             rate_matrix = self.get_aa_rate_matrix(current_substitution_model)
 
-            number_rates = self.parse_number_rate_categories()
+        number_rates = self.parse_number_rate_categories()
+        category_rates = self.parse_category_rates() if number_rates > 1 else None
 
-            category_rates = self.parse_category_rates() if number_rates > 1 else None
+        return SubstitutionModel(
+            model=current_substitution_model,
+            state_frequencies=state_frequencies,
+            phi_matrix=phi_matrix,
+            rate_matrix=rate_matrix,
+            number_rates=number_rates,
+            category_rates=category_rates,
+        )
 
-            return SubstitutionModel(
-                model=current_substitution_model,
-                state_frequencies=state_frequencies,
-                phi_matrix=phi_matrix,
-                rate_matrix=rate_matrix,
-                number_rates=number_rates,
-                category_rates=category_rates,
-            )
+    def check_model(self, model: str):
+        # Check if the model is one of the not accepted DNA models
+        for dna_model in NOT_ACCEPTED_DNA_MODELS:
+            if dna_model in model:
+                # Raise an exception signaling that the model is not accepted
+                raise ValueError(f"The model '{dna_model}' is not accepted for analysis, because it is non-reversible.")
+        # Check if the model is one of the not accepted Protein models
+        for aa_model in NOT_ACCEPTED_AA_MODELS:
+            if aa_model in model:
+                # Raise an exception signaling that the model is not accepted
+                raise ValueError(f"The model '{aa_model}' is not accepted for analysis.")
+       
 
-    def check_model_aa_mode(self, model: str) -> ModelType:
-        # First, check if the model is one of the not accepted models
-        if model in NOT_ACCEPTED_AA_MODELS:
-            # Raise an exception signaling that the model is not accepted
-            raise ValueError(f"The model '{model}' is not accepted for analysis.")
-
-        # If the model is not in the not accepted list, proceed to check if it's a protein model
+    def get_model_type(self, model: str) -> ModelType:
+        # Check if it is a protein model
         for amino_acid_substitution_model in AMINO_ACID_MODELS:
             if amino_acid_substitution_model in model:
                 return ModelType.PROTEIN
@@ -305,7 +314,7 @@ class IqTreeParser:
         # Combine the base model and rates list to form the final model string
         model_with_rates_token = f"{splitted_model[0]}{{{' ,'.join(rates)}}}"
 
-        return model_with_rates_token
+        return model_with_rates_token  
 
     def parse_state_frequencies(self):
         """
@@ -365,11 +374,13 @@ class IqTreeParser:
                         frequencies[key] = float(
                             value
                         )  # convert value to float before storing
+                    frequencies = valid_stationary_distribution(frequencies)
+                    
                 except (IndexError, ValueError) as e:
                     raise Exception(
                         f"Error while parsing empirical state frequencies. Exception: {e}"
                     )
-
+            
             # If "equal frequencies" is in the log content, return a pseudo dictionary with equal frequencies
             elif "State frequencies: (equal frequencies)" in line:
                 for i in range(n):
