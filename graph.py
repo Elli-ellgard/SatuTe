@@ -5,7 +5,7 @@ from ete3 import Tree
 from Bio.Align import MultipleSeqAlignment
 from typing import List, Tuple, Optional, Dict
 from functools import cache
-from nucleotide_code_vector import NUCLEOTIDE_CODE_VECTOR
+from dna_model import NUCLEOTIDE_CODE_VECTOR
 from amino_acid_models import AMINO_ACID_CODE_VECTOR
 
 
