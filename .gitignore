@@ -181,5 +181,8 @@ cython_debug/
 .DS_Store
 test/Clemens/small_example
 *.indices
+
+
 tests/test_results
+tests/scripts/generate_examples
 tests/scripts/test_other_options.py
