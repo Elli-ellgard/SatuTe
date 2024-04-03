@@ -146,8 +146,8 @@ class Satute:
     def run_iqtree_workflow(self, arguments_dict: Dict[str, List]):
         extra_arguments = []
 
-        if self.input_args.additional:
-            extra_arguments.append(self.input_args.additional)
+        if self.input_args.add_iqtree_options:
+            extra_arguments.append(self.input_args.add_iqtree_options)
 
         if arguments_dict["option"] == "dir":
             self.logger.info(
@@ -601,7 +601,7 @@ class Satute:
                 categorized_sites,
             )
 
-        if self.input_args.rateidx:
+        if self.input_args.category_assignment:
             write_alignment_and_indices(
                 per_rate_category_alignment, categorized_sites, msa_file
             )
@@ -686,7 +686,7 @@ class Satute:
         self.file_handler = FileHandler(self.active_directory)
         self.iqtree_handler = IqTreeHandler(self.input_args.iqtree)
 
-    def initialize_working_context(self):
+    def initialize_active_directory(self):
         if self.input_args.msa:
             self.active_directory = self.input_args.msa.parent
         elif self.input_args.dir:
@@ -806,7 +806,7 @@ if __name__ == "__main__":
     satute.parse_input()
     # ======== Validation ================
     satute.validate_satute_input_options()
-    satute.initialize_working_context()
+    satute.initialize_active_directory()
     satute.initialize_handlers()
     iq_arguments_dict = satute.construct_IQ_TREE_arguments()
     satute.run_iqtree_workflow(iq_arguments_dict)

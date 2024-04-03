@@ -213,7 +213,7 @@ def multiple_rate_analysis(
 
             # Step 7: Count leaves and branches for subtrees in the rescaled tree
             edge_subtree_metrics = calculate_subtree_edge_metrics(
-                initial_tree, focused_edge
+                collapsed_rescaled_tree_one, focused_edge
             )
 
             # Step 8: Process each edge and its associated likelihoods

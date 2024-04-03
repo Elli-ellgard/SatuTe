@@ -185,9 +185,9 @@ ARGUMENT_LIST = [
         "default": "",
     },
     {
-        "flag": "-additional",
+        "flag": "-add_iqtree_options",
         "help": (
-            "Specify a branch or edge name to focus the analysis on. Useful when you want to check saturation on a specific branch."
+            "Specify additional options for the IQ-Tree run, if necessary."
         ),
         "type": str,
         "metavar": "<additional_option>",
@@ -198,8 +198,8 @@ ARGUMENT_LIST = [
         "action": "store_true",
     },
     {
-        "flag": "-rateidx",
-        "help": "Write the indices for rates into separate files",
+        "flag": "-category_assignment",
+        "help": "Write assignment of the individual sites to the rate heterogeneity categories.",
         "action": "store_true",
     },
     {

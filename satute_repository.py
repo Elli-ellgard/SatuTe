@@ -228,7 +228,7 @@ class IqTreeParser:
             # Parse the rate matrix and stationary distribution for the DNA Substitution Model
             dict_state_frequencies, phi_matrix = self.parse_state_frequencies()
             state_frequencies = dict_state_frequencies.values()
-            rate_matrix = self.parse_rate_matrices(state_frequencies)
+            rate_matrix = self.parse_rate_matrices(dict_state_frequencies)
         else:
             # Parse the rate matrix and stationary distribution for the Protein Substitution Model
             state_frequencies, phi_matrix = get_aa_state_frequency_substitution_models(

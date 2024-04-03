@@ -86,7 +86,7 @@ def write_components(
     components_frame["Site"] = expanded_site_indices
 
     # Write the DataFrame to a CSV file
-    components_frame.to_csv(f"{file_name}.components", index=False)
+    components_frame.to_csv(f"{file_name}.components.csv", index=False)
 
 
 def write_to_csv(data_frame: pd.DataFrame, file_name: str, logger: Logger) -> None:
