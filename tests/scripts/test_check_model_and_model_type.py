@@ -30,7 +30,7 @@ class TestCheckModelAndType(unittest.TestCase):
                 test_instance.check_model(model)
 
         # Test with an accepted model (neither not accepted DNA nor not accepted protein)
-        models = ["GTR+G4", "FLU+FQ"]
+        models = ["GTR+G4", "FLU+FQ", "000000"]
         for model in models: 
             result = test_instance.check_model(model)
             self.assertIsNone(result)  
@@ -49,7 +49,7 @@ class TestCheckModelAndType(unittest.TestCase):
 
         # Test with a DNA model
         result = test_instance.get_model_type("GTR+I+G4")
-        self.assertEqual(result, ModelType.DNA)
+        self.assertEqual(result,  ModelType.DNA)
 
 if __name__ == '__main__':
     unittest.main()
