@@ -1,4 +1,5 @@
 import sys
+
 sys.path.append("./../..")
 
 import numpy as np
@@ -29,6 +30,7 @@ from partial_likelihood import (
 )
 import unittest
 import time
+from graph import count_and_nodes_edges
 
 RATE_MATRIX = np.array([[-3, 1, 1, 1], [1, -3, 1, 1], [1, 1, -3, 1], [1, 1, 1, -3]])
 
@@ -225,7 +227,6 @@ def test_one():
     # Step 9: Convert the sequence dictionary back to a MultipleSeqAlignment object
     alignment = dict_to_alignment(sequence_dict)
 
-
     # Step 11: Perform single rate analysis
     results = single_rate_analysis(
         collapsed_tree_one,
@@ -294,15 +295,14 @@ def test_two():
 
     # Step 7: Create a rate matrix and calculate stationary distribution
     rate_matrix = RateMatrix(POISSON_RATE_MATRIX)
-    psi_matrix = np.diag(AA_STATE_FREQUENCIES['POISSON'])
+    psi_matrix = np.diag(AA_STATE_FREQUENCIES["POISSON"])
 
     (
         array_left_eigenvectors,
         array_right_eigenvectors,
         multiplicity,
     ) = spectral_decomposition(rate_matrix.rate_matrix, psi_matrix)
-    
-    
+
     # Step 9: Convert the sequence dictionary back to a MultipleSeqAlignment object
     alignment = dict_to_alignment(sequence_dict)
 
@@ -311,13 +311,13 @@ def test_two():
         collapsed_tree_one,
         alignment,
         rate_matrix,
-        np.array(AA_STATE_FREQUENCIES['POISSON']),
+        np.array(AA_STATE_FREQUENCIES["POISSON"]),
         array_right_eigenvectors,
         multiplicity,
         0.05,
         None,
     )
-    
+
     # Step 12: Append additional data to results for twin nodes
     # for parent, value in twin_dictionary.items():
     #     for child in value:
@@ -368,7 +368,12 @@ class TestPartialLikelihoodCaching(unittest.TestCase):
         second_call_duration = time.time() - start_time
 
         # Assert that the second call was faster, indicating caching
-        self.assertLess(second_call_duration, first_call_duration, "Caching is not working as expected.")
+        self.assertLess(
+            second_call_duration,
+            first_call_duration,
+            "Caching is not working as expected.",
+        )
+
 
 class TestPhylogeneticAnalysis(unittest.TestCase):
     def setUp(self):
@@ -383,10 +388,10 @@ class TestPhylogeneticAnalysis(unittest.TestCase):
             SeqRecord(Seq("SSRQQ"), id="t4"),
             SeqRecord(Seq("SSRQQ"), id="t5"),
         ]
-        
+
         # Create a MultipleSeqAlignment object
         self.alignment = MultipleSeqAlignment(self.seq_records)
-        
+
         # Define a newick string for your phylogenetic tree
         self.newick_string = "(t7:0.0000010000,t3:0.0000010000,(t6:0.0000010000,((t1:0.3068411287,t4:1.2358829187)Node4:0.4797066442,(t2:0.0000010000,t5:0.0000010000)Node5:0.5990502849)Node3:0.0291780183)Node2:0.0000010000)Node1;"
 
@@ -396,18 +401,22 @@ class TestPhylogeneticAnalysis(unittest.TestCase):
         rename_internal_nodes_pre_order(tree)
         sequence_dict = {record.id: str(record.seq) for record in self.alignment}
         collapsed_tree = tree.copy("deepcopy")
-        sequence_dict, twin_dictionary = collapse_identical_leaf_sequences(collapsed_tree, sequence_dict)
-        
+        sequence_dict, twin_dictionary = collapse_identical_leaf_sequences(
+            collapsed_tree, sequence_dict
+        )
+
         rate_matrix = RateMatrix(POISSON_RATE_MATRIX)
-        psi_matrix = np.diag(AA_STATE_FREQUENCIES['POISSON'])
-        array_left_eigenvectors, array_right_eigenvectors, multiplicity = spectral_decomposition(rate_matrix.rate_matrix, psi_matrix)
-        
+        psi_matrix = np.diag(AA_STATE_FREQUENCIES["POISSON"])
+        array_left_eigenvectors, array_right_eigenvectors, multiplicity = (
+            spectral_decomposition(rate_matrix.rate_matrix, psi_matrix)
+        )
+
         alignment = dict_to_alignment(sequence_dict)
         results = single_rate_analysis(
             collapsed_tree,
             alignment,
             rate_matrix,
-            np.array(AA_STATE_FREQUENCIES['POISSON']),
+            np.array(AA_STATE_FREQUENCIES["POISSON"]),
             array_right_eigenvectors,
             multiplicity,
             0.05,
@@ -415,8 +424,14 @@ class TestPhylogeneticAnalysis(unittest.TestCase):
         )
 
         # Here, add assertions to validate your results as needed
-        self.assertTrue(results)  # This is just a placeholder, customize it based on what `single_rate_analysis` returns
+        self.assertTrue(
+            results
+        )  # This is just a placeholder, customize it based on what `single_rate_analysis` returns
+
+    
 
 
-if __name__ == '__main__':
+
+
+if __name__ == "__main__":
     unittest.main()

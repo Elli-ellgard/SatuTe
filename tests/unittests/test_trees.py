@@ -17,6 +17,8 @@ from satute_trees import (
     check_all_internal_nodes_annotated,
 )
 
+from graph import count_and_nodes_edges, Node, convert_tree_to_graph
+
 
 # Assuming all necessary functions (rescale_branch_lengths, has_duplicate_leaf_sequences, collapse_identical_leaf_sequences, and delete_children_nodes) are defined in the same module or imported correctly.
 class TestPhylogeneticTreeFunctions(unittest.TestCase):
@@ -41,18 +43,158 @@ class TestPhylogeneticTreeFunctions(unittest.TestCase):
         msa = {"A": "ATCG", "B": "ATCGT", "C": "AGGG", "D": "AGGGC"}
         self.assertFalse(has_duplicate_leaf_sequences(tree, msa))
 
-    def test_with_duplicates(self):
-        tree = Tree("((A,B),(C,D));")
+    def test_with_duplicates_eight_taxa(self):
+        tree = Tree(
+            " (T2:1,((((T5:1,T1:1)Node1:1,T3:1)Node2:1,T8:1)Node3:1,(T4:1,(T6:1,T7:1)Node4:1)Node5:1)Node6:1)Node7:1;",
+            format=1,
+        )
+
+        msa = {
+            "T2": "ATCG",
+            "T5": "AGGG",
+            "T1": "AGGG",
+            "T3": "AGGG",
+            "T8": "AGGG",
+            "T4": "AGGG",
+            "T6": "AGGG",
+            "T7": "AGGG",
+        }
+
+        updated_msa, collapsed_nodes = collapse_identical_leaf_sequences(tree, msa)
+
+        expected_collapsed_nodes = {
+            "Node1": ["T5", "T1"],
+            "Node2": ["Node1", "T3"],
+            "Node3": ["Node2", "T8"],
+            "Node4": ["T6", "T7"],
+            "Node5": ["T4", "Node4"],
+            "Node6": ["Node3", "Node5"],
+        }
+
+        expected_msa = {
+            "T2": "ATCG",
+            "Node1": "AGGG",
+            "Node2": "AGGG",
+            "Node3": "AGGG",
+            "Node4": "AGGG",
+            "Node5": "AGGG",
+            "Node6": "AGGG",
+            "T5": "AGGG",
+            "T1": "AGGG",
+            "T3": "AGGG",
+            "T8": "AGGG",
+            "T4": "AGGG",
+            "T6": "AGGG",
+            "T7": "AGGG",
+        }
+
+        self.assertEqual(updated_msa, expected_msa)
+        self.assertEqual(collapsed_nodes, expected_collapsed_nodes)
+
+    def test_duplicates_eight_taxa_over_the_root(self):
+
+        tree = Tree(
+            " ((T2:1,TX1:1)NodeTX1:1,((((T5:1,T1:1)Node1:1,T3:1)Node2:1,T8:1)Node3:1,(T4:1,(T6:1,T7:1)Node4:1)Node5:1)Node6:1)Node7:1;",
+            format=1,
+        )
+
+        msa = {
+            "T2": "AGGG",
+            "TX1": "AGGG",
+            "T5": "AGGG",
+            "T1": "AGGG",
+            "T3": "AGGG",
+            "T8": "AGGG",
+            "T4": "CTTT",
+            "T6": "CATT",
+            "T7": "CGGT",
+        }
+
+        updated_msa, collapsed_nodes = collapse_identical_leaf_sequences(tree, msa)
+
+        expected_collapsed_nodes = {
+            "NodeTX1": ["T2", "TX1"],
+            "Node3": ["Node2", "T8"],
+            "Node2": ["Node1", "T3"],
+            "Node1": ["T5", "T1"],
+        }
+
+        expected_msa = {
+            "T2": "AGGG",
+            "TX1": "AGGG",
+            "NodeTX1": "AGGG",
+            "T5": "AGGG",
+            "T1": "AGGG",
+            "Node1": "AGGG",
+            "T3": "AGGG",
+            "Node2": "AGGG",
+            "T8": "AGGG",
+            "Node3": "AGGG",
+            "T4": "CTTT",
+            "T6": "CATT",
+            "T7": "CGGT",
+        }
+
+        self.assertEqual(updated_msa, expected_msa)
+        self.assertEqual(collapsed_nodes, expected_collapsed_nodes)
+
+    def test_duplicates_eight_taxa_over_the_root_cherry_collapse(self):
+
+        tree = Tree(
+            " ((T2:1,TX1:1)NodeTX1:1,((((T5:1,T1:1)Node1:1,T3:1)Node2:1,T8:1)Node3:1,(T4:1,(T6:1,T7:1)Node4:1)Node5:1)Node6:1)Node7:1;",
+            format=1,
+        )
+
+        msa = {
+            "T2": "AGGG",
+            "TX1": "AGGG",
+            "T5": "ACGG",
+            "T1": "ACGG",
+            "T3": "ACG-",
+            "T8": "ACGG",
+            "T4": "CTTT",
+            "T6": "CATT",
+            "T7": "CGGT",
+        }
+
+        updated_msa, collapsed_nodes = collapse_identical_leaf_sequences(tree, msa)
+
+        expected_collapsed_nodes = {
+            "NodeTX1": ["T2", "TX1"],
+            "Node1": ["T5", "T1"],
+        }
+
+        expected_msa = {
+            "T2": "AGGG",
+            "TX1": "AGGG",
+            "NodeTX1": "AGGG",
+            "T5": "ACGG",
+            "T1": "ACGG",
+            "Node1": "ACGG",
+            "T3": "ACG-",
+            "T8": "ACGG",
+            "T4": "CTTT",
+            "T6": "CATT",
+            "T7": "CGGT",
+        }
+
+        self.assertEqual(updated_msa, expected_msa)
+        self.assertEqual(collapsed_nodes, expected_collapsed_nodes)
+
+    def test_with_duplicates_eight_nodes(self):
+        tree = Tree("((A:1,B:1),(C:1,D:1):1);", format=1)
         msa = {"A": "ATCG", "B": "ATCG", "C": "AGGG", "D": "AGGG"}
         self.assertTrue(has_duplicate_leaf_sequences(tree, msa))
 
     def test_collapse_identical_leaf_sequences(self):
         tree = Tree("((A:1,B:1)Node1:0.5,(C:1,D:1)Node2:0.5)Root;", format=1)
+
         msa = {"A": "ATCG", "B": "ATCG", "C": "GGCC", "D": "GGCC"}
 
         updated_msa, collapsed_nodes = collapse_identical_leaf_sequences(tree, msa)
 
         expected_collapsed_nodes = {"Node1": ["A", "B"], "Node2": ["C", "D"]}
+
         expected_msa = {
             "A": "ATCG",
             "B": "ATCG",
@@ -210,6 +352,8 @@ class TestRenameInternalNodesPreOrder(unittest.TestCase):
             check_all_internal_nodes_annotated(self.base_tree),
             "Incorrectly identified unannotated nodes as annotated before renaming.",
         )
+
+
 
 
 if __name__ == "__main__":
