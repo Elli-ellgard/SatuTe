@@ -392,23 +392,6 @@ def calculate_test_statistic_posterior_distribution(
             coefficients, variances, number_sites, branch_type
         )
     )
-    
-    """ Calculation of the sample variance """
-    variance = calculate_sample_variance(
-        multiplicity,
-        factors_left_subtree,
-        factors_right_subtree,
-        number_sites,
-        branch_type,
-    )
-    
-    variance = variance/number_sites
-
-    """Calculation of the test-statistic and decision of the statistical tests """
-    if variance > 0:
-        test_statistic = coefficient_value / np.sqrt(variance)
-    else: 
-        test_statistic = np.nan
 
     if test_statistic != np.nan:
         """Calculation of the p-value"""
@@ -440,8 +423,6 @@ def calculate_test_statistic_posterior_distribution(
     )
 
     result = TestResultBranch(
-        coefficient_value=coefficient_value,
-        variance=variance,
         test_statistic=test_statistic,
         number_informative_sites=number_informative_sites,
         p_value=p_value,
