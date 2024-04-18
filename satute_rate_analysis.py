@@ -315,6 +315,6 @@ def insert_nan_values_for_identical_taxa(
                 # Create a TestResultBranch instance with NaN values for this specific edge
                 edge_result = TestResultBranch(**nan_values_dict)
                 # Generate a unique branch name for this edge
-                branch_name = f"({parent},{child})"
+                branch_name = f"({child},{parent})"
                 # Add this TestResultBranch instance to the TestResultsBranches container
                 test_results_branches.add_branch(branch_name, edge_result)

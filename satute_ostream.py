@@ -303,8 +303,9 @@ def process_rate_category(
         log_rate_info(logger, file_name, rate, results_set)
         
         results_data_frame = pd.DataFrame(results_set["result_list"].to_dataframe())
-
+        # add sequence length for considered rate category and rate category
         results_data_frame["number_of_sites"] = len(for_categorized_rate_sites)
+        results_data_frame["rate_category"] = rate
 
         format_float_columns(results_data_frame)
 
