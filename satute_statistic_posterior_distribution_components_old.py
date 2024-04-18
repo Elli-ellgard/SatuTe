@@ -200,11 +200,11 @@ def calculate_test_statistic_exclude_zeros(
         sample_mean = np.nan
     if sample_variance_sum > 0:
         if branch_type == "internal":
-            test_statistic = sample_mean_sum / np.sqrt(
+            test_statistic = sample_mean/ np.sqrt(
                 sample_variance_sum / number_informative_sites
             )
         else:
-            test_statistic = sample_mean_sum / np.sqrt(sample_variance_sum)
+            test_statistic = sample_mean/ np.sqrt(sample_variance_sum)
     else:
         test_statistic = np.nan
 

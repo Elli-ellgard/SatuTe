@@ -9,6 +9,7 @@ from typing import Dict, Any, List
 import numpy as np
 from amino_acid_models import AMINO_ACIDS
 from satute_result import TestStatisticComponentsContainer
+from satute_statistic_posterior_distribution_components import calculate_posterior_probabilities_subtree_df
 
 
 # New function to format float columns
@@ -17,6 +18,8 @@ def format_float_columns(data_frame: DataFrame):
         if col != "branch_length":
             if data_frame[col].dtype == float:
                 data_frame[col] = data_frame[col].apply(lambda x: round(x, 4))
+
+
 
 
 def construct_file_name(
@@ -606,19 +609,4 @@ def calculate_and_write_posterior_probabilities(
     all_posterior_probabilities.to_csv(f"{output_file}.asr.csv", index=False)
 
 
-def calculate_posterior_probabilities_subtree_df(
-    dimension: int, state_frequencies: List[float], partial_likelihood_df: pd.DataFrame
-):
-    diag = np.diag(list(state_frequencies))
 
-    # Selecting the relevant columns for likelihoods
-    likelihood_cols = partial_likelihood_df.iloc[:, 3 : (3 + dimension)]
-
-    # Calculate the site likelihood for each site (row)
-    site_likelihoods = likelihood_cols @ diag
-    site_likelihoods_sum = site_likelihoods.sum(axis=1)
-
-    # Calculate the posterior probabilities for each site
-    posterior_probabilities = site_likelihoods.divide(site_likelihoods_sum, axis=0)
-
-    return posterior_probabilities

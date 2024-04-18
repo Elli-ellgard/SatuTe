@@ -5,47 +5,66 @@ from satute_result import TestResultBranch, TestStatisticComponents
 from pandas import DataFrame
 from typing import List
 import numpy as np
+import pandas as pd
 
 
 """## CALCULATION OF POSTERIOR DISTRIBUTION """
-
-
-def calculate_posterior_probabilities_subtree(
-    dimension: int,
-    state_frequencies: List[float],
-    partial_likelihood_subtree: DataFrame,
-    number_sites: int,
+def calculate_posterior_probabilities_subtree_df(
+    dimension: int, state_frequencies: List[float], partial_likelihood_df: pd.DataFrame
 ):
-    posterior_probabilities_subtree = []
-
     diag = np.diag(list(state_frequencies))
-    site_likelihood_subtree = []
-    for k in range(number_sites):
-        # sr = np.dot(
-        #     np.asarray(partial_likelihood_subtree.iloc[k, 3 : (3 + dimension)]),
-        #     freq,
-        # )
-        sl = np.sum(
-            np.asarray(partial_likelihood_subtree.iloc[k, 3 : (3 + dimension)]) @ diag
-        )
-        site_likelihood_subtree.append(sl)
-        posterior_probabilities_subtree.append(
-            np.array(
-                diag
-                @ np.asarray(partial_likelihood_subtree.iloc[k, 3 : (3 + dimension)])
-            )
-            / sl
-        )
-    return posterior_probabilities_subtree
+
+    # Selecting the relevant columns for likelihoods
+    likelihood_cols = partial_likelihood_df.iloc[:, 3 : (3 + dimension)]
+
+    # Calculate the site likelihood for each site (row)
+    site_likelihoods = likelihood_cols @ diag
+    site_likelihoods_sum = site_likelihoods.sum(axis=1)
+
+    # Calculate the posterior probabilities for each site
+    posterior_probabilities = site_likelihoods.divide(site_likelihoods_sum, axis=0)
+
+    return posterior_probabilities
+
+# def calculate_posterior_probabilities_subtree(
+#     dimension: int,
+#     state_frequencies: List[float],
+#     partial_likelihood_subtree: DataFrame,
+#     number_sites: int,
+# ):
+#     posterior_probabilities_subtree = []
+
+#     diag = np.diag(list(state_frequencies))
+#     site_likelihood_subtree = []
+#     for k in range(number_sites):
+#         # sr = np.dot(
+#         #     np.asarray(partial_likelihood_subtree.iloc[k, 3 : (3 + dimension)]),
+#         #     freq,
+#         # )
+#         sl = np.sum(
+#             np.asarray(partial_likelihood_subtree.iloc[k, 3 : (3 + dimension)]) @ diag
+#         )
+#         site_likelihood_subtree.append(sl)
+#         posterior_probabilities_subtree.append(
+#             np.array(
+#                 diag
+#                 @ np.asarray(partial_likelihood_subtree.iloc[k, 3 : (3 + dimension)])
+#             )
+#             / sl
+#         )
+#     return posterior_probabilities_subtree
 
 
 """## CALCULATION OF FACTOR FOR C_1"""
 
 
 def scalar_product_eigenvector_posterior_probability(
-    multiplicity, array_eigenvectors, posterior_probabilities, number_sites
+    multiplicity, array_eigenvectors, posterior_probabilities_df, number_sites
 ):
     factors_subtree = []  # list of vectors
+    
+    # Convert DataFrame posterior probabilities to NumPy array
+    posterior_probabilities = posterior_probabilities_df.values
 
     for i in range(multiplicity):
         v = array_eigenvectors[i]  # eigenvector v_i of the dominant non-zero eigenvalue
@@ -136,16 +155,55 @@ def calculate_sample_coherence_for_each_site(
         )
     return delta
 
-def calculate_components_of_test_statistic_for_each_site(
+# def calculate_components_of_test_statistic_for_each_site(
+#     multiplicity: int,
+#     factors_left_subtree: list[list[float]],
+#     factors_right_subtree: list[list[float]],
+#     number_sites: int,
+#     branch_type: str,
+# ):
+
+#     variance = np.zeros(number_sites)
+
+#     delta = np.zeros(number_sites)
+
+#     for i in range(multiplicity):
+
+#         delta += np.asarray(factors_left_subtree[i]) * np.asarray(
+#             factors_right_subtree[i]
+#         )
+
+#         for j in range(multiplicity):
+
+#             if branch_type == "internal":
+
+#                 m_left = np.asarray(factors_left_subtree[i]) * np.asarray(
+#                     factors_left_subtree[j]
+#                 )
+
+#             else:
+
+#                 if i == j:
+
+#                     m_left = np.ones(number_sites)
+
+#                 else:
+
+#                     m_left = np.zeros(number_sites)
+
+#             m_right = np.asarray(factors_right_subtree[i]) * np.asarray(
+#                 factors_right_subtree[j]
+#             )
+#             variance += m_right * m_left
+
+#     return delta, variance
+
+def calculate_coefficients_of_test_statistic_for_each_site(
     multiplicity: int,
     factors_left_subtree: list[list[float]],
     factors_right_subtree: list[list[float]],
     number_sites: int,
-    branch_type: str,
 ):
-
-    variance = np.zeros(number_sites)
-
     delta = np.zeros(number_sites)
 
     for i in range(multiplicity):
@@ -154,57 +212,26 @@ def calculate_components_of_test_statistic_for_each_site(
             factors_right_subtree[i]
         )
 
-        for j in range(multiplicity):
-
-            if branch_type == "internal":
-
-                m_left = np.asarray(factors_left_subtree[i]) * np.asarray(
-                    factors_left_subtree[j]
-                )
-
-            else:
-
-                if i == j:
-
-                    m_left = np.ones(number_sites)
-
-                else:
-
-                    m_left = np.zeros(number_sites)
-
-            m_right = np.asarray(factors_right_subtree[i]) * np.asarray(
-                factors_right_subtree[j]
-            )
-            variance += m_right * m_left
-
-    return delta, variance
-
+    return delta
 
 def calculate_test_statistic_exclude_zeros(
     coefficients,
-    variances,
+    population_variance,
     number_sites,
-    branch_type,
 ):
     sample_mean_sum = 0
-    sample_variance_sum = 0
     number_informative_sites = 0
     for i in range(number_sites):
-        if coefficients[i] != 0:
+        if abs(coefficients[i]) > 10**(-5):
             sample_mean_sum += coefficients[i]
-            sample_variance_sum += variances[i]
             number_informative_sites += 1
     if number_informative_sites > 0:
         sample_mean = sample_mean_sum / number_informative_sites
+        sample_variance = population_variance/ number_informative_sites
     else:
         sample_mean = np.nan
-    if sample_variance_sum > 0:
-        if branch_type == "internal":
-            test_statistic = sample_mean_sum / np.sqrt(
-                sample_variance_sum / number_informative_sites
-            )
-        else:
-            test_statistic = sample_mean_sum / np.sqrt(sample_variance_sum)
+    if sample_variance> 0:
+        test_statistic = sample_mean / np.sqrt(sample_variance)
     else:
         test_statistic = np.nan
 
@@ -215,7 +242,7 @@ def calculate_test_statistic_exclude_zeros(
     #     sample_variance= sample_variance/number_informative_sites/number_informative_sites
     # #print("variance new:", sample_variance)
     # test_statistic= sample_mean / np.sqrt(sample_variance)
-    return test_statistic, sample_mean, number_informative_sites
+    return test_statistic, sample_mean, number_informative_sites, sample_variance
 
 
 """## DECISION OF STATISTICAL TEST """
@@ -355,11 +382,11 @@ def calculate_test_statistic_posterior_distribution(
     number_sites = len(partial_likelihood_left_subtree["Site"].unique())
 
     """ Calculation of the posterior distributions """
-    posterior_probabilities_left_subtree = calculate_posterior_probabilities_subtree(
-        dimension, state_frequencies, partial_likelihood_left_subtree, number_sites
+    posterior_probabilities_left_subtree = calculate_posterior_probabilities_subtree_df(
+        dimension, state_frequencies, partial_likelihood_left_subtree
     )
-    posterior_probabilities_right_subtree = calculate_posterior_probabilities_subtree(
-        dimension, state_frequencies, partial_likelihood_right_subtree, number_sites
+    posterior_probabilities_right_subtree = calculate_posterior_probabilities_subtree_df(
+        dimension, state_frequencies, partial_likelihood_right_subtree
     )
 
     """ Calculation of the factors for the coefficient C_1 (correspond to the dominant non-zero eigenvalue)"""
@@ -377,39 +404,30 @@ def calculate_test_statistic_posterior_distribution(
         number_sites,
     )
 
-    (coefficients, variances) = calculate_components_of_test_statistic_for_each_site(
+    coefficients = calculate_coefficients_of_test_statistic_for_each_site(
+        multiplicity,
+        factors_left_subtree,
+        factors_right_subtree,
+        number_sites,
+    )
+
+    
+    sample_variance = calculate_sample_variance(
         multiplicity,
         factors_left_subtree,
         factors_right_subtree,
         number_sites,
         branch_type,
     )
+    
 
-    components = TestStatisticComponents(coefficients, variances)
+    components = TestStatisticComponents(coefficients, [sample_variance]*number_sites)
 
-    (test_statistic, coefficient_value, number_informative_sites) = (
+    (test_statistic, coefficient_value, number_informative_sites, variance) = (
         calculate_test_statistic_exclude_zeros(
-            coefficients, variances, number_sites, branch_type
-        )
+            coefficients, sample_variance, number_sites )
     )
     
-    """ Calculation of the sample variance """
-    variance = calculate_sample_variance(
-        multiplicity,
-        factors_left_subtree,
-        factors_right_subtree,
-        number_sites,
-        branch_type,
-    )
-    
-    variance = variance/number_sites
-
-    """Calculation of the test-statistic and decision of the statistical tests """
-    if variance > 0:
-        test_statistic = coefficient_value / np.sqrt(variance)
-    else: 
-        test_statistic = np.nan
-
     if test_statistic != np.nan:
         """Calculation of the p-value"""
         p_value = st.norm.sf(test_statistic)

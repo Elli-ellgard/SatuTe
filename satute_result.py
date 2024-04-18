@@ -29,8 +29,8 @@ class TestStatisticComponents:
 
         # Create a DataFrame from the components
         data = {
-            "Coefficient": self.coefficients,
-            "Variance": self.variances,
+            "coefficient": self.coefficients,
+            "sample_variance": self.variances,
         }
         df = pd.DataFrame(data)
 
