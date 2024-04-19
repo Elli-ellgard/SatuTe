@@ -86,7 +86,7 @@ def write_components(
     #    raise ValueError("Expanded site indices do not match the DataFrame length.")
 
     # Add the expanded site indices to the DataFrame
-    components_frame["Site"] = expanded_site_indices
+    components_frame["site"] = expanded_site_indices
 
     # Write the DataFrame to a CSV file
     components_frame.to_csv(f"{file_name}.components.csv", index=False)
