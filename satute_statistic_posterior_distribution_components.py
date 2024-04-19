@@ -244,6 +244,30 @@ def calculate_test_statistic_exclude_zeros(
     # test_statistic= sample_mean / np.sqrt(sample_variance)
     return test_statistic, sample_mean, number_informative_sites, sample_variance
 
+def calculate_test_statistic(
+    coefficients,
+    population_variance,
+    number_sites,
+):
+    sample_mean_sum = 0
+    for i in range(number_sites):
+        sample_mean_sum += coefficients[i]
+    sample_mean = sample_mean_sum / number_sites
+    sample_variance = population_variance/ number_sites
+    if sample_variance> 0:
+        test_statistic = sample_mean / np.sqrt(sample_variance)
+    else:
+        test_statistic = np.nan
+
+    # print("delta new:", sample_mean)
+    # if branch_type == "internal":
+    #     sample_variance= sample_variance/number_informative_sites/number_informative_sites/number_informative_sites
+    # else:
+    #     sample_variance= sample_variance/number_informative_sites/number_informative_sites
+    # #print("variance new:", sample_variance)
+    # test_statistic= sample_mean / np.sqrt(sample_variance)
+    return test_statistic, sample_mean, number_sites, sample_variance
+
 
 """## DECISION OF STATISTICAL TEST """
 
@@ -424,7 +448,7 @@ def calculate_test_statistic_posterior_distribution(
     components = TestStatisticComponents(coefficients, [sample_variance]*number_sites)
 
     (test_statistic, coefficient_value, number_informative_sites, variance) = (
-        calculate_test_statistic_exclude_zeros(
+        calculate_test_statistic(
             coefficients, sample_variance, number_sites )
     )
     
