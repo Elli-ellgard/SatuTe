@@ -190,9 +190,9 @@ def multiple_rate_analysis(
         # Step 3: Create a deep copy of the initial tree and collapse nodes with identical sequences
         collapsed_rescaled_tree_one = initial_tree.copy("deepcopy")
 
-        sequence_dict, collapsed_nodes = collapse_identical_leaf_sequences(
-            collapsed_rescaled_tree_one, sequence_dict
-        )
+        # sequence_dict, collapsed_nodes = collapse_identical_leaf_sequences(
+        #     collapsed_rescaled_tree_one, sequence_dict
+        # )
 
         # Step 4: Rescale branch lengths according to the relative rate
         rescale_branch_lengths(collapsed_rescaled_tree_one, relative_rate)
@@ -263,9 +263,9 @@ def multiple_rate_analysis(
                     "branch_length", left_partial_likelihood.get("branch_length")[0]
                 )
 
-            insert_nan_values_for_identical_taxa(
-                results_list, collapsed_nodes, initial_tree, focused_edge
-            )
+            # insert_nan_values_for_identical_taxa(
+            #     results_list, collapsed_nodes, initial_tree, focused_edge
+            # )
 
             # Step 10: Add the results for the current rate category to the main dictionary
             result_rate_dictionary[rate] = {
