@@ -39,11 +39,12 @@ def construct_file_name(
     Returns:
         str: The constructed file name, incorporating the provided parameters for clear identification of the analysis results.
     """
-    file_name = f"{msa_file.resolve()}_{rate}_{alpha}.satute"
+    file_name = f"{msa_file.resolve()}_{rate}_{alpha}"
     if output_suffix:
-        file_name = f"{msa_file.resolve()}_{output_suffix}_{rate}_{alpha}.satute"
+        file_name = f"{msa_file.resolve()}_{output_suffix}_{rate}_{alpha}"
     if edge:
         file_name += f"_{edge}"
+    file_name += ".satute"
     return file_name
 
 
