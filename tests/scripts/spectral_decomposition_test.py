@@ -23,6 +23,7 @@ def test_spectral_decomposition():
         array_left_eigenvectors,
         array_right_eigenvectors,
         multiplicity,
+        eigenvalue,
     ) = spectral_decomposition(rate_matrix.rate_matrix, psi_matrix)
 
     print(array_left_eigenvectors, array_right_eigenvectors, multiplicity)

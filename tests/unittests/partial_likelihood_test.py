@@ -121,6 +121,7 @@ def test_two():
         array_left_eigenvectors,
         array_right_eigenvectors,
         multiplicity,
+        eigenvalue,
     ) = spectral_decomposition(
         substitution_model.rate_matrix, substitution_model.phi_matrix
     )
@@ -218,6 +219,7 @@ def test_one():
         array_left_eigenvectors,
         array_right_eigenvectors,
         multiplicity,
+        eigenvalue,
     ) = spectral_decomposition(rate_matrix.rate_matrix, phi_matrix)
 
     print(collapsed_tree_one.get_ascii(show_internal=True))
@@ -300,6 +302,7 @@ def test_two():
         array_left_eigenvectors,
         array_right_eigenvectors,
         multiplicity,
+        eigenvalue
     ) = spectral_decomposition(rate_matrix.rate_matrix, psi_matrix)
     
     
@@ -400,7 +403,7 @@ class TestPhylogeneticAnalysis(unittest.TestCase):
         
         rate_matrix = RateMatrix(POISSON_RATE_MATRIX)
         psi_matrix = np.diag(AA_STATE_FREQUENCIES['POISSON'])
-        array_left_eigenvectors, array_right_eigenvectors, multiplicity = spectral_decomposition(rate_matrix.rate_matrix, psi_matrix)
+        array_left_eigenvectors, array_right_eigenvectors, multiplicity, eigenvalue = spectral_decomposition(rate_matrix.rate_matrix, psi_matrix)
         
         alignment = dict_to_alignment(sequence_dict)
         results = single_rate_analysis(

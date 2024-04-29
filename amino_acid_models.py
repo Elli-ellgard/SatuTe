@@ -1627,7 +1627,7 @@ if __name__ == "__main__":
         print_matrix(matrix, f)
         stationary_distribution = AA_STATE_FREQUENCIES[key]
         phi = np.diag(stationary_distribution)
-        left, right, m = spectral_decomposition(np.array(matrix), phi)
+        left, right, m, eigenvalue = spectral_decomposition(np.array(matrix), phi)
 
         # Custom printing function
         def print_eigenvectors(vectors):

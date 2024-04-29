@@ -279,7 +279,7 @@ class Satute:
                 "-m",
                 self.input_args.model,
                 "--quiet",
-                "-blfix",
+                #"-blfix",
                 "--keep-ident",
             ]
 
@@ -403,6 +403,7 @@ class Satute:
             array_left_eigenvectors,
             array_right_eigenvectors,
             multiplicity,
+            eigenvalue,
         ) = spectral_decomposition(
             substitution_model.rate_matrix, substitution_model.phi_matrix
         )
@@ -423,13 +424,19 @@ class Satute:
         alignment = read_alignment_file(msa_file.resolve())
         # ========  Test for Branch Saturation =========
 
-        self.log_test_statistic_info(
+        self.log_substitution_model_info(
+            substitution_model,
+            multiplicity,
+            array_right_eigenvectors,
+            eigenvalue,
+        )
+
+        self.log_iqtree_run_and_satute_info(
             iq_arguments_dict,
             substitution_model,
             rate_category,
             msa_file,
             multiplicity,
-            array_right_eigenvectors,
         )
 
         if substitution_model.number_rates == 1:
@@ -619,14 +626,55 @@ class Satute:
                 categorized_sites[rate],
             )
 
-    def log_test_statistic_info(
+    def log_substitution_model_info(
+        self,
+        substitution_model: SubstitutionModel,
+        eigenvectors: List[np.array],
+        eigenvalue: float,
+    ):
+        """
+        Logs information about substitution model and its spectral decomposition 
+
+        Args:
+            substitution_model: The substitution model used in the analysis.
+            multiplicity: Multiplicity value from spectral decomposition.
+            eigenvectors: eigenvector corresponding to eigenvalue from spectral decomposition
+            eigenvalue:  dominant non-zero eigenvalue from spectral decomposition
+        """
+        # Formatting the rate matrix for logging
+        rate_matrix_str = format_matrix(substitution_model.rate_matrix, precision=4)
+        # Formatting the state frequencies for logging
+        state_frequencies_str = format_array(
+            np.array(list(substitution_model.state_frequencies)), precision=4
+        )
+
+        # Logging the formatted rate matrix and state frequencies
+        self.logger.info(
+            f"Substitution Model:\n\n"
+            f"Model: {self.input_args.model}\n"
+            f"Rate Matrix Q:\n{rate_matrix_str}\n"
+            f"State Frequencies:\n{state_frequencies_str}\n"
+        )
+
+        eigenvector_str = ""
+        for eigenvector in eigenvectors:
+            eigenvector_str += f"\n{format_array(list(eigenvector))}"
+
+        self.logger.info(
+            f"Spectral Decomposition:\n\n"
+            f"Eigenvalue: {eigenvalue}\n"
+            f"Eigenvectors: {eigenvector_str}\n"
+            )
+
+
+
+    def log_iqtree_run_and_satute_info(
         self,
         iq_arguments_dict: Dict,
         substitution_model: SubstitutionModel,
         rate_category: str,
         msa_file: Path,
         multiplicity: int,
-        eigenvectors: List[np.array],
     ):
         """
         Logs information about the initial IQ-TREE run and tests being performed.
@@ -638,25 +686,6 @@ class Satute:
             msa_file (Path): Path to the MSA file being used.
             multiplicity: Multiplicity value from spectral decomposition.
         """
-        # Formatting the rate matrix for logging
-        rate_matrix_str = format_matrix(substitution_model.rate_matrix, precision=4)
-        # Formatting the state frequencies for logging
-        state_frequencies_str = format_array(
-            np.array(list(substitution_model.state_frequencies)), precision=4
-        )
-
-        # Logging the formatted rate matrix and state frequencies
-        self.logger.info(
-            f"Rate Matrix Q:\n{rate_matrix_str}\n\n"
-            f"State Frequencies:\n{state_frequencies_str}\n"
-        )
-
-        eigenvector_str = ""
-        for eigenvector in eigenvectors:
-            eigenvector_str += f"\n{format_array(list(eigenvector))}"
-
-        self.logger.info(f"Eigenvectors: {eigenvector_str}\n")
-
         self.logger.info(
             f"""
             Running tests and initial IQ-Tree with configurations:

@@ -48,6 +48,6 @@ def spectral_decomposition(rate_matrix, psi_matrix) -> tuple[np.array, np.array,
         h1 = scipy.linalg.fractional_matrix_power(psi_matrix, +1 / 2) @ w[:, index[i]]
         array_left_eigenvectors.append(h1)
 
-    return array_left_eigenvectors, array_right_eigenvectors, multiplicity
+    return array_left_eigenvectors, array_right_eigenvectors, multiplicity, max_lambda
 
 
