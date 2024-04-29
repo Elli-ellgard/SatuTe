@@ -629,6 +629,7 @@ class Satute:
     def log_substitution_model_info(
         self,
         substitution_model: SubstitutionModel,
+        multiplicity: int,
         eigenvectors: List[np.array],
         eigenvalue: float,
     ):
@@ -663,6 +664,7 @@ class Satute:
         self.logger.info(
             f"Spectral Decomposition:\n\n"
             f"Eigenvalue: {eigenvalue}\n"
+            f"Multiplicity: {multiplicity}\n"
             f"Eigenvectors: {eigenvector_str}\n"
             )
 
