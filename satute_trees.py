@@ -33,7 +33,10 @@ def rename_internal_nodes_pre_order(tree: Tree) -> Tree:
     Returns:
         Tree: The same tree instance with updated internal node names. Note that this function modifies the tree in-place.
     """
-    if not check_all_internal_nodes_annotated(tree):
+    number_annotated_internal_nodes, number_unannotated_internal_nodes, seen_names = get_set_and_number_annotated_internal_nodes(tree)
+    print(number_unannotated_internal_nodes)
+    print(number_annotated_internal_nodes)
+    if number_unannotated_internal_nodes != 0:
         idx = 1  # Start indexing for new names
         for node in tree.traverse("preorder"):
             if node.is_leaf() or node.name.startswith("Node"):
@@ -41,13 +44,33 @@ def rename_internal_nodes_pre_order(tree: Tree) -> Tree:
 
             # Rename internal nodes with a placeholder name or numeric name
             if not node.name or node.name.isdigit():
-                node.name = f"Node{idx}*"
-                idx += 1
+                number_annotated_internal_nodes += 1
+                node.name = f"Node{number_annotated_internal_nodes}*"
+                while node.name  in seen_names:
+                    number_annotated_internal_nodes += 1
+                    node.name = f"Node{number_annotated_internal_nodes}*"
+
+                
 
     # Optional: Check for any duplicate node names which could cause issues
     check_and_raise_for_duplicate_nodes(tree)
 
     return tree
+
+def get_set_and_number_annotated_internal_nodes(tree: Tree):
+    seen_names = set()
+    number_annotated = 0
+    number_unannotated = 0
+    for node in tree.traverse("preorder"):
+        if node.is_leaf():
+            continue  # Focus on internal nodes
+        # An internal node is unannotated if its name is empty, numeric, or a generic placeholder
+        if not node.name or node.name.isdigit() or not node.name.startswith("Node"):
+            number_unannotated +=1
+        else:
+            seen_names.add(node.name)
+            number_annotated +=1 
+    return number_annotated, number_unannotated, seen_names
 
 
 def check_and_raise_for_duplicate_nodes(tree: Tree) -> None:
