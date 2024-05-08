@@ -34,8 +34,8 @@ def rename_internal_nodes_pre_order(tree: Tree) -> Tree:
         Tree: The same tree instance with updated internal node names. Note that this function modifies the tree in-place.
     """
     number_annotated_internal_nodes, number_unannotated_internal_nodes, seen_names = get_set_and_number_annotated_internal_nodes(tree)
-    print(number_unannotated_internal_nodes)
-    print(number_annotated_internal_nodes)
+    #print(number_unannotated_internal_nodes)
+    #print(number_annotated_internal_nodes)
     if number_unannotated_internal_nodes != 0:
         idx = 1  # Start indexing for new names
         for node in tree.traverse("preorder"):
