@@ -43,6 +43,7 @@ def partial_likelihood(
     # If the current node is a leaf, return its initial likelihood vector.
     if node.is_leaf():
         return node.state, factor
+
     # Iterate through child nodes connected to the current node.
     for child in node.connected.keys():
         # Avoid traversing the path back to the parent node (coming_from).
@@ -57,6 +58,7 @@ def partial_likelihood(
             if results.sum() < 1e-50:
                 results *= 1e50
                 factor += 50  # Keeping track of the total scaling
+
     return results, factor
 
 
@@ -161,6 +163,9 @@ def update_partial_likelihood_storage(
     storage[edge_name]["right"]["likelihoods"].append(likelihood_data["right"])
 
 
+def update_partial_likelihood_storage(storage, edge_name, likelihood_data):
+    """Update the storage with new partial likelihood data."""
+    if edge_name not in storage:
 def calculate_partial_likelihoods_for_sites(
     tree: Tree,
     alignment: MultipleSeqAlignment,
