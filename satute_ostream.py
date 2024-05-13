@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import re
 import pandas as pd
 from logging import Logger
@@ -182,7 +184,6 @@ def write_results_for_category_rates(
     for rate, results_set in results.items():
         try:
 
-            
             process_rate_category(
                 rate,
                 results_set,
@@ -303,9 +304,9 @@ def process_rate_category(
     """
     try:
         file_name = construct_file_name(msa_file, output_suffix, rate, alpha, edge)
-                
+
         log_rate_info(logger, file_name, rate, results_set)
-        
+
         results_data_frame = pd.DataFrame(results_set["result_list"].to_dataframe())
         # add sequence length for considered rate category and rate category
         results_data_frame["number_of_sites"] = len(for_categorized_rate_sites)
@@ -319,7 +320,7 @@ def process_rate_category(
             results_data_frame,
             logger,
         )
-        
+
     except Exception as e:
         logger.error(f"Error processing results for key '{rate}': {e}")
 

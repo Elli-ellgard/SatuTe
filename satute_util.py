@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import scipy
 import scipy.linalg
 import numpy as np

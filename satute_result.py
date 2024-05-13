@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from typing import Dict, Any, List
 import pandas as pd
 

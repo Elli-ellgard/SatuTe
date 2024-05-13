@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import os
 import numpy as np
 import pandas as pd
@@ -682,6 +683,7 @@ class IqTreeParser:
             ),
             None,
         )
+
         if index is None:
             raise ValueError("'Model of rate heterogeneity:' not found in file.")
 

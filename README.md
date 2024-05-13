@@ -1,6 +1,3 @@
-
----
-
 # Satute: Branch Saturation Testing Tool
 
 ## Introduction
@@ -9,27 +6,14 @@ Satute is a specialized tool designed to assess the saturation of branches in ph
 
 Satute wraps around the IQ-TREE tool and adds functionalities specific to branch saturation testing. The user can provide a Multiple Sequence Alignment (MSA), a tree, and specify an evolutionary model. Satute will then perform its analysis using this input, potentially leveraging IQ-TREE for some computations.
 
-## Usage:
-
-**Basic Usage**
+## Usage: **Basic Usage**
 
 1. **Using a Directory**:
-  If you've previously run IQ-TREE and have a directory with the output files, you can provide the directory using the `-dir` option. This way, Satute will use the existing output without needing to rerun IQ-TREE:
-
-   ```bash
-   python satute_cli.py -dir /path/to/iqtree/output/
-   ```
-
+   If you've previously run IQ-TREE and have a directory with the output files, you can provide the directory using the `-dir` option. This way, Satute will use the existing output without needing to rerun IQ-TREE: `bash python satute_cli.py -dir /path/to/iqtree/output/`
 2. **Using a Multiple Sequence Alignment (MSA)**:
-  As an alternative, you can provide a multiple sequence alignment (`-msa`) and the path to IQ-TREE (`-iqtree`). Then the best-fit evolutionary model will be identified using Modelfinder (as inmplemented in IQ-Tree) and a maximum likelihood tree will be inferred. IQ-Tree will run only with necessary options. For specific option choices, please run IQ-Tree separately and use the option `-dir` afterwards. Furthermore you are able to secify the tree (`-tree`) and  the model of evolution (`-model`) togetheer with the option `-msa`, a typical command could look like:
-
-  ```bash
-  python satute_cli.py -msa ./test/cassius/toyExample.phy -tree ./test/cassius/toyExample.phy.treefile -model GTR+G4 -iqtree iqtree
-  ```
-
-**Advanced Usage**
-
-1. **Bootstrap Analysis**
+   As an alternative, you can provide a multiple sequence alignment (`-msa`) and the path to IQ-TREE (`-iqtree`). Then the best-fit evolutionary model will be identified using Modelfinder (as inmplemented in IQ-Tree) and a maximum likelihood tree will be inferred. IQ-Tree will run only with necessary options. For specific option choices, please run IQ-Tree separately and use the option `-dir` afterwards. Furthermore you are able to secify the tree (`-tree`) and the model of evolution (`-model`) togetheer with the option `-msa`, a typical command could look like: `bash python satute_cli.py -msa ./test/cassius/toyExample.phy -tree ./test/cassius/toyExample.phy.treefile -model GTR+G4 -iqtree iqtree`
+   **Advanced Usage**
+3. **Bootstrap Analysis**
 
    Ultrafast bootstrap analysis can be run using the `-ufboot` option:
 
@@ -39,11 +23,11 @@ Satute wraps around the IQ-TREE tool and adds functionalities specific to branch
 
    Traditional bootstrap analysis can be performed using the `-boot` option:
 
-   ```bash
-   python satute_cli.py -msa ./test/cassius/toyExample.phy -model GTR+G4 -boot 100
-   ```
+```bash
+python satute_cli.py -msa ./test/cassius/toyExample.phy -model GTR+G4 -boot 100
+```
 
-2. **Specifying an Edge for Analysis**
+2.**Specifying an Edge for Analysis**
 
    If you want to focus the analysis on a specific branch or edge, use the `-edge` option:
 
@@ -51,21 +35,20 @@ Satute wraps around the IQ-TREE tool and adds functionalities specific to branch
    python satute_cli.py -msa ./test/cassius/toyExample.phy -model GTR+G4 -edge "(Node1, Node2)"
    ```
 
-## Potential Errors and Warnings:
+## Potential Errors and Warnings
 
 1. **InvalidDirectoryError**: Thrown when the provided directory either does not exist or is empty. Ensure the directory path is correct and contains necessary IQ-TREE output files.
-  
+
 2. **NoAlignmentFileError**: Indicates that no multiple sequence alignment file was found in the specified directory. Ensure your directory contains the MSA file.
 
 3. **ValueError**: Can occur in multiple scenarios:
-    - If only the `-msa` and `-tree` options are used without specifying a model.
+   - If only the `-msa` and `-tree` options are used without specifying a model.
 
-## Invalid Command Combinations:
+## Invalid Command Combinations
 
 Certain combinations of command-line arguments are invalid:
 
 1. **Directory with Model, MSA, Tree, Ufboot, Boot**: Providing an input directory with `-dir` shouldn't be combined with specifying a msa, a model, a tree, ufboot or boot option.
-   
 2. **Model and Tree without MSA**: Just providing the `-model` and `-tree` without a msa (`-msa`) is insufficient.
 
 3. **MSA+Model+Tree with ufboot or boot option**: In the msa+model+tree mode, the inference is not re-done again, such that no ufboot and boot values can be determined.
@@ -73,7 +56,8 @@ Certain combinations of command-line arguments are invalid:
 4. **Edge without MSA**: The `-edge` option, used to focus the analysis on a specific branch, requires at least the `-msa` option or `-dir` option.
 
 ---
-### Arguments:
+
+### Arguments
 
 - **-iqtree**:  
   **Type**: Path  
@@ -120,7 +104,7 @@ Certain combinations of command-line arguments are invalid:
 - **-boot**:  
   **Type**: Integer  
   **Default**: None  
-  **Description**: Specifies the number of replicates for traditional bootstrap analysis. This option also triggers the computation of replicates of bootstrap, Maximum Likelihood (ML) tree and  consensus tree. A minimum value of `100` is recommended.
+  **Description**: Specifies the number of replicates for traditional bootstrap analysis. This option also triggers the computation of replicates of bootstrap, Maximum Likelihood (ML) tree and consensus tree. A minimum value of `100` is recommended.
   **Example**: `-boot 100`
 
 - **-alpha**:  
