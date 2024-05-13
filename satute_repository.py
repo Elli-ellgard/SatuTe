@@ -112,6 +112,7 @@ def parse_file_to_data_frame(file_path):
     except FileNotFoundError:
         raise Exception(f"File not found: {file_path}")
 
+
 def valid_stationary_distribution(frequencies):
     sum_freqs = sum(frequencies.values())
     if sum_freqs == 1:
@@ -123,6 +124,7 @@ def valid_stationary_distribution(frequencies):
         for i in range(len(keys)):
             frequencies[keys[i]] /= sum_freqs
         return frequencies
+
 
 class SubstitutionModel:
     """
@@ -253,13 +255,16 @@ class IqTreeParser:
         for dna_model in NOT_ACCEPTED_DNA_MODELS:
             if dna_model in model:
                 # Raise an exception signaling that the model is not accepted
-                raise ValueError(f"The model '{dna_model}' is not accepted for analysis, because it is non-reversible.")
+                raise ValueError(
+                    f"The model '{dna_model}' is not accepted for analysis, because it is non-reversible."
+                )
         # Check if the model is one of the not accepted Protein models
         for aa_model in NOT_ACCEPTED_AA_MODELS:
             if aa_model in model:
                 # Raise an exception signaling that the model is not accepted
-                raise ValueError(f"The model '{aa_model}' is not accepted for analysis.")
-       
+                raise ValueError(
+                    f"The model '{aa_model}' is not accepted for analysis."
+                )
 
     def get_model_type(self, model: str) -> ModelType:
         # Check if it is a protein model
@@ -270,7 +275,7 @@ class IqTreeParser:
         # Default to DNA if no conditions above are met
         return ModelType.DNA
 
-    def parse_rate_parameters(self, dimension: int, model: str="GTR"):
+    def parse_rate_parameters(self, dimension: int, model: str = "GTR"):
         """
         Parse rate parameters from the file content to format the model string.
 
@@ -314,7 +319,7 @@ class IqTreeParser:
         # Combine the base model and rates list to form the final model string
         model_with_rates_token = f"{splitted_model[0]}{{{' ,'.join(rates)}}}"
 
-        return model_with_rates_token  
+        return model_with_rates_token
 
     def parse_state_frequencies(self):
         """
@@ -375,12 +380,12 @@ class IqTreeParser:
                             value
                         )  # convert value to float before storing
                     frequencies = valid_stationary_distribution(frequencies)
-                    
+
                 except (IndexError, ValueError) as e:
                     raise Exception(
                         f"Error while parsing empirical state frequencies. Exception: {e}"
                     )
-            
+
             # If "equal frequencies" is in the log content, return a pseudo dictionary with equal frequencies
             elif "State frequencies: (equal frequencies)" in line:
                 for i in range(n):
@@ -389,6 +394,41 @@ class IqTreeParser:
 
         phi_matrix = np.diag(list(frequencies.values()))
         return frequencies, phi_matrix
+
+    @staticmethod
+    def find_line_index(lines: List[str], search_string: str) -> int:
+        """
+        Returns the index of the first line that contains the given search string.
+        Raises an exception if the search string is not found.
+
+        Args:
+        - lines (List[str]): The list of lines to search through.
+        - search_string (str): The string to search for.
+
+        Returns:
+        - int: The index of the first line containing the search string.
+
+        Raises:
+        - ValueError: If the search string is not found in any line.
+        """
+        for idx, line in enumerate(lines):
+            if search_string in line:
+                return idx
+        raise ValueError(
+            f"Search string '{search_string}' not found in the provided lines."
+        )
+
+    @staticmethod
+    def find_dimension_by_rate_matrix_parsing(start_index, file_content) -> int:
+        # Detect the number of matrix rows based on numeric entries
+        n = 0
+        current_idx = start_index + 2  # Adjusting to start from matrix values
+        while current_idx < len(file_content) and re.search(
+            r"(\s*-?\d+\.\d+\s*)+", file_content[current_idx]
+        ):
+            n += 1
+            current_idx += 1
+        return n
 
     def parse_rate_matrices(self, state_frequencies: List[float]):
         """
@@ -399,70 +439,143 @@ class IqTreeParser:
         Returns:
         - rate_matrix (np.array): The parsed rate matrix Q.
         """
-
-        # Dynamically determine the matrix dimension 'n'
-        start_idx = next(
-            (
-                idx
-                for idx, line in enumerate(self.file_content)
-                if "Rate matrix Q:" in line
-            ),
-            None,
-        )
-
-        if start_idx is None:
-            raise ValueError("'Rate matrix Q:' not found in file.")
-
+        start_index = IqTreeParser.find_line_index(self.file_content, "Rate matrix Q:")
         # Detect the number of matrix rows based on numeric entries
-        n = 0
-        current_idx = start_idx + 2  # Adjusting to start from matrix values
-        while current_idx < len(self.file_content) and re.search(
-            r"(\s*-?\d+\.\d+\s*)+", self.file_content[current_idx]
-        ):
-            n += 1
-            current_idx += 1
+        n = IqTreeParser.find_dimension_by_rate_matrix_parsing(
+            start_index=start_index, file_content=self.file_content
+        )
+        rates_dict = self.extract_rate_parameters()
 
-        # Find the start and end indices of the rate parameter
+        print(rates_dict)
+
+        rates = list(rates_dict.values())
+        list_state_freq = list(state_frequencies.values())
+        return self.build_rate_matrix(n=n, rates=rates, list_state_freq=list_state_freq)
+
+    def extract_rate_parameters(self):
+        """
+        Extracts rate parameters from the content of the log file. Assumes the rates are listed
+        between the lines starting with 'Rate parameter R:' and 'State frequencies'.
+
+        Returns:
+        - dict: A dictionary of rate parameters with their corresponding values.
+
+        Raises:
+        - ValueError: If the section containing rate parameters is not properly defined.
+        """
         start_index = -1
         end_index = -1
-
+        # Identify the start and end indices for the rate parameters section
         for i, line in enumerate(self.file_content):
-            if line.strip().startswith("Rate parameter R:"):
-                start_index = i + 1
-            elif line.strip().startswith("State frequencies"):
+            stripped_line = line.strip()
+            if stripped_line.startswith("Rate parameter R:"):
+                start_index = i + 1  # Start reading rates from the next line
+            elif stripped_line.startswith("State frequencies"):
                 end_index = i
                 break
 
         if start_index == -1 or end_index == -1:
-            raise ValueError("Rate parameter not found in the log file.")
+            raise ValueError(
+                "Rate parameter section is incomplete or missing in the log file."
+            )
 
-        # Get the lines in between the start and end markers
-        parameter = self.file_content[start_index + 1 : end_index]
+        # Extract the parameters and store them in a dictionary
         rates = {}
+        for line in self.file_content[start_index:end_index]:
+            line = line.strip()
+            if line:
+                key, value = line.split(":")
+                rates[key.strip()] = float(
+                    value.strip()
+                )  # Ensure keys and values are cleanly extracted
 
-        # Loop through the lines we've extracted
-        for line in parameter:
-            # If the line is not empty after removing leading/trailing whitespace
-            if line.strip():
-                # Split the line on " = " into a key and a value, and add them to the frequencies dictionary
-                key, value = line.strip().split(":")
-                rates[key] = float(value)  # convert value to float before storing
+        return rates
 
-        only_rates = list(rates.values())
-        list_state_freq = list(state_frequencies.values())
-        idx = 0
-        rate_matrix = np.zeros((n, n))
-        for i in range(n):
-            for j in range(i + 1, n):
-                rate_matrix[i, j] = only_rates[idx] * list_state_freq[j]
-                rate_matrix[j, i] = only_rates[idx] * list_state_freq[i]
-                idx += 1
+    def build_rate_matrix(
+        self, rates: List[float], list_state_freq: List[float], n: int
+    ):
+        if len(list_state_freq) != n:
+            raise ValueError("Length of state_frequencies must match the dimension n.")
+
+        rate_matrix = IqTreeParser.assemble_rate_matrix_from_rates_and_frequencies(
+            n,
+            rates,
+            list_state_freq,
+        )
+
+        normalized_rate_matrix = IqTreeParser.normalize_rate_matrix(
+            rate_matrix, list_state_freq,n
+        )
+
+        return normalized_rate_matrix
+
+    @staticmethod
+    def normalize_rate_matrix(
+        rate_matrix: np.ndarray, state_frequencies: List[float], n: int
+    ) -> np.ndarray:
+        """
+        Normalizes the rate matrix by adjusting its scale based on the weighted average rate.
+
+        This function ensures the sum of each row in the rate matrix is zero and normalizes
+        the matrix by the average rate calculated as the weighted sum of diagonal elements,
+        using state frequencies as weights.
+
+        Args:
+        - rate_matrix (np.ndarray): The rate matrix to be normalized, shape (n, n).
+        - state_frequencies (List[float]): List of frequencies for each state, length n.
+        - n (int): The dimension of the rate matrix.
+
+        Returns:
+        - np.ndarray: The normalized rate matrix with adjusted scale.
+
+        Raises:
+        - ValueError: If average rate results in zero, potentially causing division by zero.
+        """
         average_rate = 0
         for i in range(n):
-            rate_matrix[i, i] = -sum(rate_matrix[i,])
-            average_rate = average_rate + rate_matrix[i, i] * list_state_freq[i]
-        rate_matrix = -rate_matrix / average_rate
+            rate_matrix[i, i] = -np.sum(rate_matrix[i, :]) + rate_matrix[i, i]
+            average_rate += rate_matrix[i, i] * state_frequencies[i]
 
+        if average_rate == 0:
+            raise ValueError(
+                "Division by zero in normalization due to zero average rate."
+            )
+        return -rate_matrix / average_rate
+
+    @staticmethod
+    def assemble_rate_matrix_from_rates_and_frequencies(
+        n, rates: List[float], state_frequencies: List[float]
+    ):
+        """
+        Fills the upper and lower triangles of a rate matrix based on the provided rates
+        and state frequencies.
+
+        Args:
+        - n (int): The dimension of the rate matrix.
+        - rates (list[float]): List of rate values for interactions between states. Should have n*(n-1)/2 elements.
+        - state_frequencies (list[float]): List of state frequencies for each state.
+        Returns:
+        - np.ndarray: A symmetric rate matrix with both upper and lower triangles filled.
+
+        Raises:
+        - ValueError: If the length of rates does not match the expected number for a  symmetric matrix of dimension n.
+        """
+        expected_number_of_rates = n * (n - 1) // 2
+        if len(rates) != expected_number_of_rates:
+            raise ValueError(
+                f"Expected {expected_number_of_rates} rates, got {len(rates)}."
+            )
+
+        # Initialize the rate matrix
+        rate_matrix = np.zeros((n, n))
+        idx = 0
+
+        # Fill the upper and lower triangles of the matrix
+        for i in range(n):
+            for j in range(i + 1, n):
+                rate_matrix[i, j] = rates[idx] * state_frequencies[j]  # Upper triangle
+                rate_matrix[j, i] = rates[idx] * state_frequencies[i]  # Lower triangle
+                idx += 1
         return rate_matrix
 
     def get_aa_rate_matrix(self, current_substitution_model: str) -> np.ndarray:

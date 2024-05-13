@@ -279,7 +279,7 @@ class Satute:
                 "-m",
                 self.input_args.model,
                 "--quiet",
-                #"-blfix",
+                # "-blfix",
                 "--keep-ident",
             ]
 
@@ -634,7 +634,7 @@ class Satute:
         eigenvalue: float,
     ):
         """
-        Logs information about substitution model and its spectral decomposition 
+        Logs information about substitution model and its spectral decomposition
 
         Args:
             substitution_model: The substitution model used in the analysis.
@@ -666,9 +666,7 @@ class Satute:
             f"Eigenvalue: {eigenvalue}\n"
             f"Multiplicity: {multiplicity}\n"
             f"Eigenvectors: {eigenvector_str}\n"
-            )
-
-
+        )
 
     def log_iqtree_run_and_satute_info(
         self,
@@ -840,7 +838,7 @@ if __name__ == "__main__":
     satute.initialize_active_directory()
     satute.initialize_handlers()
     satute.setup_logging_configuration()
-    # IQ-Tree run if necessary 
+    # IQ-Tree run if necessary
     iq_arguments_dict = satute.construct_IQ_TREE_arguments()
     satute.run_iqtree_workflow(iq_arguments_dict)
     # Run the tool
