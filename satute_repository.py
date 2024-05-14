@@ -6,6 +6,7 @@ import re
 from enum import Enum
 from amino_acid_models import get_aa_state_frequency_substitution_models
 from typing import List
+from dna_model import NOT_ACCEPTED_DNA_MODELS
 from amino_acid_models import (
     AMINO_ACID_RATE_MATRIX,
     create_rate_matrix_with_input,
@@ -13,13 +14,11 @@ from amino_acid_models import (
     AA_STATE_FREQUENCIES,
     NOT_ACCEPTED_AA_MODELS,
 )
-from dna_model import NOT_ACCEPTED_DNA_MODELS
 
 
 class ModelType(Enum):
     DNA = "DNA"
     PROTEIN = "Protein"
-
 
 def parse_substitution_model(file_path: str) -> str:
     """

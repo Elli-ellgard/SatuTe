@@ -41,6 +41,9 @@ from satute_repository import (
 )
 
 
+from satute_sequences import check_if_alignment_has_same_taxa_as_msa
+
+
 def format_matrix(matrix, precision: int = 4):
     """Format a matrix for pretty printing."""
     formatted_matrix = "\n".join(
@@ -438,6 +441,10 @@ class Satute:
             rate_category,
             msa_file,
             multiplicity,
+        )
+
+        check_if_alignment_has_same_taxa_as_msa(
+            sequence_alignment=alignment, tree=test_tree
         )
 
         if substitution_model.number_rates == 1:
