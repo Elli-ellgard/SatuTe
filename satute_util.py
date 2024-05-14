@@ -5,6 +5,8 @@ import numpy as np
 
 
 """ ## SPECTRAL DECOMPOSITION OF THE RATE MATRIX"""
+
+
 def spectral_decomposition(rate_matrix, psi_matrix) -> tuple[np.array, np.array, int]:
     """
     Then psi_matrix := Diag(pi). Recall that matrix Q is reversible iff M:= psi_matrix^1/2 x Q x psi_matrix^{-1/2} is symmetric.
@@ -14,9 +16,9 @@ def spectral_decomposition(rate_matrix, psi_matrix) -> tuple[np.array, np.array,
     M = M @ scipy.linalg.fractional_matrix_power(psi_matrix, -1 / 2)
 
     """ Schur decomposition of matrix M"""
-    lambMatrix, w = scipy.linalg.schur(M) # Compute the eigenvalues and eigenvectors.
+    lambMatrix, w = scipy.linalg.schur(M)  # Compute the eigenvalues and eigenvectors.
     lamb = np.diagonal(lambMatrix)
-    #lamb, w = np.linalg.eig(M)  # Compute the eigenvalues and eigenvectors.
+    # lamb, w = np.linalg.eig(M)  # Compute the eigenvalues and eigenvectors.
     idx = lamb.argsort()[::-1]  # Order from small to large.
     lamb = lamb[idx]  # Order the eigenvalues according to idx.
     w = w[:, idx]  # Order the eigenvectors according to the eigenvalues"""
@@ -50,5 +52,3 @@ def spectral_decomposition(rate_matrix, psi_matrix) -> tuple[np.array, np.array,
         array_left_eigenvectors.append(h1)
 
     return array_left_eigenvectors, array_right_eigenvectors, multiplicity, max_lambda
-
-

@@ -7,6 +7,7 @@ from enum import Enum
 from amino_acid_models import get_aa_state_frequency_substitution_models
 from typing import List
 from dna_model import NOT_ACCEPTED_DNA_MODELS
+
 from amino_acid_models import (
     AMINO_ACID_RATE_MATRIX,
     create_rate_matrix_with_input,
@@ -19,6 +20,7 @@ from amino_acid_models import (
 class ModelType(Enum):
     DNA = "DNA"
     PROTEIN = "Protein"
+
 
 def parse_substitution_model(file_path: str) -> str:
     """
@@ -116,7 +118,7 @@ def parse_file_to_data_frame(file_path):
 def valid_stationary_distribution(frequencies):
     sum_freqs = sum(frequencies.values())
     if sum_freqs == 1:
-        # Valid sattionary distribution
+        # Valid stationary distribution
         return frequencies
     else:
         # Update frequencies dictionary with new values
@@ -169,7 +171,7 @@ class IqTreeParser:
     constructing a SubstitutionModel object.
     """
 
-    def __init__(self, file_path=None):
+    def __init__(self, file_path: str = None):
         """
         Initializes the IqTreeParser with the path to the IQ-TREE file.
 
@@ -230,7 +232,7 @@ class IqTreeParser:
             # Parse the rate matrix and stationary distribution for the DNA Substitution Model
             dict_state_frequencies, phi_matrix = self.parse_state_frequencies()
             state_frequencies = dict_state_frequencies.values()
-            rate_matrix = self.parse_rate_matrices(dict_state_frequencies)
+            rate_matrix = self.construct_rate_matrix(dict_state_frequencies)
         else:
             # Parse the rate matrix and stationary distribution for the Protein Substitution Model
             state_frequencies, phi_matrix = get_aa_state_frequency_substitution_models(
@@ -430,7 +432,7 @@ class IqTreeParser:
             current_idx += 1
         return n
 
-    def parse_rate_matrices(self, state_frequencies: List[float]):
+    def construct_rate_matrix(self, state_frequencies: List[float]):
         """
 
         Parse the rate parameters R  .iqtree file path and determine
@@ -445,8 +447,6 @@ class IqTreeParser:
             start_index=start_index, file_content=self.file_content
         )
         rates_dict = self.extract_rate_parameters()
-
-        print(rates_dict)
 
         rates = list(rates_dict.values())
         list_state_freq = list(state_frequencies.values())
@@ -504,7 +504,7 @@ class IqTreeParser:
         )
 
         normalized_rate_matrix = IqTreeParser.normalize_rate_matrix(
-            rate_matrix, list_state_freq,n
+            rate_matrix, list_state_freq, n
         )
 
         return normalized_rate_matrix
@@ -822,10 +822,4 @@ class IqTreeParser:
 
 if __name__ == "__main__":
     iq_tree_parser = IqTreeParser("./test/amino_acids/alignment_aa.phy.iqtree")
-
     substitution_model = iq_tree_parser.load_substitution_model()
-
-    # print(substitution_model.model)
-    # print(substitution_model.state_frequencies)
-    # print(substitution_model.phi_matrix)
-    # print(substitution_model.rate_matrix)

@@ -23,7 +23,6 @@ def format_float_columns(data_frame: DataFrame):
 
 
 
-
 def construct_file_name(
     msa_file: Path, output_suffix: str, rate: str, alpha: float, edge: str
 ) -> str:
@@ -79,7 +78,6 @@ def write_components(
     # Repeat the site_indices for each row in the DataFrame based on the identifier
     # Assuming every row/component should have an associated site index
     expanded_site_indices = []
-    num_rows_per_identifier = len(site_indices)
 
     for identifier in components_frame["Edge"].unique():
         expanded_site_indices.extend(site_indices)

@@ -318,8 +318,7 @@ def count_leaves_and_branches_for_subtree(node: Node, coming_from: Node):
     Note:
         - The function assumes that each node has an attribute 'connected', which is a dictionary with keys
         representing connected child nodes.
-        - It is primarily used for traversing phylogenetic trees or similar hierarchical structures where each node
-          can have multiple children.
+        - It is primarily used for traversing phylogenetic trees or similar hierarchical structures where each node can have multiple children.
         - The function is recursive and may not be suitable for extremely large trees due to Python's recursion limit.
     """
     # If the current node is a leaf
@@ -341,7 +340,7 @@ def count_leaves_and_branches_for_subtree(node: Node, coming_from: Node):
     return leaf_count, branch_count
 
 
-def filter_graph_edges_by_focus(graph: Graph, focused_edge):
+def filter_graph_edges_by_focus(graph: Graph, focused_edge: str):
     """Filter the graph edges based on the focused edge.
 
     Args:

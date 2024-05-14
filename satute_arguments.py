@@ -115,8 +115,7 @@ ARGUMENT_LIST = [
     {
         "flag": "-msa",
         "help": (
-            "Path to the Multiple Sequence Alignment (MSA) file you wish to analyze."
-            "The MSA can be in FASTA, NEXUS, PHYLIP, or TXT format."
+            "Path to the Multiple Sequence Alignment (MSA) file you wish to analyze. The MSA can be in FASTA, NEXUS, PHYLIP, or TXT format."
         ),
         "metavar": "<msa_file_path>",
         "type": valid_file,
@@ -181,22 +180,20 @@ ARGUMENT_LIST = [
     },
     {
         "flag": "-output_suffix",
-        "help": ("Specify an suffix for the output file."),
+        "help": "Specify a suffix for the output file.",
         "type": str,
         "metavar": "<output_suffix>",
         "default": "",
     },
     {
         "flag": "-add_iqtree_options",
-        "help": (
-            "Specify additional options for the IQ-Tree run, if necessary."
-        ),
+        "help": "Specify additional options for the IQ-Tree run, if necessary.",
         "type": str,
         "metavar": "<additional_option>",
     },
     {
         "flag": "-asr",
-        "help": "Write ancestral sequences(by empirical Bayesian method) for all nodes of the tree to .asr.csv file.",
+        "help": "Write ancestral sequences (by empirical Bayesian method) for all nodes of the tree to a .asr.csv file.",
         "action": "store_true",
     },
     {
@@ -206,7 +203,7 @@ ARGUMENT_LIST = [
     },
     {
         "flag": "-verbose",
-        "help": "Enable verbose logging",
+        "help": "Enable verbose logging.",
         "action": "store_true",
     },
 ]

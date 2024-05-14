@@ -84,6 +84,10 @@ class Satute:
         self.number_rates = 1
         self.logger = logger
 
+    """
+        BEGIN Input Arguments Validation functions   
+    """
+
     def validate_satute_input_options(self):
         """
         Validates the combinations of input arguments for Satute analysis.
@@ -107,10 +111,10 @@ class Satute:
     def validate_dir_conflicts(self):
         if self.input_args.dir and any(
             getattr(self.input_args, opt)
-            for opt in ["msa", "tree", "model", "ufboot", "boot"]
+            for opt in ["msa", "tree", "model", "ufboot", "boot", "add_iqtree_options"]
         ):
             raise ValueError(
-                "Cannot run Satute with -dir option combined with -msa, -tree, -model, -ufboot, or -boot."
+                "Cannot run Satute with -dir option combined with -'add_iqtree_options', -msa, -tree, -model, -ufboot, or -boot."
             )
 
     def validate_msa_presence(self):
@@ -133,6 +137,141 @@ class Satute:
             if not (1 <= self.input_args.category <= self.number_rates):
                 raise ValueError("Chosen category of interest is out of range.")
 
+    def validate_and_set_rate_category(self, input_category: int, number_rates: int):
+        """
+        Validates the input category against the number of rates and sets the rate category.
+
+        Args:
+        - input_category (int): The category input from the user.
+        - number_rates (int): The number of rates from the substitution model.
+
+        Returns:
+        - str: The validated and set rate category.
+
+        Raises:
+        - ValueError: If the input category is out of the valid range.
+        """
+        if not 1 <= input_category <= number_rates:
+            self.logger.error("Chosen category of interest is out of range.")
+            raise ValueError("Chosen category of interest is out of range.")
+        return str(input_category)
+
+    """END Input Arguments Validation functions """
+
+    """ BEGIN Logging Function"""
+
+    def setup_logging_configuration(self):
+        """
+        Initializes the logging system for the application.
+
+        Sets up two handlers:
+        1. A file handler that always logs at the DEBUG level.
+        2. A stream (console) handler that logs at the DEBUG level if verbose is true; otherwise, it logs at the WARNING level.
+
+        The log file is named using the MSA file name, alpha value, and an output suffix.
+        """
+        # Logger level is set to DEBUG to capture all logs for the file handler
+        self.logger.setLevel(logging.DEBUG)
+        # File Handler - always active at DEBUG level
+        log_file = self.construct_log_file_name(Path(self.file_handler.find_msa_file()))
+
+        file_handler = logging.FileHandler(log_file)
+        file_format = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+        file_handler.setFormatter(file_format)
+        file_handler.setLevel(logging.DEBUG)  # Always log everything in file
+        self.logger.addHandler(file_handler)
+
+        # Stream Handler - level depends on verbose flag
+        stream_level = logging.DEBUG if self.input_args.verbose else logging.WARNING
+        stream_handler = logging.StreamHandler()
+        stream_handler.setFormatter(file_format)
+        stream_handler.setLevel(stream_level)  # Set level based on verbose flag
+        self.logger.addHandler(stream_handler)
+
+    def log_substitution_model_info(
+        self,
+        substitution_model: SubstitutionModel,
+        multiplicity: int,
+        eigenvectors: List[np.array],
+        eigenvalue: float,
+    ):
+        """
+        Logs information about substitution model and its spectral decomposition
+
+        Args:
+            substitution_model: The substitution model used in the analysis.
+            multiplicity: Multiplicity value from spectral decomposition.
+            eigenvectors: eigenvector corresponding to eigenvalue from spectral decomposition
+            eigenvalue:  dominant non-zero eigenvalue from spectral decomposition
+        """
+        # Formatting the rate matrix for logging
+        rate_matrix_str = format_matrix(substitution_model.rate_matrix, precision=4)
+        # Formatting the state frequencies for logging
+        state_frequencies_str = format_array(
+            np.array(list(substitution_model.state_frequencies)), precision=4
+        )
+
+        # Logging the formatted rate matrix and state frequencies
+        self.logger.info(
+            f"Substitution Model:\n\n"
+            f"Model: {self.input_args.model}\n"
+            f"Rate Matrix Q:\n{rate_matrix_str}\n"
+            f"State Frequencies:\n{state_frequencies_str}\n"
+        )
+
+        eigenvector_str = ""
+        for eigenvector in eigenvectors:
+            eigenvector_str += f"\n{format_array(list(eigenvector))}"
+
+        self.logger.info(
+            f"Spectral Decomposition:\n\n"
+            f"Eigenvalue: {eigenvalue}\n"
+            f"Multiplicity: {multiplicity}\n"
+            f"Eigenvectors: {eigenvector_str}\n"
+        )
+
+    def log_iqtree_run_and_satute_info(
+        self,
+        iq_arguments_dict: Dict,
+        substitution_model: SubstitutionModel,
+        rate_category: str,
+        msa_file: Path,
+        multiplicity: int,
+    ):
+        """
+        Logs information about the initial IQ-TREE run and tests being performed.
+
+        Args:
+            iq_arguments_dict (dict): Dictionary containing IQ-TREE argument configurations.
+            substitution_model: The substitution model used in the analysis.
+            rate_category: The category of rates being considered.
+            msa_file (Path): Path to the MSA file being used.
+            multiplicity: Multiplicity value from spectral decomposition.
+        """
+        self.logger.info(
+            f"""
+            Running tests and initial IQ-Tree with configurations:
+            Mode {iq_arguments_dict['option']}
+            Model: {self.input_args.model}
+            Alpha: {self.input_args.alpha}
+            Running Saturation Test on file: {msa_file.resolve()}
+            Number of rate categories: {substitution_model.number_rates}
+            Considered rate category: {rate_category}
+            Options for Initial IQ-Tree run: {iq_arguments_dict['option']}
+            Multiplicity: {multiplicity}
+            Run test for saturation for each branch and category with {substitution_model.number_rates} rate categories
+            Results will be written to the directory: {self.active_directory.name}
+            """
+        )
+
+    def construct_log_file_name(self, msa_file: Path):
+        log_file = f"{msa_file.resolve()}_{self.input_args.alpha}.satute.log"
+        if self.input_args.output_suffix:
+            log_file = f"{msa_file.resolve()}_{self.input_args.alpha}_{self.input_args.output_suffix}.satute.log"
+        return log_file
+
+    """ END Logging Function"""
+
     def parse_input(self):
         """
         Parse command-line arguments using the argparse module. It dynamically
@@ -149,6 +288,8 @@ class Satute:
 
     def run_iqtree_workflow(self, arguments_dict: Dict[str, List]):
         extra_arguments = []
+
+        print(self.input_args.add_iqtree_options)
 
         if self.input_args.add_iqtree_options:
             extra_arguments.append(self.input_args.add_iqtree_options)
@@ -167,11 +308,11 @@ class Satute:
                 "IQ-TREE will be needed for the site probabilities for the corresponding rate categories."
             )
 
-            extra_arguments = [
+            extra_arguments = extra_arguments + [
                 "-m",
                 self.input_args.model,
                 "--redo",
-                "-blfix",
+                # "-blfix",
                 "-wspr",
                 "--quiet",
                 "--keep-ident",
@@ -279,7 +420,7 @@ class Satute:
 
             self.handle_number_rates()
 
-            extra_arguments = [
+            extra_arguments = extra_arguments + [
                 "-m",
                 self.input_args.model,
                 "--quiet",
@@ -299,6 +440,8 @@ class Satute:
             self.iqtree_handler.run_iqtree_with_arguments(
                 arguments_dict["arguments"], extra_arguments
             )
+
+        print(self.input_args.add_iqtree_options)
 
         logger.info("Used IQ-TREE options:")
         logger.info(" ".join(arguments_dict["arguments"]))
@@ -331,59 +474,6 @@ class Satute:
             self.logger.error(str(e))
             raise ValueError(f"Error extracting tree: {e}")
         return rename_internal_nodes_pre_order(Tree(newick_string, format=1))
-
-    def construct_log_file_name(self, msa_file: Path):
-        log_file = f"{msa_file.resolve()}_{self.input_args.alpha}.satute.log"
-        if self.input_args.output_suffix:
-            log_file = f"{msa_file.resolve()}_{self.input_args.alpha}_{self.input_args.output_suffix}.satute.log"
-        return log_file
-
-    def setup_logging_configuration(self):
-        """
-        Initializes the logging system for the application.
-
-        Sets up two handlers:
-        1. A file handler that always logs at the DEBUG level.
-        2. A stream (console) handler that logs at the DEBUG level if verbose is true; otherwise, it logs at the WARNING level.
-
-        The log file is named using the MSA file name, alpha value, and an output suffix.
-        """
-        # Logger level is set to DEBUG to capture all logs for the file handler
-        self.logger.setLevel(logging.DEBUG)
-        # File Handler - always active at DEBUG level
-        log_file = self.construct_log_file_name(Path(self.file_handler.find_msa_file()))
-
-        file_handler = logging.FileHandler(log_file)
-        file_format = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
-        file_handler.setFormatter(file_format)
-        file_handler.setLevel(logging.DEBUG)  # Always log everything in file
-        self.logger.addHandler(file_handler)
-
-        # Stream Handler - level depends on verbose flag
-        stream_level = logging.DEBUG if self.input_args.verbose else logging.WARNING
-        stream_handler = logging.StreamHandler()
-        stream_handler.setFormatter(file_format)
-        stream_handler.setLevel(stream_level)  # Set level based on verbose flag
-        self.logger.addHandler(stream_handler)
-
-    def validate_and_set_rate_category(self, input_category: int, number_rates: int):
-        """
-        Validates the input category against the number of rates and sets the rate category.
-
-        Args:
-        - input_category (int): The category input from the user.
-        - number_rates (int): The number of rates from the substitution model.
-
-        Returns:
-        - str: The validated and set rate category.
-
-        Raises:
-        - ValueError: If the input category is out of the valid range.
-        """
-        if not 1 <= input_category <= number_rates:
-            self.logger.error("Chosen category of interest is out of range.")
-            raise ValueError("Chosen category of interest is out of range.")
-        return str(input_category)
 
     def run(self):
         """
@@ -634,82 +724,6 @@ class Satute:
                 categorized_sites[rate],
             )
 
-    def log_substitution_model_info(
-        self,
-        substitution_model: SubstitutionModel,
-        multiplicity: int,
-        eigenvectors: List[np.array],
-        eigenvalue: float,
-    ):
-        """
-        Logs information about substitution model and its spectral decomposition
-
-        Args:
-            substitution_model: The substitution model used in the analysis.
-            multiplicity: Multiplicity value from spectral decomposition.
-            eigenvectors: eigenvector corresponding to eigenvalue from spectral decomposition
-            eigenvalue:  dominant non-zero eigenvalue from spectral decomposition
-        """
-        # Formatting the rate matrix for logging
-        rate_matrix_str = format_matrix(substitution_model.rate_matrix, precision=4)
-        # Formatting the state frequencies for logging
-        state_frequencies_str = format_array(
-            np.array(list(substitution_model.state_frequencies)), precision=4
-        )
-
-        # Logging the formatted rate matrix and state frequencies
-        self.logger.info(
-            f"Substitution Model:\n\n"
-            f"Model: {self.input_args.model}\n"
-            f"Rate Matrix Q:\n{rate_matrix_str}\n"
-            f"State Frequencies:\n{state_frequencies_str}\n"
-        )
-
-        eigenvector_str = ""
-        for eigenvector in eigenvectors:
-            eigenvector_str += f"\n{format_array(list(eigenvector))}"
-
-        self.logger.info(
-            f"Spectral Decomposition:\n\n"
-            f"Eigenvalue: {eigenvalue}\n"
-            f"Multiplicity: {multiplicity}\n"
-            f"Eigenvectors: {eigenvector_str}\n"
-        )
-
-    def log_iqtree_run_and_satute_info(
-        self,
-        iq_arguments_dict: Dict,
-        substitution_model: SubstitutionModel,
-        rate_category: str,
-        msa_file: Path,
-        multiplicity: int,
-    ):
-        """
-        Logs information about the initial IQ-TREE run and tests being performed.
-
-        Args:
-            iq_arguments_dict (dict): Dictionary containing IQ-TREE argument configurations.
-            substitution_model: The substitution model used in the analysis.
-            rate_category: The category of rates being considered.
-            msa_file (Path): Path to the MSA file being used.
-            multiplicity: Multiplicity value from spectral decomposition.
-        """
-        self.logger.info(
-            f"""
-            Running tests and initial IQ-Tree with configurations:
-            Mode {iq_arguments_dict['option']}
-            Model: {self.input_args.model}
-            Alpha: {self.input_args.alpha}
-            Running Saturation Test on file: {msa_file.resolve()}
-            Number of rate categories: {substitution_model.number_rates}
-            Considered rate category: {rate_category}
-            Options for Initial IQ-Tree run: {iq_arguments_dict['option']}
-            Multiplicity: {multiplicity}
-            Run test for saturation for each branch and category with {substitution_model.number_rates} rate categories
-            Results will be written to the directory: {self.active_directory.name}
-            """
-        )
-
     def handle_number_rates(self):
         self.number_rates = 1
         if self.input_args.model:
@@ -740,6 +754,8 @@ class Satute:
         if tree_file:
             argument_option["arguments"].extend(["-te", str(tree_file)])
         return argument_option
+
+    """BEGIN Input Argument Construction"""
 
     def construct_IQ_TREE_arguments(self):
         """
@@ -833,6 +849,8 @@ class Satute:
         # Add extra arguments if the model includes certain features
         if "+G" in self.input_args.model or "+R" in self.input_args.model:
             argument_option["model_arguments"].extend(["-wspr"])
+
+    """END Input Argument Construction"""
 
 
 if __name__ == "__main__":

@@ -1,11 +1,12 @@
 # Satute: Branch Saturation Testing Tool
 
 ## Introduction
+Introduction
+Satute is a specialized tool developed to measure the phylogenetic information shared by subtrees within a phylogeny, enabling the detection of branch saturation. In phylogenetic reconstruction, assessing the reliability of inferred trees and the data they are derived from is crucial. Saturation occurs when multiple substitutions obscure true genetic distances, potentially leading to artifacts and errors in phylogenetic analyses.
 
-Satute is a specialized tool designed to assess the saturation of branches in phylogenetic trees. By analyzing the substitution patterns across branches, Satute provides insights into potential artifacts and errors in the tree, helping researchers make more informed decisions about the reliability of their phylogenetic reconstructions.
+Satute addresses this by implementing a formal measure of phylogenetic information, facilitating a test for branch saturation. It wraps around the IQ-TREE software, leveraging its capabilities for likelihood calculations and evolutionary modeling. Users can input a Multiple Sequence Alignment (MSA), an evolutionary model, and a phylogenetic tree. Satute then performs its analysis, providing insights into the reliability of specific branches within the tree, thus helping researchers evaluate the robustness of their phylogenetic reconstructions.
 
-Satute wraps around the IQ-TREE tool and adds functionalities specific to branch saturation testing. The user can provide a Multiple Sequence Alignment (MSA), a tree, and specify an evolutionary model. Satute will then perform its analysis using this input, potentially leveraging IQ-TREE for some computations.
-
+By employing Satute, researchers can detect and quantify saturation, making informed decisions about the accuracy and stability of their phylogenetic trees.
 ## Usage: **Basic Usage**
 
 1. **Using a Directory**:
@@ -23,12 +24,11 @@ Satute wraps around the IQ-TREE tool and adds functionalities specific to branch
 
    Traditional bootstrap analysis can be performed using the `-boot` option:
 
-```bash
-python satute_cli.py -msa ./test/cassius/toyExample.phy -model GTR+G4 -boot 100
-```
+   ```bash
+   python satute_cli.py -msa ./test/cassius/toyExample.phy -model GTR+G4 -boot 100
+   ```
 
-2.**Specifying an Edge for Analysis**
-
+   2.**Specifying an Edge for Analysis**
    If you want to focus the analysis on a specific branch or edge, use the `-edge` option:
 
    ```bash
@@ -57,66 +57,135 @@ Certain combinations of command-line arguments are invalid:
 
 ---
 
-### Arguments
+### Usage of `-add_iqtree_options`
 
-- **-iqtree**:  
-  **Type**: Path  
-  **Default**: None  
-  **Description**: Specifies the path to the IQ-TREE executable. If you've installed IQ-TREE system-wide, just the executable name (`iqtree` or `iqtree2`) will suffice. Otherwise, provide the full path.  
-  **Example**: `-iqtree /path/to/iqtree2`
+The `-add_iqtree_options` flag allows you to specify additional options for the IQ-TREE run if necessary. This provides flexibility to customize the IQ-TREE execution by including specific commands that are not covered by the predefined arguments. You can use multiple additional options with this flag, particularly in scenarios where you are using the MSA option alone, the MSA option combined with a model, or the MSA option combined with both a tree and a model.
 
-- **-dir**:  
-  **Type**: Path  
-  **Default**: None  
-  **Description**: Specifies the path to an existing directory containing IQ-TREE output files. This is useful when you've already run IQ-TREE and would like to avoid rerunning it. The directory should contain essential IQ-TREE output files including the `.iqtree` file, tree file(s), and, if the model uses multiple rate categories, a `.siteprob` file.  
-  **Example**: `-dir /path/to/iqtree_output/`
+Here are some examples of how you can use this flag:
 
-- **-msa**:  
-  **Type**: Path  
-  **Default**: None  
-  **Description**: Path to the Multiple Sequence Alignment (MSA) file that you want to analyze. This file can be in FASTA, NEXUS, PHYLIP, or TXT format.  
-  **Example**: `-msa /path/to/alignment.fasta`
+- **Using MSA alone**:
+  ```sh
+  python satute_cli.py -msa /path/to/alignment.fasta -add_iqtree_options "-alninfo"
+  ```
+  This command will print alignment site statistics to a `.alninfo` file.
 
-- **-model**:  
-  **Type**: String  
-  **Default**: None  
-  **Description**: Represents the model of sequence evolution to be used. Common models include `GTR`, `HKY`, and more. Rate heterogeneity and other model extensions can be appended, such as `+G4` for gamma-distributed rates.  
-  **Example**: `-model GTR+G4`
+- **Using MSA with a model**:
+  ```sh
+  python satute_cli.py -msa /path/to/alignment.fasta -model GTR+G4 -add_iqtree_options "-blfix"
+  ```
+  This command will fix branch lengths of the tree passed via `-tree` or `-te`.
 
-- **-tree**:  
-  **Type**: Path  
-  **Default**: None  
-  **Description**: Provides the path to an input tree file. This tree will be used for the saturation analysis. The tree file can be in Newick or Nexus format.  
-  **Example**: `-tree /path/to/treefile.nwk`
+- **Using MSA with a tree and a model**:
+  ```sh
+  python satute_cli.py -msa /path/to/alignment.fasta -tree /path/to/treefile.tree -model HKY -add_iqtree_options "-blmin 0.00001 -blmax 5"
+  ```
+  In this command, several options are used:
+  - `-blmin`: Specifies the minimum branch length (default is the smaller of 0.000001 and 0.1/alignment_length).
+  - `-blmax`: Specifies the maximum branch length (default is 10).
 
-- **-category**:  
-  **Type**: Integer  
-  **Default**: None  
-  **Description**: Specifies the category of the model for rate heterogeneity that should be analyzed. The other categories will be ignored.  
-  **Example**: `-category 4`
+Additionally, when a user provides a given tree file using the `-tree` option, IQ-TREE automatically performs estimations based on that tree, streamlining the process. This means that, with a provided tree, IQ-TREE will automatically estimate the likelihood and perform other necessary computations without requiring additional input from the user for these steps. If you do not want IQ-TREE to estimate branch lengths automatically, you can use the `-blfix` option within `-add_iqtree_options` to fix the branch lengths.
 
-- **-ufboot**:  
-  **Type**: Integer (>=1000)  
-  **Default**: None  
-  **Description**: Indicates the number of replicates to be used for ultrafast bootstrap analysis. Generally, a higher number of replicates provides more robust support values. Typically, values like `1000` or `5000` are used.  
-  **Example**: `-ufboot 1000`
+Here are some useful additional IQ-TREE options that can be used with the `-add_iqtree_options` flag:
+- `-alninfo`: Print alignment site statistics to a `.alninfo` file.
+- `-blfix`: Fix branch lengths of the tree passed via `-tree` or `-te`.
+- `-blmin`: Specify the minimum branch length (default: the smaller of 0.000001 and 0.1/alignment_length).
+- `-blmax`: Specify the maximum branch length (default: 10).
 
-- **-boot**:  
-  **Type**: Integer  
-  **Default**: None  
-  **Description**: Specifies the number of replicates for traditional bootstrap analysis. This option also triggers the computation of replicates of bootstrap, Maximum Likelihood (ML) tree and consensus tree. A minimum value of `100` is recommended.
-  **Example**: `-boot 100`
 
-- **-alpha**:  
-  **Type**: Float  
-  **Default**: 0.05  
-  **Description**: Determines the significance level for the saturation test. A common value is `0.05`, representing a 5% significance level. Lower values make the test more stringent.  
-  **Example**: `-alpha 0.05`
+### Command Line Arguments
 
-- **-edge**:  
-  **Type**: String  
-  **Default**: None  
-  **Description**: If you want to focus the analysis on a specific branch or edge, you can specify its name using this option. This is particularly useful when you want to assess saturation on a particular branch of interest.  
-  **Example**: `-edge EdgeName`
+This script accepts the following command-line arguments:
+
+- `-dir <directory_path>`:
+
+  - **Description**: Path to the input directory containing IQ-TREE output files. Use this option when you've already run IQ-TREE and want to avoid rerunning it. The directory should contain essential IQ-TREE output files including the .iqtree file, tree file(s), and possibly a .siteprob file.
+  - **Type**: Valid directory
+  - **Example**: `-dir /path/to/iqtree/output`
+
+- `-tree <tree_file_path>`:
+
+  - **Description**: Path to the input tree file in Newick or Nexus format. This tree will be used as the basis for the saturation analysis.
+  - **Type**: Valid file
+  - **Example**: `-tree /path/to/treefile.tree`
+
+- `-msa <msa_file_path>`:
+
+  - **Description**: Path to the Multiple Sequence Alignment (MSA) file you wish to analyze. The MSA can be in FASTA, NEXUS, PHYLIP, or TXT format.
+  - **Type**: Valid file
+  - **Example**: `-msa /path/to/alignment.fasta`
+
+- `-iqtree <iqtree_path>`:
+
+  - **Description**: Specifies the path to the IQ-TREE executable. If IQ-TREE is installed system-wide, just providing the executable name (`iqtree` or `iqtree2`) will suffice. Otherwise, give the complete path.
+  - **Default**: `iqtree2`
+  - **Type**: Path
+  - **Example**: `-iqtree /usr/local/bin/iqtree2`
+
+- `-model <evolution_model>`:
+
+  - **Description**: Indicates the model of sequence evolution. Common models include `GTR`, `HKY`, etc. You can also specify rate heterogeneity and other model extensions, like `+G4` for gamma-distributed rates.
+  - **Type**: String
+  - **Example**: `-model GTR+G4`
+
+- `-category <rate_category>`:
+
+  - **Description**: Rate categories of interest. Relevant for models with gamma-distributed rate variations or FreeRate model. If the `-model` option includes rate variation (e.g., `+G4`), the `-category` should be a number between 1 and 4.
+  - **Type**: Integer
+  - **Example**: `-category 4`
+
+- `-ufboot <number_of_replicates>`:
+
+  - **Description**: Number of replicates for the ultrafast bootstrap analysis. Typically, a higher number like `1000` or `5000` is used. Ultrafast bootstrap provides rapid approximations to traditional bootstrap values.
+  - **Type**: Integer
+  - **Example**: `-ufboot 1000`
+
+- `-boot <number_of_replicates>`:
+
+  - **Description**: Number of replicates for traditional bootstrap analysis. This also computes a Maximum Likelihood (ML) tree and a consensus tree. Common values are `1000` or `5000`.
+  - **Type**: Integer
+  - **Example**: `-boot 1000`
+
+- `-alpha <significance_level>`:
+
+  - **Description**: Significance level for the saturation test. A common threshold is `0.05`, indicating a 5% significance level. Lower values make the test more stringent.
+  - **Type**: Float
+  - **Default**: `0.05`
+  - **Example**: `-alpha 0.01`
+
+- `-edge <edge_name>`:
+
+  - **Description**: Specify a branch or edge name to focus the analysis on. Useful when you want to check saturation on a specific branch.
+  - **Type**: String
+  - **Example**: `-edge branch1`
+
+- `-output_suffix <output_suffix>`:
+
+  - **Description**: Specify a suffix for the output file.
+  - **Type**: String
+  - **Default**: `""`
+  - **Example**: `-output_suffix _analysis`
+
+- `-add_iqtree_options <additional_option>`:
+
+  - **Description**: Specify additional options for the IQ-Tree run, if necessary.
+  - **Type**: String
+  - **Example**: `-add_iqtree_options "-nt AUTO"`
+
+- `-asr`:
+
+  - **Description**: Write ancestral sequences (by empirical Bayesian method) for all nodes of the tree to a .asr.csv file.
+  - **Type**: Flag
+  - **Example**: `-asr`
+
+- `-category_assignment`:
+
+  - **Description**: Write assignment of the individual sites to the rate heterogeneity categories.
+  - **Type**: Flag
+  - **Example**: `-category_assignment`
+
+- `-verbose`:
+  - **Description**: Enable verbose logging.
+  - **Type**: Flag
+  - **Example**: `-verbose`
 
 ---

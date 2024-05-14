@@ -3,9 +3,7 @@ import sys
 sys.path.append("./../../")
 
 import unittest
-import numpy as np
 from satute_repository import IqTreeParser
-
 
 class TestIqTreeParser(unittest.TestCase):
     def setUp(self):
@@ -72,4 +70,4 @@ if __name__ == "__main__":
     dict_state_frequencies, phi_matrix = parser.parse_state_frequencies()
     state_frequencies_dict = dict_state_frequencies
 
-    rate_matrix = parser.parse_rate_matrices(state_frequencies_dict)
+    rate_matrix = parser.construct_rate_matrix(state_frequencies_dict)
