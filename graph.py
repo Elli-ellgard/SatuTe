@@ -261,6 +261,9 @@ def calculate_subtree_edge_metrics(
     count_graph = convert_tree_to_graph(tree)
     edge_metrics = {}
 
+    # Get the number of taxa (leaf nodes)
+    num_taxa = len(tree.get_leaves())
+
     if focused_edges:
         filter_graph_edges_by_focus(count_graph, focused_edges)
 
@@ -269,17 +272,20 @@ def calculate_subtree_edge_metrics(
         edge_name = f"({left.name}, {right.name})"
         _type = edge_type(right, left)
 
-        left_metrics = count_and_nodes_edges(left, right)
-        right_metrics = count_and_nodes_edges(right, left)
+        left_leave_count, left_branch_count = count_leaves_and_branches_for_subtree(
+            left, right
+        )
+        right_leave_count = num_taxa - left_leave_count
+        right_branch_count = (2 * num_taxa - 3) - left_branch_count
 
         edge_metrics[edge_name] = {
             "left": {
-                "leave_count": left_metrics[0],
-                "branch_count": left_metrics[1],
+                "leave_count": left_leave_count,
+                "branch_count": left_branch_count,
             },
             "right": {
-                "leave_count": right_metrics[0],
-                "branch_count": right_metrics[1],
+                "leave_count": right_leave_count,
+                "branch_count": right_branch_count,
             },
             "length": branch_length,
             "type": _type,
@@ -289,7 +295,7 @@ def calculate_subtree_edge_metrics(
 
 
 @cache
-def count_and_nodes_edges(node: Node, coming_from: Node):
+def count_leaves_and_branches_for_subtree(node: Node, coming_from: Node):
     """
     Recursively counts the number of leaf nodes and branches in a subtree defined by a given node in a tree.
 
@@ -327,7 +333,9 @@ def count_and_nodes_edges(node: Node, coming_from: Node):
     for child in node.connected.keys():
         if child != coming_from:
             # Recursively count leaves and branches for each child
-            child_leaves, child_branches = count_and_nodes_edges(child, node)
+            child_leaves, child_branches = count_leaves_and_branches_for_subtree(
+                child, node
+            )
             leaf_count += child_leaves
             branch_count += child_branches + 1  # Include the branch to this child
     return leaf_count, branch_count

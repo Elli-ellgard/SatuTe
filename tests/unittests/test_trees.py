@@ -17,7 +17,6 @@ from satute_trees import (
     check_all_internal_nodes_annotated,
 )
 
-
 # Assuming all necessary functions (rescale_branch_lengths, has_duplicate_leaf_sequences, collapse_identical_leaf_sequences, and delete_children_nodes) are defined in the same module or imported correctly.
 class TestPhylogeneticTreeFunctions(unittest.TestCase):
 
