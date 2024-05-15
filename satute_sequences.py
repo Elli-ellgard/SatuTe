@@ -26,12 +26,11 @@ def dict_to_alignment(sequence_dict: dict) -> MultipleSeqAlignment:
         alignment_list.append(seq_record)
     return MultipleSeqAlignment(alignment_list)
 
-
 class TaxaMismatchError(Exception):
     """Custom exception to be raised when the taxa sets do not match."""
     pass
 
-def check_if_alignment_has_same_taxa_as_msa(sequence_alignment: MultipleSeqAlignment, tree: Tree) -> None:
+def check_if_tree_has_same_taxa_as_msa(sequence_alignment: MultipleSeqAlignment, tree: Tree) -> None:
     """
     Check if the taxa set in the multiple sequence alignment is the same as the taxa set in the tree.
 
@@ -40,8 +39,7 @@ def check_if_alignment_has_same_taxa_as_msa(sequence_alignment: MultipleSeqAlign
         tree (Tree): The phylogenetic tree object.
 
     Raises:
-        TaxaMismatchError: If the taxa sets in the alignment and the tree do not match, 
-                           explaining which taxa are missing or extra.
+        TaxaMismatchError: If the taxa sets in the alignment and the tree do not match,  explaining which taxa are missing or extra.
     """
     # Extract taxa from the multiple sequence alignment
     alignment_taxa = set(record.id for record in sequence_alignment)

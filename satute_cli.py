@@ -41,7 +41,7 @@ from satute_repository import (
 )
 
 
-from satute_sequences import check_if_alignment_has_same_taxa_as_msa
+from satute_sequences import check_if_tree_has_same_taxa_as_msa
 
 
 def format_matrix(matrix, precision: int = 4):
@@ -533,7 +533,7 @@ class Satute:
             multiplicity,
         )
 
-        check_if_alignment_has_same_taxa_as_msa(
+        check_if_tree_has_same_taxa_as_msa(
             sequence_alignment=alignment, tree=test_tree
         )
 
