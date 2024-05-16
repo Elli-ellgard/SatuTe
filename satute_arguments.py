@@ -5,7 +5,6 @@ import pathlib
 from pathlib import Path
 import os
 
-
 def valid_directory(path: Path):
     """
     Custom type function for argparse - checks if the provided path is a valid directory,

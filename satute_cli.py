@@ -533,9 +533,7 @@ class Satute:
             multiplicity,
         )
 
-        check_if_tree_has_same_taxa_as_msa(
-            sequence_alignment=alignment, tree=test_tree
-        )
+        check_if_tree_has_same_taxa_as_msa(sequence_alignment=alignment, tree=test_tree)
 
         if substitution_model.number_rates == 1:
             self.run_single_rate_analysis(
