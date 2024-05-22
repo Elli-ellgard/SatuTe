@@ -1,6 +1,3 @@
-import sys
-sys.path.append("./../..")
-
 import unittest
 
 class TestCheckModelAndType(unittest.TestCase):
@@ -14,7 +11,7 @@ class TestCheckModelAndType(unittest.TestCase):
         pass
 
     def test_check_model(self):
-        from satute_repository import IqTreeParser
+        from satute.repository import IqTreeParser
         test_instance = IqTreeParser()
 
         # Test with a not accepted Protein model
@@ -37,7 +34,7 @@ class TestCheckModelAndType(unittest.TestCase):
 
  
     def test_get_model_type(self):
-        from satute_repository import (
+        from satute.repository import (
             IqTreeParser,
             ModelType
         )

@@ -2,7 +2,7 @@
 import scipy.stats as st
 import numpy as np
 from scipy.sparse.linalg import expm
-from satute_result import TestResultBranch, TestStatisticComponents
+from satute.result import TestResultBranch, TestStatisticComponents
 from pandas import DataFrame
 from typing import List, Tuple
 import numpy as np

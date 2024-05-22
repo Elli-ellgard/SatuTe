@@ -7,7 +7,7 @@ from ete3 import Tree
 from typing import List
 
 # Assuming rescale_branch_lengths is located in a module named mymodule
-from satute_trees import (
+from satute.trees import (
     rename_internal_nodes_pre_order,
     rescale_branch_lengths,
     has_duplicate_leaf_sequences,

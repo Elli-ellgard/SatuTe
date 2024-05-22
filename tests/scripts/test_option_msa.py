@@ -1,4 +1,4 @@
-from satute_test_utils import (
+from tests.scripts.satute_test_utils import (
     run_external_command,
     print_test_name, 
     create_destination_dir,
@@ -9,11 +9,13 @@ from satute_test_utils import (
     
 )
 import os
-from pathlib import Path
+
+from tests.scripts.fixtures import *
 
 
 
-def test_1(source_path, msa, iqtree, python, satute):
+def test_1(data_dir_path, iqtree, python, satute):
+    source_path, msa, _ = data_dir_path 
     suffix = "MSA TEST 1: only msa iqtree exists"
     print_test_name(suffix)
 
@@ -50,7 +52,8 @@ def test_1(source_path, msa, iqtree, python, satute):
         print_colored_message(f"{suffix} failed", "31" )
 
 
-def test_2(source_path, msa, iqtree, python, satute):
+def test_2(data_dir_path, iqtree, python, satute):
+    source_path, msa, _ = data_dir_path 
     suffix = "MSA TEST 2: only msa ufboot"
     print_test_name(suffix)
 
@@ -89,7 +92,8 @@ def test_2(source_path, msa, iqtree, python, satute):
         print_colored_message(f"{suffix} failed", "31" )
 
 
-def test_3(source_path, msa, iqtree, python, satute):
+def test_3(data_dir_path, iqtree, python, satute):
+    source_path, msa, _ = data_dir_path 
     suffix = "MSA TEST 3: only msa boot"
     print_test_name(suffix)
 
@@ -127,30 +131,3 @@ def test_3(source_path, msa, iqtree, python, satute):
     else: 
         print_colored_message(f"{suffix} failed", "31" )
 
-
-def test_option_msa(path_iqtree, path_python, path_satute, source_path, msa, results_path):
-
-    print("")
-    print_colored_message(" ============= MODI MSA....====================", "36")
-    print("")
-
-
-    test_1(source_path, msa, path_iqtree, path_python, path_satute)
-    test_2(source_path, msa, path_iqtree, path_python, path_satute)
-    test_3(source_path, msa, path_iqtree, path_python, path_satute)
-
-
-if __name__ == "__main__":
-    # set paths to IQ-TREE and Python executable
-    path_iqtree = "iqtree"
-    path_python = "python3"
-    path_satute = "../../satute_cli.py"
-
-    # smallest toy example
-    data_dir_path = "../data/data_dna/toy_example_JC"
-    msa = "toy_example_ntaxa_7_run_5-alignment.phy"
-
-    output_dir_path =  "../test_results/"
-
-    test_option_msa(path_iqtree, path_python, path_satute, data_dir_path, msa, output_dir_path)
-    

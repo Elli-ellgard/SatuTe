@@ -5,20 +5,20 @@ import logging
 from pathlib import Path
 from ete3 import Tree
 import numpy as np
-from satute_util import spectral_decomposition
-from rate_matrix import RateMatrix
-from file_handler import FileHandler, IqTreeHandler
-from satute_trees import rename_internal_nodes_pre_order
-from satute_arguments import ARGUMENT_LIST
+from satute.util import spectral_decomposition
+from satute.rate_matrix import RateMatrix
+from satute.file_handler import FileHandler, IqTreeHandler
+from satute.trees import rename_internal_nodes_pre_order
+from satute.arguments import ARGUMENT_LIST
 from Bio.Align import MultipleSeqAlignment
 from typing import Dict, List
 
-from satute_rate_analysis import (
+from satute.rate_analysis import (
     multiple_rate_analysis,
     single_rate_analysis_collapsed_tree,
 )
 
-from satute_ostream import (
+from satute.ostream import (
     write_results_for_category_rates,
     write_alignment_and_indices,
     write_posterior_probabilities_single_rate,
@@ -26,13 +26,13 @@ from satute_ostream import (
     write_components,
 )
 
-from satute_categories import (
+from satute.categories import (
     read_alignment_file,
     split_msa_into_rate_categories_in_place,
     build_categories_by_sub_tables,
 )
 
-from satute_repository import (
+from satute.repository import (
     parse_substitution_model,
     parse_rate_from_cli_input,
     parse_file_to_data_frame,
@@ -41,7 +41,7 @@ from satute_repository import (
 )
 
 
-from satute_sequences import check_if_tree_has_same_taxa_as_msa
+from satute.sequences import check_if_tree_has_same_taxa_as_msa
 
 
 def format_matrix(matrix, precision: int = 4):
@@ -851,7 +851,7 @@ class Satute:
     """END Input Argument Construction"""
 
 
-if __name__ == "__main__":
+def main():
     # Instantiate the Satute class
     logger = logging.getLogger(__name__)
     satute = Satute(iqtree="iqtree2", logger=logger)

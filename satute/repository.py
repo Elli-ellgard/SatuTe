@@ -4,11 +4,10 @@ import numpy as np
 import pandas as pd
 import re
 from enum import Enum
-from amino_acid_models import get_aa_state_frequency_substitution_models
+from satute.amino_acid_models import get_aa_state_frequency_substitution_models
 from typing import List
-from dna_model import NOT_ACCEPTED_DNA_MODELS
-
-from amino_acid_models import (
+from satute.dna_model import NOT_ACCEPTED_DNA_MODELS
+from satute.amino_acid_models import (
     AMINO_ACID_RATE_MATRIX,
     create_rate_matrix_with_input,
     AMINO_ACID_MODELS,
@@ -20,112 +19,6 @@ from amino_acid_models import (
 class ModelType(Enum):
     DNA = "DNA"
     PROTEIN = "Protein"
-
-
-def parse_substitution_model(file_path: str) -> str:
-    """
-    Parse the substitution model from an IQ-TREE log file.
-
-    This function reads an IQ-TREE log file and extracts the substitution model
-    based on specific lines containing "Best-fit model according to BIC:" or
-    "Model of substitution:". The function returns the extracted model as a string.
-
-    Parameters:
-    - file_path (str): The path to the IQ-TREE log file.
-
-    Returns:
-    - str: The parsed substitution model.
-
-    Raises:
-    - ValueError: If the expected model strings are not found in the file.
-    - ValueError: If there's an error reading the file.
-
-    Example:
-    >>> parse_substitution_model("path_to_iqtree_log.txt")
-    'TEST_MODEL_1'
-
-    Note:
-    The function expects the IQ-TREE log file to contain specific lines indicating
-    the substitution model. If these lines are not found or if there's an issue
-    reading the file, a ValueError is raised.
-
-    """
-    try:
-        with open(file_path, "r") as file:
-            content = file.read()
-            for line in content.splitlines():
-                if ("Best-fit model according to BIC:" in line) or (
-                    "Model of substitution:" in line
-                ):
-                    model_string = line.split(":")[1].strip()
-                    if model_string:
-                        return model_string
-            raise ValueError("Expected model strings not found in the file.")
-    except IOError:
-        raise ValueError("Could not read the file.")
-
-
-def parse_rate_from_cli_input(model: str):
-    # Find the index of '+G' and '+R' in the model string
-    plus_g_index = model.find("+G")
-    plus_r_index = model.find("+R")
-
-    if plus_g_index != -1 and plus_r_index != -1:
-
-        raise ValueError("Cannot use +G and +R")
-
-    if plus_g_index != -1:
-        rate_start_index = plus_g_index + 2
-    elif plus_r_index != -1:
-        rate_start_index = plus_r_index + 2
-    else:
-        return 1  # default number_rates = 1 if no +G or +R model
-
-    try:
-        # Extract the substring after e.g.'+G'
-        number = model[rate_start_index:]
-
-        # Parse the extracted substring as an integer
-        if "{" in number:
-            # e.g. +G{0.9} will fix the Gamma shape parameter (alpha)to 0.9
-            # discrete Gamma model: default 4 rate categories
-            rate = 4
-            return rate
-        else:
-            if number and str(number).isnumeric():
-                # number of rate categories
-                rate = int(number)
-                return rate
-            else:
-                return "AMBIGUOUS"
-    except ValueError:
-        # If '+G' is not found or the number after '+G' is not a valid integer
-        # Return None or an appropriate value for error handling
-        raise ValueError("Could not parse the substitution model from the file.")
-
-
-def parse_file_to_data_frame(file_path):
-    try:
-        # Read the file into a dataframe
-        df = pd.read_csv(file_path, delimiter="\t")
-
-        return df
-
-    except FileNotFoundError:
-        raise Exception(f"File not found: {file_path}")
-
-
-def valid_stationary_distribution(frequencies):
-    sum_freqs = sum(frequencies.values())
-    if sum_freqs == 1:
-        # Valid stationary distribution
-        return frequencies
-    else:
-        # Update frequencies dictionary with new values
-        keys = list(frequencies.keys())
-        for i in range(len(keys)):
-            frequencies[keys[i]] /= sum_freqs
-        return frequencies
 
 
 class SubstitutionModel:
@@ -818,6 +711,112 @@ class IqTreeParser:
                     }
 
         return table_data
+
+
+def parse_substitution_model(file_path: str) -> str:
+    """
+    Parse the substitution model from an IQ-TREE log file.
+
+    This function reads an IQ-TREE log file and extracts the substitution model
+    based on specific lines containing "Best-fit model according to BIC:" or
+    "Model of substitution:". The function returns the extracted model as a string.
+
+    Parameters:
+    - file_path (str): The path to the IQ-TREE log file.
+
+    Returns:
+    - str: The parsed substitution model.
+
+    Raises:
+    - ValueError: If the expected model strings are not found in the file.
+    - ValueError: If there's an error reading the file.
+
+    Example:
+    >>> parse_substitution_model("path_to_iqtree_log.txt")
+    'TEST_MODEL_1'
+
+    Note:
+    The function expects the IQ-TREE log file to contain specific lines indicating
+    the substitution model. If these lines are not found or if there's an issue
+    reading the file, a ValueError is raised.
+
+    """
+    try:
+        with open(file_path, "r") as file:
+            content = file.read()
+            for line in content.splitlines():
+                if ("Best-fit model according to BIC:" in line) or (
+                    "Model of substitution:" in line
+                ):
+                    model_string = line.split(":")[1].strip()
+                    if model_string:
+                        return model_string
+            raise ValueError("Expected model strings not found in the file.")
+    except IOError:
+        raise ValueError("Could not read the file.")
+
+
+def parse_rate_from_cli_input(model: str) -> int:
+    # Find the index of '+G' and '+R' in the model string
+    plus_g_index = model.find("+G")
+    plus_r_index = model.find("+R")
+
+    if plus_g_index != -1 and plus_r_index != -1:
+
+        raise ValueError("Cannot use +G and +R")
+
+    if plus_g_index != -1:
+        rate_start_index = plus_g_index + 2
+    elif plus_r_index != -1:
+        rate_start_index = plus_r_index + 2
+    else:
+        return 1  # default number_rates = 1 if no +G or +R model
+
+    try:
+        # Extract the substring after e.g.'+G'
+        number = model[rate_start_index:]
+
+        # Parse the extracted substring as an integer
+        if "{" in number:
+            # e.g. +G{0.9} will fix the Gamma shape parameter (alpha)to 0.9
+            # discrete Gamma model: default 4 rate categories
+            rate = 4
+            return rate
+        else:
+            if number and str(number).isnumeric():
+                # number of rate categories
+                rate = int(number)
+                return rate
+            else:
+                return "AMBIGUOUS"
+    except ValueError:
+        # If '+G' is not found or the number after '+G' is not a valid integer
+        # Return None or an appropriate value for error handling
+        raise ValueError("Could not parse the substitution model from the file.")
+
+
+def parse_file_to_data_frame(file_path) -> pd.DataFrame:
+    try:
+        # Read the file into a dataframe
+        df = pd.read_csv(file_path, delimiter="\t")
+
+        return df
+
+    except FileNotFoundError:
+        raise Exception(f"File not found: {file_path}")
+
+
+def valid_stationary_distribution(frequencies: List[float]) -> List[float]:
+    sum_freqs = sum(frequencies.values())
+    if sum_freqs == 1:
+        # Valid stationary distribution
+        return frequencies
+    else:
+        # Update frequencies dictionary with new values
+        keys = list(frequencies.keys())
+        for i in range(len(keys)):
+            frequencies[keys[i]] /= sum_freqs
+        return frequencies
 
 
 if __name__ == "__main__":

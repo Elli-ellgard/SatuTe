@@ -7,8 +7,8 @@ from ete3 import Tree
 from Bio.Align import MultipleSeqAlignment
 from typing import List, Tuple, Optional, Dict
 from functools import cache
-from dna_model import NUCLEOTIDE_CODE_VECTOR
-from amino_acid_models import AMINO_ACID_CODE_VECTOR
+from satute.dna_model import NUCLEOTIDE_CODE_VECTOR
+from satute.amino_acid_models import AMINO_ACID_CODE_VECTOR
 
 
 class Node:

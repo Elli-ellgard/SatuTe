@@ -28,11 +28,11 @@ def execute_pyinstaller(main_script, hidden_imports):
     subprocess.run(cmd)
 
 # Replace 'path/to/your/project' with the actual path to your project
-project_path = './'
+project_path = './satute'
 # Replace 'your_script.py' with the name of your main Python script
 main_script = 'satute_cli.py'
-
 imports = find_python_imports(project_path)
-execute_pyinstaller(main_script, imports)
+print(imports)
+# execute_pyinstaller(main_script, imports)
 
 print("PyInstaller command executed with --onedir. Check the 'dist' directory for your application.")

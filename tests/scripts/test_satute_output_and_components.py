@@ -1,4 +1,4 @@
-from satute_test_utils import (
+from tests.scripts.satute_test_utils import (
     run_external_command,
     print_test_name, 
     create_destination_dir,
@@ -8,12 +8,13 @@ from satute_test_utils import (
     print_colored_message
     
 )
-import os
-from pathlib import Path
 
+from tests.scripts.fixtures import *
+import pytest
 
-
-def test_siteprob(source_path, msa, iqtree, python, satute):
+@pytest.mark.skip(reason='Nothing is being tested, test incomplete')
+def test_siteprob(data_dir_path,iqtree, python, satute):
+    source_path, msa, treefile = data_dir_path
     suffix = "SITEPROB TEST 1"
     print_test_name(suffix)
 
@@ -27,7 +28,7 @@ def test_siteprob(source_path, msa, iqtree, python, satute):
     categories = []
     alpha = str(0.05)
     asr = True
-
+    
 #     # Satute run
 #     run_external_command(
 #         [
@@ -52,29 +53,3 @@ def test_siteprob(source_path, msa, iqtree, python, satute):
 
 
 
-
-def test_satute_output(path_iqtree, path_python, path_satute, source_path, msa, results_path):
-
-    print("")
-    print_colored_message(" ============= Test Satute Output ====================", "36")
-    print("")
-
-
-    test_siteprob(source_path, msa, path_iqtree, path_python, path_satute)
-
-
-
-if __name__ == "__main__":
-    # set paths to IQ-TREE and Python executable
-    path_iqtree = "iqtree2"
-    path_python = "python3"
-    path_satute = "../../satute_cli.py"
-
-    # smallest toy example
-    data_dir_path = "../data/data_dna/toy_example_JC"
-    msa = "toy_example_ntaxa_7_run_5-alignment.phy"
-
-    output_dir_path =  "../test_results/"
-
-    test_satute_output(path_iqtree, path_python, path_satute, data_dir_path, msa, output_dir_path)
-    

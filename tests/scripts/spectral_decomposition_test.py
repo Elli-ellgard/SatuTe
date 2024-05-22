@@ -1,17 +1,8 @@
-import sys
-
-sys.path.append("..")
-
 import numpy as np
-from satute_util import spectral_decomposition
-from rate_matrix import RateMatrix
-from amino_acid_models import POISSON_RATE_MATRIX, AA_STATE_FREQUENCIES
+from satute.util import spectral_decomposition
+from satute.rate_matrix import RateMatrix
+from satute.amino_acid_models import POISSON_RATE_MATRIX, AA_STATE_FREQUENCIES
 from tests.unittests.partial_likelihood_test import calculate_stationary_distribution
-from partial_likelihood import (
-    partial_likelihood,
-    calculate_partial_likelihoods_for_sites,
-    calculate_exponential_matrix,
-)
 
 
 def test_spectral_decomposition():

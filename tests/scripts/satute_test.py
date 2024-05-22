@@ -1,11 +1,10 @@
-from test_option_msa import test_option_msa
-from test_option_model import test_option_model
-from test_other_options import test_other_options
-from test_option_msa_model_tree import test_option_msa_model_tree
-from test_option_combis import test_option_combis
-
 
 def main():
+    from test_option_model import test_option_model
+    from test_option_msa_model_tree import test_option_msa_model_tree
+    from test_option_combis import test_option_combis
+
+
 
     # set paths to IQ-TREE and Python executable
     path_iqtree = "iqtree2"

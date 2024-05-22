@@ -3,6 +3,7 @@ import shutil
 import subprocess
 import glob
 from pathlib import Path
+import pytest
 
 
 def print_info(suffix):
@@ -106,7 +107,7 @@ def test_1c(dir_path, msa, iqtree):
 
 
 # New test functions
-def test_1d(dir_path, msa, path_iqtree):
+def test_1d(dir_path, msa, iqtree):
     suffix = "TEST 1d: only msa iqtree exists path to executable"
     print_info(suffix)
     new_dir_path = create_dir_copy_with_suffix(dir_path, suffix)
@@ -115,7 +116,7 @@ def test_1d(dir_path, msa, path_iqtree):
             "python",
             "satute_cli.py",
             "-iqtree",
-            path_iqtree,
+            iqtree,
             "-msa",
             os.path.join(new_dir_path, msa),
             "-alpha",
@@ -124,7 +125,7 @@ def test_1d(dir_path, msa, path_iqtree):
     )
 
 
-def test_2a(path_iqtree):
+def test_2a(iqtree):
     suffix = "TEST 2a: no msa  no dir => error"
     print_info(suffix)
     run_external_command(
@@ -136,7 +137,7 @@ def test_2a(path_iqtree):
             "-alpha",
             "0.05",
             "-iqtree",
-            path_iqtree,
+            iqtree,
         ]
     )
 
@@ -159,7 +160,7 @@ def test_2b(dir_path, msa):
     )
 
 
-def test_3a(dir_path, msa, path_iqtree):
+def test_3a(dir_path, msa, iqtree):
     suffix = "TEST 3a: msa + model number of rate categories set"
     print_info(suffix)
     new_dir_path = create_dir_copy_with_suffix(dir_path, suffix)
@@ -174,12 +175,12 @@ def test_3a(dir_path, msa, path_iqtree):
             "-alpha",
             "0.05",
             "-iqtree",
-            path_iqtree,
+            iqtree,
         ]
     )
 
 
-def test_3c(dir_path, msa, path_iqtree):
+def test_3c(dir_path, msa, iqtree):
     suffix = "TEST 3c: msa + model with parameter + shape parameter of Gamma model"
     print_info(suffix)
     new_dir_path = create_dir_copy_with_suffix(dir_path, suffix)
@@ -194,12 +195,12 @@ def test_3c(dir_path, msa, path_iqtree):
             "-alpha",
             "0.05",
             "-iqtree",
-            path_iqtree,
+            iqtree,
         ]
     )
 
 
-def test_3c2(dir_path, msa, path_iqtree):
+def test_3c2(dir_path, msa, iqtree):
     suffix = "TEST 3c: msa + model with parameter"
     print_info(suffix)
     new_dir_path = create_dir_copy_with_suffix(dir_path, suffix)
@@ -214,12 +215,12 @@ def test_3c2(dir_path, msa, path_iqtree):
             "-alpha",
             "0.05",
             "-iqtree",
-            path_iqtree,
+            iqtree,
         ]
     )
 
 
-def test_3d(dir_path, msa, path_iqtree):
+def test_3d(dir_path, msa, iqtree):
     suffix = "TEST 3d: msa + model option ufboot"
     print_info(suffix)
     new_dir_path = create_dir_copy_with_suffix(dir_path, suffix)
@@ -234,12 +235,12 @@ def test_3d(dir_path, msa, path_iqtree):
             "-ufboot",
             "1000",
             "-iqtree",
-            path_iqtree,
+            iqtree,
         ]
     )
 
 
-def test_3e(dir_path, msa, path_iqtree):
+def test_3e(dir_path, msa, iqtree):
     suffix = "TEST 3e: msa + model option boot"
     print_info(suffix)
     new_dir_path = create_dir_copy_with_suffix(dir_path, suffix)
@@ -254,12 +255,12 @@ def test_3e(dir_path, msa, path_iqtree):
             "-boot",
             "100",
             "-iqtree",
-            path_iqtree,
+            iqtree,
         ]
     )
 
 
-def test_4(dir_path, msa, path_iqtree):
+def test_4(dir_path, msa, iqtree):
     suffix = "TEST 4: msa + model + nr"
     print_info(suffix)
     new_dir_path = create_dir_copy_with_suffix(dir_path, suffix)
@@ -276,7 +277,7 @@ def test_4(dir_path, msa, path_iqtree):
             "-alpha",
             "0.05",
             "-iqtree",
-            path_iqtree,
+            iqtree,
         ]
     )
 
@@ -361,17 +362,17 @@ def test_6_directory_error(dir_path):
     run_external_command(["python", "satute_cli.py", "-dir", non_existing_dir_path])
 
 
-def test_7_dir_missing_siteprob(original_dir_path, msa, iqtree_path):
+def test_7_dir_missing_siteprob(dir_path, msa, iqtree):
     print_info("TEST 7: dir missing siteprob")
 
     # Create a new directory with a suffix
     new_dir_path = create_dir_copy_with_suffix(
-        original_dir_path, "TEST_7_dir_missing_siteprob"
+        dir_path, "TEST_7_dir_missing_siteprob"
     )
 
     # Run IQ-TREE with the specified model in the new directory
     run_external_command(
-        [iqtree_path, "-s", os.path.join(new_dir_path, msa), "-m", "JC+R2", "-quiet"]
+        [iqtree, "-s", os.path.join(new_dir_path, msa), "-m", "JC+R2", "-quiet"]
     )
 
     # Run satute_cli.py with the new directory option
@@ -406,7 +407,7 @@ def test_8_dir_msa(dir_path, msa):
     )
 
 
-def test_5_edge_option(dir_path, msa, path_iqtree):
+def test_5_edge_option(dir_path, msa, iqtree):
     print_info("TEST 5: msa + model + tree option edge")
 
     # Create a new directory with a suffix and run the first part of the test
@@ -419,7 +420,7 @@ def test_5_edge_option(dir_path, msa, path_iqtree):
             "-msa",
             os.path.join(new_dir_path, msa),
             "-iqtree",
-            path_iqtree,
+            iqtree,
         ]
     )
 
@@ -437,7 +438,7 @@ def test_5_edge_option(dir_path, msa, path_iqtree):
             "-edge",
             "(Node2*, Node1*)",
             "-iqtree",
-            path_iqtree,
+            iqtree,
         ]
     )
 
@@ -516,40 +517,15 @@ def test_10c_valid_category(dir_path, msa, iqtree):
         ]
     )
 
+@pytest.fixture
+def dir_path():
+    return 'tests/data/data_dna/toy_example_JC'
 
-def main():
-    dir_path = "./test/Clemens/toy_example_JC"
-    msa = "toy_example_ntaxa_7_run_5-alignment.phy"
-    path_iqtree = "iqtree"
+@pytest.fixture
+def msa():
+    return "toy_example_ntaxa_7_run_5-alignment.phy"
 
-    test_1a(dir_path, msa, path_iqtree)
-    test_1b(dir_path, msa, path_iqtree)
-    test_1c(dir_path, msa, path_iqtree)
+@pytest.fixture
+def iqtree():
+    return 'iqtree'
 
-    test_2a(path_iqtree)
-    test_2b(dir_path, msa)
-
-    # Run new tests
-    test_3c(dir_path, msa, path_iqtree)
-    test_3c2(dir_path, msa, path_iqtree)
-    test_3d(dir_path, msa, path_iqtree)
-    test_3e(dir_path, msa, path_iqtree)
-
-    test_4(dir_path, msa, path_iqtree)
-
-    # Run new test
-    test_5(dir_path, msa, path_iqtree)
-    test_5_edge_option(dir_path, msa, path_iqtree)
-
-    test_6_directory_error(dir_path)
-
-    test_7_dir_missing_siteprob(dir_path, msa, path_iqtree)
-
-    test_8_dir_msa(dir_path, msa)
-
-    test_10a_invalid_category(dir_path, msa, path_iqtree)
-    test_10c_valid_category(dir_path, msa, path_iqtree)
-
-
-if __name__ == "__main__":
-    main()

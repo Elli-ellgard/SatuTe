@@ -1,6 +1,4 @@
-import sys
-sys.path.append("./../..")
-from amino_acid_models import AA_STATE_FREQUENCIES
+from satute.amino_acid_models import AA_STATE_FREQUENCIES
 
 def valid_stationary_distribution(frequencies):
     sum_freqs = sum(frequencies)

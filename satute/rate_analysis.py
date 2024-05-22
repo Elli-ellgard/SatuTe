@@ -1,22 +1,22 @@
 # -*- coding: utf-8 -*-
 import pandas as pd
 from pandas import DataFrame
-from partial_likelihood import calculate_partial_likelihoods_for_sites
-from graph import calculate_subtree_edge_metrics
-from satute_sequences import dict_to_alignment
+from satute.partial_likelihood import calculate_partial_likelihoods_for_sites
+from satute.graph import calculate_subtree_edge_metrics
+from satute.sequences import dict_to_alignment
 from ete3 import Tree
 from Bio.Align import MultipleSeqAlignment
 from typing import List
-from rate_matrix import RateMatrix
-from satute_result import (
+from satute.rate_matrix import RateMatrix
+from satute.result import (
     TestResultsBranches,
     TestResultBranch,
     TestStatisticComponentsContainer,
 )
-from satute_statistic_posterior_distribution_components import (
+from satute.statistic_posterior_distribution_components import (
     calculate_test_statistic_posterior_distribution,
 )
-from satute_trees import (
+from satute.trees import (
     rescale_branch_lengths,
     collapse_identical_leaf_sequences,
 )

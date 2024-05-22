@@ -3,13 +3,13 @@ import numpy as np
 sys.path.append("./../../")
 
 import unittest
-from satute_repository import IqTreeParser
+from satute.repository import IqTreeParser
 
 class TestIqTreeParser(unittest.TestCase):
     def setUp(self):
         # Mock data and instance setup for the tests
         self.parser = IqTreeParser(
-            "../data/just_iq_tree_log_files/toy_example_ntaxa_7_run_1-alignment.phy.txt.iqtree"
+            "tests/data/just_iq_tree_log_files/toy_example_ntaxa_7_run_1-alignment.phy.txt.iqtree"
         )
         self.parser.file_content = []
 

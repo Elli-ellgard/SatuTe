@@ -1,7 +1,6 @@
 import os
 import shutil
 import subprocess
-import glob
 from pathlib import Path
 
 def print_test_name(suffix):

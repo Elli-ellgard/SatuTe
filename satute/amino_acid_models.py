@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
-from satute_util import spectral_decomposition
+from satute.util import spectral_decomposition
 import re
 
 AMINO_ACID_MODELS = [

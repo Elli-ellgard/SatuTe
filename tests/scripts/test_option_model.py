@@ -1,4 +1,4 @@
-from satute_test_utils import (
+from tests.scripts.satute_test_utils import (
     run_external_command,
     print_test_name,
     create_destination_dir,
@@ -9,8 +9,10 @@ from satute_test_utils import (
 )
 import os
 
+from tests.scripts.fixtures import *
 
-def test_1(source_path, msa, iqtree, python, satute):
+def test_1(data_dir_path, iqtree, python, satute):
+    source_path, msa, _ = data_dir_path
     suffix = "MODEL TEST 1: only model"
     print_test_name(suffix)
     print(f"IQ-Tree executeable path: {iqtree}")
@@ -50,7 +52,10 @@ def test_1(source_path, msa, iqtree, python, satute):
         print_colored_message(f"{suffix} failed", "31")
 
 
-def test_2(source_path, msa, iqtree, python, satute):
+def test_2(data_dir_path, iqtree, python, satute):
+
+    source_path, msa, _ = data_dir_path
+    
     suffix = "MODEL TEST 2: msa model no heterogeneity"
     print_test_name(suffix)
 
@@ -91,7 +96,9 @@ def test_2(source_path, msa, iqtree, python, satute):
         print_colored_message(f"{suffix} failed", "31")
 
 
-def test_3(source_path, msa, iqtree, python, satute):
+def test_3(data_dir_path, iqtree, python, satute):
+    
+    source_path, msa, _ = data_dir_path
     suffix = "MODEL TEST 3: msa model heterogeneity"
     print_test_name(suffix)
 
@@ -132,7 +139,8 @@ def test_3(source_path, msa, iqtree, python, satute):
         print_colored_message(f"{suffix} failed", "31")
 
 
-def test_4(source_path, msa, iqtree, python, satute):
+def test_4(data_dir_path, iqtree, python, satute):
+    source_path, msa, _ = data_dir_path
     suffix = "MODEL TEST 4: msa model  heterogeneity rate number set"
     print_test_name(suffix)
 
@@ -173,7 +181,9 @@ def test_4(source_path, msa, iqtree, python, satute):
         print_colored_message(f"Warnings are not written into the LOG file!!", "31")
 
 
-def test_5(source_path, msa, iqtree, python, satute):
+def test_5(data_dir_path, iqtree, python, satute):
+    source_path, msa, _ = data_dir_path
+
     suffix = "MODEL TEST 5: msa model with parameter no heterogeneity"
     print_test_name(suffix)
 
@@ -213,7 +223,8 @@ def test_5(source_path, msa, iqtree, python, satute):
         print_colored_message(f"{suffix} failed", "31")
 
 
-def test_6(source_path, msa, iqtree, python, satute):
+def test_6(data_dir_path, iqtree, python, satute):
+    source_path, msa, _ = data_dir_path
     suffix = "MODEL TEST 6: msa model with parameter gamma shape parameter"
     print_test_name(suffix)
 
@@ -253,7 +264,9 @@ def test_6(source_path, msa, iqtree, python, satute):
         print_colored_message(f"{suffix} failed", "31")
 
 
-def test_7(source_path, msa, iqtree, python, satute):
+def test_7(data_dir_path, iqtree, python, satute):
+    source_path, msa, _ = data_dir_path
+    
     suffix = "MODEL TEST 7: msa model with parameter free rate"
     print_test_name(suffix)
 
@@ -293,7 +306,9 @@ def test_7(source_path, msa, iqtree, python, satute):
         print_colored_message(f"{suffix} failed", "31")
 
 
-def test_8(source_path, msa, iqtree, python, satute):
+def test_8(data_dir_path, iqtree, python, satute):
+    source_path, msa, _ = data_dir_path
+
     suffix = "MODEL TEST 8: msa model boot"
     print_test_name(suffix)
 
@@ -335,7 +350,8 @@ def test_8(source_path, msa, iqtree, python, satute):
         print_colored_message(f"{suffix} failed", "31")
 
 
-def test_9(source_path, msa, iqtree, python, satute):
+def test_9(data_dir_path, iqtree, python, satute):
+    source_path, msa, _ = data_dir_path
     suffix = "MODEL TEST 9: msa model ufboot"
     print_test_name(suffix)
 
@@ -377,7 +393,8 @@ def test_9(source_path, msa, iqtree, python, satute):
         print_colored_message(f"{suffix} failed", "31")
 
 
-def test_10(source_path, msa, iqtree, python, satute):
+def test_10(data_dir_path, iqtree, python, satute):
+    source_path, msa, _ = data_dir_path    
     suffix = "MODEL TEST 10: msa model category"
     print_test_name(suffix)
 
@@ -419,40 +436,3 @@ def test_10(source_path, msa, iqtree, python, satute):
     else:
         print_colored_message(f"{suffix} failed", "31")
 
-
-def test_option_model(
-    path_iqtree, path_python, path_satute, source_path, msa, results_path
-):
-
-    print("")
-    print_colored_message(" ============= MODI MODEL....====================", "36")
-    print("")
-
-    test_1(source_path, msa, path_iqtree, path_python, path_satute)
-    test_2(source_path, msa, path_iqtree, path_python, path_satute)
-    test_3(source_path, msa, path_iqtree, path_python, path_satute)
-    test_4(source_path, msa, path_iqtree, path_python, path_satute)
-    test_5(source_path, msa, path_iqtree, path_python, path_satute)
-    test_6(source_path, msa, path_iqtree, path_python, path_satute)
-    test_7(source_path, msa, path_iqtree, path_python, path_satute)
-    test_8(source_path, msa, path_iqtree, path_python, path_satute)
-    test_9(source_path, msa, path_iqtree, path_python, path_satute)
-    test_10(source_path, msa, path_iqtree, path_python, path_satute)
-    print("")
-
-
-if __name__ == "__main__":
-    # set paths to IQ-TREE and Python executable
-    path_iqtree = "iqtree"
-    path_python = "python3"
-    path_satute = "../../satute_cli.py"
-
-    # smallest toy example
-    data_dir_path = "../data/data_dna/toy_example_JC"
-    msa = "toy_example_ntaxa_7_run_5-alignment.phy"
-
-    output_dir_path = "../test_results/"
-
-    test_option_model(
-        path_iqtree, path_python, path_satute, data_dir_path, msa, output_dir_path
-    )

@@ -1,11 +1,5 @@
-import sys
-sys.path.append("./../..")
-
-from satute_statistic_posterior_distribution import (
-    calculate_sample_coherence,
-    calculate_sample_variance,
-)
 import unittest
+
 
 
 def sum_positive_integers(n):
@@ -18,6 +12,7 @@ def sum_squares_positive_integers(n):
 class TestCalculateSampleCoherence(unittest.TestCase):
 
     def run_test(self, number_sites, example_function, result_function):
+        from satute.statistic_posterior_distribution_components import (calculate_sample_coherence)
         with self.subTest(number_sites=number_sites):
             multiplicity, factors_left_subtree, factors_right_subtree, number_sites = example_function(number_sites)
             sample_coherence = calculate_sample_coherence(multiplicity, factors_left_subtree, factors_right_subtree, number_sites)
@@ -25,6 +20,7 @@ class TestCalculateSampleCoherence(unittest.TestCase):
             self.assertEqual(sample_coherence, result/number_sites)
 
     def run_test_with_zeros(self, nzeros, n, example_function, result_function):
+        from satute.statistic_posterior_distribution_components import (calculate_sample_coherence)
         with self.subTest(n=n):
             multiplicity, factors_left_subtree, factors_right_subtree, number_sites = example_function(nzeros, n)
             sample_coherence = calculate_sample_coherence(multiplicity, factors_left_subtree, factors_right_subtree, number_sites)

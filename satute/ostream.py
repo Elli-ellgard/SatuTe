@@ -9,9 +9,9 @@ from ete3 import Tree
 from pandas import DataFrame
 from typing import Dict, Any, List
 import numpy as np
-from amino_acid_models import AMINO_ACIDS
-from satute_result import TestStatisticComponentsContainer
-from satute_statistic_posterior_distribution_components import calculate_posterior_probabilities_subtree_df
+from satute.amino_acid_models import AMINO_ACIDS
+from satute.result import TestStatisticComponentsContainer
+from satute.statistic_posterior_distribution_components import calculate_posterior_probabilities_subtree_df
 
 
 # New function to format float columns
@@ -20,7 +20,6 @@ def format_float_columns(data_frame: DataFrame):
         if col != "branch_length":
             if data_frame[col].dtype == float:
                 data_frame[col] = data_frame[col].apply(lambda x: round(x, 4))
-
 
 
 def construct_file_name(
@@ -329,7 +328,7 @@ def log_original_tree(logger: Logger, tree: Tree):
 
 def log_rate_info(
     logger: Logger, file_name: str, rate: str, results_set: Dict[str, Any]
-):
+) -> None:
     logger.info(f"Writing results for category rates to file: {file_name}")
     if "rescaled_tree" in results_set:
         logger.info(

@@ -1,6 +1,4 @@
-import sys
-sys.path.append("./../..")
-from satute_repository import valid_stationary_distribution
+from satute.repository import valid_stationary_distribution
 
 
 # Example usage:

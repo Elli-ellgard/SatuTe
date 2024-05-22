@@ -4,7 +4,7 @@ sys.path.append("./../../")
 import unittest
 from ete3 import Tree
 from typing import List
-from graph import calculate_subtree_edge_metrics
+from satute.graph import calculate_subtree_edge_metrics
 
 
 class TestCountNodeAndEdges(unittest.TestCase):
