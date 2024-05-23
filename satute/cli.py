@@ -219,7 +219,6 @@ class Satute:
 
     def log_iqtree_run_and_satute_info(
         self,
-        iq_arguments_dict: Dict,
         substitution_model: SubstitutionModel,
         rate_category: str,
         msa_file: Path,
@@ -238,13 +237,11 @@ class Satute:
         self.logger.info(
             f"""
             Running tests and initial IQ-Tree with configurations:
-            Mode {iq_arguments_dict['option']}
             Model: {self.input_args.model}
             Alpha: {self.input_args.alpha}
             Running Saturation Test on file: {msa_file.resolve()}
             Number of rate categories: {substitution_model.number_rates}
             Considered rate category: {rate_category}
-            Options for Initial IQ-Tree run: {iq_arguments_dict['option']}
             Multiplicity: {multiplicity}
             Run test for saturation for each branch and category with {substitution_model.number_rates} rate categories
             Results will be written to the directory: {self.active_directory.name}
@@ -430,8 +427,6 @@ class Satute:
                 arguments_dict["arguments"], extra_arguments
             )
 
-        print(self.input_args.add_iqtree_options)
-
         self.logger.info("Used IQ-TREE options:")
         self.logger.info(" ".join(arguments_dict["arguments"]))
         self.logger.info(" ".join(extra_arguments))
@@ -515,7 +510,6 @@ class Satute:
         )
 
         self.log_iqtree_run_and_satute_info(
-            iq_arguments_dict,
             substitution_model,
             rate_category,
             msa_file,
@@ -588,7 +582,7 @@ class Satute:
             self.input_args.alpha,
             self.input_args.edge,
             single_rate_category,
-            logger,
+            self.logger,
         )
 
         if self.input_args.asr:
@@ -666,12 +660,12 @@ class Satute:
             alpha,
             edge,
             categorized_sites,
-            logger,
+            self.logger,
         )
 
         for rate, alignment in categorized_sites.items():
             if len(alignment) == 0:
-                logger.warning(f"Will be skipping Rate category {rate}")
+                self.logger.warning(f"Will be skipping Rate category {rate}")
 
         self.logger.info(
             f"Writing alignment and indices to {self.active_directory.name}"
