@@ -70,6 +70,8 @@ class Satute:
         self.input_args = []
         self.number_rates = 1
         self.logger = logger
+        
+        self.iq_tree_arguments_dict = {}
 
     """
         BEGIN Input Arguments Validation functions   
@@ -271,7 +273,6 @@ class Satute:
         self.input_args = parser.parse_args()
         print(self.input_args)
         
-
     def run_iqtree_workflow(self, arguments_dict: Dict[str, List]):
         extra_arguments = []
 
@@ -840,17 +841,15 @@ def main():
     satute = Satute(iqtree="iqtree2", logger=logger)
     # Parse and validate input arguments
     satute.parse_input()
-    
-    print()
-    
+
     satute.validate_satute_input_options()
     # Initialize file handler and logger
     satute.initialize_active_directory()
     satute.initialize_handlers()
     satute.setup_logging_configuration()
     # IQ-Tree run if necessary
-    iq_arguments_dict = satute.construct_IQ_TREE_arguments()
-    satute.run_iqtree_workflow(iq_arguments_dict)
+    satute.iq_arguments_dict = satute.construct_IQ_TREE_arguments()
+    satute.run_iqtree_workflow(satute.iq_arguments_dict)
     # Run the tool
     satute.run()
 
