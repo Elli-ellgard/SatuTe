@@ -1,7 +1,7 @@
 dna\_model module
 =================
 
-.. automodule:: dna_model
+.. automodule:: satute.dna_model
    :members:
    :undoc-members:
    :show-inheritance:

@@ -1,7 +1,7 @@
-partial\_likelihood module
+amino\_acid\_models module
 ==========================
 
-.. automodule:: partial_likelihood
+.. automodule:: satute.amino_acid_models
    :members:
    :undoc-members:
    :show-inheritance:

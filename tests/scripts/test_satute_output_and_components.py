@@ -1,19 +1,15 @@
 from tests.scripts.satute_test_utils import (
-    run_external_command,
-    print_test_name, 
+    print_test_name,
     create_destination_dir,
     copy_files_to_dest_dir,
-    check_iqtree_files_exist,
-    check_satute_files,
-    print_colored_message
-    
 )
 
 from tests.scripts.fixtures import *
 import pytest
 
-@pytest.mark.skip(reason='Nothing is being tested, test incomplete')
-def test_siteprob(data_dir_path,iqtree, python, satute):
+
+@pytest.mark.skip(reason="Nothing is being tested, test incomplete")
+def test_siteprob(data_dir_path, iqtree, python, satute):
     source_path, msa, treefile = data_dir_path
     suffix = "SITEPROB TEST 1"
     print_test_name(suffix)
@@ -28,7 +24,8 @@ def test_siteprob(data_dir_path,iqtree, python, satute):
     categories = []
     alpha = str(0.05)
     asr = True
-    
+
+
 #     # Satute run
 #     run_external_command(
 #         [
@@ -44,12 +41,8 @@ def test_siteprob(data_dir_path,iqtree, python, satute):
 #         ]
 #    )
 
-#     # check the files   
+#     # check the files
 #     if check_iqtree_files_exist(msa, dest_dir_path, ["m"] )  and check_satute_files(msa, dest_dir_path, categories, alpha, asr):
 #         print_colored_message(f"{suffix} was successful", "32" )
-#     else: 
+#     else:
 #         print_colored_message(f"{suffix} failed", "31" )
-
-
-
-

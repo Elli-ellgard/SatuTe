@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 import re
 import pandas as pd
 from logging import Logger
@@ -8,10 +7,11 @@ from pathlib import Path
 from ete3 import Tree
 from pandas import DataFrame
 from typing import Dict, Any, List
-import numpy as np
 from satute.amino_acid_models import AMINO_ACIDS
 from satute.result import TestStatisticComponentsContainer
-from satute.statistic_posterior_distribution_components import calculate_posterior_probabilities_subtree_df
+from satute.statistic_posterior_distribution_components import (
+    calculate_posterior_probabilities_subtree_df,
+)
 
 
 # New function to format float columns
@@ -56,7 +56,7 @@ def write_components(
     alpha: float,
     edge: str,
     site_indices: List[int],
-):
+) -> None:
     """
     Writes the components' DataFrame to a CSV file, including the same site indices for each identifier.
 
@@ -606,6 +606,3 @@ def calculate_and_write_posterior_probabilities(
 
     # Write to the output file
     all_posterior_probabilities.to_csv(f"{output_file}.asr.csv", index=False)
-
-
-

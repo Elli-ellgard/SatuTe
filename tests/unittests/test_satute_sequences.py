@@ -1,4 +1,3 @@
-import sys
 import unittest
 from Bio.Align import MultipleSeqAlignment
 from Bio.Seq import Seq

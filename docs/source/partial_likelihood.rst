@@ -1,7 +1,7 @@
-create\_executeable module
+partial\_likelihood module
 ==========================
 
-.. automodule:: create_executeable
+.. automodule:: satute.partial_likelihood
    :members:
    :undoc-members:
    :show-inheritance:

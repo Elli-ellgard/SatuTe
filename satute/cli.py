@@ -5,13 +5,17 @@ import logging
 from pathlib import Path
 from ete3 import Tree
 import numpy as np
+from Bio.Align import MultipleSeqAlignment
+from typing import Dict, List
+
 from satute.util import spectral_decomposition
 from satute.rate_matrix import RateMatrix
 from satute.file_handler import FileHandler, IqTreeHandler
 from satute.trees import rename_internal_nodes_pre_order
 from satute.arguments import ARGUMENT_LIST
-from Bio.Align import MultipleSeqAlignment
-from typing import Dict, List
+from satute.sequences import check_if_tree_has_same_taxa_as_msa
+from satute.logging import format_matrix, format_array
+
 
 from satute.rate_analysis import (
     multiple_rate_analysis,
@@ -39,23 +43,6 @@ from satute.repository import (
     SubstitutionModel,
     IqTreeParser,
 )
-
-
-from satute.sequences import check_if_tree_has_same_taxa_as_msa
-
-
-def format_matrix(matrix, precision: int = 4):
-    """Format a matrix for pretty printing."""
-    formatted_matrix = "\n".join(
-        ["\t".join([f"{item:.{precision}f}" for item in row]) for row in matrix]
-    )
-    return formatted_matrix
-
-
-def format_array(array, precision=4):
-    """Format a 1D array for pretty printing."""
-    formatted_array = "\t".join([f"{item:.{precision}f}" for item in array])
-    return formatted_array
 
 
 class Satute:
@@ -285,6 +272,8 @@ class Satute:
                 argument["flag"], **{k: v for k, v in argument.items() if k != "flag"}
             )
         self.input_args = parser.parse_args()
+        print(self.input_args)
+        
 
     def run_iqtree_workflow(self, arguments_dict: Dict[str, List]):
         extra_arguments = []
@@ -410,11 +399,11 @@ class Satute:
             )
 
         if arguments_dict["option"] == "msa + tree + model":
-            logger.info("Running IQ-TREE with constructed arguments")
-            logger.warning(
+            self.logger.info("Running IQ-TREE with constructed arguments")
+            self.logger.warning(
                 "Please consider for the analysis that IQ-Tree will be running with default options."
             )
-            logger.warning(
+            self.logger.warning(
                 "If specific options are required for the analysis, please run IQ-Tree separately."
             )
 
@@ -443,9 +432,9 @@ class Satute:
 
         print(self.input_args.add_iqtree_options)
 
-        logger.info("Used IQ-TREE options:")
-        logger.info(" ".join(arguments_dict["arguments"]))
-        logger.info(" ".join(extra_arguments))
+        self.logger.info("Used IQ-TREE options:")
+        self.logger.info(" ".join(arguments_dict["arguments"]))
+        self.logger.info(" ".join(extra_arguments))
 
     def extract_tree(self):
         """
@@ -857,6 +846,9 @@ def main():
     satute = Satute(iqtree="iqtree2", logger=logger)
     # Parse and validate input arguments
     satute.parse_input()
+    
+    print()
+    
     satute.validate_satute_input_options()
     # Initialize file handler and logger
     satute.initialize_active_directory()
@@ -867,3 +859,7 @@ def main():
     satute.run_iqtree_workflow(iq_arguments_dict)
     # Run the tool
     satute.run()
+
+
+def cli():
+    main()

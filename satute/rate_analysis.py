@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import pandas as pd
-from pandas import DataFrame
 from satute.partial_likelihood import calculate_partial_likelihoods_for_sites
 from satute.graph import calculate_subtree_edge_metrics
 from satute.sequences import dict_to_alignment

@@ -1,7 +1,7 @@
-satute\_result module
+rate\_analysis module
 =====================
 
-.. automodule:: satute_result
+.. automodule:: satute.rate_analysis
    :members:
    :undoc-members:
    :show-inheritance:

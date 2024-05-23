@@ -1,7 +1,7 @@
-satute\_trees module
+file\_handler module
 ====================
 
-.. automodule:: satute_trees
+.. automodule:: satute.file_handler
    :members:
    :undoc-members:
    :show-inheritance:

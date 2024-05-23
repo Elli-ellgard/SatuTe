@@ -1,3 +1,5 @@
+import os
+from tests.scripts.fixtures import *
 from tests.scripts.satute_test_utils import (
     run_external_command,
     print_test_name, 
@@ -8,9 +10,6 @@ from tests.scripts.satute_test_utils import (
     print_colored_message
     
 )
-import os
-
-from tests.scripts.fixtures import *
 
 
 

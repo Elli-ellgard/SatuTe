@@ -17,8 +17,7 @@ def valid_directory(path: Path):
     - pathlib.Path: Validated Path object.
 
     Raises:
-    - argparse.ArgumentTypeError: If the provided path is not a directory, is empty,
-      or does not contain the required files (.iqtree and one of the specified suffixes).
+    - argparse.ArgumentTypeError: If the provided path is not a directory, is empty, or does not contain the required files (.iqtree and one of the specified suffixes).
     """
     msa_file_types = {".fasta", ".nex", ".phy", ".txt"}
     tree_file_types = {".treefile", ".nex", ".nwk"}
