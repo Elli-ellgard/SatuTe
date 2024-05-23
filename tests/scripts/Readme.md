@@ -1,4 +1,4 @@
-# Tests for the differentv options of Satute
+# Tests for the different options of Satute
 
 1. option msa -> test_option_msa.py
 2. option model -> test_option_msa.py
@@ -8,10 +8,7 @@
     categories
 4. option not allowed/missing combinations -> test_option_combis.py
 
-
-
-
-# Tests  for the output of Satute and  different components (ToDos)
+# Tests for the output of Satute and  different components (ToDos)
 
 1. test for siteprob
 2. collapse branches

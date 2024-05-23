@@ -70,7 +70,7 @@ class Satute:
         self.input_args = []
         self.number_rates = 1
         self.logger = logger
-        
+
         self.iq_tree_arguments_dict = {}
 
     """
@@ -271,8 +271,7 @@ class Satute:
                 argument["flag"], **{k: v for k, v in argument.items() if k != "flag"}
             )
         self.input_args = parser.parse_args()
-        print(self.input_args)
-        
+
     def run_iqtree_workflow(self, arguments_dict: Dict[str, List]):
         extra_arguments = []
 
@@ -767,9 +766,11 @@ class Satute:
                     {".siteprob"}
                 )
                 if not self.site_probabilities_file:
-                    raise FileNotFoundError(
-                        "No site probabilities file found in directory"
+                    self.logger.error(
+                        "For the inference of tree a model with rate categories has been specified. But no site probabilities file found in directory. Please rerun iqtree with the option -wspr"
                     )
+                    exit(1)
+
             return self.get_dir_argument_options(self.input_args.msa, tree_file)
         else:
             argument_option = {}
@@ -841,7 +842,6 @@ def main():
     satute = Satute(iqtree="iqtree2", logger=logger)
     # Parse and validate input arguments
     satute.parse_input()
-
     satute.validate_satute_input_options()
     # Initialize file handler and logger
     satute.initialize_active_directory()

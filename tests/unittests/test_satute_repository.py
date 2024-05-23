@@ -1,7 +1,4 @@
-import sys
 import numpy as np
-sys.path.append("./../../")
-
 import unittest
 from satute.repository import IqTreeParser
 

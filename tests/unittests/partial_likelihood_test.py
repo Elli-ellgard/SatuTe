@@ -1,16 +1,15 @@
 import numpy as np
 from ete3 import Tree
-from satute.categories import read_alignment_file
-from satute.repository import IqTreeParser
-from satute.util import spectral_decomposition
+import unittest
+import time
 from Bio.Align import MultipleSeqAlignment
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
+from satute.util import spectral_decomposition
 from satute.graph import Graph, Node, get_initial_likelihood_vector
 from satute.rate_matrix import RateMatrix
 from satute.amino_acid_models import POISSON_RATE_MATRIX, AA_STATE_FREQUENCIES
 from satute.rate_analysis import single_rate_analysis
-import numpy as np
 from satute.graph import get_initial_likelihood_vector
 from satute.sequences import dict_to_alignment
 from satute.trees import (
@@ -19,13 +18,9 @@ from satute.trees import (
 )
 from satute.partial_likelihood import (
     partial_likelihood,
-    calculate_partial_likelihoods_for_sites,
 )
-import unittest
-import time
 
 RATE_MATRIX = np.array([[-3, 1, 1, 1], [1, -3, 1, 1], [1, 1, -3, 1], [1, 1, 1, -3]])
-
 
 def parse_newick_file(file_path):
     try:
@@ -44,29 +39,15 @@ def parse_newick_file(file_path):
         raise Exception("File not found: " + file_path)
 
 
-"""
-======= Tests =======
-"""
-
-
-def name_nodes_by_level_order(tree):
-    """Name nodes in a tree based on level-order traversal."""
-    i = 1
-    for node in tree.traverse("levelorder"):
-        if not node.is_leaf():
-            node.name = f"Node{i}"
-            i += 1
-    return tree
-
-
+""" ======= Tests ======= """
 def test_one_partial_likelihood():
     a1, b2, u3, u4, c5, b6 = [
-        Node("A", get_initial_likelihood_vector("A")),
-        Node("B", get_initial_likelihood_vector("C")),
+        Node("A", get_initial_likelihood_vector("A", "nucleotide")),
+        Node("B", get_initial_likelihood_vector("C", "nucleotide")),
         Node("3"),
         Node("4"),
-        Node("C", get_initial_likelihood_vector("A")),
-        Node("D", get_initial_likelihood_vector("A")),
+        Node("C", get_initial_likelihood_vector("A", "nucleotide")),
+        Node("D", get_initial_likelihood_vector("A", "nucleotide")),
     ]
 
     tree = Graph(
@@ -77,7 +58,6 @@ def test_one_partial_likelihood():
         left, right, branch_length = edge
         p1 = partial_likelihood(tree, left, right)
         p2 = partial_likelihood(tree, right, left)
-
 
 
 def calculate_stationary_distribution(rate_matrix) -> np.array:
@@ -125,7 +105,6 @@ def dict_to_alignment(sequence_dict):
         alignment_list.append(seq_record)
 
     return MultipleSeqAlignment(alignment_list)
-
 
 
 class TestPartialLikelihoodCaching(unittest.TestCase):

@@ -5,7 +5,6 @@ import glob
 from pathlib import Path
 import pytest
 
-
 def print_info(suffix):
     print(" ============= MODI MSA ====================")
     print("")

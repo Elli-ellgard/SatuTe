@@ -7,7 +7,6 @@ from tests.scripts.satute_test_utils import (
 from tests.scripts.fixtures import *
 import pytest
 
-
 @pytest.mark.skip(reason="Nothing is being tested, test incomplete")
 def test_siteprob(data_dir_path, iqtree, python, satute):
     source_path, msa, treefile = data_dir_path
