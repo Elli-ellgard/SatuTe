@@ -1,18 +1,18 @@
 # -*- coding: utf-8 -*-
 import scipy.stats as st
 import numpy as np
-from satute.result import TestResultBranch, TestStatisticComponents
 from typing import List, Tuple
 import numpy as np
 import pandas as pd
 
+from satute.result import TestResultBranch, TestStatisticComponents
+
 
 """## CALCULATION OF POSTERIOR DISTRIBUTION """
 
+
 def calculate_posterior_probabilities_subtree_df(
-    dimension: int, 
-    state_frequencies: List[float], 
-    partial_likelihood_df: pd.DataFrame
+    dimension: int, state_frequencies: List[float], partial_likelihood_df: pd.DataFrame
 ) -> pd.DataFrame:
     """
     Calculate the posterior probabilities for each site in a subtree based on the partial likelihoods of evolutionary states
@@ -24,7 +24,7 @@ def calculate_posterior_probabilities_subtree_df(
     - partial_likelihood_df (pd.DataFrame): A DataFrame containing partial likelihoods. The relevant likelihood values should start from the fourth column.
 
     Returns:
-    - pd.DataFrame: A DataFrame with the posterior probabilities for each site. 
+    - pd.DataFrame: A DataFrame with the posterior probabilities for each site.
 
     """
     diag = np.diag(list(state_frequencies))
@@ -41,16 +41,18 @@ def calculate_posterior_probabilities_subtree_df(
 
     return posterior_probabilities
 
+
 """## CALCULATION OF FACTOR FOR C_1"""
+
 
 def scalar_product_eigenvector_posterior_probability(
     multiplicity: int,
     array_eigenvectors: List[np.ndarray],
     posterior_probabilities_df: pd.DataFrame,
-    number_sites: int
+    number_sites: int,
 ) -> List[List[float]]:
     factors_subtree = []  # list of vectors
-    
+
     # Convert DataFrame posterior probabilities to NumPy array
     posterior_probabilities = posterior_probabilities_df.values
 
@@ -65,6 +67,7 @@ def scalar_product_eigenvector_posterior_probability(
 
 
 """## CALCULATION OF THE COEFFICIENTS C_1"""
+
 
 def calculate_coefficients_of_test_statistic_for_each_site(
     multiplicity: int,
@@ -81,6 +84,7 @@ def calculate_coefficients_of_test_statistic_for_each_site(
         )
 
     return delta
+
 
 # def get_transition_matrix(rate_matrix: np.array, branch_length: float):
 #     return expm(rate_matrix * branch_length)
@@ -102,6 +106,7 @@ def calculate_coefficients_of_test_statistic_for_each_site(
 
 
 """## ESTIMATION OF THE SAMPLE VARIANCE """
+
 
 def calculate_sample_variance(
     multiplicity: int,
@@ -148,7 +153,10 @@ def calculate_sample_variance(
 
 """ CALCULATION OF THE TEST STATISTIC """
 
-def calculate_test_statistic(coefficients: List[float], population_variance: float, number_sites: int) -> Tuple[float, float, float]:
+
+def calculate_test_statistic(
+    coefficients: List[float], population_variance: float, number_sites: int
+) -> Tuple[float, float, float]:
     """
     Calculate the test statistic for branch saturation.
 
@@ -176,6 +184,7 @@ def calculate_test_statistic(coefficients: List[float], population_variance: flo
 
     return test_statistic, sample_mean, standard_error_of_mean
 
+
 # def calculate_test_statistic_exclude_zeros(
 #     coefficients,
 #     population_variance,
@@ -200,6 +209,7 @@ def calculate_test_statistic(coefficients: List[float], population_variance: flo
 
 """ ## DECISION OF STATISTICAL TEST """
 
+
 def decision_z_test(test_statistic: float, alpha: float) -> Tuple[float, str]:
     """
     Determine the decision of the one-sided z-test for branch saturation given a test statistic and significance level (alpha).
@@ -215,17 +225,19 @@ def decision_z_test(test_statistic: float, alpha: float) -> Tuple[float, str]:
     """
     # Calculate the critical value from the z-distribution for the given alpha
     z_alpha = st.norm.ppf(1 - alpha)
-    
+
     # Decision based on the test statistic compared to the critical value
     if z_alpha > test_statistic:
         decision_test = "Saturated"
     else:
         decision_test = "Informative"
-    
+
     return z_alpha, decision_test
 
 
-def decision_tip2tip(coefficient_value: float, number_sites: int, multiplicity: int, alpha: float) -> str:
+def decision_tip2tip(
+    coefficient_value: float, number_sites: int, multiplicity: int, alpha: float
+) -> str:
     """
     Determines the classification of the saturation coherence between two sequences.
 
@@ -253,11 +265,12 @@ def decision_tip2tip(coefficient_value: float, number_sites: int, multiplicity: 
 
 """ ## BONFERRONI CORRECTION """
 
+
 def bonferroni_test_correction_tips(
-    p_value: float, 
-    number_tips_left_subtree: int, 
-    number_tips_right_subtree: int, 
-    alpha: float
+    p_value: float,
+    number_tips_left_subtree: int,
+    number_tips_right_subtree: int,
+    alpha: float,
 ) -> Tuple[float, str]:
     """
     Apply Bonferroni correction to adjust the significance level for multiple comparisons and determine decision of the test based on the p-value and corrected alpha.
@@ -274,17 +287,20 @@ def bonferroni_test_correction_tips(
         - decision_corrected_test_tips (str): 'Saturated' if the test is considered statistically insignificant post-correction, 'Informative' otherwise.
     """
     # Calculate corrected significance level using Bonferroni adjustment
-    corrected_alpha_tips = alpha / (number_tips_left_subtree * number_tips_right_subtree)
-    
+    corrected_alpha_tips = alpha / (
+        number_tips_left_subtree * number_tips_right_subtree
+    )
+
     # Calculate the critical value from the corrected significance level
     corrected_critical_value = st.norm.ppf(1 - corrected_alpha_tips)
-    
+
     # Make a decision based on the corrected alpha and the observed p-value
     if p_value > corrected_alpha_tips:
         decision_corrected_test_tips = "Saturated"
     else:
         decision_corrected_test_tips = "Informative"
     return corrected_critical_value, decision_corrected_test_tips
+
 
 # def get_number_of_branch_insertions(number_tips: int):
 #     if number_tips == 1 or number_tips == 2:
@@ -362,6 +378,7 @@ def bonferroni_test_correction_tips(
 
 """## CALCULATION OF THE TEST STATISTIC FOR BRANCH SATURATION"""
 
+
 def calculate_test_statistic_posterior_distribution(
     multiplicity: int,
     array_eigenvectors: List[np.ndarray],
@@ -380,7 +397,7 @@ def calculate_test_statistic_posterior_distribution(
     incorporating Bonferroni corrections and tip-to-tip tests.
 
     Args:
-        multiplicity (int): Multiplicity of the considered dominant non-zero eigenvalue. 
+        multiplicity (int): Multiplicity of the considered dominant non-zero eigenvalue.
         array_eigenvectors (List[np.ndarray]): List of eigenvectors.
         state_frequencies (List[float]): List of state frequencies.
         partial_likelihood_left_subtree (pd.DataFrame): DataFrame of partial likelihoods for the left subtree.
@@ -400,8 +417,10 @@ def calculate_test_statistic_posterior_distribution(
     posterior_probabilities_left_subtree = calculate_posterior_probabilities_subtree_df(
         dimension, state_frequencies, partial_likelihood_left_subtree
     )
-    posterior_probabilities_right_subtree = calculate_posterior_probabilities_subtree_df(
-        dimension, state_frequencies, partial_likelihood_right_subtree
+    posterior_probabilities_right_subtree = (
+        calculate_posterior_probabilities_subtree_df(
+            dimension, state_frequencies, partial_likelihood_right_subtree
+        )
     )
 
     """ Calculation of the factors for the coefficient C_1 (correspond to the dominant non-zero eigenvalue)
@@ -426,7 +445,7 @@ def calculate_test_statistic_posterior_distribution(
         factors_right_subtree,
         number_sites,
     )
-    
+
     sample_variance = calculate_sample_variance(
         multiplicity,
         factors_left_subtree,
@@ -434,15 +453,14 @@ def calculate_test_statistic_posterior_distribution(
         number_sites,
         branch_type,
     )
-    
-    components = TestStatisticComponents(coefficients, [sample_variance]*number_sites)
+
+    components = TestStatisticComponents(coefficients, [sample_variance] * number_sites)
 
     """"Calculation of the test statistc and standard error of the mean"""
     (test_statistic, coefficient_value, standard_error_of_mean) = (
-        calculate_test_statistic(
-            coefficients, sample_variance, number_sites )
+        calculate_test_statistic(coefficients, sample_variance, number_sites)
     )
-    
+
     if test_statistic != np.nan:
         """Calculation of the p-value"""
         p_value = st.norm.sf(test_statistic)
@@ -453,8 +471,10 @@ def calculate_test_statistic_posterior_distribution(
 
         # decision of the test using Bonferroni correction
         # using number of tips of the considered subtrees
-        z_alpha_corrected, decision_corrected_test_tips = bonferroni_test_correction_tips(
-            p_value, number_tips_left_subtree, number_tips_right_subtree, alpha
+        z_alpha_corrected, decision_corrected_test_tips = (
+            bonferroni_test_correction_tips(
+                p_value, number_tips_left_subtree, number_tips_right_subtree, alpha
+            )
         )
 
         # # using number of branch combinations
@@ -467,7 +487,7 @@ def calculate_test_statistic_posterior_distribution(
         decision_test = np.nan
         z_alpha_corrected = np.nan
         decision_corrected_test_tips = np.nan
-        #decision_corrected_test_branches = np.nan
+        # decision_corrected_test_branches = np.nan
 
     """ Calculation of the saturation coherence between two sequences """
     decision_test_tip2tip = decision_tip2tip(

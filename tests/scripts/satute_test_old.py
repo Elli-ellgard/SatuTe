@@ -42,16 +42,6 @@ def clean_and_prepare_dir(dir_path, msa):
             shutil.move(os.path.join(pdir, msa + ".treefile"), dir_path)
 
 
-
-
-
-
-
-
-
-
-
-
 def test_5(dir_path, msa, iqtree):
     print_info("TEST 5: msa + model + tree")
     new_dir_path = create_dir_copy_with_suffix(dir_path, "TEST 5: msa + model + tree")

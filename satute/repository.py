@@ -4,8 +4,10 @@ import numpy as np
 import pandas as pd
 import re
 from enum import Enum
-from satute.amino_acid_models import get_aa_state_frequency_substitution_models
 from typing import List
+
+
+from satute.amino_acid_models import get_aa_state_frequency_substitution_models
 from satute.dna_model import NOT_ACCEPTED_DNA_MODELS
 from satute.amino_acid_models import (
     AMINO_ACID_RATE_MATRIX,

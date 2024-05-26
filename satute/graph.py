@@ -1,27 +1,22 @@
 # -*- coding: utf-8 -*-
 from typing import Optional
-import dataclasses
 import numpy as np
 from ete3 import Tree
 from Bio.Align import MultipleSeqAlignment
 from typing import List, Tuple, Optional, Dict
 from functools import cache
+from dataclasses import dataclass, field
 from satute.dna_model import NUCLEOTIDE_CODE_VECTOR
 from satute.amino_acid_models import AMINO_ACID_CODE_VECTOR
 
 
+@dataclass
 class Node:
     """Class representing a node in the DAG."""
 
     name: str
-    state: Optional[np.array] = dataclasses.field(default_factory=lambda: None)
-    connected: dict = dataclasses.field(default_factory=dict)
-
-    def __init__(self, name: str, state=None, connected=None):
-        """Initialize a Node with a name, optional state vector, and optional connections."""
-        self.name = name
-        self.state = state
-        self.connected = connected or {}
+    state: Optional[np.array] = field(default_factory=lambda: None)
+    connected: Dict["Node", float] = field(default_factory=dict)
 
     def __hash__(self):
         """Return the hash value of the Node."""
@@ -31,13 +26,13 @@ class Node:
         """Check if two nodes are equal."""
         return self is other
 
-    def connect(self, other_node: "Node", branch_length):
+    def connect(self, other_node: "Node", branch_length: float):
         """Connect the current node to another node with a given branch length."""
         self.connected[other_node] = branch_length
 
     def is_leaf(self) -> bool:
         """Check if the node is a leaf (has a state vector)."""
-        return len(self.connected.keys()) <= 1
+        return len(self.connected) <= 1
 
     def __repr__(self):
         """Return the string representation of the Node."""

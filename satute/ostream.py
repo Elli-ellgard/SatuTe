@@ -7,6 +7,7 @@ from pathlib import Path
 from ete3 import Tree
 from pandas import DataFrame
 from typing import Dict, Any, List
+
 from satute.amino_acid_models import AMINO_ACIDS
 from satute.result import TestStatisticComponentsContainer
 from satute.statistic_posterior_distribution_components import (

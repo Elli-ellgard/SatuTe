@@ -3,10 +3,12 @@
 from functools import cache
 from scipy.sparse.linalg import expm
 from ete3 import Tree
-from satute.rate_matrix import RateMatrix
 from Bio.Align import MultipleSeqAlignment
-from satute.amino_acid_models import AMINO_ACIDS
 from typing import Dict, Any, List
+
+
+from satute.rate_matrix import RateMatrix
+from satute.amino_acid_models import AMINO_ACIDS
 from satute.graph import (
     filter_graph_edges_by_focus,
     get_alignment_look_up_table,

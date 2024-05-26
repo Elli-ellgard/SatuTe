@@ -275,8 +275,6 @@ class Satute:
     def run_iqtree_workflow(self, arguments_dict: Dict[str, List]):
         extra_arguments = []
 
-        print(self.input_args.add_iqtree_options)
-
         if self.input_args.add_iqtree_options:
             extra_arguments.append(self.input_args.add_iqtree_options)
 

@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
-from satute.util import spectral_decomposition
 import re
 
 AMINO_ACID_MODELS = [
@@ -1612,38 +1611,3 @@ def print_matrix(matrix, f):
         f.write("\n")
 
 
-if __name__ == "__main__":
-    model_string = """1
-                      1 1 
-                      1 1 1
-                    """
-
-    rate_matrix = create_rate_matrix_with_input(4, model_string)
-
-    f = open("amino_acid_models.txt", "w")
-
-    for key, string_matrix in AMINO_ACID_RATE_MATRIX.items():
-        matrix = create_rate_matrix_with_input(20, string_matrix)
-        f.write(key)
-        f.write("\n")
-        print_matrix(matrix, f)
-        stationary_distribution = AA_STATE_FREQUENCIES[key]
-        phi = np.diag(stationary_distribution)
-        left, right, m, eigenvalue = spectral_decomposition(np.array(matrix), phi)
-
-        # Custom printing function
-        def print_eigenvectors(vectors):
-            for vec in vectors:
-                print(np.array_str(vec, precision=3, suppress_small=True))
-
-        print(key)
-        # Print left and right eigenvectors
-        print("Left Eigenvectors:")
-        print_eigenvectors(left)
-
-        print("Right Eigenvectors:")
-        print_eigenvectors(right)
-
-        print("Multiplicity:", m)
-
-        f.write("\n")
