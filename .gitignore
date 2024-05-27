@@ -180,10 +180,9 @@ cython_debug/
 *.nex
 *.siteprob
 .DS_Store
-test/Clemens/small_example
 *.indices
 
+tests/test_results/
+tests/data_dna/
+tests/data_aa/
 
-tests/test_results
-tests/scripts/generate_examples
-tests/scripts/test_other_options.py

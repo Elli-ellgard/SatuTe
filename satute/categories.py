@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 
+import os
+from pandas import DataFrame
+
+
 from Bio import AlignIO
 from Bio.Align import MultipleSeqAlignment
 from Bio.SeqRecord import SeqRecord
 from Bio.Seq import Seq
-from pandas import DataFrame
-import os
 
 """ ## RATE CATEGORIES  """
 

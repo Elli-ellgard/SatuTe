@@ -1,10 +1,8 @@
 # -*- coding: utf-8 -*-
 import scipy.stats as st
 import numpy as np
-from typing import List, Tuple
-import numpy as np
 import pandas as pd
-
+from typing import List, Tuple
 from satute.result import TestResultBranch, TestStatisticComponents
 
 

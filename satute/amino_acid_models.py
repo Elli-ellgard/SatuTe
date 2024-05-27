@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
-
-import numpy as np
 import re
+import numpy as np
 
 AMINO_ACID_MODELS = [
     "BLOSUM62",  # BLOcks SUbstitution Matrix (Henikoff and Henikoff, 1992)
@@ -483,7 +482,6 @@ AMINO_ACID_RATE_MATRIX = {
     0.021939769224089 0.182762501894970 1.139165041333800 0.192759935895995 1.342951983818990 0.476209340516188 0.137649645940120 0.072268115092742 2.321701900318870 0.177138315144646 0.161052630578922 0.348477651608884 0.393193176722666 3.234681510126880 0.081395316441860 0.345719568712117 0.174898633040519 0.636664640334042
     2.751362222454670 0.072153227138698 0.065420927831618 0.088077392769029 1.555396905840990 0.065221940911213 0.231186486525368 0.396428077428706 0.008043434782625 8.542589373962890 1.075872855650690 0.056252073499162 1.509852171058890 0.534676724129225 0.162975872809625 0.377288666084473 1.885338569864270 0.128598566560553 0.080346083861554""",
 }
-
 
 AA_STATE_FREQUENCIES = {
     "POISSON": [
@@ -972,7 +970,6 @@ AA_STATE_FREQUENCIES = {
     ],
 }
 
-
 AMINO_ACID_CODE_VECTOR = {
     "A": np.array([1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]),
     "R": np.array([0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]),
@@ -1005,7 +1002,6 @@ AMINO_ACID_CODE_VECTOR = {
     "-": np.array([1 / 20] * 20),  # Gap
     "?": np.array([1 / 20] * 20),  # Unknown
 }
-
 
 POISSON_RATE_MATRIX = np.array(
     [
@@ -1452,7 +1448,6 @@ POISSON_RATE_MATRIX = np.array(
     ]
 )
 
-
 AMINO_ACIDS = [
     "A",
     "R",
@@ -1506,75 +1501,36 @@ def transform_to_rate_matrix(matrix):
 
 def get_aa_state_frequency_substitution_models(substitution_model: str) -> tuple:
     """
-    Extracts the amino acid state frequencies and creates a diagonal matrix for a given substitution model.
+    Extracts amino acid state frequencies and creates a diagonal matrix for a substitution model.
 
-    This function sanitizes the substitution model string to remove any model extensions or parameters denoted by "+" or "{",
-    then looks up the core model in the AA_STATE_FREQUENCIES dictionary to retrieve its state frequencies.
-    A diagonal matrix is constructed from these frequencies, which can be used for subsequent calculations.
-
-    Parameters:
-    - substitution_model (str): The substitution model string which may include extensions or parameters.
+    Args:
+        substitution_model (str): The substitution model string, potentially with extensions.
 
     Returns:
-    - tuple: A tuple containing two elements:
-        1. A numpy array of state frequencies.
-        2. A diagonal numpy matrix constructed from these state frequencies.
+        tuple: A tuple containing:
+            - A numpy array of state frequencies.
+            - A diagonal numpy matrix of these frequencies.
 
     Raises:
-    - ValueError: If the core model cannot be extracted from the provided string or if the core model is not found in the
-                  AA_STATE_FREQUENCIES dictionary.
+        ValueError: If the core model is invalid or not found.
 
-    Example usage:
-    >>> substitution_model = 'BLOSUM62+G{parameter}'
-    >>> frequencies, phi_matrix = get_aa_state_frequency_substitution_models(substitution_model)
-    >>> print(frequencies)
-    >>> print(phi_matrix)
+    Example:
+        >>> substitution_model = 'BLOSUM62+G{parameter}'
+        >>> frequencies, phi_matrix = get_aa_state_frequency_substitution_models(substitution_model)
+        >>> print(frequencies)
+        >>> print(phi_matrix)
     """
-    # Regular expression to extract the core model name from the substitution model string
     match = re.match(r"^[^\+\{]+", substitution_model)
     if match:
         core_model = match.group()
     else:
-        # If the core model can't be extracted, raise an error
         raise ValueError(f"Could not extract core model from: {substitution_model}")
 
-    # Check if the core model is in the AA_STATE_FREQUENCIES dictionary
     if core_model not in AA_STATE_FREQUENCIES:
-        # If not found, raise an error indicating the model is invalid
         raise ValueError(f"Invalid substitution model: {substitution_model}")
-    else:
-        # Retrieve the frequencies for the core model and create a diagonal matrix
-        frequencies = np.array(AA_STATE_FREQUENCIES[core_model])
-        return frequencies, np.diag(frequencies)
 
-
-"""
-def create_rate_matrix_with_input(matrix_size, input_string: str):
-    # Split the string into lines
-    # input_string = input_string.replace(" ", "")
-    lines = input_string.split("\n")
-
-    # Initialize a matrix with 1's for off-diagonal elements
-    rate_matrix = [
-        [0 if i != j else 0 for j in range(matrix_size)] for i in range(matrix_size)
-    ]
-
-    for i, row in enumerate(lines):
-        for j, col in enumerate(row.split()):
-            rate_matrix[i + 1][j] = float(col)
-
-    # Mirror the lower triangle to the upper triangle
-    for i in range(matrix_size):
-        for j in range(i):
-            rate_matrix[j][i] = rate_matrix[i][j]
-
-    for i in range(matrix_size):
-        rate_matrix[i][i] = -np.sum(rate_matrix[i])
-
-    return np.array(rate_matrix)
-
-
-"""
+    frequencies = np.array(AA_STATE_FREQUENCIES[core_model])
+    return frequencies, np.diag(frequencies)
 
 
 def create_rate_matrix_with_input(matrix_size, input_string: str, eq):
@@ -1609,5 +1565,3 @@ def print_matrix(matrix, f):
     for row in matrix:
         f.write(" ".join(map(str, row)))
         f.write("\n")
-
-

@@ -6,7 +6,6 @@ import re
 from enum import Enum
 from typing import List
 
-
 from satute.amino_acid_models import get_aa_state_frequency_substitution_models
 from satute.dna_model import NOT_ACCEPTED_DNA_MODELS
 from satute.amino_acid_models import (

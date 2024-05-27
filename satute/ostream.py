@@ -14,7 +14,6 @@ from satute.statistic_posterior_distribution_components import (
     calculate_posterior_probabilities_subtree_df,
 )
 
-
 # New function to format float columns
 def format_float_columns(data_frame: DataFrame):
     for col in data_frame.columns:
@@ -389,23 +388,31 @@ def update_node_metadata(newick: str, row: DataFrame, columns: list) -> str:
     target_node = get_target_node(row["edge"])
     escaped_target_node = re.escape(target_node)
     meta_data = create_meta_data_string(row, columns)
-
     newick = insert_metadata_into_newick(newick, escaped_target_node, meta_data)
     return newick
 
 
 def create_meta_data_string(row: DataFrame, columns: list) -> str:
     """
-    Creates a metadata string from a DataFrame row.
+    Creates a metadata string from a DataFrame row, focusing on specific columns.
 
     Args:
     - row (DataFrame): A single row from the DataFrame.
-    - columns (list): List of columns in the DataFrame.
+    - columns (list): List of columns to include in the metadata.
 
     Returns:
     - str: Metadata string.
     """
-    meta_data_parts = [f"{col}={row[col]}" for col in columns if col != "edge"]
+    relevant_columns = [
+        "statistic",
+        "decision_test",
+        "decision_corrected_test_tips",
+        "p_value",
+    ]
+    meta_data_parts = [
+        f"{col}={row[col]}" for col in columns if col in relevant_columns
+    ]
+
     return "&" + ",".join(meta_data_parts) if meta_data_parts else ""
 
 

@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
-import argparse
-import pathlib
-from pathlib import Path
+
 import os
+import argparse
+from pathlib import Path
 
 def valid_directory(path: Path):
     """
@@ -53,7 +53,7 @@ def valid_directory(path: Path):
             f"No file with suffixes {suffixes_str} found in the directory {path}"
         )
 
-    return pathlib.Path(path)
+    return Path(path)
 
 
 def valid_file(path: Path):
@@ -71,7 +71,7 @@ def valid_file(path: Path):
     """
     if not os.path.isfile(path):
         raise argparse.ArgumentTypeError(f"{path} is not a valid file")
-    return pathlib.Path(path)
+    return Path(path)
 
 
 def valid_alpha(alpha: float):
@@ -125,7 +125,7 @@ ARGUMENT_LIST = [
         ),
         "default": "iqtree2",
         "metavar": "<iqtree_path>",
-        "type": pathlib.Path,
+        "type": Path,
     },
     {
         "flag": "-model",

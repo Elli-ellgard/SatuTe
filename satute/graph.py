@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
-from typing import Optional
 import numpy as np
 from ete3 import Tree
 from Bio.Align import MultipleSeqAlignment
 from typing import List, Tuple, Optional, Dict
 from functools import cache
 from dataclasses import dataclass, field
+
 from satute.dna_model import NUCLEOTIDE_CODE_VECTOR
 from satute.amino_acid_models import AMINO_ACID_CODE_VECTOR
 
@@ -266,20 +266,15 @@ def calculate_subtree_edge_metrics(
         edge_name = f"({left.name}, {right.name})"
         _type = edge_type(right, left)
 
-        left_leave_count, left_branch_count = count_leaves_and_branches_for_subtree(
-            left, right
-        )
+        left_leave_count = count_leaves_for_subtree(left, right)
         right_leave_count = num_taxa - left_leave_count
-        right_branch_count = (2 * num_taxa - 3) - left_branch_count
 
         edge_metrics[edge_name] = {
             "left": {
                 "leave_count": left_leave_count,
-                "branch_count": left_branch_count,
             },
             "right": {
                 "leave_count": right_leave_count,
-                "branch_count": right_branch_count,
             },
             "length": branch_length,
             "type": _type,
@@ -289,49 +284,34 @@ def calculate_subtree_edge_metrics(
 
 
 @cache
-def count_leaves_and_branches_for_subtree(node: Node, coming_from: Node):
+def count_leaves_for_subtree(node: Node, coming_from: Node):
     """
-    Recursively counts the number of leaf nodes and branches in a subtree defined by a given node in a tree.
-
-    This function is designed to work with a tree structure where each node maintains a list of connected nodes.
-    It starts from a specified node ('node') and traverses the subtree, counting the number of leaf nodes and branches.
-    The traversal avoids backtracking to the 'coming_from' node to prevent double counting.
+    Counts the number of leaf nodes in a subtree.
 
     Args:
-        node (Node): The node from which the subtree counting begins. This node acts as the root of the subtree.
-        coming_from (Node): The node from which the traversal to the current 'node' occurred. This is used to
-                            prevent the traversal from moving back up the tree, thereby avoiding the branch
-                            that was used to reach the 'node'.
+        node (Node): The root node of the subtree.
+        coming_from (Node): The node from which traversal occurred to avoid backtracking.
 
     Returns:
-        tuple: A tuple (leaf_count, branch_count) representing the count of leaf nodes and branches within the subtree.
-        leaf_count (int): The number of leaf nodes in the subtree rooted at 'node'.
-        branch_count (int): The number of branches in the subtree rooted at 'node', excluding the branch
-        from 'coming_from' to 'node'.
+        int: The number of leaf nodes in the subtree.
 
     Note:
-        - The function assumes that each node has an attribute 'connected', which is a dictionary with keys
-        representing connected child nodes.
-        - It is primarily used for traversing phylogenetic trees or similar hierarchical structures where each node can have multiple children.
-        - The function is recursive and may not be suitable for extremely large trees due to Python's recursion limit.
+        - Assumes each node has a 'connected' attribute, a dictionary of child nodes.
+        - Suitable for phylogenetic trees or similar structures.
+        - Recursive function; may hit Python's recursion limit for large trees.
     """
     # If the current node is a leaf
     if node.is_leaf():
-        return 1, 0
+        return 1
 
-    # Initialize leaf and branch counts
-    leaf_count, branch_count = 0, 0
-
+    # Initialize leaf count
+    leaf_count = 0
     # Iterate over children
     for child in node.connected.keys():
         if child != coming_from:
-            # Recursively count leaves and branches for each child
-            child_leaves, child_branches = count_leaves_and_branches_for_subtree(
-                child, node
-            )
-            leaf_count += child_leaves
-            branch_count += child_branches + 1  # Include the branch to this child
-    return leaf_count, branch_count
+            # Recursively count leaves for each child
+            leaf_count += count_leaves_for_subtree(child, node)
+    return leaf_count
 
 
 def filter_graph_edges_by_focus(graph: Graph, focused_edge: str):
