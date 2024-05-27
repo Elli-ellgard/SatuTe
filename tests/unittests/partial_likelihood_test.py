@@ -5,7 +5,7 @@ import time
 from Bio.Align import MultipleSeqAlignment
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
-from satute.util import spectral_decomposition
+from satute.decomposition import spectral_decomposition
 from satute.graph import Graph, Node, get_initial_likelihood_vector
 from satute.rate_matrix import RateMatrix
 from satute.amino_acid_models import POISSON_RATE_MATRIX, AA_STATE_FREQUENCIES
@@ -21,6 +21,7 @@ from satute.partial_likelihood import (
 )
 
 RATE_MATRIX = np.array([[-3, 1, 1, 1], [1, -3, 1, 1], [1, 1, -3, 1], [1, 1, 1, -3]])
+
 
 def parse_newick_file(file_path):
     try:
@@ -40,6 +41,8 @@ def parse_newick_file(file_path):
 
 
 """ ======= Tests ======= """
+
+
 def test_one_partial_likelihood():
     a1, b2, u3, u4, c5, b6 = [
         Node("A", get_initial_likelihood_vector("A", "nucleotide")),

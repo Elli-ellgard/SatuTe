@@ -4,8 +4,6 @@ import numpy as np
 
 
 """ ## SPECTRAL DECOMPOSITION OF THE RATE MATRIX"""
-
-
 def spectral_decomposition(rate_matrix, psi_matrix) -> tuple[np.array, np.array, int]:
     """
     Then psi_matrix := Diag(pi). Recall that matrix Q is reversible iff M:= psi_matrix^1/2 x Q x psi_matrix^{-1/2} is symmetric.

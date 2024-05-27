@@ -1,5 +1,5 @@
 import numpy as np
-from satute.util import spectral_decomposition
+from satute.decomposition import spectral_decomposition
 from tests.unittests.partial_likelihood_test import calculate_stationary_distribution
 from satute.rate_matrix import RateMatrix
 from satute.amino_acid_models import (

@@ -8,7 +8,7 @@ import numpy as np
 from Bio.Align import MultipleSeqAlignment
 from typing import Dict, List
 
-from satute.util import spectral_decomposition
+from satute.decomposition import spectral_decomposition
 from satute.rate_matrix import RateMatrix
 from satute.file_handler import FileHandler, IqTreeHandler
 from satute.trees import rename_internal_nodes_pre_order
