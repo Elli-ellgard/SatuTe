@@ -483,7 +483,8 @@ class Satute:
         # ======== Arguments =================
         msa_file = self.input_args.msa
         # ======== Tree File Handling ========
-        test_tree = self.extract_tree()
+        newick_string = self.file_handler.get_newick_string_from_iq_tree_file(msa_file.resolve())
+        test_tree = rename_internal_nodes_pre_order(Tree(newick_string, format=1))
         # ======== Model parameter ===========
         ## Get dictionary for stationary distribution and diagonal matrix of the stationary distribution
         iq_tree_file_path = f"{msa_file.resolve()}.iqtree"
