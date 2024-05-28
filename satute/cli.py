@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
+from Bio.Align import MultipleSeqAlignment
 
 import argparse
 import logging
+import numpy as np
 from pathlib import Path
 from ete3 import Tree
-import numpy as np
-from Bio.Align import MultipleSeqAlignment
 from typing import Dict, List
 
 from satute.decomposition import spectral_decomposition
@@ -15,7 +15,6 @@ from satute.trees import rename_internal_nodes_pre_order
 from satute.arguments import ARGUMENT_LIST
 from satute.sequences import check_if_tree_has_same_taxa_as_msa
 from satute.logging import format_matrix, format_array
-
 
 from satute.rate_analysis import (
     multiple_rate_analysis,
@@ -465,7 +464,10 @@ class Satute:
         # ======== Arguments =================
         msa_file = self.input_args.msa
         # ======== Tree File Handling ========
-        test_tree = self.extract_tree()
+        newick_string = self.file_handler.get_newick_string_from_iq_tree_file(
+            msa_file.resolve()
+        )
+        test_tree = rename_internal_nodes_pre_order(Tree(newick_string, format=1))
         # ======== Model parameter ===========
         ## Get dictionary for stationary distribution and diagonal matrix of the stationary distribution
         iq_tree_file_path = f"{msa_file.resolve()}.iqtree"
@@ -570,6 +572,7 @@ class Satute:
         singe_rate_indices = [
             i for i in range(1, alignment.get_alignment_length() + 1, 1)
         ]
+
         single_rate_category = {"single_rate": singe_rate_indices}
 
         write_results_for_category_rates(

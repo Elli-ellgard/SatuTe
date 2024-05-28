@@ -1,34 +1,22 @@
 # Satute: Branch Saturation Testing Tool
 
 ## Introduction
-<div style="text-align: center;">
-  <img src="./docs//figure_1_2024_05_22-1.png" alt="Example Image" />
-  <p>
-    <em>
-  <p>
-  <em>Figure 1: In the alignment of sequences from different species, each column represents a pattern. For a given tree, branch AB splits the tree into subtrees TA and TB, dividing each pattern into subpatterns. These subpatterns are used to compute likelihood vectors L(&#8706;A) and L(&#8706;B), and the scalar product
-  <span style="font-family: 'Times New Roman', Times, serif;">
-    C
-    <sub>1</sub>
-    <sup>&#8706;</sup>
-  </span>.
-  The average scalar product 
-  <span style="font-family: 'Times New Roman', Times, serif;">&#770;C<sub>1</sub></span>
-  is computed, and using its variance and the number of sites, the z-score Z is calculated. Satute uses the z-score to test if branches are informative or saturated, based on a chosen significance level.</em>
-</p>
-</em>
-<p>
-</div>
 
-Satute is a specialized tool designed to evaluate the phylogenetic information shared by subtrees within a phylogeny, enabling the detection of branch saturation. Assessing the reliability of inferred phylogenetic trees and their underlying data is crucial in phylogenetic reconstruction. Satute facilitates this by implementing a formal measure of phylogenetic information to test for branch saturation. Currently, users can either input a finished IQ-TREE run or use IQ-TREE on a Multiple Sequence Alignment (MSA) to apply the saturation test. Satute performs its analysis, providing insights into the reliability of specific branches within the tree, helping researchers assess the robustness of their phylogenetic reconstructions. By employing Satute, researchers can detect and quantify saturation, making informed decisions about the accuracy and stability of their phylogenetic trees. For more details on IQ-TREE, visit [IQ-TREE](http://www.iqtree.org) [Nguyen et al., 2015](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4271533/).
+![Figure 1: In the alignment of sequences from different species, each column represents a pattern. For a given tree, branch $\mathbf{AB}$ splits the tree into subtrees $\mathbf{TA}$ and $\mathbf{TB}$, dividing each pattern into subpatterns. These subpatterns are used to compute likelihood vectors $L(\partial \mathbf{A})$ and $L(\partial \mathbf{B})$, and the scalar product $C_1^\partial$. The average scalar product $\hat{C}_1$ is computed, and using its variance and the number of sites, the z-score $Z$ is calculated. Satute uses the z-score to test if branches are informative or saturated, based on a chosen significance level.](./docs/figure_1_2024_05_22-1.png)
 
-## Getting started: **Installing Satute**
+Satute is a command line tool to detect branch saturation in phylogenetic trees.
+A branch of a phylogenetic tree is considered saturated if so many mutations occurred that the relationship is no longer distinguishable from no relationship.Traditional measures of reliability like the bootstrap value fail to detect branch saturation, as a saturated branch can be well supported by data but carry no phylogenetic information.
+Satute implements the saturation test to detect saturated branches after phylogenetic tree reconstruction by IQTree.
+For more details on the statistical test see [the paper](http://www.cibiv.at).
 
-To install Satute, you can use pipx, the Python package installer. Follow the instructions below to install the tool on your system.
+# Installation
+
+Satute is available as a python package from pypi and can be normally installed via pip.
+We recommend to use [pipx](https://pipx.pypa.io/stable/) to install Satute as a standalone command line tool.
 
 pipx is a tool that allows you to install and run Python applications in isolated environments, ensuring each application and its dependencies are kept separate to avoid conflicts.
 
-### Steps to Install Satute using pipx:
+### Install Satute using pipx:
 
 1. **Install Satute using pipx:**
    Once pipx is installed, you can use it to install Satute:
@@ -38,45 +26,58 @@ pipx is a tool that allows you to install and run Python applications in isolate
 For more detailed instructions and information about pipx, refer to the [official pipx documentation](https://pipxproject.github.io/pipx/).
 
 Using pipx ensures that Satute and its dependencies are installed in an isolated environment, minimizing potential conflicts with other Python packages on your system.
+
 ### Prerequisites
 
 * Python 3.6 or higher
 * `pipx` (Python package installer)
 
-### Verifying the Installation
+## Verifying the Installation
+
+After the installation is complete, you can verify that Satute has been installed correctly by running the following command:
 
 ```bash
-  satute -h
+satute version
 ```
 
-There you will see all the options that Satute is providing.
+You should see the version number of Satute printed on the screen, confirming that the installation was successful.
 
-## Usage: **Basic Usage**
+# Basic Usage
 
 Satute provides several ways to apply the saturation test on a given multiple sequence alignment, tree, and model. The easiest and most recommended approach is to use it directly on a finished IQ-TREE run. For details please go to the official website of IQ-Tree: http://www.iqtree.org/
 
-1. **Using a Directory**:
-If you've previously run IQ-TREE and have a directory with the output files, you can provide the directory using the `-dir` option. This way, Satute will use the existing output without needing to rerun IQ-TREE. It is important to note that Satute utilizes the `.iqtree` file, the tree file, and the multiple sequence alignment (MSA) file generated by IQ-TREE to perform its analyses. However, if the tree has been inferred with a model with rate categories and the `-wspr` option has not been used, further analyses cannot be performed because the `.siteprob` file will not be created, making the assignment of each site to rate categories impossible. In such cases, we suggest rerunning IQ-TREE with the `-wspr` option.
+# Usage with a previous IQ-TREE run
+
+Satute provides several ways to apply the saturation test on a given multiple sequence alignment, tree, and model.
+The easiest and recommended approach is to use [IQ-TREE](http://www.iqtree.org) to reconstruct a phylogeny and execute Satute on its output.
 
 ```bash
-   satute -dir ./examples/example_data_dna_iqtree_run/
+satute -dir IQTREE_RESULT_DIR
 ```
 
-When the run is completed, you will find several files in the output directory. Satute generates a `satute.log` file that logs the details of the run. If no specific rate category is defined, the following files will be created for the entire alignment and the given model:
+An example is provided in `examples/example_data_dna_iqtree_run/` which can be analyzed via
+
+```bash
+satute -dir examples/example_data_dna_iqtree_run/
+```
+
+If IQ-TREE was executed with a model with rate heterogeneity, but without the `-wspr` option, IQ-TREE will not generate the `.siteprob` file. This file is necessary to run Satute and we suggest rerunning IQ-TREE with the `-wspr` option.
 
 * `satute.csv`
 * `satute.components.csv`
 * `satute.nex`
 
-If a specific rate category is defined, these three files will be created for each rate category:
+If a specific rate category is defined by the model, these three files will be created for each rate category:
 
 * `satute.<rate_category>.csv`
 * `satute.<rate_category>.components.csv`
 * `satute.<rate_category>.nex`
 
 ## satute.log
+
 The `satute.log` file provides a comprehensive record of the steps and processes performed by the Satute tool during its execution. It includes details on the initialization and configuration, the substitution model used, spectral decomposition results, and the analysis execution. Additionally, it logs the writing of results to various output files and provides a summary of the number of sites corresponding to each rate category, ensuring a transparent and traceable analysis process.
 ## satute.csv file
+
 In the satute.csv file one will find, for each edge the columns:
 
 ### Table Headers and Description
@@ -125,9 +126,10 @@ The NEXUS file contains two main sections: `TAXA` and `TREES`.
 Lists the 7 taxa included in the analysis:
 
 ```
+#NEXUS
 BEGIN TAXA;
     DIMENSIONS NTAX=7;
-    TAXLABELS
+     TAXLABELS
         t7
         t3
         t2
@@ -137,77 +139,76 @@ BEGIN TAXA;
         t4
     ;
 END;
-```
 
-### TREES Section
-
-Defines the phylogenetic tree with metadata for each branch:
-
-```
 BEGIN TREES;
-Tree tree1 = (t7:2.16965e-06[&coefficient_value=0.0889,standard_error_of_mean=0.1493,test_statistic=0.595,p_value=0.2759,z_alpha=1.6449,decision_test=Saturated,z_alpha_corrected=2.394,decision_corrected_test_tips=Saturated,decision_test_tip2tip=SatuT2T,branch_length=2.1696521999999996e-06,number_of_sites=8,rate_category=p4],...);
+Tree tree1 = (t7:3.01328e-06,(((t3:1.55499,(t2:1.77629,t5:2.76104e-06)Node5*:0.377782[&p_value=0.0344,decision_test=Informative,decision_corrected_test_tips=Saturated])Node4*:0.368276,t6:2.16996e-06)Node3*:1.23617,t1:2.22639e-06)Node2*:1.05052,t4:1.85109)Node1*:0;
 END;
 ```
 
 Each branch includes:
 
-* Coefficient value, standard error, test statistic, and p-value.
-* Decisions based on statistical tests (e.g., Informative, Saturated).
+* Decisions based on statistical tests p-value(e.g., Informative, Saturated).
 * Branch length, number of sites, and rate category.
 
 ## Other Input Types to Use Satute
 
 1. **Using a Multiple Sequence Alignment (MSA)**:
-As an alternative, you can provide a multiple sequence alignment (`-msa`) and the path to IQ-TREE (`-iqtree`). If no model is specified, ModelFinder, which is included in IQ-TREE [Kalyaanamoorthy et al., 2017], will infer the best-fitting evolutionary model to conduct the analysis. IQ-TREE will run with only the necessary options. For specific option choices, please run IQ-TREE separately and use the `-dir` option afterwards. For the inference of the tree and other computations, `-iqtree` will be needed. By default, the path to IQ-TREE is set to `iqtree2`. If IQ-TREE is located elsewhere, you can specify its path using the `-iqtree` flag.
+As an alternative, Satute can run IQ-TREE on a multiple sequence alignment (msa), provided via the `-msa` command line option.
 
-   **Example without specifying a model**:
+   **Specifying without a model**:
 
    ```bash
    satute -msa ./test/cassius/toyExample.phy -iqtree iqtree
    ```
 
-   **Example specifying a model**:
+   An example MSA is provided in `examples/example_data_msa/msa.phy` which can be analyzed via
+
+   **Specifying a model**:
 
    ```bash
    satute -msa ./test/cassius/toyExample.phy -model GTR+G4 -iqtree iqtree
    ```
 
-1. **Using a MSA+Model+Tree**:
-You can also specify a tree file (`-tree`) along with the multiple sequence alignment (`-msa`). However, without specifying a model (`-model`), this will lead to an error. Ensure that the model is specified when providing a tree file. Additionally, note that branch lengths will be reestimated during the analysis. If you want to fix the branch lengths, you need to add the `-blfix` option using the `-add_iqtree_options` flag. Below are example commands:
+  **Specifying a Tree**:
+  
+  You can also specify a tree file via `-tree` along with the multiple sequence alignment via `-msa`, in which case a model must be specified via `-model`. IQ-TREE will then only be used to (re-)estimate the branch lengths.
 
-   **Example with branch length reestimation**:
+  ```bash
+  satute -msa examples/example_data_msa/msa.phy -tree examples/example_data_msa/example.treefile -model GTR+G4
+  ```
 
-   ```bash
-   satute -msa ./test/cassius/toyExample.phy -tree ./test/cassius/toyExample.phy.treefile -model GTR+G4 -iqtree iqtree
-   ```
+### Fixing Branch lengths
 
-   **Example fixing branch lengths**:
+However, without specifying a model (`-model`), this will lead to an error. Ensure that the model is specified when providing a tree file. Additionally, note that branch lengths will be reestimated during the analysis. If you want to fix the branch lengths, you need to add the `-blfix` option using the `-add_iqtree_options` flag. Below are example commands:
 
-   ```bash
-   satute -msa ./test/cassius/toyExample.phy -tree ./test/cassius/toyExample.phy.treefile -model GTR+G4 -iqtree iqtree -add_iqtree_options "-blfix"
-   ```
+**Example fixing branch lengths**:
 
-### Usage of `-add_iqtree_options`
+```bash
+satute -msa ./test/cassius/toyExample.phy -tree ./test/cassius/toyExample.phy.treefile -model GTR+G4 -iqtree iqtree -add_iqtree_options "-blfix"
+```
+
+### Adding IQ-TREE options via `-add_iqtree_options`
 
 The `-add_iqtree_options` flag allows you to specify additional options for the IQ-TREE run if necessary. This provides flexibility to customize the IQ-TREE execution by including specific commands that are not covered by the predefined arguments. You can use multiple additional options with this flag, particularly in scenarios where you are using the MSA option alone, the MSA option combined with a model, or the MSA option combined with both a tree and a model.
 
 Here are some examples of how you can use this flag:
 
-**Using MSA alone**:
+#### Write alginment site statistics
 
-  ```sh
-  satute -msa /path/to/alignment.fasta -add_iqtree_options "-alninfo"
-  ```
+```sh
+satute -msa /path/to/alignment.fasta -add_iqtree_options "-alninfo"
+```
+This command will write alignment site statistics to a `.alninfo` file.
 
-  This command will print alignment site statistics to a `.alninfo` file.
+#### Fixing branch lengths
 
-**Using MSA with a model**:
-  
-  ```sh
-  satute.py -msa /path/to/alignment.fasta -model GTR+G4 -add_iqtree_options "-blfix"
-  ```
+TODO: This is already covered, why cover it again here?
 
-  This command will fix branch lengths of the tree passed via `-tree` or `-te`.
+```sh
+satute.py -msa /path/to/alignment.fasta -model GTR+G4 -add_iqtree_options "-blfix"
+```
+
+This command will fix branch lengths of the tree passed via `-tree` or `-te`.
 
 **Using MSA with a tree and a model**:
   
@@ -215,11 +216,14 @@ Here are some examples of how you can use this flag:
   satute -msa /path/to/alignment.fasta -tree /path/to/treefile.tree -model HKY -add_iqtree_options "-blmin 0.00001 -blmax 5"
   ```
 
-  In this command, several options are used:
+#### Specifying minimal and maximal branch lengths
 
-* `-blmin`: Specifies the minimum branch length (default is the smaller of 0.000001 and 0.1/alignment_length).
-* `-blmax`: Specifies the maximum branch length (default is 10).
-
+```sh 
+satute -msa /path/to/alignment.fasta -tree /path/to/treefile.tree -model HKY -add_iqtree_options "-blmin 0.00001 -blmax 5"
+```
+In this command, several options are used:
+- `-blmin`: Specifies the minimum branch length (default is the smaller of 0.000001 and 0.1/alignment_length).
+- `-blmax`: Specifies the maximum branch length (default is 10).
 
 
 # Advanced Usage
@@ -278,26 +282,29 @@ The `.asr.csv` file contains the posterior distributions of ancestral sequences 
 
 These columns represent the posterior distributions for the nodes on both sides of each edge in the phylogenetic tree. The probabilities are calculated for each site in the alignment, providing a detailed view of the ancestral sequence distributions at every edge split.
 
-## Potential Errors and Warnings
+# Potential Errors and Warnings
 
-1. **InvalidDirectoryError**: Thrown when the provided directory either does not exist or is empty. Ensure the directory path is correct and contains necessary IQ-TREE output files.
+## InvalidDirectoryError
 
-2. **NoAlignmentFileError**: Indicates that no multiple sequence alignment file was found in the specified directory. Ensure your directory contains the MSA file.
+Thrown when the provided directory either does not exist or is empty. Ensure the directory path is correct and contains necessary IQ-TREE output files.
 
-3. **ValueError**: Can occur in multiple scenarios:
+## NoAlignmentFileError
+
+Indicates that no multiple sequence alignment file was found in the specified directory. Ensure your directory contains the MSA file.
+
+## ValueError
+
+Can occur in multiple scenarios:
    * If only the `-msa` and `-tree` options are used without specifying a model.
 
-## Invalid Command Combinations
+# Invalid Command Combinations
 
 Certain combinations of command-line arguments are invalid:
 
 1. **Directory with Model, MSA, Tree, Ufboot, Boot**: Providing an input directory with `-dir` shouldn't be combined with specifying a msa, a model, a tree, ufboot or boot option.
 2. **Model and Tree without MSA**: Just providing the `-model` and `-tree` without a msa (`-msa`) is insufficient.
-
 3. **MSA+Model+Tree with ufboot or boot option**: In the msa+model+tree mode, the inference is not re-done again, such that no ufboot and boot values can be determined.
-
-4. **Edge without MSA**: The `-edge` option, used to focus the analysis on a specific branch, requires at least the `-msa` option or `-dir` option.
-
+4. **Edge without MSA or DIR**: The `-edge` option, used to focus the analysis on a specific branch, requires the `-msa` option or `-dir` option.
 
 ### Command Line Arguments
 
