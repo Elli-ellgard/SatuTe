@@ -14,11 +14,11 @@
 3. [Getting Started](#getting-started)
    - [Minimal command-line examples](#minimal-)
    - [Initial Setup](#initial-setup)
-   - [Satute Output](#satute-output)
-4. [Basic Features](#basic-features)
-   - [How to Perform Common Task 1](#how-to-perform-common-task-1)
-   - [How to Perform Common Task 2](#how-to-perform-common-task-2)
-   - [How to Perform Common Task 3](#how-to-perform-common-task-3)
+4. [Satute Output](#4-satute-output)
+   - [Log file](#log-file)
+   - [Test Results](#test-results)
+   - [Components of Test Statistic](#components-of-test-statistic)
+   - [Nexus file](#nexus-file)
 5. [Additional Features](#5-additional-features)
    - [Bootstrap Analysis](#bootstrap-analysis)
    - [Edge Specification](#edge-specification)
@@ -27,7 +27,7 @@
    - [Others](#others)
 6. [Troubleshooting](#6-troubleshooting)
    - [Potential Errors and Warnings](#potential-errors-and-warnings)
-   - [Invalid Command Combinations](#invalid-commandcombinations)
+   - [Invalid Command Combinations](#invalid-command-combinations)
    - [Support and Contact Information](#support-and-contact-information)
 
 ## 1. Introduction
@@ -114,6 +114,93 @@ You should see the version number of Satute printed on the screen, confirming th
 | `-model <evolution_model>`                | Indicates the model of sequence evolution. Common models include `GTR`, `HKY`, etc. You can also specify rate heterogeneity and other model extensions, like `+G4` for gamma-distributed rates.                                                                                   | `-model GTR+G4`                  |
 | `-alpha <significance_level>`             | Significance level for the saturation test. A common threshold is `0.05`, indicating a 5% significance level. Lower values make the test more stringent.                                                                                                                          | `-alpha 0.01`                    |
 | `-add_iqtree_options <additional_option>` | Specify additional options for the IQ-Tree run, if necessary.                                                                                                                                                                                                                     | `-add_iqtree_options "-nt AUTO"` |
+
+
+## 4. Satute Output
+
+TODO: table
+
+
+
+
+## Log file
+
+The `satute.log` file provides a comprehensive record of the steps and processes performed by the Satute tool during its execution. It includes details on the initialization and configuration, the substitution model used, spectral decomposition results, and the analysis execution. Additionally, it logs the writing of results to various output files and provides a summary of the number of sites corresponding to each rate category, ensuring a transparent and traceable analysis process.
+
+## Test Results
+
+In the satute.csv file one will find, for each edge the columns:
+
+### Table Headers and Description
+
+| Column Name                  | Description                                                    |
+| ---------------------------- | -------------------------------------------------------------- |
+| edge                         | The branch or edge in the tree being analyzed                  |
+| coefficient_value            | The value of the coefficient calculated for the edge           |
+| standard_error_of_mean       | The standard error of the mean for the coefficient             |
+| test_statistic               | The test statistic value used to evaluate the edge             |
+| p_value                      | The p-value indicating the significance of the test statistic  |
+| z_alpha                      | The z-value corresponding to the alpha level for the test      |
+| decision_test                | The decision based on the test statistic (e.g., Informative)   |
+| z_alpha_corrected            | The corrected z-value considering multiple testing corrections |
+| decision_corrected_test      | The decision based on the corrected z-value                    |
+| decision_corrected_test_tips | The decision based on the corrected test for tips              |
+| decision_test_tip2tip        | The decision based on the test for tip-to-tip comparisons      |
+| branch_length                | The length of the branch or edge in the tree                   |
+| number_of_sites              | The number of sites in the alignment associated with the edge  |
+| rate_category                | The rate category for which the analysis was performed         |
+
+## Components of Test Statistic
+
+### Components File
+
+| Column Name     | Description                                                       |
+| --------------- | ----------------------------------------------------------------- |
+| Edge            | The branch or edge in the tree being analyzed                     |
+| coefficient     | The coefficient value for the site in the specified rate category |
+| sample_variance | The variance of the coefficient for the site                      |
+| rate            | The rate category                                                 |
+| site            | The specific site in the alignment being analyzed                 |
+
+### Description
+
+The components file contains the variance and the coherence values for each site in the alignment for a specific edge in the tree. Each row represents a site with its corresponding coefficient, variance, and rate category for the edge "(t7, Node1*)".
+
+## Nexus file
+
+### Description of the NEXUS File
+
+The NEXUS file contains two main sections: `TAXA` and `TREES`.
+
+#### TAXA Section
+
+Lists the 7 taxa included in the analysis:
+
+```
+#NEXUS
+BEGIN TAXA;
+    DIMENSIONS NTAX=7;
+     TAXLABELS
+        t7
+        t3
+        t2
+        t5
+        t6
+        t1
+        t4
+    ;
+END;
+
+BEGIN TREES;
+Tree tree1 = (t7:3.01328e-06,(((t3:1.55499,(t2:1.77629,t5:2.76104e-06)Node5*:0.377782[&p_value=0.0344,decision_test=Informative,decision_corrected_test_tips=Saturated])Node4*:0.368276,t6:2.16996e-06)Node3*:1.23617,t1:2.22639e-06)Node2*:1.05052,t4:1.85109)Node1*:0;
+END;
+```
+
+Each branch includes:
+
+* Decisions based on statistical tests p-value(e.g., Informative, Saturated).
+* Branch length, number of sites, and rate category.
+
 
 ## 5. Additional Features
 
