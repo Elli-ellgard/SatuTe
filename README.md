@@ -10,9 +10,9 @@
    - [Prerequisites](#prerequisites)
    - [Using Pipex](#install-satute-using-pipx)
    - [Verifying the Installation](#verifying-the-installation)
-3. [Getting Started](#getting-started)
-   - [Minimal command-line examples](#minimal-)
-   - [Initial Setup](#initial-setup)
+3. [Basic Features](#3-basic-features)
+   - [Getting started](#getting-started)
+   - [](#)
 4. [Satute Output](#4-satute-output)
    - [Log file](#log-file)
    - [Test Results](#test-results)
@@ -50,6 +50,11 @@ The minimal input of Satute is a multiple sequence alignment, a model of sequenc
 
 The main function of Satute operates as follows: Given the required input, Satute first calculates the spectral decomposition of the rate matrix and determines the likelihood vectors for each node in the tree. It then performs the test for branch saturation on a user-selected branch or on every branch of the tree, as described in the relevant literature. The program outputs the test results and its components in different CSV files and a Nexus file (see section [Satute Output](#satute-output)).
 
+<div style="text-align: center;padding: 20px;">
+    <img src="./docs/figure_1_2024_05_27.png" alt="Main Workflow" width="500"/>
+</div>
+
+
 In cases where a model of rate heterogeneity is used, Satute assigns each site to the rate category with the highest posterior probability. The alignment is then split by Satute. For each category, the test for branch saturation is employed on the rescaled phylogenetic tree given the subalignment.
 
 ## 2. Installation
@@ -66,7 +71,7 @@ We recommend to use [pipx](https://pipx.pypa.io/stable/) to install Satute as a 
 
 1. **Install pipx:**  If you don't have pipx installed, you can install it using pip:
 
-    ```sh
+    ```bash
     pip install pipx
     ```
 
@@ -95,18 +100,31 @@ satute version
 You should see the version number of Satute printed on the screen, confirming that the installation was successful.
 
 
-## 3. Getting Started
+## 3. Basic Features
 
-### Using a Directory:
+### Getting Started
 
-   If you've previously run IQ-TREE and have a directory with the output files, you can provide the directory using the `-dir` option. This way, Satute will use the existing output without needing to rerun IQ-TREE: `bash python satute_cli.py -dir /path/to/iqtree/output/`
+   If you have  a previously output of a IQ-TREE run, e.g. from the Webserver. You can provide the directory using the `-dir` option. This way, Satute will use the existing output without needing to rerun IQ-TREE. 
+
+  1. **Satute options:**
+
+     | Option | Description  |
+     | ------------ | ----------------------------------------------------------- |
+     | `-dir <directory_path>`                   | Path to the input directory containing IQ-TREE output files. Use this option when you've already run IQ-TREE and want to avoid rerunning it. The directory should contain essential IQ-TREE output files including the .iqtree file, tree file(s), and possibly a .siteprob file. |
+     |||
+
+  2. **Examples:**
+
+      ```bash
+      satute -dir /path/to/iqtree/output/
+      ```
    
 ### **Using a Multiple Sequence Alignment (MSA)**:
    As an alternative, you can provide a multiple sequence alignment (`-msa`) and the path to IQ-TREE (`-iqtree`). Then the best-fit evolutionary model will be identified using Modelfinder (as inmplemented in IQ-Tree) and a maximum likelihood tree will be inferred. IQ-Tree will run only with necessary options. For specific option choices, please run IQ-Tree separately and use the option `-dir` afterwards. Furthermore you are able to secify the tree (`-tree`) and the model of evolution (`-model`) togetheer with the option `-msa`, a typical command could look like: `bash python satute_cli.py -msa ./test/cassius/toyExample.phy -tree ./test/cassius/toyExample.phy.treefile -model GTR+G4 -iqtree iqtree`
 
 | Option | Description  | Example  |
 | ----------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
-| `-dir <directory_path>`                   | Path to the input directory containing IQ-TREE output files. Use this option when you've already run IQ-TREE and want to avoid rerunning it. The directory should contain essential IQ-TREE output files including the .iqtree file, tree file(s), and possibly a .siteprob file. | `-dir /path/to/iqtree/output`    |
+
 | `-tree <tree_file_path>`                  | Path to the input tree file in Newick or Nexus format. This tree will be used as the basis for the saturation analysis.                                                                                                                                                           | `-tree /path/to/treefile.tree`   |
 | `-msa <msa_file_path>`                    | Path to the Multiple Sequence Alignment (MSA) file you wish to analyze. The MSA can be in FASTA, NEXUS, PHYLIP, or TXT format.                                                                                                                                                    | `-msa /path/to/alignment.fasta`  |
 | `-iqtree <iqtree_path>`                   | Specifies the path to the IQ-TREE executable. If IQ-TREE is installed system-wide, just providing the executable name (`iqtree` or `iqtree2`) will suffice. Otherwise, give the complete path.                                                                                    | `-iqtree /usr/local/bin/iqtree2` |
@@ -210,7 +228,7 @@ Each branch includes:
      | Option | Description  |
      | ------------ | ----------------------------------------------------------- |
      | `-ufboot <number_of_replicates>`          | Number of replicates for the ultrafast bootstrap analysis. Typically, a higher number like `1000` or `5000` is used. Ultrafast bootstrap provides rapid approximations to traditional bootstrap values. |
-     | `-boot <number_of_replicates>`            | Number of replicates for traditional bootstrap analysis. This also computes a Maximum Likelihood (ML) tree and a consensus tree. Common values is `100`. |
+     | `-boot <number_of_replicates>`            | Number of replicates for traditional bootstrap analysis. This also computes a Maximum Likelihood (ML) tree and a consensus tree. Common value is `100`. |
      | |  |
 
 2. **Examples:**
