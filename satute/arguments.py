@@ -63,7 +63,7 @@ ARGUMENT_LIST = [
     {
         "flag": "-boot",
         "help": (
-            "Number of replicates for traditional bootstrap analysis. This also computes a Maximum Likelihood (ML) tree and a consensus tree. Common values are `1000` or `5000`."
+            "Number of replicates for traditional bootstrap analysis. This also computes a Maximum Likelihood (ML) tree and a consensus tree. Common values is `100`."
         ),
         "type": int,
         "metavar": "<number_of_replicates>",
