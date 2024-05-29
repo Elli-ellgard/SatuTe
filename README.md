@@ -1,36 +1,91 @@
-# Satute: Branch Saturation Testing Tool
+# Software Manual for Satute
 
-![Figure 1: In the alignment of sequences from different species, each column represents a pattern. For a given tree, branch $\mathbf{AB}$ splits the tree into subtrees $\mathbf{TA}$ and $\mathbf{TB}$, dividing each pattern into subpatterns. These subpatterns are used to compute likelihood vectors $L(\partial \mathbf{A})$ and $L(\partial \mathbf{B})$, and the scalar product $C_1^\partial$. The average scalar product $\hat{C}_1$ is computed, and using its variance and the number of sites, the z-score $Z$ is calculated. Satute uses the z-score to test if branches are informative or saturated, based on a chosen significance level.](./docs/figure_1_2024_05_22-1.png)
+## Table of Contents
 
-## Introduction
+## Potential Errors and Warnings
+1. [Introduction](#1-introduction)
+   - [Overview](#overview)
+   - [Requirements](#requirements)
+   - [Main Workflow](#main-workflow)
+2. [Installation](#2-installation)
+   - [Prerequisites](#prerequisites)
+   - [Using Pipex](#install-satute-using-pipx)
+   - [Verifying the Installation](#verifying-the-installation)
+3. [Getting Started](#getting-started)
+   - [Minimal command-line examples](#minimal-)
+   - [Initial Setup](#initial-setup)
+   - [Satute Output](#satute-output)
+4. [Basic Features](#basic-features)
+   - [How to Perform Common Task 1](#how-to-perform-common-task-1)
+   - [How to Perform Common Task 2](#how-to-perform-common-task-2)
+   - [How to Perform Common Task 3](#how-to-perform-common-task-3)
+5. [Additional Features](#5-additional-features)
+   - [Bootstrap Analysis](#bootstrap-analysis)
+   - [Edge Specification](#edge-specification)
+   - [Category Features](#category-features)
+   - [Ancestral sequence reconstruction](#ancestral-sequence-reconstruction)
+   - [Others](#others)
+6. [Troubleshooting](#6-troubleshooting)
+   - [Potential Errors and Warnings](#potential-errors-and-warnings)
+   - [Invalid Command Combinations](#invalid-commandcombinations)
+   - [Support and Contact Information](#support-and-contact-information)
 
-Satute is a command line tool to detect branch saturation in phylogenetic trees. A branch of a phylogenetic tree is considered saturated if so many mutations occurred that the relationship is no longer distinguishable from no relationship. Traditional measures of reliability like the bootstrap value fail to detect branch saturation, as a saturated branch can be well supported by data but carry no phylogenetic information. Satute implements the saturation test to detect saturated branches after phylogenetic tree reconstruction by IQTree.
-For more details on the statistical test see [the paper](http://www.cibiv.at).
+## 1. Introduction
 
-# Installation
+### Overview
+
+Welcome to the Satute manual. This document provides comprehensive information on how to install, configure, and use Satute effectively.
+
+Satute is a Python-based tool designed to test for branch saturation in phylogenetic analyses. Saturation occurs when multiple substitutions obscure true genetic distances, potentially leading to artifacts and errors. Assessing the reliability of inferred phylogenetic trees and the data they are derived from is crucial in phylogenetic reconstruction. The developed test for branch saturation measures the phylogenetic information shared by subtrees within a phylogeny, enabling the detection of branch saturation. By using Satute, researchers can detect and quantify saturation, thereby making informed decisions about the accuracy and stability of their phylogenetic trees.
+
+### Requirements
+
+The minimal input of Satute is a multiple sequence alignment, a model of sequence evolution with its parameters, and a phylogenetic tree. Satute parses these essential pieces of information from the output of [IQ-TREE](http://www.iqtree.org/), an efficient software for phylogenomic inference . While we strongly recommend running IQ-TREE separately with customised options, Satute can also use an IQ-TREE executable to generate any missing information using default settings.
+
+**Technical Requirements:**
+
+    1. Python: 3.6 or higher
+    2. IQ-Tree: 2.2.2.3 or higher
+
+### Main Workflow
+
+The main function of Satute operates as follows: Given the required input, Satute first calculates the spectral decomposition of the rate matrix and determines the likelihood vectors for each node in the tree. It then performs the test for branch saturation on a user-selected branch or on every branch of the tree, as described in the relevant literature. The program outputs the test results and its components in different CSV files and a Nexus file (see section [Satute Output](#satute-output)).
+
+In cases where a model of rate heterogeneity is used, Satute assigns each site to the rate category with the highest posterior probability. The alignment is then split by Satute. For each category, the test for branch saturation is employed on the rescaled phylogenetic tree given the subalignment.
+
+## 2. Installation
 
 Satute is available as a python package from pypi and can be normally installed via pip.
-We recommend to use [pipx](https://pipx.pypa.io/stable/) to install Satute as a standalone command line tool.
-
-pipx is a tool that allows you to install and run Python applications in isolated environments, ensuring each application and its dependencies are kept separate to avoid conflicts.
-
-### Install Satute using pipx
-
-1. **Install Satute using pipx:**
-   Once pipx is installed, you can use it to install Satute:
-  ```sh
-   pipx install satute
-  ```
-For more detailed instructions and information about pipx, refer to the [official pipx documentation](https://pipxproject.github.io/pipx/).
-
-Using pipx ensures that Satute and its dependencies are installed in an isolated environment, minimizing potential conflicts with other Python packages on your system.
+We recommend to use [pipx](https://pipx.pypa.io/stable/) to install Satute as a standalone command line tool. Using pipx ensures that Satute and its dependencies are installed in an isolated environment, minimizing potential conflicts with other Python packages on your system.
 
 ### Prerequisites
 
-* Python 3.6 or higher
-* `pipx` (Python package installer)
+- Python 3.6 or higher
+- `pipx` (Python package installer)
 
-## Verifying the Installation
+### Install Satute using pipx
+
+1. **Install pipx:**  If you don't have pipx installed, you can install it using pip:
+
+    ```sh
+    pip install pipx
+    ```
+
+    After installation, ensure pipx is set up correctly:
+
+    ```bash
+    pipx ensurepath
+    ```
+
+2. **Install Satute using pipx:**  Once pipx is installed, you can use it to install Satute:
+
+    ```bash
+    pipx install satute
+    ```
+
+For more detailed instructions and information about pipx, refer to the [official pipx documentation](https://pipxproject.github.io/pipx/).
+
+### Verifying the Installation
 
 After the installation is complete, you can verify that Satute has been installed correctly by running the following command:
 
@@ -40,265 +95,171 @@ satute version
 
 You should see the version number of Satute printed on the screen, confirming that the installation was successful.
 
-# Basic Usage
 
-Satute provides several ways to apply the saturation test on a given multiple sequence alignment, tree, and model. The easiest and most recommended approach is to use it directly on a finished IQ-TREE run. For details please go to the official website of IQ-Tree: http://www.iqtree.org/
+## 3. Getting Started
 
-# Usage with a previous IQ-TREE run
+### Using a Directory:
 
-Satute provides several ways to apply the saturation test on a given multiple sequence alignment, tree, and model.
-The easiest and recommended approach is to use [IQ-TREE](http://www.iqtree.org) to reconstruct a phylogeny and execute Satute on its output.
+   If you've previously run IQ-TREE and have a directory with the output files, you can provide the directory using the `-dir` option. This way, Satute will use the existing output without needing to rerun IQ-TREE: `bash python satute_cli.py -dir /path/to/iqtree/output/`
+   
+### **Using a Multiple Sequence Alignment (MSA)**:
+   As an alternative, you can provide a multiple sequence alignment (`-msa`) and the path to IQ-TREE (`-iqtree`). Then the best-fit evolutionary model will be identified using Modelfinder (as inmplemented in IQ-Tree) and a maximum likelihood tree will be inferred. IQ-Tree will run only with necessary options. For specific option choices, please run IQ-Tree separately and use the option `-dir` afterwards. Furthermore you are able to secify the tree (`-tree`) and the model of evolution (`-model`) togetheer with the option `-msa`, a typical command could look like: `bash python satute_cli.py -msa ./test/cassius/toyExample.phy -tree ./test/cassius/toyExample.phy.treefile -model GTR+G4 -iqtree iqtree`
 
-```bash
-satute -dir IQTREE_RESULT_DIR
-```
+| Option | Description  | Example  |
+| ----------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
+| `-dir <directory_path>`                   | Path to the input directory containing IQ-TREE output files. Use this option when you've already run IQ-TREE and want to avoid rerunning it. The directory should contain essential IQ-TREE output files including the .iqtree file, tree file(s), and possibly a .siteprob file. | `-dir /path/to/iqtree/output`    |
+| `-tree <tree_file_path>`                  | Path to the input tree file in Newick or Nexus format. This tree will be used as the basis for the saturation analysis.                                                                                                                                                           | `-tree /path/to/treefile.tree`   |
+| `-msa <msa_file_path>`                    | Path to the Multiple Sequence Alignment (MSA) file you wish to analyze. The MSA can be in FASTA, NEXUS, PHYLIP, or TXT format.                                                                                                                                                    | `-msa /path/to/alignment.fasta`  |
+| `-iqtree <iqtree_path>`                   | Specifies the path to the IQ-TREE executable. If IQ-TREE is installed system-wide, just providing the executable name (`iqtree` or `iqtree2`) will suffice. Otherwise, give the complete path.                                                                                    | `-iqtree /usr/local/bin/iqtree2` |
+| `-model <evolution_model>`                | Indicates the model of sequence evolution. Common models include `GTR`, `HKY`, etc. You can also specify rate heterogeneity and other model extensions, like `+G4` for gamma-distributed rates.                                                                                   | `-model GTR+G4`                  |
+| `-alpha <significance_level>`             | Significance level for the saturation test. A common threshold is `0.05`, indicating a 5% significance level. Lower values make the test more stringent.                                                                                                                          | `-alpha 0.01`                    |
+| `-add_iqtree_options <additional_option>` | Specify additional options for the IQ-Tree run, if necessary.                                                                                                                                                                                                                     | `-add_iqtree_options "-nt AUTO"` |
 
-An example is provided in `examples/example_data_dna_iqtree_run/` which can be analyzed via
+## 5. Additional Features
 
-```bash
-satute -dir examples/example_data_dna_iqtree_run/
-```
+### Bootstrap Analysis
 
-If IQ-TREE was executed with a model with rate heterogeneity, but without the `-wspr` option, IQ-TREE will not generate the `.siteprob` file. This file is necessary to run Satute and we suggest rerunning IQ-TREE with the `-wspr` option.
+1. **Satute options:**
 
-* `satute.csv`
-* `satute.components.csv`
-* `satute.nex`
+     | Option | Description  |
+     | ------------ | ----------------------------------------------------------- |
+     | `-ufboot <number_of_replicates>`          | Number of replicates for the ultrafast bootstrap analysis. Typically, a higher number like `1000` or `5000` is used. Ultrafast bootstrap provides rapid approximations to traditional bootstrap values. |
+     | `-boot <number_of_replicates>`            | Number of replicates for traditional bootstrap analysis. This also computes a Maximum Likelihood (ML) tree and a consensus tree. Common values is `100`. |
+     | |  |
 
-If a specific rate category is defined by the model, these three files will be created for each rate category:
+2. **Examples:**
 
-* `satute.<rate_category>.csv`
-* `satute.<rate_category>.components.csv`
-* `satute.<rate_category>.nex`
-
-## satute.log
-
-The `satute.log` file provides a comprehensive record of the steps and processes performed by the Satute tool during its execution. It includes details on the initialization and configuration, the substitution model used, spectral decomposition results, and the analysis execution. Additionally, it logs the writing of results to various output files and provides a summary of the number of sites corresponding to each rate category, ensuring a transparent and traceable analysis process.
-## satute.csv file
-
-In the satute.csv file one will find, for each edge the columns:
-
-### Table Headers and Description
-
-| Column Name                  | Description                                                    |
-| ---------------------------- | -------------------------------------------------------------- |
-| edge                         | The branch or edge in the tree being analyzed                  |
-| coefficient_value            | The value of the coefficient calculated for the edge           |
-| standard_error_of_mean       | The standard error of the mean for the coefficient             |
-| test_statistic               | The test statistic value used to evaluate the edge             |
-| p_value                      | The p-value indicating the significance of the test statistic  |
-| z_alpha                      | The z-value corresponding to the alpha level for the test      |
-| decision_test                | The decision based on the test statistic (e.g., Informative)   |
-| z_alpha_corrected            | The corrected z-value considering multiple testing corrections |
-| decision_corrected_test      | The decision based on the corrected z-value                    |
-| decision_corrected_test_tips | The decision based on the corrected test for tips              |
-| decision_test_tip2tip        | The decision based on the test for tip-to-tip comparisons      |
-| branch_length                | The length of the branch or edge in the tree                   |
-| number_of_sites              | The number of sites in the alignment associated with the edge  |
-| rate_category                | The rate category for which the analysis was performed         |
-
-## satute.components file
-
-### Components File Description
-
-| Column Name     | Description                                                       |
-| --------------- | ----------------------------------------------------------------- |
-| Edge            | The branch or edge in the tree being analyzed                     |
-| coefficient     | The coefficient value for the site in the specified rate category |
-| sample_variance | The variance of the coefficient for the site                      |
-| rate            | The rate category                                                 |
-| site            | The specific site in the alignment being analyzed                 |
-
-### Description
-
-The components file contains the variance and the coherence values for each site in the alignment for a specific edge in the tree. Each row represents a site with its corresponding coefficient, variance, and rate category for the edge "(t7, Node1*)".
-
-## .satute.nex file
-
-### Description of the NEXUS File
-
-The NEXUS file contains two main sections: `TAXA` and `TREES`.
-
-#### TAXA Section
-
-Lists the 7 taxa included in the analysis:
-
-```
-#NEXUS
-BEGIN TAXA;
-    DIMENSIONS NTAX=7;
-     TAXLABELS
-        t7
-        t3
-        t2
-        t5
-        t6
-        t1
-        t4
-    ;
-END;
-
-BEGIN TREES;
-Tree tree1 = (t7:3.01328e-06,(((t3:1.55499,(t2:1.77629,t5:2.76104e-06)Node5*:0.377782[&p_value=0.0344,decision_test=Informative,decision_corrected_test_tips=Saturated])Node4*:0.368276,t6:2.16996e-06)Node3*:1.23617,t1:2.22639e-06)Node2*:1.05052,t4:1.85109)Node1*:0;
-END;
-```
-
-Each branch includes:
-
-* Decisions based on the test p-value(e.g., Informative, Saturated).
-
-## Advanced Usage
-
-1. **Using a Multiple Sequence Alignment (MSA)**:
-As an alternative, Satute can run IQ-TREE on a multiple sequence alignment (msa), provided via the `-msa` command line option.
-
-   **Specifying without a model**:
-
-   ```bash
-   satute -msa ./test/cassius/toyExample.phy -iqtree iqtree
-   ```
-
-   An example MSA is provided in `examples/example_data_msa/msa.phy` which can be analyzed via
-
-   **Specifying a model**:
-
-   ```bash
-   satute -msa ./test/cassius/toyExample.phy -model GTR+G4 -iqtree iqtree
-   ```
-
-    **Specifying a Tree**:
-  
-    You can also specify a tree file via `-tree` along with the multiple sequence alignment via `-msa`, in which case a model must be specified via `-model`. IQ-TREE will then only be used to (re-)estimate the branch lengths.
+    Ultrafast bootstrap analysis can be run using the `-ufboot` option:
 
     ```bash
-    satute -msa examples/example_data_msa/msa.phy -tree examples/example_data_msa/example.treefile -model GTR+G4
+    satute -msa ./test/cassius/toyExample.phy -model GTR+G4 -ufboot 1000
     ```
 
-### Fixing Branch lengths
+    Traditional bootstrap analysis can be performed using the `-boot` option:
 
-  However, without specifying a model (`-model`), this will lead to an error. Ensure that the model is specified when providing a tree file. Additionally, note that branch lengths will be reestimated during the analysis. If you want to fix the branch lengths, you need to add the `-blfix` option using the `-add_iqtree_options` flag. Below are example commands:
+    ```bash
+    satute -msa ./test/cassius/toyExample.phy -model GTR+G4 -boot 100
+    ```
 
-  **Example fixing branch lengths**:
+### Edge Specification
 
-```bash
-satute -msa ./test/cassius/toyExample.phy -tree ./test/cassius/toyExample.phy.treefile -model GTR+G4 -iqtree iqtree -add_iqtree_options "-blfix"
-```
+1. **Satute options:**
 
-### Adding IQ-TREE options via `-add_iqtree_options`
+     | Option | Description  |
+     | ------------ | ----------------------------------------------------------- |
+     | `-edge <edge_name>`                       | Specify a branch or edge name to focus the analysis on. Useful when you want to check saturation on a specific branch.|
+     | |  |
 
-The `-add_iqtree_options` flag allows you to specify additional options for the IQ-TREE run if necessary. This provides flexibility to customize the IQ-TREE execution by including specific commands that are not covered by the predefined arguments. You can use multiple additional options with this flag, particularly in scenarios where you are using the MSA option alone, the MSA option combined with a model, or the MSA option combined with both a tree and a model.
-
-Here are some examples of how you can use this flag:
-
-#### Write alignment site statistics
-
-```sh
-satute -msa /path/to/alignment.fasta -add_iqtree_options "-alninfo"
-```
-
-This command will write alignment site statistics to a `.alninfo` file.
-This command will fix branch lengths of the tree passed via `-tree` or `-te`.
-
-**Using MSA with a tree and a model**:
+2. **Example:**
   
-  ```sh
-  satute -msa /path/to/alignment.fasta -tree /path/to/treefile.tree -model HKY -add_iqtree_options "-blmin 0.00001 -blmax 5"
-  ```
+    If you want to focus the analysis on a specific branch or edge, use the `-edge` option:
 
-#### Specifying minimal and maximal branch lengths
+    ```bash
+    satute -msa ./test/cassius/toyExample.phy -model GTR+G4 -edge "(Node1*, Node2*)"
+    ```
 
-```sh
-satute -msa /path/to/alignment.fasta -tree /path/to/treefile.tree -model HKY -add_iqtree_options "-blmin 0.00001 -blmax 5"
-```
+### Category Features
 
-In this command, several options are used:
+1. **Satute options:**
 
-* `-blmin`: Specifies the minimum branch length (default is the smaller of 0.000001 and 0.1/alignment_length).
+     | Option | Description  |
+     | ------------ | ----------------------------------------------------------- |
+     | `-category <rate_category>`               | Rate categories of interest. Relevant for models with gamma-distributed rate variations or FreeRate model. If the `-model` option includes rate variation (e.g., `+G4`), the `-category` should be a number between 1 and 4.|
+     | `-category_assignment`                    | Write assignment of the individual sites to the rate heterogeneity categories.|
+     | |  |
 
-* `-blmax`: Specifies the maximum branch length (default is 10).
+2. **Example:**
 
-## Specifying an Edge for Analysis**
-  
-  If you want to focus the analysis on a specific branch or edge, use the `-edge` option:
+     ....
 
-  ```bash
-   satute -msa ./test/cassius/toyExample.phy -model GTR+G4 -edge "(Node1*, Node2*)"
-  ```
-  
-## Useage of -asr option
 
-The `-asr` option in Satute allows users to write ancestral sequences for all nodes of the tree to a `.asr.csv` file using the empirical Bayesian method. The `.asr.csv` file contains the posterior distributions of ancestral sequences for both the left and right nodes of the split trees at each edge. This feature is useful to gain more insight into the likelihoods of nodes that are separated by the edge being analyzed.
 
-**Example Usage:**
+### Ancestral sequence reconstruction
 
-```bash
-satute -msa /path/to/alignment.fasta -model GTR+G4 -iqtree /usr/local/bin/iqtree2 -asr
-```
+1. **Satute options:**
 
-In this example, Satute will perform the analysis on the given multiple sequence alignment (`alignment.fasta`) using the specified evolutionary model (`GTR+G4`) and the IQ-TREE executable (`/usr/local/bin/iqtree2`). The ancestral sequences will be inferred and saved to a `.asr.csv` file.
+     | Option | Description  |
+     | ------------ | ----------------------------------------------------------- |
+     | `-asr`                                    | Write ancestral sequences (by empirical Bayesian method) for all nodes of the tree to a .asr.csv file. |
+     | |  |
 
-### Insights into `.asr.csv` Data Rows
+2. **Example:**
 
-The `.asr.csv` file contains the posterior distributions of ancestral sequences for both the left and right nodes of the split trees at each edge. The columns in the file are:
 
-| Column Name  | Description                                                             |
-| ------------ | ----------------------------------------------------------------------- |
-| `pA_left`    | Probability of nucleotide A in the left subtree at the specified site.  |
-| `pC_left`    | Probability of nucleotide C in the left subtree at the specified site.  |
-| `pG_left`    | Probability of nucleotide G in the left subtree at the specified site.  |
-| `pT_left`    | Probability of nucleotide T in the left subtree at the specified site.  |
-| `Node_left`  | Name of the node in the left subtree.                                   |
-| `pA_right`   | Probability of nucleotide A in the right subtree at the specified site. |
-| `pC_right`   | Probability of nucleotide C in the right subtree at the specified site. |
-| `pG_right`   | Probability of nucleotide G in the right subtree at the specified site. |
-| `pT_right`   | Probability of nucleotide T in the right subtree at the specified site. |
-| `Node_right` | Name of the node in the right subtree.                                  |
-| `Site`       | Site number in the alignment.                                           |
-| `Edge`       | Edge in the phylogenetic tree that splits the left and right subtrees.  |
+    The `-asr` option in Satute allows users to write ancestral sequences for all nodes of the tree to a `.asr.csv` file using the empirical Bayesian method. The `.asr.csv` file contains the posterior distributions of ancestral sequences for both the left and right nodes of the split trees at each edge. This feature is useful to gain more insight into the likelihoods of nodes that are separated by the edge being analyzed:
 
-These columns represent the posterior distributions for the nodes on both sides of each edge in the phylogenetic tree. The probabilities are calculated for each site in the alignment, providing a detailed view of the ancestral sequence distributions at every edge split.
+    ```bash
+    satute -msa /path/to/alignment.fasta -model GTR+G4 -iqtree /usr/local/bin/iqtree2 -asr
+    ```
 
-## Potential Errors and Warnings
+    In this example, Satute will perform the analysis on the given multiple sequence alignment (`alignment.fasta`) using the specified evolutionary model (`GTR+G4`) and the IQ-TREE executable (`/usr/local/bin/iqtree2`). The ancestral sequences will be inferred and saved to a `.asr.csv` file.
 
-### InvalidDirectoryError
+3. **Result file `.asr.csv`:**
 
-Thrown when the provided directory either does not exist or is empty. Ensure the directory path is correct and contains necessary IQ-TREE output files.
+    The `.asr.csv` file contains the posterior distributions of ancestral sequences for both the left and right nodes of the split trees at each edge. The columns in the file are:
 
-### NoAlignmentFileError
+    | Column Name  | Description                                                             |
+    | ------------ | ----------------------------------------------------------------------- |
+    | `pA_left`    | Probability of nucleotide A in the left subtree at the specified site.  |
+    | `pC_left`    | Probability of nucleotide C in the left subtree at the specified site.  |
+    | `pG_left`    | Probability of nucleotide G in the left subtree at the specified site.  |
+    | `pT_left`    | Probability of nucleotide T in the left subtree at the specified site.  |
+    | `Node_left`  | Name of the node in the left subtree.                                   |
+    | `pA_right`   | Probability of nucleotide A in the right subtree at the specified site. |
+    | `pC_right`   | Probability of nucleotide C in the right subtree at the specified site. |
+    | `pG_right`   | Probability of nucleotide G in the right subtree at the specified site. |
+    | `pT_right`   | Probability of nucleotide T in the right subtree at the specified site. |
+    | `Node_right` | Name of the node in the right subtree.                                  |
+    | `Site`       | Site number in the alignment.                                           |
+    | `Edge`       | Edge in the phylogenetic tree that splits the left and right subtrees.  |
+    |||
 
-Indicates that no multiple sequence alignment file was found in the specified directory. Ensure your directory contains the MSA file.
+    These columns represent the posterior distributions for the nodes on both sides of each edge in the phylogenetic tree. The probabilities are calculated for each site in the alignment, providing a detailed view of the ancestral sequence distributions at every edge split.
 
-### ValueError
+### Others
 
-Can occur in multiple scenarios:
+1. **Satute options:**
 
-* If only the `-msa` and `-tree` options are used without specifying a model.
+     | Option | Description  |
+     | ------------ | ----------------------------------------------------------- |
+     | `-output_suffix <output_suffix>`          | Specify a suffix for the output file.  |
+     | `-verbose`                                | Enable verbose logging.| 
+     | |  |
 
-## Invalid Command Combinations
+2. **Example:**
+
+     ....
+
+
+## 6. Troubleshooting
+
+### Potential Errors and Warnings
+
+1. **InvalidDirectoryError:**
+
+    Thrown when the provided directory either does not exist or is empty. Ensure the directory path is correct and contains necessary IQ-TREE output files.
+
+2. **NoAlignmentFileError:**
+
+    Indicates that no multiple sequence alignment file was found in the specified directory. Ensure your directory contains the MSA file.
+
+3. **ValueError:**
+
+    Can occur in multiple scenarios:
+    - If only the `-msa` and `-tree` options are used without specifying a model.
+
+### Invalid Command Combinations
 
 Certain combinations of command-line arguments are invalid:
 
 1. **Directory with Model, MSA, Tree, Ufboot, Boot**: Providing an input directory with `-dir` shouldn't be combined with specifying a msa, a model, a tree, ufboot or boot option.
+
 2. **Model and Tree without MSA**: Just providing the `-model` and `-tree` without a msa (`-msa`) is insufficient.
 3. **MSA+Model+Tree with ufboot or boot option**: In the msa+model+tree mode, the inference is not re-done again, such that no ufboot and boot values can be determined.
+
 4. **Edge without MSA or DIR**: The `-edge` option, used to focus the analysis on a specific branch, requires the `-msa` option or `-dir` option.
 
-### Command Line Arguments
 
-| Argument                                  | Description                                                                                                                                                                                                                                                                       | Example                          |
-| ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
-| `-dir`                   | Path to the input directory containing IQ-TREE output files. Use this option when you've already run IQ-TREE and want to avoid rerunning it. The directory should contain essential IQ-TREE output files including the .iqtree file, tree file(s), and possibly a .siteprob file. | `-dir /path/to/iqtree/output`    |
-| `-tree`                  | Path to the input tree file in Newick or Nexus format. This tree will be used as the basis for the saturation analysis.                                                                                                                                                           | `-tree /path/to/treefile.tree`   |
-| `-msa`                    | Path to the Multiple Sequence Alignment (MSA) file you wish to analyze. The MSA can be in FASTA, NEXUS, PHYLIP, or TXT format.                                                                                                                                                    | `-msa /path/to/alignment.fasta`  |
-| `-iqtree`                   | Specifies the path to the IQ-TREE executable. If IQ-TREE is installed system-wide, just providing the executable name (`iqtree` or `iqtree2`) will suffice. Otherwise, give the complete path.                                                                                    | `-iqtree /usr/local/bin/iqtree2` |
-| `-model`                | Indicates the model of sequence evolution. Common models include `GTR`, `HKY`, etc. You can also specify rate heterogeneity and other model extensions, like `+G4` for gamma-distributed rates.                                                                                   | `-model GTR+G4`                  |
-| `-category`               | Rate categories of interest. Relevant for models with gamma-distributed rate variations or FreeRate model. If the `-model` option includes rate variation (e.g., `+G4`), the `-category` should be a number between 1 and 4.                                                      | `-category 4`                    |
-| `-ufboot`          | Number of replicates for the ultrafast bootstrap analysis. Typically, a higher number like `1000` or `5000` is used. Ultrafast bootstrap provides rapid approximations to traditional bootstrap values.                                                                           | `-ufboot 1000`                   |
-| `-boot`            | Number of replicates for traditional bootstrap analysis. This also computes a Maximum Likelihood (ML) tree and a consensus tree. Common values are `1000` or `5000`.                                                                                                              | `-boot 1000`                     |
-| `-alpha`             | Significance level for the saturation test. A common threshold is `0.05`, indicating a 5% significance level. Lower values make the test more stringent.                                                                                                                          | `-alpha 0.01`                    |
-| `-edge`                       | Specify a branch or edge name to focus the analysis on. Useful when you want to check saturation on a specific branch.                                                                                                                                                            | `-edge branch1`                  |
-| `-output_suffix`          | Specify a suffix for the output file.                                                                                                                                                                                                                                             | `-output_suffix _analysis`       |
-| `-add_iqtree_options` | Specify additional options for the IQ-Tree run, if necessary.                                                                                                                                                                                                                     | `-add_iqtree_options "-nt AUTO"` |
-| `-asr`                                    | Write ancestral sequences (by empirical Bayesian method) for all nodes of the tree to a .asr.csv file.                                                                                                                                                                            | `-asr`                           |
-| `-category_assignment`                    | Write assignment of the individual sites to the rate heterogeneity categories.                                                                                                                                                                                                    | `-category_assignment`           |
-| `-verbose`                                | Enable verbose logging.                                                                                                                                                                                                                                                           | `-verbose`                       |
+### Support and Contact Information
+
+......
