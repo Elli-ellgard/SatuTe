@@ -1,0 +1,18 @@
+tree-abl0.1-bbl0.1-cbl3.5_-_A8+B8_-_1500bp_-_JC
+-----------------------------------------------
+
+Trees with two subtrees of 8 taxa each, named A1... A8, B1... B8.
+The branches inside the subtrees are set to 0.1.
+
+The internal branch linking the subtrees is set to 
+3.5 (substitutions per site.
+
+The DNA alignments of length 1500bp were simulated 
+using seq-gen under the JC+G model with a 
+continuous Gamma distribution using alpha=0.8.
+
+The file simtree.tree contain the trees in phylip format, 
+used for the simulation. (same for all alignments)
+The file simtree-labelled.tree contain the the same 
+topologies, but the inner nodes are labelled with "Node1*" etc.
+
