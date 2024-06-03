@@ -81,27 +81,6 @@ def parse_category_rates(log_file, number_rates):
 
 """ ## HANDLE ALIGNMENTS  """
 
-
-def filter_alignment_by_ids(alignment, ids):
-    """
-    Filter a MultipleSeqAlignment object to include only sequences with specific IDs.
-
-    Parameters:
-    alignment (MultipleSeqAlignment): The alignment to filter.
-    ids (list of str): The IDs of the sequences to include.
-
-    Returns:
-    MultipleSeqAlignment: The filtered alignment.
-    """
-
-    # Filter the alignment
-    filtered_alignment = MultipleSeqAlignment(
-        [record for record in alignment if record.id in ids]
-    )
-
-    return filtered_alignment
-
-
 def guess_alignment_format(file_name) -> str:
     with open(file_name, "r") as f:
         first_line = f.readline().strip()

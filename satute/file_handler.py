@@ -51,7 +51,7 @@ class FileHandler:
         """
         return os.path.exists(filepath)
 
-    def read_file(self, filepath):
+    def read_file(self, filepath)-> list[str]:
         """
         Read the contents of a file.
 
@@ -73,7 +73,7 @@ class FileHandler:
             raise ValueError(f"The file at path {filepath} is empty.")
         # Open and read the file, then return its contents
         with open(filepath, "r") as file:
-            return file.read()
+            return file.readlines()
 
     def write_to_file(self, filepath, content):
         """
@@ -102,20 +102,7 @@ class FileHandler:
         - ValueError: If the IQ-TREE file is empty or does not contain a valid Newick format string.
         """
         iq_tree_file = f"{path}.iqtree"
-
-        # Check if file exists
-        if not self.file_exists(iq_tree_file):
-            raise FileNotFoundError(
-                f"The IQ-TREE file at path {iq_tree_file} does not exist."
-            )
-
-        # Check if file is empty
-        if os.path.getsize(iq_tree_file) == 0:
-            raise ValueError(f"The IQ-TREE file at path {iq_tree_file} is empty.")
-
-        newick_string = ""
-        with open(iq_tree_file, "r") as f:
-            lines = f.readlines()
+        lines = self.read_file(iq_tree_file)        
 
         # Instead of iterating through every line, we'll use a more Pythonic approach to find the desired line
         # This should help to slightly optimize the function.
@@ -271,73 +258,10 @@ class IqTreeHandler:
         except subprocess.CalledProcessError as e:
             print(f"IQ-TREE execution failed with the following error: {e}")
 
-    def get_iqtree_version(self, path=None):
-        """
-        Get the version of iqtree installed on the system.
-
-        Args:
-        - path (str, optional): Path to the iqtree executable. If not provided, will search for 'iqtree' or 'iqtree2' in the system PATH.
-
-        Returns:
-        - tuple: Version of iqtree and the path to the executable.
-
-        Raises:
-        - Exception: If iqtree is not found or any other error occurs.
-        """
-
-        if path:
-            # Try to execute the given path
-            try:
-                result = subprocess.run(
-                    [path, "-h"], capture_output=True, text=True, check=True
-                )
-                first_line = result.stdout.splitlines()[0]
-                if "version" in first_line.lower():
-                    version = first_line.split()[-1]
-                    return version, os.path.abspath(path)
-                else:
-                    raise Exception(
-                        "Version information not found in the iqtree output from the provided path."
-                    )
-            except FileNotFoundError:
-                raise Exception(
-                    f"The given path '{path}' does not point to a valid iqtree executable."
-                )
-            except subprocess.CalledProcessError:
-                raise Exception(
-                    f"Error while trying to execute iqtree at the given path '{path}'."
-                )
-
-        # If no path is provided, check default executables
-        executables = ["iqtree", "iqtree2"]
-
-        for exe in executables:
-            try:
-                result = subprocess.run(
-                    [exe, "-h"], capture_output=True, text=True, check=True
-                )
-                if result.stdout:
-                    first_line = result.stdout.splitlines()[0]
-                    if "version" in first_line.lower():
-                        version = first_line.split()[-1]
-                        return version, os.path.abspath(exe)
-                    else:
-                        continue
-                else:
-                    continue
-
-            except (FileNotFoundError, subprocess.CalledProcessError):
-                continue
-
-        raise Exception(
-            "iqtree or iqtree2 is not installed or not found in the system PATH."
-        )
 
     def check_iqtree_path(self, iqtree_path):
         """Check if the given IQ-TREE path exists and raise an exception if it doesn't."""
-        if os.path.exists(iqtree_path) and os.path.isfile(iqtree_path):
-            return True
-        elif shutil.which(iqtree_path):
+        if os.path.exists(iqtree_path) and os.path.isfile(iqtree_path) or shutil.which(iqtree_path):
             return True
         else:
             raise IqTreeNotFoundError(f"IQ-TREE does not exist at {iqtree_path}")

@@ -203,12 +203,6 @@ def collapse_identical_leaf_sequences(
     # Return the updated multiple sequence alignment and collapsed nodes dictionary
     return multiple_sequence_alignment, collapsed_nodes_dict
 
-
-def has_only_leaf_children(node) -> bool:
-    # Check if all children of the node are leaves
-    return any(child.is_leaf() for child in node.children)
-
-
 def delete_children_nodes(
     node: Tree, collapsed_nodes_info: Dict[str, List[str]]
 ) -> Dict:
@@ -260,24 +254,3 @@ def delete_children_nodes(
 
     return collapsed_nodes_info
 
-
-if __name__ == "__main__":
-    tree = Tree("(((A:0.1,B:0.1):0.1,AB:1),(C:0.2,D:0.1,E:0.1):1);")
-
-    multiple_sequence_alignment = {
-        "A": "CATGC",
-        "B": "CATGC",
-        "AB": "CATGC",
-        "AE": "CATGC",
-        "C": "ATGT",
-        "D": "ATGC",
-        "E": "ATGC",
-    }
-
-    rename_internal_nodes_pre_order(tree)
-
-    print_tree_with_inner_node_names(tree)
-
-    collapse_identical_leaf_sequences(tree, multiple_sequence_alignment)
-
-    print_tree_with_inner_node_names(tree)

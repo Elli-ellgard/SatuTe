@@ -2,7 +2,7 @@
 
 import re
 import numpy as np
-from typing import Dict, List
+from typing import List
 
 AMINO_ACID_MODELS = [
     "BLOSUM62",  # BLOcks SUbstitution Matrix (Henikoff and Henikoff, 1992)

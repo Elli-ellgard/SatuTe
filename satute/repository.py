@@ -819,10 +819,3 @@ def valid_stationary_distribution(frequencies: Dict[str, float]) -> Dict[str, fl
             frequencies[key] /= sum_freqs
         return frequencies
 
-
-
-
-
-if __name__ == "__main__":
-    iq_tree_parser = IqTreeParser("./test/amino_acids/alignment_aa.phy.iqtree")
-    substitution_model = iq_tree_parser.load_substitution_model()

@@ -13,8 +13,8 @@ def spectral_decomposition(rate_matrix, psi_matrix) -> tuple[np.array, np.array,
     M = M @ scipy.linalg.fractional_matrix_power(psi_matrix, -1 / 2)
 
     """ Schur decomposition of matrix M"""
-    lambMatrix, w = scipy.linalg.schur(M)  # Compute the eigenvalues and eigenvectors.
-    lamb = np.diagonal(lambMatrix)
+    lamb_matrix, w = scipy.linalg.schur(M)  # Compute the eigenvalues and eigenvectors.
+    lamb = np.diagonal(lamb_matrix)
     # lamb, w = np.linalg.eig(M)  # Compute the eigenvalues and eigenvectors.
     idx = lamb.argsort()[::-1]  # Order from small to large.
     lamb = lamb[idx]  # Order the eigenvalues according to idx.
