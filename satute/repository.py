@@ -4,9 +4,9 @@ import numpy as np
 import pandas as pd
 import re
 from enum import Enum
-from typing import List
+from typing import List, Dict
 
-from satute.amino_acid_models import get_aa_state_frequency_substitution_models
+from satute.amino_acid_models import get_aa_state_frequency_substitution_models, normalize_stationary_distribution_aa
 from satute.dna_model import NOT_ACCEPTED_DNA_MODELS
 from satute.amino_acid_models import (
     AMINO_ACID_RATE_MATRIX,
@@ -132,6 +132,7 @@ class IqTreeParser:
             state_frequencies, phi_matrix = get_aa_state_frequency_substitution_models(
                 current_substitution_model
             )
+            state_frequencies = normalize_stationary_distribution_aa(state_frequencies)
             rate_matrix = self.get_aa_rate_matrix(current_substitution_model)
 
         number_rates = self.parse_number_rate_categories()
@@ -807,17 +808,19 @@ def parse_file_to_data_frame(file_path) -> pd.DataFrame:
         raise Exception(f"File not found: {file_path}")
 
 
-def valid_stationary_distribution(frequencies: List[float]) -> List[float]:
+def valid_stationary_distribution(frequencies: Dict[str, float]) -> Dict[str, float]:
     sum_freqs = sum(frequencies.values())
     if sum_freqs == 1:
         # Valid stationary distribution
         return frequencies
     else:
-        # Update frequencies dictionary with new values
-        keys = list(frequencies.keys())
-        for i in range(len(keys)):
-            frequencies[keys[i]] /= sum_freqs
+        # Normalize frequencies dictionary with new values
+        for key in frequencies:
+            frequencies[key] /= sum_freqs
         return frequencies
+
+
+
 
 
 if __name__ == "__main__":

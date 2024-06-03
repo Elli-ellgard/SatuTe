@@ -2,6 +2,7 @@
 
 import re
 import numpy as np
+from typing import Dict, List
 
 AMINO_ACID_MODELS = [
     "BLOSUM62",  # BLOcks SUbstitution Matrix (Henikoff and Henikoff, 1992)
@@ -1560,6 +1561,16 @@ def create_rate_matrix_with_input(matrix_size, input_string: str, eq):
         rate_matrix[i][i] = -np.sum(rate_matrix[i])
 
     return np.array(rate_matrix)
+
+
+def normalize_stationary_distribution_aa(frequencies: List[float]) -> List[float]:
+    sum_freqs = sum(frequencies)
+    if sum_freqs == 1:
+        # Valid stationary distribution
+        return frequencies
+    else:
+        # Normalize frequencies list with new values
+        return [freq / sum_freqs for freq in frequencies]
 
 
 def print_matrix(matrix, f):
