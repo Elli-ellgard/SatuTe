@@ -73,13 +73,13 @@ def write_components(
     file_name = construct_file_name(msa_file, output_suffix, rate, alpha, edge)
     components_frame = components.to_dataframe()
 
-    components_frame["rate"] = rate
+    components_frame["rate_category"] = rate
 
     # Repeat the site_indices for each row in the DataFrame based on the identifier
     # Assuming every row/component should have an associated site index
     expanded_site_indices = []
 
-    for identifier in components_frame["Edge"].unique():
+    for identifier in components_frame["edge"].unique():
         expanded_site_indices.extend(site_indices)
 
     # Check to ensure the expanded list matches the DataFrame's length
@@ -550,15 +550,15 @@ def calculate_and_write_posterior_probabilities(
             dimension, state_frequencies, right_partial_likelihood
         )
 
-        left_posterior_probabilities["Node"] = left_partial_likelihood["Node"]
+        left_posterior_probabilities["node"] = left_partial_likelihood["Node"]
 
-        right_posterior_probabilities["Site"] = [
+        right_posterior_probabilities["site"] = [
             categorized_sites[i] for i in right_partial_likelihood["Site"]
         ]
 
-        right_posterior_probabilities["Node"] = right_partial_likelihood["Node"]
+        right_posterior_probabilities["node"] = right_partial_likelihood["Node"]
 
-        right_posterior_probabilities["Edge"] = edge
+        right_posterior_probabilities["edge"] = edge
 
         # Map numerical indices to state names and add side suffix
         state_columns_left = {i: "p" + state for i, state in enumerate(states)}
@@ -576,7 +576,7 @@ def calculate_and_write_posterior_probabilities(
         )
 
         # Ensure 'Site', 'Node', and 'Edge' columns are not suffixed
-        for col in ["Site", "Edge"]:
+        for col in ["site", "edge"]:
 
             if col + "_left" in left_posterior_probabilities.columns:
 
