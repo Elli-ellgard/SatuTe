@@ -63,7 +63,7 @@ ARGUMENT_LIST = [
     {
         "flag": "-boot",
         "help": (
-            "Number of replicates for traditional bootstrap analysis. This also computes a Maximum Likelihood (ML) tree and a consensus tree. Common values is `100`."
+            "Number of replicates for traditional bootstrap analysis. This also computes a Maximum Likelihood (ML) tree and a consensus tree. Common value is `100`."
         ),
         "type": int,
         "metavar": "<number_of_replicates>",
@@ -71,7 +71,7 @@ ARGUMENT_LIST = [
     {
         "flag": "-alpha",
         "help": (
-            "Significance level for the saturation test. A common threshold is `0.05`, indicating a 5% significance level. Lower values make the test more stringent."
+            "Significance level for the saturation test. The default level is `0.05`, indicating a 5% significance level. Lower values make the test more stringent."
         ),
         "type": valid_alpha,
         "default": 0.05,
