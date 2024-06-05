@@ -497,14 +497,16 @@ def write_alignment_and_indices(
     """
     try:
         for rate in per_rate_category_alignment.keys():
-            file_path = f"{msa_file.resolve()}.{rate}.phy.rate.indices"
-            with open(file_path, "w") as file:
-                if rate in per_rate_category_alignment and rate in categorized_sites:
-                    if per_rate_category_alignment[rate].get_alignment_length() == 0:
-                        continue
-                    # Convert MultipleSeqAlignment to string in FASTA format
-                    AlignIO.write(per_rate_category_alignment[rate], file, "phylip")
-                    file.write(",".join([str(i) for i in categorized_sites[rate]]))
+            if rate in per_rate_category_alignment and rate in categorized_sites:
+                if per_rate_category_alignment[rate].get_alignment_length() == 0:
+                    continue
+                else:
+                    file_path = f"{msa_file.resolve()}.{rate}.fasta.rate.indices"
+                    with open(file_path, "w") as file:
+                        # Convert MultipleSeqAlignment to string in FASTA format
+                        AlignIO.write(per_rate_category_alignment[rate], file, "fasta")
+                        file.write("Indices:")
+                        file.write(",".join([str(i) for i in categorized_sites[rate]]))
     except TypeError as e:
         print(f"TypeError: {e}")
     except IOError as e:

@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-
-
 import os
 import argparse
+import sys
 from pathlib import Path
+
 
 def valid_directory(path: Path):
     """
@@ -88,8 +88,8 @@ def valid_alpha(alpha: float):
     - argparse.ArgumentTypeError: If the provided path is not a file.
     """
     alpha = float(alpha)
-    if 0 > alpha and alpha >= 1:
-        raise argparse.ArgumentTypeError(f"{alpha} is not a valid file")
+    if 0 > alpha or alpha >= 1:
+        raise argparse.ArgumentTypeError(f"The set alpha value of {alpha} is not valid")
     return alpha
 
 

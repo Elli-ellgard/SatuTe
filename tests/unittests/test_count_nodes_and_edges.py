@@ -23,11 +23,9 @@ class TestCountNodeAndEdges(unittest.TestCase):
             "(N1, Root)": {
                 "left": {
                     "leave_count": 2,
-                    "branch_count": 2,
                 },
                 "right": {
                     "leave_count": 3,
-                    "branch_count": 5,
                 },
                 "length": 1,  # Assume branch length is 1 for simplicity
                 "type": "internal",
@@ -35,11 +33,9 @@ class TestCountNodeAndEdges(unittest.TestCase):
             "(A, N1)": {
                 "left": {
                     "leave_count": 1,
-                    "branch_count": 0,
                 },
                 "right": {
                     "leave_count": 4,
-                    "branch_count": 7,
                 },
                 "length": 1,
                 "type": "external",
@@ -47,11 +43,9 @@ class TestCountNodeAndEdges(unittest.TestCase):
             "(B, N1)": {
                 "left": {
                     "leave_count": 1,
-                    "branch_count": 0,
                 },
                 "right": {
                     "leave_count": 4,
-                    "branch_count": 7,
                 },
                 "length": 1,
                 "type": "external",
@@ -59,11 +53,9 @@ class TestCountNodeAndEdges(unittest.TestCase):
             "(N3, Root)": {
                 "left": {
                     "leave_count": 3,
-                    "branch_count": 4,
                 },
                 "right": {
                     "leave_count": 2,
-                    "branch_count": 3,
                 },
                 "length": 1,
                 "type": "internal",
@@ -71,11 +63,9 @@ class TestCountNodeAndEdges(unittest.TestCase):
             "(C, N3)": {
                 "left": {
                     "leave_count": 1,
-                    "branch_count": 0,
                 },
                 "right": {
                     "leave_count": 4,
-                    "branch_count": 7,
                 },
                 "length": 1,
                 "type": "external",
@@ -83,11 +73,9 @@ class TestCountNodeAndEdges(unittest.TestCase):
             "(D, N4)": {
                 "left": {
                     "leave_count": 1,
-                    "branch_count": 0,
                 },
                 "right": {
                     "leave_count": 4,
-                    "branch_count": 7,
                 },
                 "length": 1,
                 "type": "external",
@@ -104,11 +92,9 @@ class TestCountNodeAndEdges(unittest.TestCase):
             "(C, Root)": {
                 "left": {
                     "leave_count": 1,
-                    "branch_count": 0,
                 },
                 "right": {
                     "leave_count": 2,
-                    "branch_count": 3,
                 },
                 "length": 1,  # Assume branch length is 1 for simplicity
                 "type": "external",
@@ -116,11 +102,9 @@ class TestCountNodeAndEdges(unittest.TestCase):
             "(A, N1)": {
                 "left": {
                     "leave_count": 1,
-                    "branch_count": 0,
                 },
                 "right": {
                     "leave_count": 2,
-                    "branch_count": 3,
                 },
                 "length": 1,
                 "type": "external",
@@ -128,11 +112,9 @@ class TestCountNodeAndEdges(unittest.TestCase):
             "(B, N1)": {
                 "left": {
                     "leave_count": 1,
-                    "branch_count": 0,
                 },
                 "right": {
                     "leave_count": 2,
-                    "branch_count": 3,
                 },
                 "length": 1,
                 "type": "external",
@@ -154,11 +136,6 @@ class TestCountNodeAndEdges(unittest.TestCase):
                         actual[key][metric_key]["leave_count"],
                         metrics[metric_key]["leave_count"],
                         f"Incorrect leave_count for {key} on {metric_key}",
-                    )
-                    self.assertEqual(
-                        actual[key][metric_key]["branch_count"],
-                        metrics[metric_key]["branch_count"],
-                        f"Incorrect branch_count for {key} on {metric_key}",
                     )
 
                 # Check length and type

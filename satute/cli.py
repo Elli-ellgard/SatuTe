@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from Bio.Align import MultipleSeqAlignment
 
+import sys
 import argparse
 import logging
 import numpy as np
@@ -42,7 +43,6 @@ from satute.repository import (
     SubstitutionModel,
     IqTreeParser,
 )
-
 
 class Satute:
     """Class representing Satute command-line tool for wrapping up functions of IQ-TREE."""
@@ -257,7 +257,7 @@ class Satute:
 
     """ END Logging Function"""
 
-    def parse_input(self):
+    def parse_input(self, args=None):
         """
         Parse command-line arguments using the argparse module. It dynamically
         adds arguments to the parser based on a predefined list of argument
@@ -269,7 +269,7 @@ class Satute:
             parser.add_argument(
                 argument["flag"], **{k: v for k, v in argument.items() if k != "flag"}
             )
-        self.input_args = parser.parse_args()
+        self.input_args = parser.parse_args(args)
 
     def run_iqtree_workflow(self, arguments_dict: Dict[str, List]):
         extra_arguments = []
@@ -836,13 +836,13 @@ class Satute:
 
     """END Input Argument Construction"""
 
-
-def main():
+"""
+def main(args=None):
     # Instantiate the Satute class
     logger = logging.getLogger(__name__)
-    satute = Satute(iqtree="iqtree2", logger=logger)
+    satute = Satute(iqtree="iqtree", logger=logger)
     # Parse and validate input arguments
-    satute.parse_input()
+    satute.parse_input(args)
     satute.validate_satute_input_options()
     # Initialize file handler and logger
     satute.initialize_active_directory()
@@ -857,3 +857,39 @@ def main():
 
 def cli():
     main()
+"""
+
+
+def main(args=None):
+    # Instantiate the Satute class
+    logger = logging.getLogger(__name__)
+    satute = Satute(iqtree="iqtree", logger=logger)
+    
+    try:
+        # Parse and validate input arguments
+        satute.parse_input(args)
+        satute.validate_satute_input_options()
+        
+        # Initialize file handler and logger
+        satute.initialize_active_directory()
+        satute.initialize_handlers()
+        satute.setup_logging_configuration()
+        
+        # IQ-Tree run if necessary
+        satute.iq_arguments_dict = satute.construct_IQ_TREE_arguments()
+        satute.run_iqtree_workflow(satute.iq_arguments_dict)
+        
+        # Run the tool
+        satute.run()
+    except Exception as e:
+        logger.error(f"An error occurred: {e}")
+        sys.exit(1)
+    
+    # Optionally return an exit code or nothing
+    return 0
+
+def cli():
+    # args = sys.argv[1:]
+    exit_code = main()
+    sys.exit(exit_code)
+

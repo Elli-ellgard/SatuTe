@@ -1,18 +1,15 @@
 import os
 from tests.scripts.satute_test_utils import (
-    run_external_command,
+    run_satute,
     print_test_name,
     create_destination_dir,
     copy_files_to_dest_dir,
     check_satute_files,
-    print_colored_message,
 )
 
 from tests.scripts.fixtures import *
 
-"""TODO: The following tests throw all errors, not checking the existence
- of output files but the standard output """
-
+"""TODO: The following tests throw all errors, not checking the existence of output files but the standard output """
 
 def test_1(data_dir_path, iqtree, python, satute):
     source_path, msa, treefile = data_dir_path    
@@ -27,28 +24,27 @@ def test_1(data_dir_path, iqtree, python, satute):
     copy_files_to_dest_dir(source_path, dest_dir_path, files_to_copy)
 
     categories = []
-    alpha = str(2.0)
+    alpha = str(0.05)
     asr = True
 
-    run_external_command(
-        [
-            python,
-            satute,
-            "-iqtree",
-            iqtree,
-            "-alpha",
-            alpha,
-            "-asr",
-        ]
-    )
+    # Capture sys.exit using pytest.raises
+    with pytest.raises(SystemExit) as excinfo:
+        run_satute(
+            [
+                "-iqtree",
+                iqtree,
+                "-alpha",
+                alpha,
+                "-asr",
+            ]
+        )
 
-    # check the files
-    if not check_satute_files(msa, dest_dir_path, categories, alpha, asr):
-        print_colored_message(f"{suffix} was successful", "32")
-    else:
-        print_colored_message(f"{suffix} failed", "31")
+    # Verify the exit code if needed
+    assert excinfo.value.code == 1  # assuming exit code 1 for failure
 
-
+    # check the files    
+    assert not check_satute_files(msa, dest_dir_path, categories, alpha, asr)
+    
 def test_2(data_dir_path, iqtree, python, satute):
     source_path, msa, treefile = data_dir_path    
     suffix = "TEST 2: msa + tree "
@@ -62,37 +58,31 @@ def test_2(data_dir_path, iqtree, python, satute):
     copy_files_to_dest_dir(source_path, dest_dir_path, files_to_copy)
 
     categories = []
-    alpha = str(2.0)
+    alpha = str(0.05)
     asr = True
 
-    run_external_command(
-        [
-            python,
-            satute,
-            "-iqtree",
-            iqtree,
-            "-msa",
-            os.path.join(dest_dir_path, msa),
-            "-tree",
-            os.path.join(dest_dir_path, treefile),
-            "-alpha",
-            alpha,
-            "-asr",
-        ]
-    )
 
+    # Capture sys.exit using pytest.raises
+    with pytest.raises(SystemExit) as excinfo:
+        run_satute(
+            [
+                "-iqtree",
+                iqtree,
+                "-alpha",
+                alpha,
+                "-asr",
+            ]
+        )
+
+    # Verify the exit code if needed
+    assert excinfo.value.code == 1  # assuming exit code 1 for failure
     # check the files
-    if not check_satute_files(msa, dest_dir_path, categories, alpha, asr):
-        print_colored_message(f"{suffix} was successful", "32")
-    else:
-        print_colored_message(f"{suffix} failed", "31")
-
+    assert not check_satute_files(msa, dest_dir_path, categories, alpha, asr)
 
 def test_3(data_dir_path, iqtree, python, satute):
     source_path, msa, treefile = data_dir_path    
     suffix = "TEST 3: msa  tree  model boot"
     print_test_name(suffix)
-
     # create output directory
     dest_dir_path = create_destination_dir(source_path, suffix)
 
@@ -101,39 +91,37 @@ def test_3(data_dir_path, iqtree, python, satute):
     copy_files_to_dest_dir(source_path, dest_dir_path, files_to_copy)
 
     categories = []
-    alpha = str(2.0)
+    alpha = str(0.05)
     asr = True
 
-    run_external_command(
-        [
-            python,
-            satute,
-            "-iqtree",
-            iqtree,
-            "-msa",
-            os.path.join(dest_dir_path, msa),
-            "-tree",
-            os.path.join(dest_dir_path, treefile),
-            "-model",
-            "JC+G2",
-            "-boot",
-            "100",
-            "-alpha",
-            alpha,
-            "-asr",
-        ]
-    )
+    # Capture sys.exit using pytest.raises
+    with pytest.raises(SystemExit) as excinfo:
+        run_satute(
+            [
+                "-iqtree",
+                iqtree,
+                "-msa",
+                os.path.join(dest_dir_path, msa),
+                "-tree",
+                os.path.join(dest_dir_path, treefile),
+                "-model",
+                "JC+G2",
+                "-boot",
+                "100",
+                "-alpha",
+                alpha,
+                "-asr",
+            ]
+        )
 
+    # Verify the exit code if needed
+    assert excinfo.value.code == 1  # assuming exit code 1 for failure
     # check the files
-    if not check_satute_files(msa, dest_dir_path, categories, alpha, asr):
-        print_colored_message(f"{suffix} was successful", "32")
-    else:
-        print_colored_message(f"{suffix} failed", "31")
-
+    assert not check_satute_files(msa, dest_dir_path, categories, alpha, asr)
 
 def test_4(data_dir_path, iqtree, python, satute):
     source_path, msa, treefile = data_dir_path    
-    suffix = "TEST 3: msa  tree  model ufboot"
+    suffix = "TEST 3: msa  tree model ufboot"
     print_test_name(suffix)
 
     # create output directory
@@ -144,33 +132,33 @@ def test_4(data_dir_path, iqtree, python, satute):
     copy_files_to_dest_dir(source_path, dest_dir_path, files_to_copy)
 
     categories = []
-    alpha = str(2.0)
+    alpha = str(0.05)
     asr = True
 
-    run_external_command(
-        [
-            python,
-            satute,
-            "-iqtree",
-            iqtree,
-            "-msa",
-            os.path.join(dest_dir_path, msa),
-            "-tree",
-            os.path.join(dest_dir_path, treefile),
-            "-model",
-            "JC+G2",
-            "-ufboot",
-            "1000",
-            "-alpha",
-            alpha,
-            "-asr",
-        ]
-    )
+    # Capture sys.exit using pytest.raises
+    with pytest.raises(SystemExit) as excinfo:
+        run_satute(
+            [
+                "-iqtree",
+                iqtree,
+                "-msa",
+                os.path.join(dest_dir_path, msa),
+                "-tree",
+                os.path.join(dest_dir_path, treefile),
+                "-model",
+                "JC+G2",
+                "-ufboot",
+                "1000",
+                "-alpha",
+                alpha,
+                "-asr",
+            ]
+        )
 
+    # Verify the exit code if needed
+    assert excinfo.value.code == 1  # assuming exit code 1 for failure
     # check the files
-    if not check_satute_files(msa, dest_dir_path, categories, alpha, asr):
-        print_colored_message(f"{suffix} was successful", "32")
-    else:
-        print_colored_message(f"{suffix} failed", "31")
+    assert not check_satute_files(msa, dest_dir_path, categories, alpha, asr)
+
 
 

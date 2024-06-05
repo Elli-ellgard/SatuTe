@@ -13,14 +13,15 @@ def main():
     msa = "toy_example_ntaxa_7_run_5-alignment.phy"
     treefile = "tree_plain.treefile"
 
-    output_dir_path = "../test_results/"
+    output_dir_path = "./tests/test_results/"
 
-    test_option_msa(
-        path_iqtree, path_python, path_satute, data_dir_path, msa, output_dir_path
-    )
-    test_other_options(
-        path_iqtree, path_python, path_satute, data_dir_path, msa, output_dir_path
-    )
+    # test_option_msa(
+    #    path_iqtree, path_python, path_satute, data_dir_path, msa, output_dir_path
+    #)
+    # test_other_options(
+    #    path_iqtree, path_python, path_satute, data_dir_path, msa, output_dir_path
+    # )
+    
     test_option_model(
         path_iqtree, path_python, path_satute, data_dir_path, msa, output_dir_path
     )

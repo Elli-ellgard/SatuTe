@@ -1,21 +1,19 @@
 import os
 from tests.scripts.fixtures import *
 from tests.scripts.satute_test_utils import (
-    run_external_command,
+    run_satute,
     print_test_name, 
     create_destination_dir,
     copy_files_to_dest_dir,
     check_iqtree_files_exist,
     check_satute_files,
-    print_colored_message
-    
 )
 
 
 
 def test_1(data_dir_path, iqtree, python, satute):
     source_path, msa, _ = data_dir_path 
-    suffix = "MSA TEST 1: only msa iqtree exists"
+    suffix = "MSA TEST 1: only msa IQ-TREE exists"
     print_test_name(suffix)
 
     # create output directory
@@ -30,10 +28,8 @@ def test_1(data_dir_path, iqtree, python, satute):
     asr = True
 
     # Satute run
-    run_external_command(
+    run_satute(
         [
-            python,
-            satute,
             "-iqtree",
             iqtree,
             "-msa",
@@ -45,11 +41,8 @@ def test_1(data_dir_path, iqtree, python, satute):
    )
 
     # check the files   
-    if check_iqtree_files_exist(msa, dest_dir_path, ["m"] )  and check_satute_files(msa, dest_dir_path, categories, alpha, asr):
-        print_colored_message(f"{suffix} was successful", "32" )
-    else: 
-        print_colored_message(f"{suffix} failed", "31" )
-
+    assert check_iqtree_files_exist(msa, dest_dir_path, ["m"] )
+    assert check_satute_files(msa, dest_dir_path, categories, alpha, asr)
 
 def test_2(data_dir_path, iqtree, python, satute):
     source_path, msa, _ = data_dir_path 
@@ -68,10 +61,8 @@ def test_2(data_dir_path, iqtree, python, satute):
     asr = False
 
     # Satute run
-    run_external_command(
+    run_satute(
         [
-            python,
-            satute,
             "-iqtree",
             iqtree,
             "-msa",
@@ -85,11 +76,8 @@ def test_2(data_dir_path, iqtree, python, satute):
 
     
     # check the files   
-    if check_iqtree_files_exist(msa, dest_dir_path, ["ufboot","m"]) and check_satute_files(msa, dest_dir_path, categories, alpha, asr):
-        print_colored_message(f"{suffix} was successful", "32" )
-    else: 
-        print_colored_message(f"{suffix} failed", "31" )
-
+    assert check_iqtree_files_exist(msa, dest_dir_path, ["ufboot","m"]) 
+    assert check_satute_files(msa, dest_dir_path, categories, alpha, asr)
 
 def test_3(data_dir_path, iqtree, python, satute):
     source_path, msa, _ = data_dir_path 
@@ -108,10 +96,8 @@ def test_3(data_dir_path, iqtree, python, satute):
     asr = True
 
 
-    run_external_command(
+    run_satute(
         [
-            python,
-            satute,
             "-iqtree",
             iqtree,
             "-msa",
@@ -125,8 +111,5 @@ def test_3(data_dir_path, iqtree, python, satute):
     )
 
     # check the files   
-    if check_iqtree_files_exist(msa, dest_dir_path, ["boot","m"])  and    check_satute_files(msa, dest_dir_path, categories, alpha, asr):
-        print_colored_message(f"{suffix} was successful", "32" )
-    else: 
-        print_colored_message(f"{suffix} failed", "31" )
-
+    assert check_iqtree_files_exist(msa, dest_dir_path, ["boot","m"])  
+    assert check_satute_files(msa, dest_dir_path, categories, alpha, asr)

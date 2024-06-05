@@ -19,6 +19,7 @@ pytest = "^8.2.1"
 sphinx = "^7.3.7"
 pygments = "^2.18.0"
 sphinx-rtd-theme = "^2.0.0"
+pytest-xdist = "^3.2.1"  # Add this line
 
 [tool.poetry.scripts]
 satute = "satute.cli:cli"

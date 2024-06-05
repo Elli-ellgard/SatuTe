@@ -1,16 +1,15 @@
 import os
 from pathlib import Path
+from tests.scripts.fixtures import *
 from tests.scripts.satute_test_utils import (
-    run_external_command,
     print_test_name,
     create_destination_dir,
     copy_files_to_dest_dir,
     check_iqtree_files_exist,
     check_satute_files,
-    print_colored_message,
+    run_satute
 )
 
-from tests.scripts.fixtures import *
 
 def test_1(data_dir_path, iqtree, python, satute):
     source_path, msa, treefile = data_dir_path
@@ -25,14 +24,12 @@ def test_1(data_dir_path, iqtree, python, satute):
     files_to_copy = [msa, treefile]
     copy_files_to_dest_dir(source_path, dest_dir_path, files_to_copy)
 
-    categories = []
-    alpha = str(2.0)
+    categories = [1,2]
+    alpha = str(0.05)
     asr = True
 
-    run_external_command(
+    run_satute(
         [
-            python,
-            satute,
             "-iqtree",
             iqtree,
             "-msa",
@@ -48,7 +45,5 @@ def test_1(data_dir_path, iqtree, python, satute):
     )
 
     # check the files
-    if not check_satute_files(msa, dest_dir_path, categories, alpha, asr):
-        print_colored_message(f"{suffix} was successful", "32")
-    else:
-        print_colored_message(f"{suffix} failed", "31")
+    assert not check_iqtree_files_exist(msa, dest_dir_path, []) , "IQTree files check failed: Required files are missing or not created."    
+    assert check_satute_files(msa, dest_dir_path, categories, alpha, asr)    

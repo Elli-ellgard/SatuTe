@@ -10,7 +10,8 @@ def valid_stationary_distribution(frequencies):
         print("NOT a valid distribution")
 
 
-for model, freqs in AA_STATE_FREQUENCIES.items():
-    print(model)
-    valid_stationary_distribution(freqs)
-    print("")
+if __name__ == "__main__":
+    for model, freqs in AA_STATE_FREQUENCIES.items():
+        print(model)
+        valid_stationary_distribution(freqs)
+        print("")

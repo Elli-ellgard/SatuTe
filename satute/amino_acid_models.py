@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 import re
 import numpy as np
 from typing import List

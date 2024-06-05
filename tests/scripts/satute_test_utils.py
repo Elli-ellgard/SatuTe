@@ -1,7 +1,9 @@
 import os
 import shutil
 import subprocess
+import time
 from pathlib import Path
+import satute.cli
 
 def print_test_name(suffix):
     print("")
@@ -12,7 +14,7 @@ def print_test_name(suffix):
 def print_colored_message(message, color_code):
     print(f"\033[{color_code}m{message}\033[0m")
 
-def create_destination_dir(source_dir, suffix, base_dir="../test_results/") -> Path:
+def create_destination_dir(source_dir, suffix, base_dir="./tests/test_results/") -> Path:
     source_path = Path(source_dir)
     base_path = Path(base_dir)
     
@@ -54,14 +56,13 @@ def copy_files_to_dest_dir(source_dir, dest_dir, files_to_copy):
         else:
             print(f"Warning: File '{file_name}' not found in the source directory.")
 
-
 def check_files_exist(directory, file_list, name):
     directory_path = Path(directory)
     
     # Check if the directory exists
     if not directory_path.is_dir():
         raise ValueError(f"Directory '{directory}' does not exist.")
-    
+        
     missing_files = [file for file in file_list if not (directory_path / file).is_file()]
     
     if missing_files:
@@ -70,7 +71,6 @@ def check_files_exist(directory, file_list, name):
     else:
         print(f"All {name} files are present in the directory '{directory}'.")
         return True
-
 
 def additional_iqtree_files(options):
     suffix = []
@@ -91,6 +91,21 @@ def check_iqtree_files_exist(data_name, dest_dir_path, iqtree_options):
     files_to_check = [ data_name + suffix for suffix in iqtree_files_endings]
     return check_files_exist(dest_dir_path, files_to_check, "IQ-TREE")
 
+def check_files_exist(directory, file_list, name):
+    directory_path = Path(directory)
+    
+    # Check if the directory exists
+    if not directory_path.is_dir():
+        raise ValueError(f"Directory '{directory}' does not exist.")
+        
+    missing_files = [file for file in file_list if not (directory_path / file).is_file()]
+    
+    if missing_files:
+        print(f"The following {name} files are missing in the directory '{directory}': {', '.join(missing_files)}")
+        return False
+    else:
+        print(f"All {name} files are present in the directory '{directory}'.")
+        return True
 
 def check_satute_files(data_name, dest_dir_path, categories, alpha, asr):
     file_endings = [f"_{alpha}.satute.log"]
@@ -107,11 +122,13 @@ def check_satute_files(data_name, dest_dir_path, categories, alpha, asr):
     files_to_check = [ data_name + suffix for suffix in file_endings]  
     return check_files_exist(dest_dir_path, files_to_check, "Satute")
 
-
-
 def run_external_command(command_args):
-    subprocess.run(command_args)
-
+    subprocess.run(command_args, check=True)
+    
+def run_satute(args):
+    # Add a small delay to ensure files are written
+    time.sleep(2)
+    return satute.cli.main(args)
 
 def clean_and_prepare_dir(dir_path, msa):
     pdir = os.path.dirname(dir_path)

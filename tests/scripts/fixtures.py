@@ -2,7 +2,7 @@ import pytest
 
 @pytest.fixture
 def iqtree():
-    return 'iqtree3'
+    return 'iqtree'
 
 @pytest.fixture
 def python():
@@ -17,4 +17,4 @@ def data_dir_path():
     return ("tests/data/data_dna/toy_example_JC", "toy_example_ntaxa_7_run_5-alignment.phy", "tree_plain.treefile")
 
 
-output_dir_path =  "../test_results/"
+output_dir_path =  "./tests/"

@@ -22,45 +22,7 @@ from satute.partial_likelihood import (
 
 RATE_MATRIX = np.array([[-3, 1, 1, 1], [1, -3, 1, 1], [1, 1, -3, 1], [1, 1, 1, -3]])
 
-
-def parse_newick_file(file_path):
-    try:
-        # Open the file in read mode
-        with open(file_path, "r") as f:
-            # Read the content of the file
-            newick_string = f.readlines()
-
-        # Parse the newick string into a Tree object
-        t = Tree(newick_string[0], format=1)
-
-        # Return the parsed Tree object
-        return t
-
-    except FileNotFoundError:
-        raise Exception("File not found: " + file_path)
-
-
 """ ======= Tests ======= """
-
-
-def test_one_partial_likelihood():
-    a1, b2, u3, u4, c5, b6 = [
-        Node("A", get_initial_likelihood_vector("A", "nucleotide")),
-        Node("B", get_initial_likelihood_vector("C", "nucleotide")),
-        Node("3"),
-        Node("4"),
-        Node("C", get_initial_likelihood_vector("A", "nucleotide")),
-        Node("D", get_initial_likelihood_vector("A", "nucleotide")),
-    ]
-
-    tree = Graph(
-        [(a1, u3, 0.01), (u3, b2, 0.01), (u3, u4, 0.01), (u4, c5, 0.01), (u4, b6, 0.01)]
-    )
-
-    for edge in tree.get_edges():
-        left, right, branch_length = edge
-        p1 = partial_likelihood(tree, left, right)
-        p2 = partial_likelihood(tree, right, left)
 
 
 def calculate_stationary_distribution(rate_matrix) -> np.array:

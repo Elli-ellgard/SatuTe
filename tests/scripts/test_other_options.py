@@ -1,14 +1,14 @@
+import os
+
 from tests.scripts.satute_test_utils import (
-    run_external_command,
     print_test_name, 
     create_destination_dir,
     copy_files_to_dest_dir,
     check_iqtree_files_exist,
     check_satute_files,
-    print_colored_message
-    
+    run_satute    
 )
-import os
+
 from tests.scripts.fixtures import *
 
 def test_1(data_dir_path, iqtree, python, satute):
@@ -29,10 +29,8 @@ def test_1(data_dir_path, iqtree, python, satute):
     asr = True
 
     # Satute run
-    run_external_command(
+    run_satute(
         [
-            python,
-            satute,
             "-iqtree",
             iqtree,
             "-msa",
@@ -44,12 +42,9 @@ def test_1(data_dir_path, iqtree, python, satute):
    )
 
     # check the files   
-    if check_iqtree_files_exist(msa, dest_dir_path, ["m"] )  and check_satute_files(msa, dest_dir_path, categories, alpha, asr):
-        print_colored_message(f"{suffix} was successful", "32" )
-    else: 
-        print_colored_message(f"{suffix} failed", "31" )
-
-
+    assert check_iqtree_files_exist(msa, dest_dir_path, ["m"] )
+    assert check_satute_files(msa, dest_dir_path, categories, alpha, asr)
+    
 def test_2(data_dir_path, iqtree, python, satute):
     source_path, msa, _ = data_dir_path 
     suffix = "OTHER TEST 2: only msa iqtree not exists"
@@ -68,10 +63,8 @@ def test_2(data_dir_path, iqtree, python, satute):
     asr = True
 
     # Satute run
-    run_external_command(
+    run_satute(
         [
-            python,
-            satute,
             "-iqtree",
             iqtree,
             "-msa",
@@ -84,11 +77,8 @@ def test_2(data_dir_path, iqtree, python, satute):
 
     
     # check the files   
-    if not check_iqtree_files_exist(msa, dest_dir_path, ["m"]) and not check_satute_files(msa, dest_dir_path, categories, alpha, asr):
-        print_colored_message(f"{suffix} was successful", "32" )
-    else: 
-        print_colored_message(f"{suffix} failed", "31" )
-
+    assert check_iqtree_files_exist(msa, dest_dir_path, ["m"]), "IQTree files check failed: Required files are missing or not created."
+    assert check_satute_files(msa, dest_dir_path, categories, alpha, asr), "Satute files check failed: Required files are missing or not created."
 
 def test_3(data_dir_path, iqtree, python, satute):
     source_path, msa, _ = data_dir_path 
@@ -103,28 +93,25 @@ def test_3(data_dir_path, iqtree, python, satute):
     copy_files_to_dest_dir(source_path, dest_dir_path, files_to_copy)
 
     categories = []
-    alpha = str(2.0)
+    alpha = str(0.05)
     asr = True
 
-
-    run_external_command(
-        [
-            python,
-            satute,
-            "-iqtree",
-            iqtree,
-            "-alpha",
-            alpha,
-            "-asr",
-        ]
-    )
+    # Capture sys.exit using pytest.raises
+    with pytest.raises(SystemExit) as excinfo:
+        run_satute(
+            [
+                "-iqtree",
+                iqtree,
+                "-alpha",
+                alpha,
+                "-asr",
+            ]
+        )
+    # Verify the exit code if needed
+    assert excinfo.value.code == 1  # assuming exit code 1 for failure
 
     # check the files   
-    if not  check_satute_files(msa, dest_dir_path, categories, alpha, asr):
-        print_colored_message(f"{suffix} was successful", "32" )
-    else: 
-        print_colored_message(f"{suffix} failed", "31" )
-
+    assert not check_satute_files(msa, dest_dir_path, categories, alpha, asr) , "Satute files check failed: Required files are missing or not created."
 
 def test_4(data_dir_path, iqtree, python, satute):
     source_path, msa, _ = data_dir_path 
@@ -142,26 +129,25 @@ def test_4(data_dir_path, iqtree, python, satute):
     alpha = str(2.0)
     asr = True
 
-
-    run_external_command(
-        [
-            python,
-            satute,
-            "-iqtree",
-            iqtree,
-            "-msa",
-            os.path.join(dest_dir_path, msa),
-            "-alpha",
-            alpha,
-            "-asr",
-        ]
-    )
+   # Capture sys.exit using pytest.raises
+    with pytest.raises(SystemExit) as excinfo:
+        run_satute(
+            [
+                "-iqtree",
+                iqtree,
+                "-msa",
+                os.path.join(dest_dir_path, msa),
+                "-alpha",
+                alpha,
+                "-asr",
+            ]
+        )
+    # Verify the exit code if needed
+    assert excinfo.value.code == 1  # assuming exit code 1 for failure
 
     # check the files   
-    if  not check_iqtree_files_exist(msa, dest_dir_path, ["m"])  and   not check_satute_files(msa, dest_dir_path, categories, alpha, asr):
-        print_colored_message(f"{suffix} was successful", "32" )
-    else: 
-        print_colored_message(f"{suffix} failed", "31" )
+    assert  not check_iqtree_files_exist(msa, dest_dir_path, ["m"]) , "IQTree files check failed: Required files are missing or not created."
+    assert not check_satute_files(msa, dest_dir_path, categories, alpha, asr), "Satute files check failed: Required files are missing or not created."
 
 def test_5(data_dir_path, iqtree, python, satute):
     source_path, msa, _ = data_dir_path 
@@ -180,16 +166,14 @@ def test_5(data_dir_path, iqtree, python, satute):
     asr = True
 
     # Satute run
-    run_external_command(
+    run_satute(
         [
-            python,
-            satute,
             "-msa",
             os.path.join(dest_dir_path, msa),
             "-model",
             "JC+G4",
             "-alpha",
-            "0.05",
+            alpha,
             "-category",
             "3",
             "-iqtree",
@@ -200,10 +184,8 @@ def test_5(data_dir_path, iqtree, python, satute):
 
     
     # check the files   
-    if check_iqtree_files_exist(msa, dest_dir_path, []) and  check_satute_files(msa, dest_dir_path, categories, alpha, asr):
-        print_colored_message(f"{suffix} was successful", "32" )
-    else: 
-        print_colored_message(f"{suffix} failed", "31" )
+    assert check_iqtree_files_exist(msa, dest_dir_path, []), "IQTree files check failed: Required files are missing or not created."
+    assert check_satute_files(msa, dest_dir_path, categories, alpha, asr), "Satute files check failed: Required files are missing or not created."
 
 def test_6(data_dir_path, iqtree, python, satute):
     source_path, msa, _ = data_dir_path 
@@ -221,28 +203,25 @@ def test_6(data_dir_path, iqtree, python, satute):
     alpha = str(0.05)
     asr = True
 
-    # Satute run
-    run_external_command(
-        [
-            python,
-            satute,
-            "-msa",
-            os.path.join(dest_dir_path, msa),
-            "-model",
-            "JC+G4",
-            "-alpha",
-            "0.05",
-            "-category",
-            "2",
-            "-iqtree",
-            iqtree,
-            "-asr"
-        ]
-    )
 
-    
-    # check the files   
-    if check_iqtree_files_exist(msa, dest_dir_path, []) and  check_satute_files(msa, dest_dir_path, categories, alpha, asr):
-        print_colored_message(f"{suffix} was successful", "32" )
-    else: 
-        print_colored_message(f"{suffix} failed", "31" )
+    # Capture sys.exit using pytest.raises
+    with pytest.raises(SystemExit) as excinfo:
+        # Satute run
+        run_satute(
+            [
+                "-msa",
+                os.path.join(dest_dir_path, msa),
+                "-model",
+                "JC+G4",
+                "-category",
+                "2",
+                "-iqtree",
+                iqtree,
+                "-asr"
+            ]
+        )
+
+    # Verify the exit code if needed
+    assert excinfo.value.code == 2  # assuming exit code 1 for failure
+    # check the files    
+    assert not check_satute_files(msa, dest_dir_path, categories, alpha, asr)
