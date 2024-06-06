@@ -204,4 +204,9 @@ ARGUMENT_LIST = [
         "help": "Enable verbose logging.",
         "action": "store_true",
     },
+    {
+        "flag": "-quiet",
+        "help": "Even no warnings on the the terminal.",
+        "action": "store_true",
+    },
 ]

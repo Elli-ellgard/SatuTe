@@ -71,6 +71,7 @@ def test_2(data_dir_path, iqtree, python, satute):
                 "-alpha",
                 alpha,
                 "-asr",
+                
             ]
         )
 

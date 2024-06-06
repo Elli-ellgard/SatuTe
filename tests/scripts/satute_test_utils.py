@@ -126,8 +126,30 @@ def run_external_command(command_args):
     subprocess.run(command_args, check=True)
     
 def run_satute(args):
+    """
+    Runs the satute CLI with the provided arguments, ensuring the 'quiet' 
+    argument is set, and adds a small delay to ensure files are written.
+
+    Args:
+        args (list or None): Command-line arguments to pass to satute.cli.main. If None, an empty list is used.
+
+    Returns:
+        bool: The result of satute.cli.main(args).
+    """
+    if args is None:
+        args = []
+
+    if not isinstance(args, list):
+        raise TypeError("args must be a list or None")
+
+    # Ensure '--quiet' is in the arguments
+    if '-quiet' not in args:
+        args.append('-quiet')
+
     # Add a small delay to ensure files are written
     time.sleep(2)
+
+    # Call the main function of satute.cli with the arguments
     return satute.cli.main(args)
 
 def clean_and_prepare_dir(dir_path, msa):

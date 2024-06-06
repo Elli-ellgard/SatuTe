@@ -2,7 +2,8 @@
 import os
 import subprocess
 import shutil
-
+from typing import List, Optional
+from pathlib import Path
 
 class FileHandler:
     """Handles file operations for the Satute project."""
@@ -16,7 +17,7 @@ class FileHandler:
         """
         self.base_directory = base_directory
 
-    def find_file_by_suffix(self, suffixes):
+    def find_file_by_suffix(self, suffixes: List[str])-> Optional[str]:
         """
         Locate a file in the base directory based on its suffixes, ignoring files containing 'satute'.
 
@@ -39,7 +40,7 @@ class FileHandler:
         # Return None if no file with the specified suffixes is found
         return None
 
-    def file_exists(self, filepath) -> bool:
+    def file_exists(self, filepath:str) -> bool:
         """
         Check if a file exists.
 
@@ -75,19 +76,7 @@ class FileHandler:
         with open(filepath, "r") as file:
             return file.readlines()
 
-    def write_to_file(self, filepath, content):
-        """
-        Write content to a file.
-
-        Args:
-        - filepath (str): Path to the file to write to.
-        - content (str): Content to write to the file.
-        """
-        # Open and write the content to the file
-        with open(filepath, "w") as file:
-            file.write(content)
-
-    def get_newick_string_from_iq_tree_file(self, path):
+    def get_newick_string_from_iq_tree_file(self, path: str) -> str:
         """
         Extracts Newick format string from an IQ-TREE file.
 
@@ -99,30 +88,28 @@ class FileHandler:
 
         Raises:
         - FileNotFoundError: If the IQ-TREE file does not exist.
-        - ValueError: If the IQ-TREE file is empty or does not contain a valid Newick format string.
+        - ValueError: If the IQ-TREE file does not contain a valid Newick format string.
         """
-        iq_tree_file = f"{path}.iqtree"
-        lines = self.read_file(iq_tree_file)        
+        iq_tree_file = Path(f"{path}.iqtree")
+        if not iq_tree_file.is_file():
+            raise FileNotFoundError(f"IQ-TREE file not found: {iq_tree_file}")
 
-        # Instead of iterating through every line, we'll use a more Pythonic approach to find the desired line
-        # This should help to slightly optimize the function.
+        lines = self.read_file(iq_tree_file)
+
+        # Search for the Newick format header and extract the Newick string
         try:
-            # Find the index of the line containing the Newick format header
             newick_line_index = next(
                 i for i, line in enumerate(lines) if "Tree in newick format:" in line
             )
-            # The Newick string is expected to be two lines after the header
             newick_string = lines[newick_line_index + 2].strip()
-        except StopIteration:
-            # This exception will be raised if the header line is not found in the file
+        except (StopIteration, IndexError):
             raise ValueError(
-                f"The IQ-TREE file at path {iq_tree_file} does not contain a valid Newick format string."
+                f"The IQ-TREE file at {iq_tree_file} does not contain a valid Newick format string."
             )
 
-        # Additional validation to ensure the Newick string is properly formatted
         if not newick_string.endswith(";"):
             raise ValueError(
-                f"The IQ-TREE file at path {iq_tree_file} does not contain a valid Newick format string."
+                f"The IQ-TREE file at {iq_tree_file} contains an invalid Newick format string."
             )
 
         return newick_string
@@ -176,25 +163,25 @@ class FileHandler:
             self.find_file_by_suffix({".iqtree"})
         )
 
-    def find_msa_file(self):
-        msa_file_types = {".fasta", ".nex", ".phy", ".txt"}
+    def find_msa_file(self)->str:
+        msa_file_types = [".fasta", ".nex", ".phy", ".txt"]
         msa_file = self.find_file_by_suffix(msa_file_types)
         if not msa_file:
             raise FileNotFoundError("No MSA file found in directory")
         return msa_file
 
-    def find_tree_file(self):
-        tree_file_types = {".treefile", ".nex", ".nwk"}
+    def find_tree_file(self)-> str:
+        tree_file_types = [".treefile", ".nex", ".nwk"]
         tree_file = self.find_file_by_suffix(tree_file_types)
         if not tree_file:
             raise FileNotFoundError("No tree file found in directory")
         return tree_file
 
-    def find_iqtree_file(self):
-        iqtree_file = self.find_file_by_suffix({".iqtree"})
-        if not iqtree_file:
+    def find_iq_tree_file(self):
+        iq_tree_file = self.find_file_by_suffix([".iqtree"])
+        if not iq_tree_file:
             raise FileNotFoundError("No .iqtree file found in directory")
-        return iqtree_file
+        return iq_tree_file
 
 
 class IqTreeNotFoundError(Exception):

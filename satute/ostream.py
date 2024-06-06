@@ -3,6 +3,7 @@ import re
 import pandas as pd
 from logging import Logger
 from Bio import AlignIO
+from Bio.Align import MultipleSeqAlignment
 from pathlib import Path
 from ete3 import Tree
 from pandas import DataFrame
@@ -26,18 +27,19 @@ def construct_file_name(
     msa_file: Path, output_suffix: str, rate: str, alpha: float, edge: str
 ) -> str:
     """
-    Constructs a file name for saving analysis results, incorporating multiple parameters to generate a meaningful and unique file name.
+    Constructs a file name for saving analysis results, incorporating the MSA file path,
+    an optional output suffix, the evolutionary rate, the alpha parameter, and optional
+    edge information. The resulting file name ends with a ".satute" extension.
 
-    The function constructs the file name by starting with the path of the MSA (Multiple Sequence Alignment) file, followed by the specified evolutionary rate, and the alpha value. These components are concatenated using underscores. If an output suffix is provided, it is inserted between the MSA file path and the rate. If edge information is provided, it is appended at the end. The resulting file name ends with a ".satute" extension.
     Args:
-        msa_file (Path): The path to the MSA file, which forms the base of the file name.
-        output_suffix (str): An optional string to be included in the file name for additional context or differentiation.
-        rate (str): A string representing the evolutionary rate category, included in the file name to indicate the analysis's focus.
-        alpha (float): A float value representing the alpha parameter used in the analysis, included in the file name for specificity.
-        edge (str): An optional string representing edge information in the phylogenetic analysis, appended to the file name if provided.
+        msa_file (Path): The base path of the MSA file.
+        output_suffix (str): An optional suffix for additional context.
+        rate (str): The evolutionary rate category.
+        alpha (float): The alpha parameter used in the analysis.
+        edge (str): Optional edge information in the analysis.
 
     Returns:
-        str: The constructed file name, incorporating the provided parameters for clear identification of the analysis results.
+        str: The constructed file name with the ".satute" extension.
     """
     file_name = f"{msa_file.resolve()}_{rate}_{alpha}"
     if output_suffix:
@@ -80,11 +82,7 @@ def write_components(
 
     for identifier in components_frame["Edge"].unique():
         expanded_site_indices.extend(site_indices)
-
-    # Check to ensure the expanded list matches the DataFrame's length
-    # if len(expanded_site_indices) != len(components_frame):
-    #    raise ValueError("Expanded site indices do not match the DataFrame length.")
-
+    
     # Add the expanded site indices to the DataFrame
     components_frame["site"] = expanded_site_indices
 
@@ -483,36 +481,46 @@ def write_nexus_file(
 
 
 def write_alignment_and_indices(
-    per_rate_category_alignment: Dict[str, AlignIO.MultipleSeqAlignment],
-    categorized_sites: List[int],
+    per_rate_category_alignment: Dict[str, MultipleSeqAlignment],
+    categorized_sites: Dict[str, List[int]],
     msa_file: Path,
-):
+    logger: Logger,
+) -> None:
     """
-    Writes MultipleSeqAlignment objects and indices to files.
+    Writes MultipleSeqAlignment objects and indices to PHYLIP files.
+
     Parameters:
-    - per_rate_category_alignment (dict): A dictionary mapping rates to MultipleSeqAlignment objects.
-    - categorized_sites (dict): A dictionary mapping rates to lists of integers (indices).
+    - per_rate_category_alignment (Dict[str, MultipleSeqAlignment]): A dictionary mapping rates to MultipleSeqAlignment objects.
+    - categorized_sites (Dict[str, List[int]]): A dictionary mapping rates to lists of integers (indices).
+    - msa_file (Path): Path to the base alignment file.
+    - logger (logging.Logger): Logger for error reporting.
+
     Returns:
     - None
     """
     try:
-        for rate in per_rate_category_alignment.keys():
-            if rate in per_rate_category_alignment and rate in categorized_sites:
-                if per_rate_category_alignment[rate].get_alignment_length() == 0:
-                    continue
-                else:
-                    file_path = f"{msa_file.resolve()}.{rate}.fasta.rate.indices"
-                    with open(file_path, "w") as file:
-                        # Convert MultipleSeqAlignment to string in FASTA format
-                        AlignIO.write(per_rate_category_alignment[rate], file, "fasta")
-                        file.write("Indices:")
-                        file.write(",".join([str(i) for i in categorized_sites[rate]]))
-    except TypeError as e:
-        print(f"TypeError: {e}")
-    except IOError as e:
-        print(f"IOError: {e}")
-    except Exception as e:
-        print(f"An unexpected error occurred: {e}")
+        for rate, alignment in per_rate_category_alignment.items():
+            indices = categorized_sites.get(rate)
+            if not indices or alignment.get_alignment_length() == 0:
+                continue
+
+            # Construct file path with appropriate extension
+            file_path = msa_file.with_suffix(f".{rate}.indices.phy")
+
+            with open(file_path, "w") as handle:
+                # Write alignment in PHYLIP sequential format
+                AlignIO.write(alignment, handle, "phylip-sequential")
+
+                # Append indices to the PHYLIP file
+                indices_str = ",".join(map(str, indices))
+                handle.write(f"\n\n# Rate Category: {rate}\n")
+                handle.write(f"Indices: {indices_str}\n")
+
+                # Log the successful write operation
+                logger.info(f"Written alignment and indices to {file_path}")
+
+    except (IOError, Exception) as e:
+        logger.error(f"An error occurred: {e}")
 
 
 def calculate_and_write_posterior_probabilities(

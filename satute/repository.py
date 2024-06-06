@@ -809,13 +809,13 @@ def parse_file_to_data_frame(file_path) -> pd.DataFrame:
 
 
 def valid_stationary_distribution(frequencies: Dict[str, float]) -> Dict[str, float]:
-    sum_freqs = sum(frequencies.values())
-    if sum_freqs == 1:
+    sum_frequencies = sum(frequencies.values())
+    if sum_frequencies == 1:
         # Valid stationary distribution
         return frequencies
     else:
         # Normalize frequencies dictionary with new values
         for key in frequencies:
-            frequencies[key] /= sum_freqs
+            frequencies[key] /= sum_frequencies
         return frequencies
 
