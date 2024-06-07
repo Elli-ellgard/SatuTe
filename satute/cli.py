@@ -92,9 +92,11 @@ class Satute:
         validate_msa_presence(input_args=self.input_args)
         validate_tree_and_model(input_args=self.input_args)
         validate_boot_options(input_args=self.input_args)
-        validate_category_range(input_args=self.input_args, number_rates=self.number_rates)
+
+    """BEGIN Parsing"""
 
     def parse_input(self, args=None):
+        
         """
         Parse command-line arguments using the argparse module. It dynamically
         adds arguments to the parser based on a predefined list of argument
@@ -105,8 +107,37 @@ class Satute:
             # Unpack the dictionary directly without modifying the original list
             parser.add_argument(
                 argument["flag"], **{k: v for k, v in argument.items() if k != "flag"}
-            )
+        )
+            
         self.input_args = parser.parse_args(args)
+        
+    
+    """BEGIN Initialization"""
+
+    def initialize_handlers(self):
+        """
+        Initialize the FileHandler and IqTreeHandler.
+        """
+        self.file_handler = FileHandler(self.active_directory)
+        self.iqtree_handler = IqTreeHandler(self.input_args.iqtree)
+
+    def initialize_active_directory(self):
+        if self.input_args.msa:
+            self.active_directory = self.input_args.msa.parent
+        elif self.input_args.dir:
+            self.active_directory = self.input_args.dir
+
+    """END IQ-Tree Run"""
+        
+    def handle_number_rates(self):
+        self.number_rates = 1
+        if self.input_args.model:
+            self.number_rates = parse_rate_from_cli_input(self.input_args.model)
+        return self.number_rates
+
+    """END Parsing"""
+
+    """BEGIN IQ-Tree Run"""
 
     def run_iqtree_workflow(self, arguments_dict: Dict[str, List]):
         extra_arguments = []
@@ -143,18 +174,10 @@ class Satute:
             )
 
         if arguments_dict["option"] == "msa":
-            self.logger.info("Running IQ-TREE with constructed arguments")
 
+            log_consider_iq_tree_message(self.logger)
             self.logger.info(
                 "If no model is specified in input arguments, best-fit model will be extracted from log file."
-            )
-
-            self.logger.warning(
-                "Please consider for the analysis that IQ-Tree will be running with default options."
-            )
-
-            self.logger.warning(
-                "If specific options are required for the analysis, please run IQ-Tree separately."
             )
 
             model_finder_arguments = [
@@ -168,7 +191,6 @@ class Satute:
             ),
 
             # Update model in input arguments and re-construct arguments
-
             iq_tree_parser = IqTreeParser(f"{arguments_dict['msa_file']}.iqtree")
 
             self.input_args.model = iq_tree_parser.parse_substitution_model()
@@ -195,13 +217,7 @@ class Satute:
             )
 
         if arguments_dict["option"] == "msa + model":
-            self.logger.info("Running IQ-TREE with constructed arguments")
-            self.logger.warning(
-                "Please consider for the analysis that IQ-Tree will be running with default options."
-            )
-            self.logger.warning(
-                "If specific options are required for the analysis, please run IQ-Tree separately."
-            )
+            
 
             self.handle_number_rates()
 
@@ -217,27 +233,16 @@ class Satute:
                 "--redo",
             ]
 
-            if isinstance(self.number_rates, int):
-                # Add the '-wspr' option if number_rates > 1
-                if self.number_rates > 1:
-                    extra_arguments.append("-wspr")
-            if isinstance(self.number_rates, str):
-                if self.number_rates == "AMBIGUOUS":
-                    extra_arguments.append("-wspr")
+            self.add_wspr_option_if_needed(extra_arguments=extra_arguments)
 
             self.iqtree_handler.run_iqtree_with_arguments(
                 arguments=arguments_dict["arguments"], extra_arguments=extra_arguments
             )
 
         if arguments_dict["option"] == "msa + tree + model":
-            self.logger.info("Running IQ-TREE with constructed arguments")
-            self.logger.warning(
-                "Please consider for the analysis that IQ-Tree will be running with default options."
-            )
-            self.logger.warning(
-                "If specific options are required for the analysis, please run IQ-Tree separately."
-            )
 
+            log_consider_iq_tree_message(self.logger)
+            
             self.handle_number_rates()
 
             extra_arguments = extra_arguments + [
@@ -248,13 +253,7 @@ class Satute:
                 "--keep-ident",
             ]
 
-            if isinstance(self.number_rates, int):
-                # Add the '-wspr' option if number_rates > 1
-                if self.number_rates > 1:
-                    extra_arguments.append("-wspr")
-            if isinstance(self.number_rates, str):
-                if self.number_rates == "AMBIGUOUS":
-                    extra_arguments.append("-wspr")
+            self.add_wspr_option_if_needed(extra_arguments=extra_arguments)
 
             # Call IQ-TREE with the constructed arguments
             self.iqtree_handler.run_iqtree_with_arguments(
@@ -264,6 +263,9 @@ class Satute:
         self.logger.info("Used IQ-TREE options:")
         self.logger.info(" ".join(arguments_dict["arguments"]))
         self.logger.info(" ".join(extra_arguments))
+
+    """BEGIN SATUTE RUN"""
+
 
     def run(self):
         """
@@ -298,10 +300,12 @@ class Satute:
         # Get number of rate categories in case of a +G or +R model
         # Consider a specific rate category
 
+        validate_category_range(input_args=self.input_args, number_rates=self.number_rates)
+        
         rate_category = "all"
         if self.input_args.category:
             rate_category = validate_and_set_rate_category(
-                self.input_args.category, substitution_model.number_rates
+                self.input_args.category, substitution_model.number_rates, logger=self.logger
             )
 
         if self.number_rates == "AMBIGUOUS":
@@ -359,6 +363,11 @@ class Satute:
                 self.input_args.alpha,
                 self.input_args.edge,
             )
+
+
+    """END SATUTE Run"""
+
+    """BEGIN Analysis"""
 
     def run_single_rate_analysis(
         self,
@@ -478,9 +487,7 @@ class Satute:
             self.logger,
         )
 
-        for rate, alignment in categorized_sites.items():
-            if len(alignment) == 0:
-                self.logger.warning(f"Will be skipping Rate category {rate}")
+        validate_and_check_rate_categories(categorized_sites, self.input_args.category, self.logger)
 
         self.logger.info(
             f"Writing alignment and indices to {self.active_directory.name}"
@@ -520,24 +527,8 @@ class Satute:
                 categorized_sites[rate],
             )
 
-    def handle_number_rates(self):
-        self.number_rates = 1
-        if self.input_args.model:
-            self.number_rates = parse_rate_from_cli_input(self.input_args.model)
-        return self.number_rates
+    """END Analysis"""
 
-    def initialize_handlers(self):
-        """
-        Initialize the FileHandler and IqTreeHandler.
-        """
-        self.file_handler = FileHandler(self.active_directory)
-        self.iqtree_handler = IqTreeHandler(self.input_args.iqtree)
-
-    def initialize_active_directory(self):
-        if self.input_args.msa:
-            self.active_directory = self.input_args.msa.parent
-        elif self.input_args.dir:
-            self.active_directory = self.input_args.dir
 
     """BEGIN Input Argument Construction"""
 
@@ -651,6 +642,19 @@ class Satute:
 
     """END Input Argument Construction"""
 
+    def add_wspr_option_if_needed(self, extra_arguments: List[str]) -> None:
+        """
+        Adds the '-wspr' option to the extra_arguments list if needed based on the number of rates.
+
+        Args:
+            extra_arguments (List[str]): List of additional arguments for IQ-TREE.
+
+        Returns:
+            None
+        """
+        if (isinstance(self.number_rates, int) and self.number_rates > 1) or isinstance(self.number_rates, str) and self.number_rates == "AMBIGUOUS":
+            extra_arguments.append("-wspr")
+
 
 def main(args=None):
     # Instantiate the Satute class
@@ -658,26 +662,22 @@ def main(args=None):
     satute = Satute(iqtree="iqtree", logger=logger)
     
     try:
-        # Parse and validate input arguments
+    # Parse and validate input arguments
         satute.parse_input(args)
         satute.validate_satute_input_options()
-
         # Initialize file handler and logger
         satute.initialize_active_directory()
         satute.initialize_handlers()
-
         setup_logging_configuration(logger=logger, input_args=satute.input_args, msa_file= Path(satute.file_handler.find_msa_file()))
-
         # IQ-Tree run if necessary
         satute.iq_arguments_dict = satute.construct_IQ_TREE_arguments()
         satute.run_iqtree_workflow(satute.iq_arguments_dict)
-
         # Run the tool
         satute.run()
     except Exception as e:
         logger.error(f"An error occurred: {e}")
         sys.exit(1)
-            
+
     # Optionally return an exit code or nothing
     return 0
 

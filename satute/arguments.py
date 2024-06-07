@@ -76,20 +76,28 @@ def valid_file(path: Path):
 
 def valid_alpha(alpha: float):
     """
-    Custom type function for argparse - checks if the provided path is a valid file.
+    Custom type function for argparse - checks if the provided alpha value is valid.
 
     Args:
-    - path (str): File path to be validated.
+    - alpha (float): Alpha value to be validated.
 
     Returns:
-    - pathlib.Path: Validated Path object.
+    - float: Validated alpha value.
 
     Raises:
-    - argparse.ArgumentTypeError: If the provided path is not a file.
+    - argparse.ArgumentTypeError: If the alpha value is not between 0 and 1 inclusive.
     """
-    alpha = float(alpha)
-    if 0 > alpha or alpha >= 1:
-        raise argparse.ArgumentTypeError(f"The set alpha value of {alpha} is not valid")
+    try:
+        alpha = float(alpha)
+        if not (0 <= alpha < 1):
+            raise ValueError(f"The set alpha value of {alpha} is not valid")
+    except ValueError as e:
+        # Print the error message
+        print(e)
+        # Exit the program with status code 1
+        sys.exit(1)
+        # Raise an ArgumentTypeError for argparse compatibility
+        raise argparse.ArgumentTypeError(e)
     return alpha
 
 

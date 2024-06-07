@@ -28,15 +28,11 @@ class SubstitutionModel:
 
     Attributes:
     model (optional): An external model object that may be used for substitution computations.
-    state_frequencies (optional): A data structure (e.g., list or array) containing the
-                                  frequencies of different states in the model.
-    phi_matrix (optional): A matrix containing phi values, which could represent transition probabilities or
-                           other relevant parameters in the model.
-    rate_matrix (optional): A matrix containing rate values which could represent substitution rates or
-                            other relevant parameters in the model.
+    state_frequencies (optional): A data structure (e.g., list or array) containing the frequencies of different states in the model.
+    phi_matrix (optional): A matrix containing phi values, which could represent transition probabilities or other relevant parameters in the model.
+    rate_matrix (optional): A matrix containing rate values which could represent substitution rates or other relevant parameters in the model.
     number_rates (optional): A scalar indicating the number of different rates in the model.
-    category_rates (optional): A data structure (e.g., list or array) containing the rates of different
-                               categories in the model.
+    category_rates (optional): A data structure (e.g., list or array) containing the rates of different categories in the model.
     """
 
     def __init__(

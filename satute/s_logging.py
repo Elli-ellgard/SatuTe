@@ -16,6 +16,14 @@ def format_array(array, precision=4):
     formatted_array = "\t".join([f"{item:.{precision}f}" for item in array])
     return formatted_array
 
+def log_consider_iq_tree_message(logger):
+    logger.info("Running IQ-TREE with constructed arguments")
+    logger.warning(
+                "Please consider for the analysis that IQ-Tree will be running with default options."
+            )
+    logger.warning(
+                "If specific options are required for the analysis, please run IQ-Tree separately."
+            )
 
 def construct_log_file_name(msa_file: Path, input_args):
     log_file = f"{msa_file.resolve()}_{input_args.alpha}.satute.log"
@@ -56,7 +64,6 @@ def setup_logging_configuration(logger, input_args, msa_file: Path):
     
     logger.addHandler(stream_handler)
     
-    
 def log_iq_tree_run_and_satute_info(
     input_args,
     substitution_model: SubstitutionModel,
@@ -88,7 +95,6 @@ def log_iq_tree_run_and_satute_info(
         Results will be written to the directory: {active_directory.name}
         """
     )
-    
     
 def log_substitution_model_info(
         logger: logging.Logger,

@@ -119,7 +119,6 @@ def test_3(data_dir_path, iqtree, python, satute):
         ]
     )
     
-    
     # check the files
     assert check_iqtree_files_exist(msa, dest_dir_path, []) , "IQTree files check failed: Required files are missing or not created."
     assert check_satute_files(msa, dest_dir_path, categories, alpha, asr), "Satute files check failed: Required files are missing or not created."
@@ -136,7 +135,7 @@ def test_4(data_dir_path, iqtree, python, satute):
     files_to_copy = [msa]
     copy_files_to_dest_dir(source_path, dest_dir_path, files_to_copy)
 
-    categories = [1,4]
+    categories = [1, 4]
     alpha = str(0.05)
     asr = False
 

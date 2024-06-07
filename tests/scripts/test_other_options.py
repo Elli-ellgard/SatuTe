@@ -162,7 +162,7 @@ def test_5(data_dir_path, iqtree, python, satute):
     files_to_copy = [msa]
     copy_files_to_dest_dir(source_path, dest_dir_path, files_to_copy)
 
-    categories = [3]
+    categories = [4]
     alpha = str(0.05)
     asr = True
 
@@ -176,7 +176,7 @@ def test_5(data_dir_path, iqtree, python, satute):
             "-alpha",
             alpha,
             "-category",
-            "3",
+            "4",
             "-iqtree",
             iqtree,
             "-asr"
@@ -223,6 +223,6 @@ def test_6(data_dir_path, iqtree, python, satute):
         )
 
     # Verify the exit code if needed
-    assert excinfo.value.code == 2  # assuming exit code 1 for failure
+    assert excinfo.value.code == 1  # assuming exit code 1 for failure
     # check the files    
     assert not check_satute_files(msa, dest_dir_path, categories, alpha, asr)
