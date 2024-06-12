@@ -674,12 +674,15 @@ def main(args=None):
         satute.run_iqtree_workflow(satute.iq_arguments_dict)
         # Run the tool
         satute.run()
+    except argparse.ArgumentTypeError as e:
+        # Argparse will print the error itself, no need to log it again
+        sys.exit(1)
     except Exception as e:
         logger.error(f"An error occurred: {e}")
         sys.exit(1)
 
     # Optionally return an exit code or nothing
-    return 0
+    return 1
 
 def cli():
     exit_code = main()

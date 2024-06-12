@@ -1,5 +1,6 @@
 import os
 
+from tests.scripts.fixtures import *
 from tests.scripts.satute_test_utils import (
     print_test_name, 
     create_destination_dir,
@@ -9,7 +10,6 @@ from tests.scripts.satute_test_utils import (
     run_satute    
 )
 
-from tests.scripts.fixtures import *
 
 def test_1(data_dir_path, iqtree, python, satute):
     source_path, msa, _ = data_dir_path 
@@ -144,7 +144,7 @@ def test_4(data_dir_path, iqtree, python, satute):
             ]
         )
     # Verify the exit code if needed
-    assert excinfo.value.code == 1  # assuming exit code 1 for failure
+    assert excinfo.value.code == 2  # assuming exit code 1 for failure
 
     # check the files   
     assert  not check_iqtree_files_exist(msa, dest_dir_path, ["m"]) , "IQTree files check failed: Required files are missing or not created."

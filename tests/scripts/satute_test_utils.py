@@ -14,6 +14,27 @@ def print_test_name(suffix):
 def print_colored_message(message, color_code):
     print(f"\033[{color_code}m{message}\033[0m")
 
+def filter_files_by_last_name(filenames, suffix):
+    """
+    Filters the filenames that end with any of the specified suffixes.
+
+    Args:
+    filenames (list): List of filenames to filter.
+    suffixes (list): List of suffixes to match filenames against.
+
+    Returns:
+    list: List of filenames that match the suffixes.
+    """
+    filtered_list = []
+    for file in filenames:
+        splitted_file_name = file.split('.')
+
+        if splitted_file_name[-1] != suffix:
+            filtered_list.append(file)
+
+        
+    return filtered_list
+
 def create_destination_dir(source_dir, suffix, base_dir="./tests/test_results/") -> Path:
     source_path = Path(source_dir)
     base_path = Path(base_dir)
@@ -72,6 +93,24 @@ def check_files_exist(directory, file_list, name):
         print(f"All {name} files are present in the directory '{directory}'.")
         return True
 
+def check_files_exist_dir(directory_path, filenames, description):
+    """
+    Checks if the specified files exist in the directory.
+
+    Args:
+    directory_path (str): Path to the directory.
+    filenames (list): List of filenames to check.
+    description (str): Description of the file type (for reporting).
+
+    Returns:
+    dict: Dictionary with filenames as keys and existence as boolean values.
+    """
+    file_existence = {}
+    for filename in filenames:
+        file_path = os.path.join(directory_path, filename)
+        file_existence[filename] = os.path.isfile(file_path)
+    return file_existence
+
 def additional_iqtree_files(options):
     suffix = []
     if "ufboot" in options:
@@ -91,21 +130,6 @@ def check_iqtree_files_exist(data_name, dest_dir_path, iqtree_options):
     files_to_check = [ data_name + suffix for suffix in iqtree_files_endings]
     return check_files_exist(dest_dir_path, files_to_check, "IQ-TREE")
 
-def check_files_exist(directory, file_list, name):
-    directory_path = Path(directory)
-    
-    # Check if the directory exists
-    if not directory_path.is_dir():
-        raise ValueError(f"Directory '{directory}' does not exist.")
-        
-    missing_files = [file for file in file_list if not (directory_path / file).is_file()]
-    
-    if missing_files:
-        print(f"The following {name} files are missing in the directory '{directory}': {', '.join(missing_files)}")
-        return False
-    else:
-        print(f"All {name} files are present in the directory '{directory}'.")
-        return True
 
 def check_satute_files(data_name, dest_dir_path, categories, alpha, asr):
     file_endings = [f"_{alpha}.satute.log"]
@@ -121,6 +145,39 @@ def check_satute_files(data_name, dest_dir_path, categories, alpha, asr):
         
     files_to_check = [ data_name + suffix for suffix in file_endings]  
     return check_files_exist(dest_dir_path, files_to_check, "Satute")
+
+
+def check_satute_files_dir(dest_dir_path, categories, alpha, asr):
+    """
+    Constructs and checks the existence of expected files with given suffixes for 'satute'.
+
+    Args:
+    dest_dir_path (str): Path to the destination directory where files are expected.
+    categories (list): List of category rates.
+    alpha (str): A suffix to append to the file names.
+    asr (bool): Whether to include the ASR suffix.
+
+    Returns:
+    dict: Dictionary with filenames as keys and existence as boolean values.
+    """
+    file_endings = [f"_{alpha}.satute.log"]
+    suffixes = [".satute.csv", ".satute.nex"]
+    
+    if asr: 
+        suffixes.append(".satute.asr.csv")
+    
+    if categories:
+        for rate in categories:
+            category_endings = [f"_p{rate}_{alpha}{suffix}" for suffix in suffixes]
+            file_endings.extend(category_endings)
+    else:
+        file_endings.extend([f"_single_rate_{alpha}{suffix}" for suffix in suffixes])
+        
+    # Construct the filenames based on the suffixes
+    files_to_check = file_endings
+    
+    # Check for file existence
+    return check_files_exist_dir(dest_dir_path, files_to_check, "Satute")
 
 def run_external_command(command_args):
     subprocess.run(command_args, check=True)
@@ -168,6 +225,20 @@ def clean_and_prepare_dir(dir_path, msa):
         if os.path.exists(os.path.join(pdir, msa + ".treefile")):
             shutil.move(os.path.join(pdir, msa + ".treefile"), dir_path)
 
+def list_filenames_in_directory(directory_path):
+    """
+    Lists all filenames in the given directory and its subdirectories.
 
+    Args:
+    directory_path (str): Path to the directory.
 
-
+    Returns:
+    list: List of filenames.
+    """
+    filenames = []
+    
+    for root, dirs, files in os.walk(directory_path):
+        for file in files:
+            filenames.append(file)
+    
+    return filenames

@@ -20,7 +20,6 @@ def valid_directory(path: Path):
     - argparse.ArgumentTypeError: If the provided path is not a directory, is empty, or does not contain the required files (.iqtree and one of the specified suffixes).
     """
     msa_file_types = {".fasta", ".nex", ".phy", ".txt"}
-    tree_file_types = {".treefile", ".nex", ".nwk"}
 
     if not os.path.isdir(path):
         raise argparse.ArgumentTypeError(f"{path} is not a valid directory")
@@ -34,21 +33,13 @@ def valid_directory(path: Path):
         raise argparse.ArgumentTypeError(
             f"No .iqtree file found in the directory {path}"
         )
+        
 
     # Check for the presence of at least one file with a specified suffix
     if not any(
         file.endswith(suffix) for suffix in msa_file_types for file in directory_files
     ):
         suffixes_str = ", ".join(msa_file_types)
-        raise argparse.ArgumentTypeError(
-            f"No file with suffixes {suffixes_str} found in the directory {path}"
-        )
-
-    # Check for the presence of at least one file with a specified suffix
-    if not any(
-        file.endswith(suffix) for suffix in tree_file_types for file in directory_files
-    ):
-        suffixes_str = ", ".join(tree_file_types)
         raise argparse.ArgumentTypeError(
             f"No file with suffixes {suffixes_str} found in the directory {path}"
         )
@@ -92,10 +83,6 @@ def valid_alpha(alpha: float):
         if not (0 <= alpha < 1):
             raise ValueError(f"The set alpha value of {alpha} is not valid")
     except ValueError as e:
-        # Print the error message
-        print(e)
-        # Exit the program with status code 1
-        sys.exit(1)
         # Raise an ArgumentTypeError for argparse compatibility
         raise argparse.ArgumentTypeError(e)
     return alpha

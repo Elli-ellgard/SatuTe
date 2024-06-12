@@ -10,7 +10,6 @@ from tests.scripts.satute_test_utils import (
 )
 
 
-
 def test_1(data_dir_path, iqtree, python, satute):
     source_path, msa, _ = data_dir_path 
     suffix = "MSA TEST 1: only msa IQ-TREE exists"
