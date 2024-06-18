@@ -1,92 +1,6 @@
 # -*- coding: utf-8 -*-
-import os
-import argparse
-import sys
 from pathlib import Path
-
-
-def valid_directory(path: Path):
-    """
-    Custom type function for argparse - checks if the provided path is a valid directory,
-    is not empty, and contains a .iqtree file and at least one file with specified suffixes.
-
-    Args:
-    - path (str): Directory path to be validated.
-
-    Returns:
-    - pathlib.Path: Validated Path object.
-
-    Raises:
-    - argparse.ArgumentTypeError: If the provided path is not a directory, is empty, or does not contain the required files (.iqtree and one of the specified suffixes).
-    """
-    msa_file_types = {".fasta", ".nex", ".phy", ".txt"}
-
-    if not os.path.isdir(path):
-        raise argparse.ArgumentTypeError(f"{path} is not a valid directory")
-
-    directory_files = os.listdir(path)
-    if not directory_files:
-        raise argparse.ArgumentTypeError(f"{path} directory is empty")
-
-    # Check for the presence of a .iqtree file in the directory
-    if not any(file.endswith(".iqtree") for file in directory_files):
-        raise argparse.ArgumentTypeError(
-            f"No .iqtree file found in the directory {path}"
-        )
-        
-
-    # Check for the presence of at least one file with a specified suffix
-    if not any(
-        file.endswith(suffix) for suffix in msa_file_types for file in directory_files
-    ):
-        suffixes_str = ", ".join(msa_file_types)
-        raise argparse.ArgumentTypeError(
-            f"No file with suffixes {suffixes_str} found in the directory {path}"
-        )
-
-    return Path(path)
-
-
-def valid_file(path: Path):
-    """
-    Custom type function for argparse - checks if the provided path is a valid file.
-
-    Args:
-    - path (str): File path to be validated.
-
-    Returns:
-    - pathlib.Path: Validated Path object.
-
-    Raises:
-    - argparse.ArgumentTypeError: If the provided path is not a file.
-    """
-    if not os.path.isfile(path):
-        raise argparse.ArgumentTypeError(f"{path} is not a valid file")
-    return Path(path)
-
-
-def valid_alpha(alpha: float):
-    """
-    Custom type function for argparse - checks if the provided alpha value is valid.
-
-    Args:
-    - alpha (float): Alpha value to be validated.
-
-    Returns:
-    - float: Validated alpha value.
-
-    Raises:
-    - argparse.ArgumentTypeError: If the alpha value is not between 0 and 1 inclusive.
-    """
-    try:
-        alpha = float(alpha)
-        if not (0 <= alpha < 1):
-            raise ValueError(f"The set alpha value of {alpha} is not valid")
-    except ValueError as e:
-        # Raise an ArgumentTypeError for argparse compatibility
-        raise argparse.ArgumentTypeError(e)
-    return alpha
-
+from satute.valid_data_input import valid_directory, valid_file, valid_alpha
 
 ARGUMENT_LIST = [
     {
@@ -180,6 +94,7 @@ ARGUMENT_LIST = [
     },
     {
         "flag": "-add_iqtree_options",
+        "default": "",
         "help": "Specify additional options for the IQ-Tree run, if necessary.",
         "type": str,
         "metavar": "<additional_option>",

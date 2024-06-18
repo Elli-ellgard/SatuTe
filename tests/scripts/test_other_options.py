@@ -1,6 +1,7 @@
 import os
 
 from tests.scripts.fixtures import *
+
 from tests.scripts.satute_test_utils import (
     print_test_name, 
     create_destination_dir,
@@ -13,7 +14,7 @@ from tests.scripts.satute_test_utils import (
 
 def test_1(data_dir_path, iqtree, python, satute):
     source_path, msa, _ = data_dir_path 
-    suffix = "OTHER TEST 1: only msa iqtree exists  path to executable"
+    suffix = "OTHER TEST 1: only msa IQ-Tree exists path to executable"
     print_test_name(suffix)
     print(f"IQ-Tree executeable path: {iqtree}")
 

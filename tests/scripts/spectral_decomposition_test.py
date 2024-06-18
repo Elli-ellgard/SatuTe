@@ -10,7 +10,6 @@ from satute.amino_acid_models import (
     print_matrix,
 )
 
-
 def test_spectral_decomposition():
     rate_matrix = RateMatrix(POISSON_RATE_MATRIX)
     state_frequencies = calculate_stationary_distribution(rate_matrix.rate_matrix)
@@ -22,8 +21,6 @@ def test_spectral_decomposition():
         multiplicity,
         eigenvalue,
     ) = spectral_decomposition(rate_matrix.rate_matrix, psi_matrix)
-
-    print(array_left_eigenvectors, array_right_eigenvectors, multiplicity)
 
 
 def construct_rate_matrix(rate_matrix):

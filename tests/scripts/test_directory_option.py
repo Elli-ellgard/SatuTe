@@ -73,7 +73,7 @@ def test_2(dir_path, iqtree, python, satute):
 
 def test_3(dir_path, iqtree, python, satute):
     source_path  = dir_path[0] 
-    suffix = "Directory Test Two Without IQ-TREE File"
+    suffix = "Directory Test Three Without IQ-TREE File"
 
     # create output directory
     dest_dir_path = create_destination_dir(source_path, suffix)
@@ -103,7 +103,7 @@ def test_3(dir_path, iqtree, python, satute):
 
 def test_4(dir_path, iqtree, python, satute):
     source_path  = dir_path[0] 
-    suffix = "Directory Test Two Without IQ-TREE File"
+    suffix = "Directory Test Four Without IQ-TREE File"
 
     # create output directory
     dest_dir_path = create_destination_dir(source_path, suffix)
@@ -164,7 +164,7 @@ def test_5(dir_path, iqtree, python, satute):
     
 def test_5(dir_path, iqtree, python, satute):
     source_path  = dir_path[0] 
-    suffix = "Directory Test 5 MSA+DIR"
+    suffix = "Directory Test 5 MSA+DIR, should break"
 
     # create output directory
     dest_dir_path = create_destination_dir(source_path, suffix)

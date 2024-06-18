@@ -26,3 +26,9 @@ class NoAlignmentFileError(Exception):
     """Exception raised when no multiple sequence alignment file is found."""
 
     pass
+
+
+class IqTreeNotFoundError(Exception):
+    """Exception raised when IQ-TREE is not found at the given path."""
+
+    pass

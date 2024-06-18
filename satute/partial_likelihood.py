@@ -216,9 +216,11 @@ def calculate_partial_likelihoods_for_sites(
 
         # Calculate the partial likelihoods for each edge in the graph
         for edge in filtered_edges:
+            
             right, left, length = edge
-            p1, p1_factor = partial_likelihood(left, right, rate_matrix)
-            p2, p2_factor = partial_likelihood(right, left, rate_matrix)
+            
+            p1, _ = partial_likelihood(left, right, rate_matrix)
+            p2, _ = partial_likelihood(right, left, rate_matrix)
 
             likelihood_data = get_partial_likelihood_dict(
                 (left, right), p1, p2, site_idx, length, states

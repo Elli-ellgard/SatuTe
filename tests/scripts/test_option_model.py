@@ -1,5 +1,4 @@
 from tests.scripts.satute_test_utils import (
-    run_external_command,
     run_satute,
     print_test_name,
     create_destination_dir,
@@ -9,7 +8,6 @@ from tests.scripts.satute_test_utils import (
 )
 import os
 from pathlib import Path
-import sys
 from tests.scripts.fixtures import *
 
 
@@ -359,7 +357,7 @@ def test_10(data_dir_path, iqtree, python, satute):
             "-model",
             "GTR+G4",
             "-alpha",
-            "0.05",
+            alpha,
             "-category",
             "3",
             "-iqtree",

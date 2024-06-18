@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from ete3 import Tree
 from collections import Counter
-from typing import Dict, List, Tuple, Set
+from typing import Tuple, Set
 
 
 ###############              Printing                 ######################
@@ -141,7 +141,7 @@ def check_all_internal_nodes_annotated(tree: Tree) -> bool:
 
 
 ###############              Tree Check          ######################
-def is_bifurcating(tree) -> bool:
+def is_bifurcating(tree: Tree) -> bool:
     """
     Checks if a given tree is strictly bifurcating.
 
@@ -165,92 +165,3 @@ def has_duplicate_leaf_sequences(node, multiple_sequence_alignment) -> bool:
     sequences = [multiple_sequence_alignment[leaf.name] for leaf in node.iter_leaves()]
     sequence_count = Counter(sequences)
     return any(count > 1 for count in sequence_count.values())
-
-
-###############              Collapsing          ######################
-def collapse_identical_leaf_sequences(
-    tree: Tree, multiple_sequence_alignment: Dict[str, str]
-) -> tuple[Dict, Dict]:
-    """
-    Collapses a tree by merging nodes with identical leaf sequences.
-
-    Args:
-    tree (Tree): The tree to be collapsed.
-    multiple_sequence_alignment: The multiple sequence alignment associated with the tree's leaves.
-
-    Returns:
-    tuple: A tuple containing the updated multiple sequence alignment and a dictionary of collapsed nodes.
-    """
-    # Initialize a dictionary to track the collapsed nodes
-    collapsed_nodes_dict = {}
-
-    # Traverse the tree in postorder
-    for node in tree.traverse("postorder"):
-        # Check only internal (non-leaf) nodes
-        if not node.is_leaf():
-            # Get sequences of all leaf nodes under the current internal node
-            leaf_sequences = [
-                multiple_sequence_alignment[leaf.name] for leaf in node.iter_leaves()
-            ]
-
-            # Check if all leaf sequences under this node are identical
-            if len(set(leaf_sequences)) == 1:
-                # Delete the children nodes as they are identical and update the collapsed nodes dictionary
-                delete_children_nodes(node, collapsed_nodes_dict)
-                # Update the multiple sequence alignment for the current node
-                multiple_sequence_alignment[node.name] = leaf_sequences[0]
-
-    # Return the updated multiple sequence alignment and collapsed nodes dictionary
-    return multiple_sequence_alignment, collapsed_nodes_dict
-
-def delete_children_nodes(
-    node: Tree, collapsed_nodes_info: Dict[str, List[str]]
-) -> Dict:
-    """
-    Deletes the children nodes of a specified non-leaf node in a phylogenetic tree and updates a dictionary
-    with the names of all leaves that were under these nodes.
-
-    This function is primarily used in processes where it's necessary to simplify a tree by collapsing nodes
-    with identical sequences, and there's a need to keep track of the original leaf distribution for further analysis.
-
-    Args:
-        node (Tree): A non-leaf node from which children will be detached. This node must be part of a larger Tree structure.
-        collapsed_nodes_info (dict): A dictionary to be updated with information about the collapsed nodes. It maps node names
-        to lists containing the names of all leaf nodes that were under each collapsed node.
-
-    Returns:
-        dict: The updated dictionary reflecting the changes made to the tree structure, including the names of leaves under the detached nodes.
-
-    Raises:
-        TypeError: If `node` is not an instance of `Tree` or `collapsed_nodes_info` is not a dictionary.
-        ValueError: If `node` is a leaf node, indicating it has no children to delete.
-
-    Example:
-        >>> from ete3 import Tree
-        >>> tree = Tree("((A:1,B:1)Node1:0.5,(C:1,D:1)Node2:0.5)Root;")
-        >>> collapsed_nodes_info = {}
-        >>> updated_info = delete_children_nodes(tree&"Node1", collapsed_nodes_info)
-        >>> print(tree)
-        ((C:1,D:1)Node2:0.5)Root;
-        >>> print(updated_info)
-        {'Node1': ['A', 'B']}
-
-    Note:
-        - The function modifies the input tree by detaching child nodes from the specified node. These child nodes are removed from the tree but not deleted from memory.
-        - The function assumes the tree and the dictionary are correctly formatted and the node exists within the tree.
-    """
-    if not isinstance(node, Tree):
-        raise TypeError("The node must be an instance of ete3.Tree.")
-    if not isinstance(collapsed_nodes_info, dict):
-        raise TypeError("collapsed_nodes_info must be a dictionary.")
-    if node.is_leaf():
-        raise ValueError(
-            "The specified node is a leaf and does not have children to delete."
-        )
-
-    collapsed_nodes_info[node.name] = [leaf.name for leaf in node.iter_leaves()]
-    for child in list(node.children):
-        child.detach()
-
-    return collapsed_nodes_info
-

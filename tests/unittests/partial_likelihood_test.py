@@ -6,15 +6,13 @@ from Bio.Align import MultipleSeqAlignment
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 from satute.decomposition import spectral_decomposition
-from satute.graph import Graph, Node, get_initial_likelihood_vector
+from satute.graph import Node
 from satute.rate_matrix import RateMatrix
 from satute.amino_acid_models import POISSON_RATE_MATRIX, AA_STATE_FREQUENCIES
 from satute.rate_analysis import single_rate_analysis
-from satute.graph import get_initial_likelihood_vector
 from satute.sequences import dict_to_alignment
 from satute.trees import (
     rename_internal_nodes_pre_order,
-    collapse_identical_leaf_sequences,
 )
 from satute.partial_likelihood import (
     partial_likelihood,
@@ -132,11 +130,7 @@ class TestPhylogeneticAnalysis(unittest.TestCase):
         tree = Tree(self.newick_string, format=1)
         rename_internal_nodes_pre_order(tree)
         sequence_dict = {record.id: str(record.seq) for record in self.alignment}
-        collapsed_tree = tree.copy("deepcopy")
-        sequence_dict, twin_dictionary = collapse_identical_leaf_sequences(
-            collapsed_tree, sequence_dict
-        )
-
+        
         rate_matrix = RateMatrix(POISSON_RATE_MATRIX)
         psi_matrix = np.diag(AA_STATE_FREQUENCIES["POISSON"])
         array_left_eigenvectors, array_right_eigenvectors, multiplicity, eigenvalue = (
@@ -145,7 +139,7 @@ class TestPhylogeneticAnalysis(unittest.TestCase):
 
         alignment = dict_to_alignment(sequence_dict)
         results = single_rate_analysis(
-            collapsed_tree,
+            tree,
             alignment,
             rate_matrix,
             np.array(AA_STATE_FREQUENCIES["POISSON"]),

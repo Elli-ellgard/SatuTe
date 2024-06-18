@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
-
 import os
 from pandas import DataFrame
-
-
 from Bio import AlignIO
 from Bio.Align import MultipleSeqAlignment
 from Bio.SeqRecord import SeqRecord
@@ -18,7 +15,6 @@ def get_column_names_with_prefix(data_frame, prefix):
         data_frame.columns.str.startswith(prefix)
     ].tolist()
     return columns_with_prefix
-
 
 def build_categories_by_sub_tables(data_frame: DataFrame):
     rate_category_dictionary = {}
@@ -40,52 +36,12 @@ def build_categories_by_sub_tables(data_frame: DataFrame):
     return rate_category_dictionary
 
 
-def parse_category_rates(log_file, number_rates):
-    f = open(log_file, "r")
-    lines = f.readlines()
-    f.close()
-    table_data = {}
-
-    # Find the start and end indices of the table
-    start_index = -1
-    end_index = -1
-
-    for i, line in enumerate(lines):
-        if line.strip().startswith("Category"):
-            start_index = i + 1
-        elif line.strip().startswith(f"{number_rates}"):
-            end_index = i + 1
-            break
-
-    if start_index == -1 or end_index == -1:
-        raise ValueError("Table not found in the log file.")
-
-    # Parse the table rows
-    table_lines = lines[start_index:end_index]
-
-    for line in table_lines:
-        line = line.strip()
-        if line:
-            row = line.split()
-            category = row[0]
-            relative_rate = float(row[1])
-            proportion = float(row[2])
-            if category != "0":
-                table_data[f"p{category}"] = {
-                    "Category": category,
-                    "Relative_rate": relative_rate,
-                    "Proportion": proportion,
-                }
-    return table_data
-
-
 """ ## HANDLE ALIGNMENTS  """
 
-def guess_alignment_format(file_name) -> str:
+def guess_alignment_format(file_name: str) -> str:
     with open(file_name, "r") as f:
         first_line = f.readline().strip()
-
-    # Now we'll check for various signatures that might indicate the format.
+    # Check for various signatures that might indicate the format
     if first_line.startswith(">"):
         return "fasta"
     elif first_line.startswith("CLUSTAL"):
@@ -99,8 +55,7 @@ def guess_alignment_format(file_name) -> str:
     elif first_line[0].isdigit():
         return "phylip"
     else:
-        return None
-
+        raise ValueError(f"Unknown alignment format in file {file_name}")
 
 def change_states_to_allowed(alignment):
     for record in alignment:

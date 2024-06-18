@@ -3,6 +3,8 @@ import numpy as np
 from pathlib import Path
 from typing import List
 from satute.repository import SubstitutionModel
+from argparse import Namespace
+from logging import Logger
 
 def format_matrix(matrix, precision: int = 4):
     """Format a matrix for pretty printing."""
@@ -16,7 +18,7 @@ def format_array(array, precision=4):
     formatted_array = "\t".join([f"{item:.{precision}f}" for item in array])
     return formatted_array
 
-def log_consider_iq_tree_message(logger):
+def log_consider_iq_tree_message(logger: Logger):
     logger.info("Running IQ-TREE with constructed arguments")
     logger.warning(
                 "Please consider for the analysis that IQ-Tree will be running with default options."
@@ -25,13 +27,14 @@ def log_consider_iq_tree_message(logger):
                 "If specific options are required for the analysis, please run IQ-Tree separately."
             )
 
+
 def construct_log_file_name(msa_file: Path, input_args):
     log_file = f"{msa_file.resolve()}_{input_args.alpha}.satute.log"
     if input_args.output_suffix:
         log_file = f"{msa_file.resolve()}_{input_args.alpha}_{input_args.output_suffix}.satute.log"
     return log_file
 
-def setup_logging_configuration(logger, input_args, msa_file: Path):
+def setup_logging_configuration(logger: Logger, input_args: List[Namespace], msa_file: Path):
     """
     Initializes the logging system for the application.
     Sets up two handlers:
@@ -65,7 +68,7 @@ def setup_logging_configuration(logger, input_args, msa_file: Path):
     logger.addHandler(stream_handler)
     
 def log_iq_tree_run_and_satute_info(
-    input_args,
+    input_args:List[Namespace],
     substitution_model: SubstitutionModel,
     active_directory,
     rate_category: str,
@@ -98,7 +101,7 @@ def log_iq_tree_run_and_satute_info(
     
 def log_substitution_model_info(
         logger: logging.Logger,
-        input_args,
+        input_args: List[Namespace],
         substitution_model: SubstitutionModel,
         multiplicity: int,
         eigenvectors: List[np.array],

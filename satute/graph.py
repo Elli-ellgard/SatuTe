@@ -284,7 +284,7 @@ def calculate_subtree_edge_metrics(
 
 
 @cache
-def count_leaves_for_subtree(node: Node, coming_from: Node):
+def count_leaves_for_subtree(node: Node, coming_from: Node)-> int:
     """
     Counts the number of leaf nodes in a subtree.
 

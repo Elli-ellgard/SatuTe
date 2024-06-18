@@ -7,8 +7,8 @@ from tests.scripts.satute_test_utils import (
     copy_files_to_dest_dir,
     check_iqtree_files_exist,
     check_satute_files,
+    check_satute_files_dir
 )
-
 
 def test_1(data_dir_path, iqtree, python, satute):
     source_path, msa, _ = data_dir_path 
@@ -112,3 +112,108 @@ def test_3(data_dir_path, iqtree, python, satute):
     # check the files   
     assert check_iqtree_files_exist(msa, dest_dir_path, ["boot","m"])  
     assert check_satute_files(msa, dest_dir_path, categories, alpha, asr)
+    
+def test_4(data_dir_path, iqtree, python, satute):
+    source_path, msa, _ = data_dir_path 
+    suffix = "MSA TEST 4: With additional IQ-TREE options"
+    print_test_name(suffix)
+
+    # create output directory
+    dest_dir_path = create_destination_dir(source_path, suffix)
+
+    # copy msa file to output directory
+    files_to_copy = [msa]
+    copy_files_to_dest_dir(source_path, dest_dir_path, files_to_copy)
+
+    categories = []
+    alpha = str(0.02)
+    asr = True
+
+    run_satute(
+        [
+            "-iqtree",
+            iqtree,
+            "-msa",
+            os.path.join(dest_dir_path, msa),
+            "-boot",
+            "100",
+            "-alpha",
+            alpha,
+            "-asr",
+        ]
+    )
+
+    # check the files   
+    assert check_iqtree_files_exist(msa, dest_dir_path, ["boot","m"])  
+    assert check_satute_files(msa, dest_dir_path, categories, alpha, asr)
+
+def test_5(data_dir_path, iqtree, python, satute):
+    source_path, msa, _ = data_dir_path 
+    suffix = "MSA TEST 5: With additional IQ-TREE options"
+    print_test_name(suffix)
+
+    # create output directory
+    dest_dir_path = create_destination_dir(source_path, suffix)
+
+    # copy msa file to output directory
+    files_to_copy = [msa]
+    copy_files_to_dest_dir(source_path, dest_dir_path, files_to_copy)
+
+    categories = []
+    alpha = str(0.02)
+    asr = True
+
+    run_satute(
+        [
+            "-iqtree",
+            iqtree,
+            "-msa",
+            os.path.join(dest_dir_path, msa),
+            "-boot",
+            "100",
+            "-alpha",
+            alpha,
+            "-asr",
+            "-add_iqtree_options",
+            "-alninfo"
+        ]
+    )
+
+    # check the files   
+    assert check_iqtree_files_exist(msa, dest_dir_path, ["boot","m"])  
+    assert check_satute_files(msa, dest_dir_path, categories, alpha, asr)
+
+def test_6(data_dir_path, iqtree, python, satute):
+    source_path, msa, _ = data_dir_path 
+    suffix = "MSA TEST 6: Add Suffix"
+    print_test_name(suffix)
+
+    # create output directory
+    dest_dir_path = create_destination_dir(source_path, suffix)
+
+    # copy msa file to output directory
+    files_to_copy = [msa]
+    copy_files_to_dest_dir(source_path, dest_dir_path, files_to_copy)
+
+    categories = []
+    alpha = str(0.02)
+    asr = True
+
+    file_suffix = "bam_bam"
+
+    run_satute(
+        [
+            "-iqtree",
+            iqtree,
+            "-msa",
+            os.path.join(dest_dir_path, msa),
+            "-alpha",
+            alpha,
+            "-asr",
+            "-output_suffix",
+            file_suffix
+        ]
+    )
+    # check the files   
+    assert check_iqtree_files_exist(msa, dest_dir_path, ["m"])  
+    assert check_satute_files_dir(dest_dir_path, categories, alpha, asr)

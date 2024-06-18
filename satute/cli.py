@@ -12,16 +12,17 @@ from typing import Dict, List
 
 from satute.decomposition import spectral_decomposition
 from satute.rate_matrix import RateMatrix
-from satute.file_handler import FileHandler, IqTreeHandler
+from satute.handlers import FileHandler, IqTreeHandler
 from satute.trees import rename_internal_nodes_pre_order
 from satute.arguments import ARGUMENT_LIST
 from satute.sequences import check_if_tree_has_same_taxa_as_msa
+from typing import Optional, Dict, List
 from satute.s_logging import *
 from satute.valid_data_input import *
 
 from satute.rate_analysis import (
     multiple_rate_analysis,
-    single_rate_analysis_collapsed_tree,
+    single_rate_analysis
 )
 
 from satute.ostream import (
@@ -42,7 +43,6 @@ from satute.repository import (
     parse_substitution_model,
     parse_rate_from_cli_input,
     parse_file_to_data_frame,
-    SubstitutionModel,
     IqTreeParser,
 )
 
@@ -51,28 +51,28 @@ class Satute:
 
     def __init__(
         self,
-        iqtree=None,
-        logger=None,
+        iq_tree: Optional[str] = None,
+        logger: Optional[Logger] = None,
     ):
         # IQ-TREE related attributes
-        self.iqtree = iqtree
-        self.iqtree_tree_file = None
-        self.iqtree_handler = None
+        self.iqtree: Optional[str] = iq_tree
+        self.iqtree_tree_file: Optional[Path] = None
+        self.iqtree_handler: Optional[IqTreeHandler] = None
 
         # Directories and paths
-        self.input_dir = None
-        self.site_probabilities_file = None
-        self.active_directory = None
+        self.input_dir: Optional[Path] = None
+        self.site_probabilities_file: Optional[Path] = None
+        self.active_directory: Optional[Path] = None
 
-        self.alpha = 0.05
+        self.alpha: float = 0.05
 
         # Miscellaneous attributes
-        self.output_prefix = None
-        self.input_args = []
-        self.number_rates = 1
-        self.logger = logger
+        self.output_prefix: Optional[str] = None
+        self.input_args: List[argparse.Namespace] = []
+        self.number_rates: int = 1
+        self.logger: Optional[Logger] = logger
 
-        self.iq_tree_arguments_dict = {}
+        self.iq_tree_arguments_dict: Dict[str, List[str]] = {}
 
     def validate_satute_input_options(self):
         """
@@ -102,7 +102,7 @@ class Satute:
         adds arguments to the parser based on a predefined list of argument
         configurations, ensuring flexibility and ease of updates.
         """
-        parser = argparse.ArgumentParser(description="Satute")
+        parser = argparse.ArgumentParser(description="Satute", exit_on_error=True)
         for argument in ARGUMENT_LIST:
             # Unpack the dictionary directly without modifying the original list
             parser.add_argument(
@@ -119,7 +119,7 @@ class Satute:
         Initialize the FileHandler and IqTreeHandler.
         """
         self.file_handler = FileHandler(self.active_directory)
-        self.iqtree_handler = IqTreeHandler(self.input_args.iqtree)
+        self.iqtree_handler = IqTreeHandler(self.input_args.iqtree, self.logger)
 
     def initialize_active_directory(self):
         if self.input_args.msa:
@@ -281,9 +281,13 @@ class Satute:
         test_tree = rename_internal_nodes_pre_order(Tree(newick_string, format=1))
         # ======== Model parameter ===========
         ## Get dictionary for stationary distribution and diagonal matrix of the stationary distribution
+        
         iq_tree_file_path = f"{msa_file.resolve()}.iqtree"
+        
         satute_iq_tree_parser = IqTreeParser(iq_tree_file_path)
+        
         substitution_model = satute_iq_tree_parser.load_substitution_model()
+        
         ## Convert representation of rate_matrix
         RATE_MATRIX = RateMatrix(substitution_model.rate_matrix)
 
@@ -298,11 +302,10 @@ class Satute:
         )
 
         # Get number of rate categories in case of a +G or +R model
-        # Consider a specific rate category
-
         validate_category_range(input_args=self.input_args, number_rates=self.number_rates)
         
         rate_category = "all"
+        
         if self.input_args.category:
             rate_category = validate_and_set_rate_category(
                 self.input_args.category, substitution_model.number_rates, logger=self.logger
@@ -364,7 +367,6 @@ class Satute:
                 self.input_args.edge,
             )
 
-
     """END SATUTE Run"""
 
     """BEGIN Analysis"""
@@ -381,7 +383,7 @@ class Satute:
         alpha: float,
         focused_edge: str,
     ):
-        results = single_rate_analysis_collapsed_tree(
+        results = single_rate_analysis(
             test_tree,
             alignment,
             rate_matrix,
@@ -391,12 +393,9 @@ class Satute:
             alpha,
             focused_edge,
         )
-
-        singe_rate_indices = [
-            i for i in range(1, alignment.get_alignment_length() + 1, 1)
-        ]
-
-        single_rate_category = {"single_rate": singe_rate_indices}
+        
+        single_rate_indices = [i for i in range(1, alignment.get_alignment_length() + 1, 1)]
+        single_rate_category = {"single_rate": single_rate_indices}
 
         write_results_for_category_rates(
             results,
@@ -435,7 +434,7 @@ class Satute:
             "single_rate",
             self.input_args.alpha,
             self.input_args.edge,
-            singe_rate_indices,
+            single_rate_indices,
         )
 
     def run_multiple_rate_analysis(
@@ -659,7 +658,7 @@ class Satute:
 def main(args=None):
     # Instantiate the Satute class
     logger = logging.getLogger(__name__)
-    satute = Satute(iqtree="iqtree", logger=logger)
+    satute = Satute(iq_tree="iqtree", logger=logger)
     
     try:
     # Parse and validate input arguments
@@ -668,7 +667,7 @@ def main(args=None):
         # Initialize file handler and logger
         satute.initialize_active_directory()
         satute.initialize_handlers()
-        setup_logging_configuration(logger=logger, input_args=satute.input_args, msa_file= Path(satute.file_handler.find_msa_file()))
+        setup_logging_configuration(logger = logger, input_args = satute.input_args, msa_file = Path(satute.file_handler.find_msa_file()))
         # IQ-Tree run if necessary
         satute.iq_arguments_dict = satute.construct_IQ_TREE_arguments()
         satute.run_iqtree_workflow(satute.iq_arguments_dict)

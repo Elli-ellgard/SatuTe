@@ -90,7 +90,7 @@ def parse_state_frequencies(file_content):
 def parse_rate_matrices(file_content, state_frequencies):
     """
 
-    Parse the rate parameters R  .iqtree file path and determine
+    Parse the rate parameters R .iqtree file path and determine
     the rate matrix Q using the rate parameters and stationary distribution
 
     Returns:

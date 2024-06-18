@@ -1473,7 +1473,7 @@ AMINO_ACIDS = [
 ]
 
 
-def string_to_padded_matrix(matrix_string) -> np.array:
+def string_to_padded_matrix(matrix_string:str) -> np.array:
     # Splitting the string into lines
     lines = matrix_string.strip().split("\n")
 
@@ -1534,7 +1534,7 @@ def get_aa_state_frequency_substitution_models(substitution_model: str) -> tuple
     return frequencies, np.diag(frequencies)
 
 
-def create_rate_matrix_with_input(matrix_size, input_string: str, eq):
+def create_rate_matrix_with_input(matrix_size: int, input_string: str, eq):
     # Split the string into lines
     # input_string = input_string.replace(" ", "")
     lines = input_string.split("\n")

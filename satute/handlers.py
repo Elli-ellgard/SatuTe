@@ -4,11 +4,13 @@ import subprocess
 import shutil
 from typing import List, Optional
 from pathlib import Path
+from logging import Logger
+from satute.exceptions import IqTreeNotFoundError
 
 class FileHandler:
     """Handles file operations for the Satute project."""
 
-    def __init__(self, base_directory):
+    def __init__(self, base_directory:str):
         """
         Initialize with a base directory.
 
@@ -114,7 +116,7 @@ class FileHandler:
 
         return newick_string
 
-    def get_newick_string(self, file_path):
+    def get_newick_string(self, file_path: str)->str:
         """
         Fetch the Newick string from a file.
 
@@ -128,8 +130,6 @@ class FileHandler:
         - FileNotFoundError: If the file does not exist.
         - ValueError: If the file is empty or does not contain a valid Newick string.
         """
-        from pathlib import Path
-
         # Check if file exists
         if not Path(file_path).is_file():
             raise FileNotFoundError(f"The file at path {file_path} does not exist.")
@@ -149,20 +149,6 @@ class FileHandler:
 
         return newick_string
 
-    def get_newick_string_from_args(self):
-        """
-        Get the newick string from the provided input arguments.
-
-        Returns:
-        - str: Newick format string.
-        """
-        # If directory is provided, check for tree file and iqtree file
-        return self.get_newick_string(
-            self.find_file_by_suffix({".treefile", ".nwk"})
-        ) or self.get_newick_string_from_iq_tree_file(
-            self.find_file_by_suffix({".iqtree"})
-        )
-
     def find_msa_file(self)->str:
         msa_file_types = [".fasta", ".nex", ".phy", ".txt"]
         msa_file = self.find_file_by_suffix(msa_file_types)
@@ -177,30 +163,25 @@ class FileHandler:
             raise FileNotFoundError("No tree file found in directory")
         return tree_file
 
-    def find_iq_tree_file(self):
+    def find_iq_tree_file(self)->str:
         iq_tree_file = self.find_file_by_suffix([".iqtree"])
         if not iq_tree_file:
             raise FileNotFoundError("No .iqtree file found in directory")
         return iq_tree_file
 
 
-class IqTreeNotFoundError(Exception):
-    """Exception raised when IQ-TREE is not found at the given path."""
-
-    pass
-
-
 class IqTreeHandler:
     """Handles IQ-TREE related operations for the Satute project."""
 
-    def __init__(self, iqtree_path):
+    def __init__(self, iqtree_path, logger : Logger=None):
         """
         Initialize with an optional base directory.
 
         Args:
         - base_directory (str, optional): The directory where the handler might operate. Defaults to None.
         """
-        self.iqtree_path = iqtree_path
+        self.iq_tree_path = iqtree_path
+        self.logger = logger
 
     def validate_and_append_boot_arguments(self, ufboot, bootstrap):
         """Validates the ufboot and boot parameters and appends them to extra_arguments if valid.
@@ -232,19 +213,50 @@ class IqTreeHandler:
 
         return extra_arguments  # return the list of extra_arguments
 
-    def run_iqtree_with_arguments(self, arguments, extra_arguments=[]):
-        """Run IQ-TREE with given arguments and extra arguments."""
-        extra_arguments_string = " ".join(extra_arguments)
+    def run_iqtree_with_arguments(self, arguments: List[str], extra_arguments: List[str]=[]):
+        """
+        Run IQ-TREE with given arguments and extra arguments.
 
-        iq_tree_command = (
-            f"{self.iqtree_path} {' '.join(arguments)} {extra_arguments_string}"
-        )
+        Args:
+            arguments (list): List of arguments for IQ-TREE.
+            extra_arguments (list): List of additional arguments for IQ-TREE (optional).
+
+        Raises:
+            RuntimeError: If IQ-TREE execution fails.
+        """
+        extra_arguments_string = " ".join(extra_arguments)
+        iq_tree_command = f"{self.iq_tree_path} {' '.join(arguments)} {extra_arguments_string}"
+
+        self.logger.info(f"Running IQ-TREE command: {iq_tree_command}")
 
         try:
-            subprocess.run(iq_tree_command, shell=True, check=True)
-        except subprocess.CalledProcessError as e:
-            print(f"IQ-TREE execution failed with the following error: {e}")
+            result = subprocess.run(
+                iq_tree_command,
+                shell=True,
+                check=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True
+            )
 
+            # Log the output and error messages
+            self.logger.info(f"IQ-TREE Output: {result.stdout}")
+            if result.stderr:
+                self.logger.warning(f"IQ-TREE Error: {result.stderr}")
+
+        except subprocess.CalledProcessError as e:
+            error_message = (
+                f"IQ-TREE execution failed with error code {e.returncode}.\n"
+                f"Command: {iq_tree_command}\n"
+                f"Output: {e.stdout}\n"
+                f"Error: {e.stderr}\n"
+                "Please check the command and ensure that IQ-TREE is installed and accessible."
+            )
+            
+            self.logger.error(error_message)
+    
+            # Raise a RuntimeError with details for further handling
+            raise RuntimeError(error_message) from e
 
     def check_iqtree_path(self, iqtree_path):
         """Check if the given IQ-TREE path exists and raise an exception if it doesn't."""

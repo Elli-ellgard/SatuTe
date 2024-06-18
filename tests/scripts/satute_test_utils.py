@@ -3,7 +3,13 @@ import shutil
 import subprocess
 import time
 from pathlib import Path
+from Bio import AlignIO
+from Bio.Align import MultipleSeqAlignment
+from pathlib import Path
+from ete3 import Tree
+
 import satute.cli
+
 
 def print_test_name(suffix):
     print("")
@@ -130,7 +136,6 @@ def check_iqtree_files_exist(data_name, dest_dir_path, iqtree_options):
     files_to_check = [ data_name + suffix for suffix in iqtree_files_endings]
     return check_files_exist(dest_dir_path, files_to_check, "IQ-TREE")
 
-
 def check_satute_files(data_name, dest_dir_path, categories, alpha, asr):
     file_endings = [f"_{alpha}.satute.log"]
     suffix = [".satute.csv",".satute.nex"]
@@ -145,7 +150,6 @@ def check_satute_files(data_name, dest_dir_path, categories, alpha, asr):
         
     files_to_check = [ data_name + suffix for suffix in file_endings]  
     return check_files_exist(dest_dir_path, files_to_check, "Satute")
-
 
 def check_satute_files_dir(dest_dir_path, categories, alpha, asr):
     """
@@ -242,3 +246,60 @@ def list_filenames_in_directory(directory_path):
             filenames.append(file)
     
     return filenames
+
+
+def delete_taxon_from_msa(input_file: str, output_file: str, taxon_id: str, format: str = "phylip-sequential"):
+    """
+    Delete a taxon from a multiple sequence alignment.
+
+    Args:
+        input_file (str): Path to the input MSA file.
+        output_file (str): Path to the output MSA file with the taxon removed.
+        taxon_id (str): The identifier of the taxon to remove.
+        format (str): Format of the MSA file (default: "fasta").
+    """
+    # Read the MSA from the input file
+    alignment = AlignIO.read(input_file, format)
+
+    # Filter out the sequences with the specified taxon_id
+    filtered_alignment = MultipleSeqAlignment(
+        record for record in alignment if record.id != taxon_id
+    )
+
+    # Write the filtered alignment to the output file
+    AlignIO.write(filtered_alignment, output_file, format)
+
+    print(f"Taxon '{taxon_id}' has been removed. The new MSA is saved to '{output_file}'.")
+    
+
+def delete_taxon_from_tree(newick_file: str, taxon: str):
+    """
+    Delete a taxon from a phylogenetic tree and overwrite the Newick file with the updated tree.
+
+    Args:
+        newick_file (str): Path to the Newick file containing the tree.
+        taxon (str): The name of the taxon to delete.
+
+    Raises:
+        FileNotFoundError: If the Newick file does not exist.
+        ValueError: If the taxon is not found in the tree.
+    """
+    # Load the tree from the Newick file
+    try:
+        tree = Tree(newick_file)
+    except FileNotFoundError as e:
+        print(f"File not found: {newick_file}")
+        raise e
+
+    # Find and delete the taxon
+    node = tree.search_nodes(name=taxon)
+    if not node:
+        raise ValueError(f"Taxon '{taxon}' not found in the tree.")
+
+    node[0].delete()
+
+    # Write the updated tree back to the Newick file
+    with open(newick_file, "w") as f:
+        f.write(tree.write(format=1))  # format=1 for Newick with branch lengths
+
+    print(f"Taxon '{taxon}' has been removed and the tree has been updated.")

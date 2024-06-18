@@ -8,6 +8,7 @@ from typing import List, Dict
 
 from satute.amino_acid_models import get_aa_state_frequency_substitution_models, normalize_stationary_distribution_aa
 from satute.dna_model import NOT_ACCEPTED_DNA_MODELS
+
 from satute.amino_acid_models import (
     AMINO_ACID_RATE_MATRIX,
     create_rate_matrix_with_input,
@@ -661,7 +662,7 @@ class IqTreeParser:
         # If the loop completes without returning, raise an error
         raise ValueError("Substitution model not found in the file content.")
 
-    def parse_category_rates(self):
+    def parse_category_rates(self)->dict:
         """
         Parses the category rates from the file content and returns them in a structured format.
 
@@ -792,12 +793,10 @@ def parse_rate_from_cli_input(model: str) -> int:
         # Return None or an appropriate value for error handling
         raise ValueError("Could not parse the substitution model from the file.")
 
-
-def parse_file_to_data_frame(file_path) -> pd.DataFrame:
+def parse_file_to_data_frame(file_path: str) -> pd.DataFrame:
     try:
         # Read the file into a dataframe
         df = pd.read_csv(file_path, delimiter="\t")
-
         return df
 
     except FileNotFoundError:
