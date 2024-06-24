@@ -16,6 +16,7 @@ from satute.amino_acid_models import (
     AA_STATE_FREQUENCIES,
     NOT_ACCEPTED_AA_MODELS,
 )
+from satute.exceptions import InvalidModelNameError, ModelNotFoundError
 
 
 class ModelType(Enum):
@@ -125,6 +126,7 @@ class IqTreeParser:
             state_frequencies = dict_state_frequencies.values()
             rate_matrix = self.construct_rate_matrix(dict_state_frequencies)
         else:
+            current_substitution_model = current_substitution_model.upper()
             # Parse the rate matrix and stationary distribution for the Protein Substitution Model
             state_frequencies, phi_matrix = get_aa_state_frequency_substitution_models(
                 current_substitution_model
@@ -161,9 +163,11 @@ class IqTreeParser:
                 )
 
     def get_model_type(self, model: str) -> ModelType:
+    
         # Check if it is a protein model
+        model_upper = model.upper()
         for amino_acid_substitution_model in AMINO_ACID_MODELS:
-            if amino_acid_substitution_model in model:
+            if amino_acid_substitution_model in model_upper:
                 return ModelType.PROTEIN
 
         # Default to DNA if no conditions above are met
@@ -470,6 +474,7 @@ class IqTreeParser:
                 idx += 1
         return rate_matrix
 
+
     def get_aa_rate_matrix(self, current_substitution_model: str) -> np.ndarray:
         """
         Retrieves and constructs the amino acid rate matrix for a given substitution model.
@@ -482,23 +487,22 @@ class IqTreeParser:
         Parameters:
         - current_substitution_model (str): The substitution model string, which may include extensions or parameters.
 
-        Returns:
-        - np.ndarray: The amino acid rate matrix as a NumPy array.
-
         Raises:
-        - KeyError: If the core model name is not found in the AMINO_ACID_RATE_MATRIX dictionary.
+        - ModelNotFoundError: If the core model name is not found in the AMINO_ACID_RATE_MATRIX dictionary.
+        - InvalidModelNameError: If the core model name cannot be extracted.
+
+        Returns:
+        - np.ndarray: The constructed amino acid rate matrix.
         """
         # Regular expression to extract the core model name
         core_model_match = re.match(r"^[^\+\{]+", current_substitution_model)
         if core_model_match:
             core_model = core_model_match.group()
         else:
-            raise ValueError(
-                f"Could not extract core model from: {current_substitution_model}"
-            )
+            raise InvalidModelNameError(current_substitution_model)
 
-        if core_model not in AMINO_ACID_RATE_MATRIX:
-            raise KeyError(f"Model '{core_model}' not found in AMINO_ACID_RATE_MATRIX.")
+        if core_model not in AMINO_ACID_RATE_MATRIX or core_model not in AA_STATE_FREQUENCIES:
+            raise ModelNotFoundError(core_model)
 
         # THIS WILL LEAD TO A BUG
 
@@ -753,7 +757,6 @@ def parse_substitution_model(file_path: str) -> str:
             raise ValueError("Expected model strings not found in the file.")
     except IOError:
         raise ValueError("Could not read the file.")
-
 
 def parse_rate_from_cli_input(model: str) -> int:
     # Find the index of '+G' and '+R' in the model string

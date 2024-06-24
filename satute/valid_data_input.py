@@ -5,7 +5,6 @@ from typing import List
 import os
 import argparse
 
-
 def validate_dir_conflicts(input_args: List[argparse.Namespace]):
     """
     Ensure '-dir' is not used with incompatible options.
@@ -25,7 +24,6 @@ def validate_dir_conflicts(input_args: List[argparse.Namespace]):
             "Choose either '-dir' or the other options."
         )
 
-        
 def validate_msa_presence(input_args: List[argparse.Namespace]):
     """
     Ensure either 'msa' or 'dir' is specified, not both.
@@ -53,7 +51,6 @@ def validate_tree_and_model(input_args: List[argparse.Namespace]):
     """
     if input_args.tree and not input_args.model:
         raise ValueError("Error: A model must be specified when using a tree file.")
-
 
 def validate_boot_options(input_args: List[argparse.Namespace]):
     """
@@ -167,7 +164,6 @@ def valid_directory(path: Path)->Path:
 
     return Path(path)
 
-
 def valid_file(path: Path)->Path:
     """
     Custom type function for argparse - checks if the provided path is a valid file.
@@ -184,7 +180,6 @@ def valid_file(path: Path)->Path:
     if not os.path.isfile(path):
         raise argparse.ArgumentTypeError(f"{path} is not a valid file")
     return Path(path)
-
 
 def valid_alpha(alpha: float) -> float:
     """
@@ -209,3 +204,22 @@ def valid_alpha(alpha: float) -> float:
         # Raise an ArgumentTypeError for argparse compatibility
         raise argparse.ArgumentTypeError(e)
     return alpha
+
+def validate_satute_input_options(input_args : List[argparse.Namespace]):
+        """
+        Validates the combinations of input arguments for Satute analysis.
+
+        This function ensures that:
+        - The -dir option is not used with specific other options (like -msa, -tree).
+        - The -msa option is provided if -dir is not used.
+        - The -tree option, if used, must be accompanied by a -model option.
+        - The -ufboot or -boot options are not used with a specific combination of options.
+        - The chosen category (if provided) is within a valid range.
+
+        Raises:
+            ValueError: If an invalid combination of arguments is provided.
+        """
+        validate_dir_conflicts(input_args=input_args)
+        validate_msa_presence(input_args=input_args)
+        validate_tree_and_model(input_args=input_args)
+        validate_boot_options(input_args=input_args)

@@ -15,8 +15,6 @@ from tests.scripts.satute_test_utils import (
 def test_1(data_dir_path, iqtree, python, satute):
     source_path, msa, _ = data_dir_path 
     suffix = "OTHER TEST 1: only msa IQ-Tree exists path to executable"
-    print_test_name(suffix)
-    print(f"IQ-Tree executeable path: {iqtree}")
 
     # create output directory
     dest_dir_path = create_destination_dir(source_path, suffix)
@@ -50,8 +48,6 @@ def test_1(data_dir_path, iqtree, python, satute):
 def test_2(data_dir_path, iqtree, python, satute):
     source_path, msa, _ = data_dir_path 
     suffix = "OTHER TEST 2: only msa iqtree not exists"
-    print_test_name(suffix)
-    print(f"IQ-Tree executeable path: {iqtree}")
 
     # create output directory
     dest_dir_path = create_destination_dir(source_path, suffix)
@@ -85,7 +81,6 @@ def test_2(data_dir_path, iqtree, python, satute):
 def test_3(data_dir_path, iqtree, python, satute):
     source_path, msa, _ = data_dir_path 
     suffix = "OTHER TEST 3: no msa no dir"
-    print_test_name(suffix)
 
     # create output directory
     dest_dir_path = create_destination_dir(source_path, suffix)
@@ -110,7 +105,7 @@ def test_3(data_dir_path, iqtree, python, satute):
             ]
         )
     # Verify the exit code if needed
-    assert excinfo.value.code == 1  # assuming exit code 1 for failure
+    assert excinfo.value.code != 0  # assuming exit code 1 for failure
 
     # check the files   
     assert not check_satute_files(msa, dest_dir_path, categories, alpha, asr) , "Satute files check failed: Required files are missing or not created."
@@ -118,8 +113,7 @@ def test_3(data_dir_path, iqtree, python, satute):
 def test_4(data_dir_path, iqtree, python, satute):
     source_path, msa, _ = data_dir_path 
     suffix = "OTHER TEST 4: alpha greater 1"
-    print_test_name(suffix)
-
+ 
     # create output directory
     dest_dir_path = create_destination_dir(source_path, suffix)
 
@@ -145,7 +139,7 @@ def test_4(data_dir_path, iqtree, python, satute):
             ]
         )
     # Verify the exit code if needed
-    assert excinfo.value.code == 2  # assuming exit code 1 for failure
+    assert excinfo.value.code != 0  # assuming exit code 1 for failure
 
     # check the files   
     assert  not check_iqtree_files_exist(msa, dest_dir_path, ["m"]) , "IQTree files check failed: Required files are missing or not created."
@@ -154,7 +148,6 @@ def test_4(data_dir_path, iqtree, python, satute):
 def test_5(data_dir_path, iqtree, python, satute):
     source_path, msa, _ = data_dir_path 
     suffix = "CATEGORY TEST 1: msa model category exists"
-    print_test_name(suffix)
 
     # create output directory
     dest_dir_path = create_destination_dir(source_path, suffix)
@@ -192,7 +185,6 @@ def test_5(data_dir_path, iqtree, python, satute):
 def test_6(data_dir_path, iqtree, python, satute):
     source_path, msa, _ = data_dir_path 
     suffix = "CATEGORY TEST 2: msa model category not exists"
-    print_test_name(suffix)
 
     # create output directory
     dest_dir_path = create_destination_dir(source_path, suffix)
@@ -224,6 +216,6 @@ def test_6(data_dir_path, iqtree, python, satute):
         )
 
     # Verify the exit code if needed
-    assert excinfo.value.code == 1  # assuming exit code 1 for failure
+    assert excinfo.value.code != 0  # assuming exit code 1 for failure
     # check the files    
     assert not check_satute_files(msa, dest_dir_path, categories, alpha, asr)

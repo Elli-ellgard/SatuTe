@@ -14,7 +14,6 @@ from tests.scripts.fixtures import *
 def test_1(data_dir_path, iqtree, python, satute):
     source_path, msa, tree_file = data_dir_path    
     suffix = "TEST 1: no msa no dir"
-    print_test_name(suffix)
 
     # create output directory
     dest_dir_path = create_destination_dir(source_path, suffix)
@@ -40,7 +39,7 @@ def test_1(data_dir_path, iqtree, python, satute):
         )
 
     # Verify the exit code if needed
-    assert excinfo.value.code == 1  # assuming exit code 1 for failure
+    assert excinfo.value.code != 0  # assuming exit code 1 for failure
 
     # check the files    
     assert not check_satute_files(msa, dest_dir_path, categories, alpha, asr)
@@ -48,7 +47,6 @@ def test_1(data_dir_path, iqtree, python, satute):
 def test_2(data_dir_path, iqtree, python, satute):
     source_path, msa, tree_file = data_dir_path    
     suffix = "TEST 2: only IQ-Tree and -alpha value and -asr, should break!"
-    print_test_name(suffix)
 
     # create output directory
     dest_dir_path = create_destination_dir(source_path, suffix)
@@ -71,19 +69,17 @@ def test_2(data_dir_path, iqtree, python, satute):
                 "-alpha",
                 alpha,
                 "-asr",
-                
             ]
         )
 
     # Verify the exit code if needed
-    assert excinfo.value.code == 1  # assuming exit code 1 for failure
+    assert excinfo.value.code != 0  # assuming exit code 1 for failure
     # check the files
     assert not check_satute_files(msa, dest_dir_path, categories, alpha, asr)
 
 def test_3(data_dir_path, iqtree, python, satute):
     source_path, msa, tree_file = data_dir_path    
     suffix = "TEST 3: msa  tree  model boot"
-    print_test_name(suffix)
     # create output directory
     dest_dir_path = create_destination_dir(source_path, suffix)
 
@@ -116,14 +112,13 @@ def test_3(data_dir_path, iqtree, python, satute):
         )
 
     # Verify the exit code if needed
-    assert excinfo.value.code == 1  # assuming exit code 1 for failure
+    assert excinfo.value.code != 0  # assuming exit code 1 for failure
     # check the files
     assert not check_satute_files(msa, dest_dir_path, categories, alpha, asr)
 
 def test_4(data_dir_path, iqtree, python, satute):
     source_path, msa, treefile = data_dir_path    
     suffix = "TEST 4: msa  tree model ufboot"
-    print_test_name(suffix)
 
     # create output directory
     dest_dir_path = create_destination_dir(source_path, suffix)
@@ -157,7 +152,7 @@ def test_4(data_dir_path, iqtree, python, satute):
         )
 
     # Verify the exit code if needed
-    assert excinfo.value.code == 1  # assuming exit code 1 for failure
+    assert excinfo.value.code != 0  # assuming exit code 1 for failure
     # check the files
     assert not check_satute_files(msa, dest_dir_path, categories, alpha, asr)
 

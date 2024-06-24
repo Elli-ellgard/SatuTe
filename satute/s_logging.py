@@ -1,7 +1,7 @@
 import logging
 import numpy as np
 from pathlib import Path
-from typing import List
+from typing import List, Dict
 from satute.repository import SubstitutionModel
 from argparse import Namespace
 from logging import Logger
@@ -141,3 +141,20 @@ def log_substitution_model_info(
             f"Multiplicity: {multiplicity}\n"
             f"Eigenvectors: {eigenvector_str}\n"
         )
+
+def log_iqtree_options(
+    arguments_dict: Dict[str, List[str]],
+    extra_arguments: List[str],
+    logger: logging.Logger
+) -> None:
+    """
+    Logs the used IQ-TREE options.
+
+    Args:
+    - arguments_dict (dict): Dictionary containing IQ-TREE arguments.
+    - extra_arguments (list): List of additional arguments used in the IQ-TREE run.
+    - logger (logging.Logger): Logger instance to use for logging the options.
+    """
+    logger.info("Used IQ-TREE options:")
+    logger.info(" ".join(arguments_dict["arguments"]))
+    logger.info(" ".join(extra_arguments))

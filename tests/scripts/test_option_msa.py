@@ -13,7 +13,6 @@ from tests.scripts.satute_test_utils import (
 def test_1(data_dir_path, iqtree, python, satute):
     source_path, msa, _ = data_dir_path 
     suffix = "MSA TEST 1: only msa IQ-TREE exists"
-    print_test_name(suffix)
 
     # create output directory
     dest_dir_path = create_destination_dir(source_path, suffix)
@@ -46,7 +45,6 @@ def test_1(data_dir_path, iqtree, python, satute):
 def test_2(data_dir_path, iqtree, python, satute):
     source_path, msa, _ = data_dir_path 
     suffix = "MSA TEST 2: only msa ufboot"
-    print_test_name(suffix)
 
     # create output directory
     dest_dir_path = create_destination_dir(source_path, suffix)
@@ -81,7 +79,6 @@ def test_2(data_dir_path, iqtree, python, satute):
 def test_3(data_dir_path, iqtree, python, satute):
     source_path, msa, _ = data_dir_path 
     suffix = "MSA TEST 3: only msa boot"
-    print_test_name(suffix)
 
     # create output directory
     dest_dir_path = create_destination_dir(source_path, suffix)
@@ -116,7 +113,6 @@ def test_3(data_dir_path, iqtree, python, satute):
 def test_4(data_dir_path, iqtree, python, satute):
     source_path, msa, _ = data_dir_path 
     suffix = "MSA TEST 4: With additional IQ-TREE options"
-    print_test_name(suffix)
 
     # create output directory
     dest_dir_path = create_destination_dir(source_path, suffix)
@@ -150,7 +146,6 @@ def test_4(data_dir_path, iqtree, python, satute):
 def test_5(data_dir_path, iqtree, python, satute):
     source_path, msa, _ = data_dir_path 
     suffix = "MSA TEST 5: With additional IQ-TREE options"
-    print_test_name(suffix)
 
     # create output directory
     dest_dir_path = create_destination_dir(source_path, suffix)
@@ -186,7 +181,6 @@ def test_5(data_dir_path, iqtree, python, satute):
 def test_6(data_dir_path, iqtree, python, satute):
     source_path, msa, _ = data_dir_path 
     suffix = "MSA TEST 6: Add Suffix"
-    print_test_name(suffix)
 
     # create output directory
     dest_dir_path = create_destination_dir(source_path, suffix)
