@@ -5,19 +5,6 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-*.iqtree
-*.bionj
-*.ckp.gz
-*.mldist
-*.model.gz
-*.siteprop
-*.log
-*.treefile
-*.csv
-*.phy.siteprob
-*.fasta.siteprob
-*.satute.tree
-*.components
 .vscode
 
 # C extensions
@@ -177,9 +164,7 @@ cython_debug/
 #  and can be added to the global gitignore or merged into this file.  For a more nuclear
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
-*.nex
-*.siteprob
 .DS_Store
-*.indices
 
 tests/test_results/
+ 
