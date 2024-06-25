@@ -1,0 +1,190 @@
+IQ-TREE 2.3.4 COVID-edition built May 11 2024
+
+Input file name: ./tests/data/data_dna/tree_cbl3.5_A8+B8_1500bp_JC+G-a0.8_iqtree_tree_run/ali-len1500nt_cbl3.5.fasta
+Type of analysis: ModelFinder + tree reconstruction
+Random seed number: 493769
+
+REFERENCES
+----------
+
+To cite IQ-TREE please use:
+
+Bui Quang Minh, Heiko A. Schmidt, Olga Chernomor, Dominik Schrempf,
+Michael D. Woodhams, Arndt von Haeseler, and Robert Lanfear (2020)
+IQ-TREE 2: New models and efficient methods for phylogenetic inference
+in the genomic era. Mol. Biol. Evol., in press.
+https://doi.org/10.1093/molbev/msaa015
+
+To cite ModelFinder please use: 
+
+Subha Kalyaanamoorthy, Bui Quang Minh, Thomas KF Wong, Arndt von Haeseler,
+and Lars S Jermiin (2017) ModelFinder: Fast model selection for
+accurate phylogenetic estimates. Nature Methods, 14:587–589.
+https://doi.org/10.1038/nmeth.4285
+
+SEQUENCE ALIGNMENT
+------------------
+
+Input data: 16 sequences with 1500 nucleotide sites
+Number of constant sites: 991 (= 66.0667% of all sites)
+Number of invariant (constant or ambiguous constant) sites: 991 (= 66.0667% of all sites)
+Number of parsimony informative sites: 482
+Number of distinct site patterns: 441
+
+ModelFinder
+-----------
+
+Best-fit model according to BIC: JC+I+G4
+
+List of models sorted by BIC scores: 
+
+Model                  LogL         AIC      w-AIC        AICc     w-AICc         BIC      w-BIC
+JC+I+G4           -9896.953   19855.906 +    0.356   19857.258 +    0.378   20020.616 +    0.965
+K2P+I+G4          -9896.737   19857.474 +    0.163   19858.913 +    0.165   20027.497 -   0.0309
+TNe+I+G4          -9896.207   19858.414 +    0.102   19859.945 +   0.0988   20033.750 -  0.00136
+K3P+I+G4          -9896.407   19858.814 +   0.0833   19860.344 +   0.0809   20034.150 -  0.00111
+TPM2+I+G4         -9896.695   19859.390 +   0.0624   19860.921 +   0.0606   20034.727 - 0.000832
+TPM3+I+G4         -9896.736   19859.472 +   0.0599   19861.002 +   0.0582   20034.808 - 0.000799
+TIMe+I+G4         -9895.881   19859.762 +   0.0518   19861.387 -    0.048   20040.411 - 4.85e-05
+TIM2e+I+G4        -9896.167   19860.333 -   0.0389   19861.958 -   0.0361   20040.983 - 3.65e-05
+TIM3e+I+G4        -9896.206   19860.411 -   0.0375   19862.036 -   0.0347   20041.061 - 3.51e-05
+F81+F+I+G4        -9897.796   19863.592 -  0.00764   19865.216 -  0.00708   20044.241 - 7.15e-06
+TVMe+I+G4         -9896.383   19862.767 -   0.0115   19864.488 -   0.0102   20048.729 - 7.58e-07
+HKY+F+I+G4        -9897.575   19865.150 -   0.0035   19866.872 -  0.00309   20051.113 -  2.3e-07
+SYM+I+G4          -9895.860   19863.720 -  0.00716   19865.540 -  0.00602   20054.995 -  3.3e-08
+TN+F+I+G4         -9896.640   19865.280 -  0.00328   19867.101 -  0.00276   20056.556 - 1.51e-08
+TPM2u+F+I+G4      -9897.137   19866.274 -    0.002   19868.095 -  0.00168   20057.550 - 9.21e-09
+K3Pu+F+I+G4       -9897.250   19866.499 -  0.00178   19868.320 -   0.0015   20057.775 - 8.23e-09
+TPM3u+F+I+G4      -9897.576   19867.152 -  0.00129   19868.972 -  0.00108   20058.428 - 5.94e-09
+TIM2+F+I+G4       -9896.191   19866.382 -  0.00189   19868.306 -  0.00151   20062.971 - 6.12e-10
+TIM+F+I+G4        -9896.319   19866.638 -  0.00167   19868.561 -  0.00133   20063.227 - 5.39e-10
+TIM3+F+I+G4       -9896.641   19867.282 -  0.00121   19869.205 - 0.000963   20063.871 - 3.91e-10
+TVM+F+I+G4        -9896.820   19869.639 - 0.000371   19871.668 - 0.000281   20071.542 - 8.44e-12
+GTR+F+I+G4        -9895.959   19869.919 - 0.000323   19872.056 - 0.000232   20077.134 - 5.15e-13
+GTR+F+I+R3        -9891.732   19867.464 -   0.0011   19869.943 - 0.000666   20090.619 - 6.07e-16
+GTR+F+R4          -9891.621   19869.242 - 0.000453   19871.841 - 0.000258   20097.710 - 1.75e-17
+GTR+F+R3          -9898.946   19879.893 -  2.2e-06   19882.255 - 1.41e-06   20097.735 - 1.73e-17
+GTR+F+I+R4        -9891.166   19870.331 - 0.000263   19873.053 - 0.000141   20104.113 - 7.13e-19
+GTR+F+R5          -9891.170   19872.341 - 9.62e-05   19875.188 - 4.84e-05   20111.436 - 1.83e-20
+GTR+F+I+R2        -9927.566   19935.131 - 2.23e-18   19937.379 - 1.51e-18   20147.660 -  2.5e-28
+GTR+F+G4         -10004.126   20084.253 - 9.27e-51   20086.282 - 7.02e-51   20286.155 - 2.11e-58
+GTR+F+R2         -10071.664   20221.328 - 1.59e-80   20223.465 - 1.14e-80   20428.543 - 2.54e-89
+GTR+F+I          -10356.513   20789.026 - 8.46e-204   20791.055 - 6.41e-204   20990.929 - 1.92e-211
+GTR+F            -11974.466   24022.932 -        0   24024.855 -        0   24219.521 -        0
+
+AIC, w-AIC   : Akaike information criterion scores and weights.
+AICc, w-AICc : Corrected AIC scores and weights.
+BIC, w-BIC   : Bayesian information criterion scores and weights.
+
+Plus signs denote the 95% confidence sets.
+Minus signs denote significant exclusion.
+
+SUBSTITUTION PROCESS
+--------------------
+
+Model of substitution: JC+I+G4
+
+Rate parameter R:
+
+  A-C: 1.0000
+  A-G: 1.0000
+  A-T: 1.0000
+  C-G: 1.0000
+  C-T: 1.0000
+  G-T: 1.0000
+
+State frequencies: (equal frequencies)
+
+Rate matrix Q:
+
+  A        -1    0.3333    0.3333    0.3333
+  C    0.3333        -1    0.3333    0.3333
+  G    0.3333    0.3333        -1    0.3333
+  T    0.3333    0.3333    0.3333        -1
+
+Model of rate heterogeneity: Invar+Gamma with 4 categories
+Proportion of invariable sites: 0.5465
+Gamma shape alpha: 0.3561
+
+ Category  Relative_rate  Proportion
+  0         0              0.5465
+  1         0.0241         0.1134
+  2         0.3271         0.1134
+  3         1.498          0.1134
+  4         6.972          0.1134
+Relative rates are computed as MEAN of the portion of the Gamma distribution falling in the category.
+
+MAXIMUM LIKELIHOOD TREE
+-----------------------
+
+Log-likelihood of the tree: -9895.9967 (s.e. 301.4669)
+Unconstrained log-likelihood (without tree): -5348.9533
+Number of free parameters (#branches + #model parameters): 31
+Akaike information criterion (AIC) score: 19853.9934
+Corrected Akaike information criterion (AICc) score: 19855.3449
+Bayesian information criterion (BIC) score: 20018.7032
+
+Total tree length (sum of branch lengths): 7.1012
+Sum of internal branch lengths: 5.6551 (79.6356% of tree length)
+
+NOTE: Tree is UNROOTED although outgroup taxon 'A1' is drawn at root
+
++--A1
+|
++--A2
+|
+|     +--A3
+|  +--|
+|  |  +--A4
++--|
+   |        +**A5
+   |     +--|
+   |     |  |                                                       +--B1
+   |     |  |                                                    +--|
+   |     |  |                                                    |  +--B2
+   |     |  |                                                 +--|
+   |     |  |                                                 |  |  +--B3
+   |     |  |                                                 |  +--|
+   |     |  |                                                 |     +--B4
+   |     |  +-------------------------------------------------|
+   |     |                                                    |     +--B5
+   |     |                                                    |  +--|
+   |     |                                                    |  |  +--B6
+   |     |                                                    +--|
+   |     |                                                       |  +--B7
+   |     |                                                       +--|
+   |     |                                                          +--B8
+   |  +--|
+   |  |  +--A6
+   +--|
+      |  +--A7
+      +--|
+         +--A8
+
+Tree in newick format:
+
+(A1:0.0925343338,A2:0.0846198351,((A3:0.1271824188,A4:0.0721942699):0.0970092637,(((A5:0.0000020058,(((B1:0.0837094112,B2:0.0924683131):0.0607876243,(B3:0.1629912650,B4:0.0651244289):0.0995211146):0.1676006811,((B5:0.1307592413,B6:0.0796291271):0.1056956143,(B7:0.0847372915,B8:0.0857576278):0.0537208273):0.0261002797):4.5497051887):0.0622497844,A6:0.1234355431):0.0993613280,(A7:0.0730423031,A8:0.0879199568):0.0974416058):0.1408236436):0.0950333281);
+
+ALISIM COMMAND
+--------------
+To simulate an alignment of the same length as the original alignment, using the tree and model parameters estimated from this analysis, you can use the following command:
+
+--alisim simulated_MSA -t ./tests/data/data_dna/tree_cbl3.5_A8+B8_1500bp_JC+G-a0.8_iqtree_tree_run/ali-len1500nt_cbl3.5.fasta.treefile -m "JC+I{0.546514}+G4{0.356139}" --length 1500
+
+To mimic the alignment used to produce this analysis, i.e. simulate an alignment of the same length as the original alignment, using the tree and model parameters estimated from this analysis *and* copying the same gap positions as the original alignment, you can use the following command:
+
+iqtree -s ./tests/data/data_dna/tree_cbl3.5_A8+B8_1500bp_JC+G-a0.8_iqtree_tree_run/ali-len1500nt_cbl3.5.fasta --alisim mimicked_MSA
+
+To simulate any number of alignments in either of the two commandlines above, use the --num-alignments options, for example mimic 100 alignments you would use the command line:
+
+iqtree -s ./tests/data/data_dna/tree_cbl3.5_A8+B8_1500bp_JC+G-a0.8_iqtree_tree_run/ali-len1500nt_cbl3.5.fasta --alisim mimicked_MSA --num-alignments 100
+
+For more information on using AliSim, please visit: www.iqtree.org/doc/AliSim
+
+TIME STAMP
+----------
+
+Date and time: Wed Jun 12 16:59:31 2024
+Total CPU time used: 3.84449 seconds (0h:0m:3s)
+Total wall-clock time used: 3.9268 seconds (0h:0m:3s)
+
