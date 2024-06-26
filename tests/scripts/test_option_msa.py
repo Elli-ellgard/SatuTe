@@ -131,16 +131,16 @@ def test_4(data_dir_path, iqtree, python, satute):
             iqtree,
             "-msa",
             os.path.join(dest_dir_path, msa),
-            "-boot",
-            "100",
             "-alpha",
             alpha,
             "-asr",
+            "-add_iqtree_options",
+            "'-fast'"
         ]
     )
 
     # check the files   
-    assert check_iqtree_files_exist(msa, dest_dir_path, ["boot","m"])  
+    assert check_iqtree_files_exist(msa, dest_dir_path, ["m"])  
     assert check_satute_files(msa, dest_dir_path, categories, alpha, asr)
 
 def test_5(data_dir_path, iqtree, python, satute):
@@ -170,12 +170,12 @@ def test_5(data_dir_path, iqtree, python, satute):
             alpha,
             "-asr",
             "-add_iqtree_options",
-            "-alninfo"
+            "'-fast -alninfo'"
         ]
     )
 
     # check the files   
-    assert check_iqtree_files_exist(msa, dest_dir_path, ["boot","m"])  
+    assert check_iqtree_files_exist(msa, dest_dir_path, ["boot","m", "alninfo"])  
     assert check_satute_files(msa, dest_dir_path, categories, alpha, asr)
 
 def test_6(data_dir_path, iqtree, python, satute):
