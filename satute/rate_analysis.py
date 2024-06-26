@@ -8,7 +8,7 @@ from satute.partial_likelihood import calculate_partial_likelihoods_for_sites
 from satute.graph import calculate_subtree_edge_metrics
 from satute.sequences import dict_to_alignment
 from satute.rate_matrix import RateMatrix
-from satute.statistic_posterior_distribution_components import (
+from satute.ztest_posterior_distribution import (
     calculate_test_statistic_posterior_distribution,
 )
 from satute.trees import (

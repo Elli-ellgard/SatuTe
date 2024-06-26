@@ -1,5 +1,5 @@
 import unittest
-from satute.statistic_posterior_distribution_components import (
+from satute.ztest_posterior_distribution import (
     calculate_coefficients_of_test_statistic_for_each_site,
 )
 
