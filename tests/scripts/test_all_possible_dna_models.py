@@ -96,4 +96,4 @@ def test_non_reversible_substitution_models(data_dir_path, iqtree, model):
 
     # Check the files
     assert check_iqtree_files_exist(msa, dest_dir_path, []), "IQ-Tree files check failed: Required files are missing or not created."
-    assert not check_satute_files(msa, dest_dir_path, categories, alpha, asr), "Satute files check failed: Required files are missing or not created."
+    assert not check_satute_files(msa, dest_dir_path, categories, alpha, asr), "Satute files check failed: no files should be created except the log file."
