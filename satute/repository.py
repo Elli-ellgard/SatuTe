@@ -8,7 +8,7 @@ from typing import List, Dict
 
 from satute.exceptions import InvalidModelNameError, ModelNotFoundError
 from satute.amino_acid_models import get_aa_state_frequency_substitution_models, normalize_stationary_distribution_aa
-from satute.dna_model import NOT_ACCEPTED_DNA_MODELS
+from satute.dna_models import NOT_ACCEPTED_DNA_MODELS
 
 from satute.amino_acid_models import (
     AMINO_ACID_RATE_MATRIX,
