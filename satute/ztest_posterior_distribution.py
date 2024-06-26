@@ -495,7 +495,7 @@ def calculate_test_statistic_posterior_distribution(
     result = TestResultBranch(
         coefficient_value=coefficient_value,
         standard_error_of_mean=standard_error_of_mean,
-        zscore=test_statistic,
+        z_score=test_statistic,
         p_value=p_value,
         z_alpha=z_alpha,
         decision_test=decision_test,

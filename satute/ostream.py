@@ -74,7 +74,7 @@ def write_components(
     file_name = construct_file_name(msa_file, output_suffix, rate, alpha, edge)
     components_frame = components.to_dataframe()
 
-    components_frame["rate"] = rate
+    components_frame["rate_category"] = rate
 
     # Repeat the site_indices for each row in the DataFrame based on the identifier
     # Assuming every row/component should have an associated site index
@@ -402,7 +402,7 @@ def create_meta_data_string(row: DataFrame, columns: list) -> str:
     - str: Metadata string.
     """
     relevant_columns = [
-        "zscore",
+        "z_score",
         "decision_test",
         "decision_corrected_test_tips",
         "p_value",

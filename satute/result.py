@@ -102,7 +102,7 @@ class TestStatisticComponentsContainer:
         for identifier, component in self.components.items():
             df = component.to_dataframe()
             for _, row in df.iterrows():
-                data_row = {"Edge": identifier}
+                data_row = {"edge": identifier}
                 data_row.update(row.to_dict())
                 data.append(data_row)
 
