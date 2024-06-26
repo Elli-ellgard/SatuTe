@@ -46,9 +46,32 @@ def test_K2P_model(dir_path_iqtree_files):
         eigenvalue,
     ) = spectral_decomposition(substitution_model.rate_matrix, substitution_model.phi_matrix)
 
-    assert multiplicity == 2, "The largest non-zero eigenvalue of K2P should have multiplicity 2."
+    assert multiplicity == 1, "The largest non-zero eigenvalue of this K2P model should have multiplicity 1."
     assert len(array_right_eigenvectors) == multiplicity, "Dimension of right eigenspace is incorrect."
     assert len(array_left_eigenvectors) == multiplicity, "Dimension of left eigenspace is incorrect."
+
+def test_K2Pb_model(dir_path_iqtree_files):
+    model="K2Pb"
+    source_path  = dir_path_iqtree_files[0]
+    iqtree_file_path = find_file_with_suffix("example_model", f"{model}.iqtree",source_path)
+
+    satute_iq_tree_parser = IqTreeParser(iqtree_file_path)
+    substitution_model = satute_iq_tree_parser.load_substitution_model()
+    rate_matrix = RateMatrix(substitution_model.rate_matrix)
+
+    (
+        array_left_eigenvectors,
+        array_right_eigenvectors,
+        multiplicity,
+        eigenvalue,
+    ) = spectral_decomposition(substitution_model.rate_matrix, substitution_model.phi_matrix)
+
+    assert multiplicity == 2, "The largest non-zero eigenvalue of this K2P model should have multiplicity 2."
+    assert len(array_right_eigenvectors) == multiplicity, "Dimension of right eigenspace is incorrect."
+    assert len(array_left_eigenvectors) == multiplicity, "Dimension of left eigenspace is incorrect."
+
+
+
 
 def test_GTR_model(dir_path_iqtree_files):
     model="GTR_F"
