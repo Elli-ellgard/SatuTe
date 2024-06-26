@@ -12,7 +12,7 @@ from satute.repository import IqTreeParser
 def test_JC_model(dir_path_iqtree_files):
     model="JC"
     source_path  = dir_path_iqtree_files[0]
-    iqtree_file_path = find_file_with_suffix("example_model", f"{model}.iqtree",source_path)
+    iqtree_file_path = find_file_with_suffix("example_dna_model", f"{model}.iqtree",source_path)
 
     satute_iq_tree_parser = IqTreeParser(iqtree_file_path)
     substitution_model = satute_iq_tree_parser.load_substitution_model()
@@ -33,7 +33,7 @@ def test_JC_model(dir_path_iqtree_files):
 def test_K2P_model(dir_path_iqtree_files):
     model="K2P"
     source_path  = dir_path_iqtree_files[0]
-    iqtree_file_path = find_file_with_suffix("example_model", f"{model}.iqtree",source_path)
+    iqtree_file_path = find_file_with_suffix("example_dna_model", f"{model}.iqtree",source_path)
 
     satute_iq_tree_parser = IqTreeParser(iqtree_file_path)
     substitution_model = satute_iq_tree_parser.load_substitution_model()
@@ -53,7 +53,7 @@ def test_K2P_model(dir_path_iqtree_files):
 def test_K2Pb_model(dir_path_iqtree_files):
     model="K2Pb"
     source_path  = dir_path_iqtree_files[0]
-    iqtree_file_path = find_file_with_suffix("example_model", f"{model}.iqtree",source_path)
+    iqtree_file_path = find_file_with_suffix("example_dna_model", f"{model}.iqtree",source_path)
 
     satute_iq_tree_parser = IqTreeParser(iqtree_file_path)
     substitution_model = satute_iq_tree_parser.load_substitution_model()
@@ -76,7 +76,7 @@ def test_K2Pb_model(dir_path_iqtree_files):
 def test_GTR_model(dir_path_iqtree_files):
     model="GTR_F"
     source_path  = dir_path_iqtree_files[0]
-    iqtree_file_path = find_file_with_suffix("example_model", f"{model}.iqtree",source_path)
+    iqtree_file_path = find_file_with_suffix("example_dna_model", f"{model}.iqtree",source_path)
 
     satute_iq_tree_parser = IqTreeParser(iqtree_file_path)
     substitution_model = satute_iq_tree_parser.load_substitution_model()
@@ -103,7 +103,7 @@ def test_GTR_model(dir_path_iqtree_files):
 def test_LG_model(dir_path_iqtree_files):
     model="LG"
     source_path  = dir_path_iqtree_files[0]
-    iqtree_file_path = find_file_with_suffix("example_model", f"{model}.iqtree",source_path)
+    iqtree_file_path = find_file_with_suffix("example_aa_model", f"{model}.iqtree",source_path)
 
     satute_iq_tree_parser = IqTreeParser(iqtree_file_path)
     substitution_model = satute_iq_tree_parser.load_substitution_model()
