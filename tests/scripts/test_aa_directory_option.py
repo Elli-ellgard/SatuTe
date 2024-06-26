@@ -24,7 +24,6 @@ def test_3(dir_aa_path, iqtree, python, satute):
     alpha = str(0.05)
     asr = True
     
-    # Satute run    
     # Capture sys.exit using pytest.raises
     with pytest.raises(SystemExit) as excinfo:
         run_satute(
@@ -34,7 +33,6 @@ def test_3(dir_aa_path, iqtree, python, satute):
                 "-alpha",
                 alpha,
                 "-asr",
-                "-quiet"
             ])
     # Verify the exit code if needed
     assert excinfo.value.code != 0  # assuming exit code 1 for failure

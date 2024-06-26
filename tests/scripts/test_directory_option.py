@@ -13,7 +13,7 @@ from tests.scripts.fixtures import *
 
 def test_1(dir_path, iqtree, python, satute):
     source_path  = dir_path[0] 
-    suffix = "Directory Test One Everything is the folder Without IQ-Tree"
+    suffix = "Directory Test One Everything is the folder Without IQ-Tree Executable"
 
     # create output directory
     dest_dir_path = create_destination_dir(source_path, suffix)
@@ -34,7 +34,6 @@ def test_1(dir_path, iqtree, python, satute):
             "-alpha",
             alpha,
             "-asr",
-            "-quiet"
         ])
 
     # check the files   
@@ -62,7 +61,6 @@ def test_2(dir_path, iqtree, python, satute):
             "-alpha",
             alpha,
             "-asr",
-            "-quiet"
         ])
 
     # check the files   
@@ -93,7 +91,6 @@ def test_3(dir_path, iqtree, python, satute):
                 "-alpha",
                 alpha,
                 "-asr",
-                "-quiet"
             ])
     # Verify the exit code if needed
     assert excinfo.value.code != 0  # assuming exit code 1 for failure
@@ -121,7 +118,6 @@ def test_4(dir_path, iqtree, python, satute):
                 "-alpha",
                 alpha,
                 "-asr",
-                "-quiet"
             ])
     # Verify the exit code if needed
     assert excinfo.value.code != 0  # assuming exit code 1 for failure    
@@ -153,7 +149,6 @@ def test_5(dir_path, iqtree, python, satute):
                 "-alpha",
                 alpha,
                 "-asr",
-                "-quiet"
             ])
     # Verify the exit code if needed
     assert excinfo.value.code != 0  # assuming exit code 1 for failure    

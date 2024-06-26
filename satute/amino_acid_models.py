@@ -1620,31 +1620,6 @@ AMINO_ACIDS = [
 ]
 
 
-def string_to_padded_matrix(matrix_string:str) -> np.array:
-    # Splitting the string into lines
-    lines = matrix_string.strip().split("\n")
-
-    # Determining the maximum row length
-    max_length = max(len(line.split()) for line in lines)
-
-    # Splitting each line into elements, converting to floats, and padding with zeros
-    matrix = [
-        list(map(float, line.split())) + [0.0] * (max_length - len(line.split()))
-        for line in lines
-    ]
-
-    return np.array(matrix)
-
-def transform_to_rate_matrix(matrix) -> np.array:
-    # Making a copy of the matrix to avoid modifying the original
-    rate_matrix = np.array(matrix, copy=True)
-
-    # Setting the diagonal elements
-    for i in range(rate_matrix.shape[0]):
-        rate_matrix[i, i] = -np.sum(rate_matrix[i, :i])
-
-    return rate_matrix
-
 def get_aa_state_frequency_substitution_models(substitution_model: str) -> Tuple[np.ndarray, np.ndarray]:
     """
     Extracts amino acid state frequencies and creates a diagonal matrix for a substitution model.
@@ -1678,11 +1653,12 @@ def create_rate_matrix_with_input(matrix_size: int, input_string: str, eq) -> np
     # Split the string into lines
     # input_string = input_string.replace(" ", "")
     lines = input_string.split("\n")
-
+    
     # Initialize a matrix with 1's for off-diagonal elements
     rate_matrix = [
         [0 if i != j else 0 for j in range(matrix_size)] for i in range(matrix_size)
     ]
+    
 
     for i, row in enumerate(lines):
         for j, col in enumerate(row.split()):
@@ -1710,7 +1686,25 @@ def normalize_stationary_distribution_aa(frequencies: List[float]) -> List[float
         # Normalize frequencies list with new values
         return [freq / sum_freqs for freq in frequencies]
 
-def print_matrix(matrix, f):
-    for row in matrix:
-        f.write(" ".join(map(str, row)))
-        f.write("\n")
+def check_rate_matrix(rate_matrix, frequencies):
+    n = len(rate_matrix)
+    
+    # Check non-negative off-diagonal elements
+    for i in range(n):
+        for j in range(n):
+            if i != j and rate_matrix[i][j] < 0:
+                return False, "Negative off-diagonal element found"
+
+    # Check row sums to zero
+    for i in range(n):
+        if not np.isclose(sum(rate_matrix[i]), 0):
+            return False, "Row sum does not equal zero"
+
+    # Check symmetry with respect to equilibrium frequencies
+    for i in range(n):
+        for j in range(n):
+            if not np.isclose(frequencies[i] * rate_matrix[i][j], frequencies[j] * rate_matrix[j][i]):
+                return False, "Matrix is not symmetric with respect to equilibrium frequencies"
+
+    return True, "The rate matrix has all the right properties"
+

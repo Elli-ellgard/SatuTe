@@ -1,14 +1,13 @@
-from tests.scripts.satute_test_utils import (
-    run_satute,
-    create_destination_dir,
-    copy_files_to_dest_dir,
-    check_iqtree_files_exist,
-    check_satute_files,
-)
-
 import os
 from pathlib import Path
 from tests.scripts.fixtures import *
+from tests.scripts.satute_test_utils import (
+    run_satute,
+    check_satute_files,    
+    create_destination_dir,    
+    copy_files_to_dest_dir,    
+    check_iqtree_files_exist,
+)
 
 
 def test_1(data_dir_path, iqtree, python, satute):
@@ -46,7 +45,6 @@ def test_1(data_dir_path, iqtree, python, satute):
     assert not check_iqtree_files_exist(msa, dest_dir_path, []) , "IQTree files check failed: Required files are missing or not created."
     assert not check_satute_files(msa, dest_dir_path, categories, alpha, asr), "Satute files check failed: Required files are missing or not created."
 
-
 def test_2(data_dir_path, iqtree, python, satute):
     source_path, msa, _ = data_dir_path    
     suffix = "MODEL TEST 2: msa model no heterogeneity"
@@ -77,7 +75,7 @@ def test_2(data_dir_path, iqtree, python, satute):
         ]
     )
 
-    # check the files
+    # check the filesw
     assert check_iqtree_files_exist(msa, dest_dir_path, []) , "IQTree files check failed: Required files are missing or not created."
     assert check_satute_files(msa, dest_dir_path, categories, alpha, asr), "Satute files check failed: Required files are missing or not created."
 
@@ -352,7 +350,7 @@ def test_10(data_dir_path, iqtree, python, satute):
         )
 
         # Assertions for IQTree and Satute files
-        assert check_iqtree_files_exist(msa, Path(dest_dir_path).absolute(), []), "IQTree files check failed: Required files are missing or not created."
+        assert check_iqtree_files_exist(msa, Path(dest_dir_path).absolute(), []), "IQ-Tree files check failed: Required files are missing or not created."
         assert check_satute_files(msa, Path(dest_dir_path).absolute(), categories, alpha, asr), "Satute files check failed: Required files are missing or not created."
 
     except SystemExit as e:
@@ -366,5 +364,6 @@ def test_10(data_dir_path, iqtree, python, satute):
     except Exception as e:
         # Catch other unexpected exceptions and fail the test
         pytest.fail(f"An unexpected exception occurred: {e}")
-        
+
+
 

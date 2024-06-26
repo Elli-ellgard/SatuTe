@@ -118,7 +118,7 @@ def test_3(data_dir_path, iqtree, python, satute):
 
 def test_4(data_dir_path, iqtree, python, satute):
     source_path, msa, treefile = data_dir_path    
-    suffix = "TEST 4: msa  tree model ufboot"
+    suffix = "TEST 4: msa tree model ufboot"
 
     # create output directory
     dest_dir_path = create_destination_dir(source_path, suffix)

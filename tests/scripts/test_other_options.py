@@ -37,7 +37,6 @@ def test_1(data_dir_path, iqtree, python, satute):
             "-alpha",
             alpha,
             "-asr",
-            "-quiet"
         ]
    )
 
