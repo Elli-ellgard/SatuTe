@@ -5,7 +5,7 @@ import time
 from Bio.Align import MultipleSeqAlignment
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
-from satute.decomposition import spectral_decomposition
+from satute.spectral_decomposition import spectral_decomposition
 from satute.graph import Node
 from satute.rate_matrix import RateMatrix
 from satute.amino_acid_models import POISSON_RATE_MATRIX, AA_STATE_FREQUENCIES

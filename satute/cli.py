@@ -10,7 +10,7 @@ from ete3 import Tree
 from typing import Dict, List
 
 from satute.exceptions import ModelNotFoundError, InvalidModelNameError
-from satute.decomposition import spectral_decomposition
+from satute.spectral_decomposition import spectral_decomposition
 from satute.rate_matrix import RateMatrix
 from satute.file_handler import FileHandler
 from satute.iqtree_handler import IqTreeHandler

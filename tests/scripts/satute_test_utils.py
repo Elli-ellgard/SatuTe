@@ -303,3 +303,11 @@ def delete_taxon_from_tree(newick_file: str, taxon: str):
         f.write(tree.write(format=1))  # format=1 for Newick with branch lengths
 
     print(f"Taxon '{taxon}' has been removed and the tree has been updated.")
+
+
+def find_file_with_suffix(gene_name, suffix, source_folder):
+    # Iterate over files in the source folder
+    for filename in os.listdir(source_folder):
+        if gene_name in filename and filename.endswith(suffix):
+            return os.path.join(source_folder, filename)
+    return None

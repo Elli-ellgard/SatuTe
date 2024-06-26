@@ -40,5 +40,8 @@ def dir_path():
 def dir_path_categories():
     return "tests/data/data_dna/tree_cbl3.5_A8+B8_1500bp_JC+G-a0.8_iqtree_tree_run", 
 
+@pytest.fixture
+def dir_path_iqtree_files():
+    return "tests/data/point_iqtree_files/", 
 
 output_dir_path =  "./tests/"
