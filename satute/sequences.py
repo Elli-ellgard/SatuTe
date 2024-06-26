@@ -4,11 +4,9 @@ from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 from ete3 import Tree
 
-
 # Define these sets at a global level to avoid re-creation
 DNA_CHARACTERS = set("ACGT")
 PROTEIN_CHARACTERS = set("ARNDCQEGHILKMFPSTWYV")
-
 
 def check_if_tree_has_same_taxa_as_msa(
     sequence_alignment: MultipleSeqAlignment, tree: Tree

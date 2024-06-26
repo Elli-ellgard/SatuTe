@@ -1,10 +1,11 @@
 import logging
 import numpy as np
 from pathlib import Path
-from typing import List, Dict
+from typing import List, Dict, Any
 from satute.repository import SubstitutionModel
 from argparse import Namespace
 from logging import Logger
+from ete3 import Tree
 
 def format_matrix(matrix, precision: int = 4):
     """Format a matrix for pretty printing."""
@@ -158,3 +159,16 @@ def log_iqtree_options(
     logger.info("Used IQ-TREE options:")
     logger.info(" ".join(arguments_dict["arguments"]))
     logger.info(" ".join(extra_arguments))
+    
+def log_original_tree(logger: Logger, tree: Tree):
+    logger.info(f"Original Tree: {tree.write(format=1, format_root_node=True)}")
+
+
+def log_rate_info(
+    logger: Logger, file_name: str, rate: str, results_set: Dict[str, Any]
+) -> None:
+    logger.info(f"Writing results for category rates to file: {file_name}")
+    if "rescaled_tree" in results_set:
+        logger.info(
+            f"Tree for rate category {rate}: {results_set['rescaled_tree'].write(format=1, format_root_node=True)}"
+        )

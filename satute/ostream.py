@@ -9,8 +9,10 @@ from ete3 import Tree
 from pandas import DataFrame
 from typing import Dict, Any, List
 
-from satute.amino_acid_models import AMINO_ACIDS
+
+from satute.s_logging import log_original_tree, log_rate_info
 from satute.result import TestStatisticComponentsContainer
+from satute.amino_acid_models import AMINO_ACIDS
 from satute.statistic_posterior_distribution_components import (
     calculate_posterior_probabilities_subtree_df,
 )
@@ -318,20 +320,6 @@ def process_rate_category(
 
     except Exception as e:
         logger.error(f"Error processing results for key '{rate}': {e}")
-
-
-def log_original_tree(logger: Logger, tree: Tree):
-    logger.info(f"Original Tree: {tree.write(format=1, format_root_node=True)}")
-
-
-def log_rate_info(
-    logger: Logger, file_name: str, rate: str, results_set: Dict[str, Any]
-) -> None:
-    logger.info(f"Writing results for category rates to file: {file_name}")
-    if "rescaled_tree" in results_set:
-        logger.info(
-            f"Tree for rate category {rate}: {results_set['rescaled_tree'].write(format=1, format_root_node=True)}"
-        )
 
 
 def write_results_to_files(

@@ -1,13 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
-import shutil
-import subprocess
-import sys 
 from pathlib import Path
-from logging import Logger
 from typing import List, Optional
-from satute.exceptions import IqTreeNotFoundError
-
 
 class FileHandler:
     """Handles file operations for the Satute project."""

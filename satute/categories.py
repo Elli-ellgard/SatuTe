@@ -8,7 +8,6 @@ from Bio.Seq import Seq
 
 """ ## RATE CATEGORIES  """
 
-
 def get_column_names_with_prefix(data_frame, prefix):
     # Filter the columns using the specified prefix
     columns_with_prefix = data_frame.columns[
@@ -35,12 +34,34 @@ def build_categories_by_sub_tables(data_frame: DataFrame):
 
     return rate_category_dictionary
 
-
 """ ## HANDLE ALIGNMENTS  """
 
 def guess_alignment_format(file_name: str) -> str:
+    """
+    Guess the format of a multiple sequence alignment file.
+
+    Parameters:
+    - file_name (str): The path to the alignment file.
+
+    Returns:
+    - str: The guessed format of the alignment file.
+
+    Raises:
+    - ValueError: If the file format could not be guessed.
+
+    The function reads the first line of the file and checks for various signatures
+    that might indicate the format. It currently supports the following formats:
+    - FASTA
+    - CLUSTAL
+    - STOCKHOLM
+    - NEXUS
+    - PileUp
+    - Phylip
+    """
+
     with open(file_name, "r") as f:
         first_line = f.readline().strip()
+
     # Check for various signatures that might indicate the format
     if first_line.startswith(">"):
         return "fasta"
@@ -58,14 +79,31 @@ def guess_alignment_format(file_name: str) -> str:
         raise ValueError(f"Unknown alignment format in file {file_name}")
 
 def change_states_to_allowed(alignment):
+    """
+    This function changes the states of the sequences in the alignment to allowed states.
+    It replaces lowercase letters with uppercase, and specific symbols ('.' and '!') with '-'.
+
+    Parameters:
+    alignment (MultipleSeqAlignment): The input alignment object.
+
+    Returns:
+    alignment (MultipleSeqAlignment): The modified alignment object with allowed states.
+    """
+
+    # Iterate over each sequence record in the alignment
     for record in alignment:
+        # Convert the sequence to uppercase
         record.seq = record.seq.upper()
+        # Replace '.' with '-'
         record.seq = record.seq.replace(".", "-")
+
+        # Replace '!' with '-'
         record.seq = record.seq.replace("!", "-")
+    # Return the modified alignment
     return alignment
 
 
-def read_alignment_file(file_name) -> MultipleSeqAlignment:
+def read_alignment_file(file_name: str) -> MultipleSeqAlignment:
     """
     Reads an alignment file and returns the alignment object.
 

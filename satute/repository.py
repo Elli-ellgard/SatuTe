@@ -6,6 +6,7 @@ import re
 from enum import Enum
 from typing import List, Dict
 
+from satute.exceptions import InvalidModelNameError, ModelNotFoundError
 from satute.amino_acid_models import get_aa_state_frequency_substitution_models, normalize_stationary_distribution_aa
 from satute.dna_model import NOT_ACCEPTED_DNA_MODELS
 
@@ -16,8 +17,6 @@ from satute.amino_acid_models import (
     AA_STATE_FREQUENCIES,
     NOT_ACCEPTED_AA_MODELS,
 )
-from satute.exceptions import InvalidModelNameError, ModelNotFoundError
-
 
 class ModelType(Enum):
     DNA = "DNA"
@@ -474,7 +473,6 @@ class IqTreeParser:
                 idx += 1
         return rate_matrix
 
-
     def get_aa_rate_matrix(self, current_substitution_model: str) -> np.ndarray:
         """
         Retrieves and constructs the amino acid rate matrix for a given substitution model.
@@ -804,7 +802,6 @@ def parse_file_to_data_frame(file_path: str) -> pd.DataFrame:
 
     except FileNotFoundError:
         raise Exception(f"File not found: {file_path}")
-
 
 def valid_stationary_distribution(frequencies: Dict[str, float]) -> Dict[str, float]:
     sum_frequencies = sum(frequencies.values())
