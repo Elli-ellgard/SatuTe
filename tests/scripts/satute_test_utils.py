@@ -127,6 +127,8 @@ def additional_iqtree_files(options):
         suffix.append(".siteprob")
     elif "m" in options: 
         suffix.append(".model.gz")
+    elif "alnifo" in options: 
+        suffix.append(".alninfo")
     return suffix
 
 def check_iqtree_files_exist(data_name, dest_dir_path, iqtree_options):
