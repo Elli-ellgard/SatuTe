@@ -11,7 +11,7 @@ from typing import Dict, Any, List
 
 from satute.amino_acid_models import AMINO_ACIDS
 from satute.result import TestStatisticComponentsContainer
-from satute.statistic_posterior_distribution_components import (
+from satute.ztest_posterior_distribution import (
     calculate_posterior_probabilities_subtree_df,
 )
 
