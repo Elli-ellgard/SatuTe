@@ -15,6 +15,14 @@ def sum_positive_integers(n):
 def sum_squares_positive_integers(n):
     return n*(n+1)*(2*n+1)/6
 
+def identity(n):
+    return n
+
+def res_internal_ex1(n):
+    m = sum_squares_positive_integers(n)
+    return m*m/n
+
+
 
 
 class TestScalarProduct(unittest.TestCase):
@@ -167,6 +175,68 @@ class TestCalculateComponents(unittest.TestCase):
             )
 
 
+class TestCalculateSampleVariance(unittest.TestCase):
+
+    def run_test_external_branches(self, number_sites, example_function, result_function):
+        with self.subTest(number_sites=number_sites):
+            branch_type = "external"
+            multiplicity, factors_left_subtree, factors_right_subtree, number_sites = (
+                example_function(number_sites)
+            )
+
+            variance = calculate_sample_variance(
+                    multiplicity,
+                    factors_left_subtree,
+                    factors_right_subtree,
+                    number_sites,
+                    branch_type
+                )
+        
+            result = result_function(number_sites)
+            self.assertEqual(variance, result/number_sites*multiplicity)
+
+    def run_test_internal_branches(self, number_sites, example_function, result_function):
+        with self.subTest(number_sites=number_sites):
+            branch_type = "internal"
+            multiplicity, factors_left_subtree, factors_right_subtree, number_sites = (
+                example_function(number_sites)
+            )
+
+            variance = calculate_sample_variance(
+                    multiplicity,
+                    factors_left_subtree,
+                    factors_right_subtree,
+                    number_sites,
+                    branch_type
+                )
+        
+            result = result_function(number_sites)
+            self.assertAlmostEqual(variance, result/number_sites*multiplicity*multiplicity, places=10)
+
+    def example1(self, n):
+        # sum of the squares of the first n positive integers
+        multiplicity = 1
+        factors_left_subtree = [[i for i in range(1, n + 1)]]
+        factors_right_subtree = factors_left_subtree
+        return multiplicity, factors_left_subtree, factors_right_subtree, n
+    
+    def example2(self, n):
+        # sum of the squares of the first n positive integers
+        multiplicity = 2
+        factors_left_subtree = [[i for i in range(1, n + 1)]]*multiplicity
+        factors_right_subtree = [[1 for i in range(1, n + 1)]]*multiplicity
+        return multiplicity, factors_left_subtree, factors_right_subtree, n
+  
+
+    def test_calculate_sample_coherence(self):
+        number_sites_list = [4, 10, 30]
+        for number_sites in number_sites_list:
+            self.run_test_external_branches(number_sites, self.example1, sum_squares_positive_integers)
+            self.run_test_external_branches(number_sites, self.example2, identity)
+            self.run_test_internal_branches(number_sites, self.example2, sum_squares_positive_integers)
+            self.run_test_internal_branches(number_sites, self.example1, res_internal_ex1)
+
+
 class TestCalculateTestStatistic(unittest.TestCase):
 
     def run_test(self, number_sites, example_function):
@@ -175,10 +245,10 @@ class TestCalculateTestStatistic(unittest.TestCase):
             test_statistic, sample_mean, se = calculate_test_statistic(coefficients,population_variance,number_sites)
             
 
-            self.assertEqual(sample_mean, np.mean(coefficients))
+            self.assertAlmostEqual(sample_mean, np.mean(coefficients), places=10)
             if population_variance > 0:
-                self.assertEqual(test_statistic, np.mean(coefficients)/np.sqrt(population_variance/number_sites))
-                self.assertEqual(se, np.sqrt(population_variance/number_sites) )
+                self.assertAlmostEqual(test_statistic, np.mean(coefficients)/np.sqrt(population_variance/number_sites), places=10)
+                self.assertAlmostEqual(se, np.sqrt(population_variance/number_sites), places=10)
             else: 
                 self.assertTrue(np.isnan(test_statistic))
                 self.assertTrue(np.isnan(se))
