@@ -1,0 +1,477 @@
+IQ-TREE 2.2.2.3 COVID-edition built Mar 13 2023
+
+Input file name: ./alignments/10574_NT_AL.fasta
+User tree file name: orthomam_supermatrix.treefile
+Type of analysis: tree reconstruction
+Random seed number: 632342
+
+REFERENCES
+----------
+
+To cite IQ-TREE please use:
+
+Bui Quang Minh, Heiko A. Schmidt, Olga Chernomor, Dominik Schrempf,
+Michael D. Woodhams, Arndt von Haeseler, and Robert Lanfear (2020)
+IQ-TREE 2: New models and efficient methods for phylogenetic inference
+in the genomic era. Mol. Biol. Evol., in press.
+https://doi.org/10.1093/molbev/msaa015
+
+SEQUENCE ALIGNMENT
+------------------
+
+Input data: 190 sequences with 1638 nucleotide sites
+Number of constant sites: 897 (= 54.7619% of all sites)
+Number of invariant (constant or ambiguous constant) sites: 897 (= 54.7619% of all sites)
+Number of parsimony informative sites: 672
+Number of distinct site patterns: 784
+
+SUBSTITUTION PROCESS
+--------------------
+
+Model of substitution: K2P
+
+Rate parameter R:
+
+  A-C: 1.0000
+  A-G: 0.5800
+  A-T: 1.0000
+  C-G: 1.0000
+  C-T: 0.5800
+  G-T: 1.0000
+
+State frequencies: (equal frequencies)
+
+Rate matrix Q:
+
+  A        -1    0.3876    0.2248    0.3876
+  C    0.3876        -1    0.3876    0.2248
+  G    0.2248    0.3876        -1    0.3876
+  T    0.3876    0.2248    0.3876        -1
+
+Model of rate heterogeneity: Uniform
+
+MAXIMUM LIKELIHOOD TREE
+-----------------------
+
+Log-likelihood of the tree: -38302.4107 (s.e. 1210.4034)
+Unconstrained log-likelihood (without tree): -8996.1918
+Number of free parameters (#branches + #model parameters): 377
+Akaike information criterion (AIC) score: 77358.8215
+Corrected Akaike information criterion (AICc) score: 77585.0215
+Bayesian information criterion (BIC) score: 79395.0856
+
+Total tree length (sum of branch lengths): 3.6770
+Sum of internal branch lengths: 1.5975 (43.4455% of tree length)
+
+WARNING: 16 near-zero internal branches (<0.0006) should be treated with caution
+         Such branches are denoted by '**' in the figure below
+
+NOTE: Tree is UNROOTED although outgroup taxon 'Vombatus_ursinus' is drawn at root
+
++---Vombatus_ursinus
+|
+|                                                                          +--Bos_mutus
+|                                                                       +--|
+|                                                                       |  |  +--Bison_bison_bison
+|                                                                       |  +--|
+|                                                                       |     |  +**Bos_indicus
+|                                                                       |     +--|
+|                                                                       |        +**Bos_taurus
+|                                                                    +--|
+|                                                                    |  +--Bubalus_bubalis
+|                                                                 +--|
+|                                                                 |  |  +--Oryx_dammah
+|                                                                 |  +--|
+|                                                                 |     |     +--Capra_hircus
+|                                                                 |     |  +**|
+|                                                                 |     |  |  +--Ovis_aries
+|                                                                 |     +--|
+|                                                                 |        +--Budorcas_taxicolor
+|                                                              +--|
+|                                                              |  |     +**Cervus_canadensis
+|                                                              |  |  +--|
+|                                                              |  |  |  +**Cervus_elaphus
+|                                                              |  +--|
+|                                                              |     +--Odocoileus_virginianus_texanus
+|                                                           +--|
+|                                                           |  |     +--Balaenoptera_acutorostrata_scammoni
+|                                                           |  |  +--|
+|                                                           |  |  |  +--Balaenoptera_musculus
+|                                                           |  +--|
+|                                                           |     |              +--Delphinapterus_leucas
+|                                                           |     |           +--|
+|                                                           |     |           |  +**Monodon_monoceros
+|                                                           |     |        +--|
+|                                                           |     |        |  |  +**Neophocaena_asiaeorientalis_asiaeorientalis
+|                                                           |     |        |  +--|
+|                                                           |     |        |     +--Phocoena_sinus
+|                                                           |     |     +--|
+|                                                           |     |     |  |     +**Globicephala_melas
+|                                                           |     |     |  |  +**|
+|                                                           |     |     |  |  |  |  +--Orcinus_orca
+|                                                           |     |     |  |  |  +**|
+|                                                           |     |     |  |  |     +--Tursiops_truncatus
+|                                                           |     |     |  +--|
+|                                                           |     |     |     +--Lagenorhynchus_obliquidens
+|                                                           |     |  +--|
+|                                                           |     |  |  +--Lipotes_vexillifer
+|                                                           |     +--|
+|                                                           |        +--Physeter_catodon
+|                                                        +--|
+|                                                        |  +-----Sus_scrofa
+|                                                     +--|
+|                                                     |  |         +**Camelus_bactrianus
+|                                                     |  |      +**|
+|                                                     |  |      |  +**Camelus_ferus
+|                                                     |  |   +--|
+|                                                     |  |   |  +--Camelus_dromedarius
+|                                                     |  +---|
+|                                                     |      +--Vicugna_pacos
+|                                                  +--|
+|                                                  |  |                       +--Acinonyx_jubatus
+|                                                  |  |                    +--|
+|                                                  |  |                    |  |  +--Puma_concolor
+|                                                  |  |                    |  +--|
+|                                                  |  |                    |     +--Puma_yagouaroundi
+|                                                  |  |                 +**|
+|                                                  |  |                 |  +--Lynx_canadensis
+|                                                  |  |              +--|
+|                                                  |  |              |  |     +--Felis_catus
+|                                                  |  |              |  |  +--|
+|                                                  |  |              |  |  |  +--Prionailurus_bengalensis
+|                                                  |  |              |  +**|
+|                                                  |  |              |     +--Leopardus_geoffroyi
+|                                                  |  |           +--|
+|                                                  |  |           |  |        +**Panthera_leo
+|                                                  |  |           |  |     +**|
+|                                                  |  |           |  |     |  +**Panthera_uncia
+|                                                  |  |           |  |  +**|
+|                                                  |  |           |  |  |  +--Panthera_tigris
+|                                                  |  |           |  +--|
+|                                                  |  |           |     +--Panthera_pardus
+|                                                  |  |        +--|
+|                                                  |  |        |  +--Hyaena_hyaena
+|                                                  |  |     +--|
+|                                                  |  |     |  +--Suricata_suricatta
+|                                                  |  |  +--|
+|                                                  |  |  |  |        +--Ailuropoda_melanoleuca
+|                                                  |  |  |  |     +--|
+|                                                  |  |  |  |     |  |     +--Ursus_maritimus
+|                                                  |  |  |  |     |  |  +**|
+|                                                  |  |  |  |     |  |  |  +--Ursus_arctos
+|                                                  |  |  |  |     |  +--|
+|                                                  |  |  |  |     |     +--Ursus_americanus
+|                                                  |  |  |  |  +--|
+|                                                  |  |  |  |  |  |           +--Enhydra_lutris_kenyoni
+|                                                  |  |  |  |  |  |        +--|
+|                                                  |  |  |  |  |  |        |  +--Lontra_canadensis
+|                                                  |  |  |  |  |  |     +--|
+|                                                  |  |  |  |  |  |     |  |     +--Mustela_putorius_furo
+|                                                  |  |  |  |  |  |     |  |  +--|
+|                                                  |  |  |  |  |  |     |  |  |  +--Mustela_erminea
+|                                                  |  |  |  |  |  |     |  +--|
+|                                                  |  |  |  |  |  |     |     +--Neogale_vison
+|                                                  |  |  |  |  |  |  +--|
+|                                                  |  |  |  |  |  |  |  +--Meles_meles
+|                                                  |  |  |  |  |  +--|
+|                                                  |  |  |  |  |     |           +--Mirounga_angustirostris
+|                                                  |  |  |  |  |     |        +--|
+|                                                  |  |  |  |  |     |        |  +**Mirounga_leonina
+|                                                  |  |  |  |  |     |     +--|
+|                                                  |  |  |  |  |     |     |  |  +--Neomonachus_schauinslandi
+|                                                  |  |  |  |  |     |     |  +**|
+|                                                  |  |  |  |  |     |     |     +-------Leptonychotes_weddellii
+|                                                  |  |  |  |  |     |  +--|
+|                                                  |  |  |  |  |     |  |  |  +--Phoca_vitulina
+|                                                  |  |  |  |  |     |  |  +--|
+|                                                  |  |  |  |  |     |  |     +--Halichoerus_grypus
+|                                                  |  |  |  |  |     +--|
+|                                                  |  |  |  |  |        |        +--Zalophus_californianus
+|                                                  |  |  |  |  |        |     +--|
+|                                                  |  |  |  |  |        |     |  +--Eumetopias_jubatus
+|                                                  |  |  |  |  |        |  +--|
+|                                                  |  |  |  |  |        |  |  +--Callorhinus_ursinus
+|                                                  |  |  |  |  |        +--|
+|                                                  |  |  |  |  |           +--Odobenus_rosmarus_divergens
+|                                                  |  |  |  +--|
+|                                                  |  |  |     |   +--Canis_lupus_dingo
+|                                                  |  |  |     +---|
+|                                                  |  |  |         |  +**Vulpes_vulpes
+|                                                  |  |  |         +--|
+|                                                  |  |  |            +--Vulpes_lagopus
+|                                                  |  +--|
+|                                                  |     |  +--Ceratotherium_simum_simum
+|                                                  |     +--|
+|                                                  |        |     +--Equus_asinus
+|                                                  |        |  +**|
+|                                                  |        |  |  +--Equus_quagga
+|                                                  |        +--|
+|                                                  |           |  +**Equus_caballus
+|                                                  |           +--|
+|                                                  |              +**Equus_przewalskii
+|                                               +--|
+|                                               |  |         +--Rousettus_aegyptiacus
+|                                               |  |     +---|
+|                                               |  |     |   |     +**Pteropus_vampyrus
+|                                               |  |     |   |  +--|
+|                                               |  |     |   |  |  +--Pteropus_giganteus
+|                                               |  |     |   +--|
+|                                               |  |     |      +--Pteropus_alecto
+|                                               |  |  +--|
+|                                               |  |  |  |  +--Rhinolophus_ferrumequinum
+|                                               |  |  |  +--|
+|                                               |  |  |     +--Hipposideros_armiger
+|                                               |  +--|
+|                                               |     |           +--Artibeus_jamaicensis
+|                                               |     |        +--|
+|                                               |     |        |  +--Sturnira_hondurensis
+|                                               |     |     +--|
+|                                               |     |     |  |  +--Phyllostomus_hastatus
+|                                               |     |     |  +--|
+|                                               |     |     |     +--Phyllostomus_discolor
+|                                               |     |  +--|
+|                                               |     |  |  +--Desmodus_rotundus
+|                                               |     +--|
+|                                               |        |     +--Molossus_molossus
+|                                               |        |  +--|
+|                                               |        |  |  +--Miniopterus_natalensis
+|                                               |        +--|
+|                                               |           |      +--Pipistrellus_kuhlii
+|                                               |           |   +--|
+|                                               |           |   |  +--Eptesicus_fuscus
+|                                               |           +---|
+|                                               |               |  +--Myotis_myotis
+|                                               |               +--|
+|                                               |                  |     +--Myotis_lucifugus
+|                                               |                  |  +--|
+|                                               |                  |  |  +--Myotis_brandtii
+|                                               |                  +--|
+|                                               |                     +--Myotis_davidii
+|                                            +--|
+|                                            |  |        +--Talpa_occidentalis
+|                                            |  |     +--|
+|                                            |  |     |  +--Condylura_cristata
+|                                            |  |  +--|
+|                                            |  |  |  |  +------Erinaceus_europaeus
+|                                            |  |  |  +--|
+|                                            |  |  |     |   +-----Sorex_araneus
+|                                            |  |  |     +---|
+|                                            |  |  |         +----Suncus_etruscus
+|                                            |  +--|
+|                                            |     |      +--Manis_javanica
+|                                            |     +------|
+|                                            |            +--Manis_pentadactyla
+|                                         +--|
+|                                         |  |                                         +--Mus_caroli
+|                                         |  |                                      +--|
+|                                         |  |                                      |  +--Mus_musculus
+|                                         |  |                                   +--|
+|                                         |  |                                   |  +--Mus_pahari
+|                                         |  |                                +--|
+|                                         |  |                                |  +--Apodemus_sylvaticus
+|                                         |  |                             +--|
+|                                         |  |                             |  |  +--Grammomys_surdaster
+|                                         |  |                             |  +--|
+|                                         |  |                             |     +--Arvicanthis_niloticus
+|                                         |  |                          +--|
+|                                         |  |                          |  |     +--Rattus_rattus
+|                                         |  |                          |  |  +--|
+|                                         |  |                          |  |  |  +--Rattus_norvegicus
+|                                         |  |                          |  +--|
+|                                         |  |                          |     +--Mastomys_coucha
+|                                         |  |                       +--|
+|                                         |  |                       |  |  +----Acomys_russatus
+|                                         |  |                       |  +--|
+|                                         |  |                       |     +------Meriones_unguiculatus
+|                                         |  |                    +--|
+|                                         |  |                    |  |     +---Phodopus_roborovskii
+|                                         |  |                    |  |  +--|
+|                                         |  |                    |  |  |  |  +--Cricetulus_griseus
+|                                         |  |                    |  |  |  +--|
+|                                         |  |                    |  |  |     +--Mesocricetus_auratus
+|                                         |  |                    |  +--|
+|                                         |  |                    |     |     +--Arvicola_amphibius
+|                                         |  |                    |     |  +--|
+|                                         |  |                    |     |  |  |        +--Microtus_ochrogaster
+|                                         |  |                    |     |  |  |     +--|
+|                                         |  |                    |     |  |  |     |  +--Microtus_oregoni
+|                                         |  |                    |     |  |  |  +--|
+|                                         |  |                    |     |  |  |  |  +--Microtus_fortis
+|                                         |  |                    |     |  |  +--|
+|                                         |  |                    |     |  |     +--Myodes_glareolus
+|                                         |  |                    |     +--|
+|                                         |  |                    |        |  +--Onychomys_torridus
+|                                         |  |                    |        +--|
+|                                         |  |                    |           |     +--Peromyscus_maniculatus_bairdii
+|                                         |  |                    |           |  +--|
+|                                         |  |                    |           |  |  +--Peromyscus_leucopus
+|                                         |  |                    |           +--|
+|                                         |  |                    |              +--Peromyscus_californicus_insignis
+|                                         |  |                 +--|
+|                                         |  |                 |  +-----Nannospalax_galili
+|                                         |  |              +--|
+|                                         |  |              |  +-------Jaculus_jaculus
+|                                         |  |           +--|
+|                                         |  |           |  |  +-----Castor_canadensis
+|                                         |  |           |  +--|
+|                                         |  |           |     |    +--Perognathus_longimembris_pacificus
+|                                         |  |           |     +----|
+|                                         |  |           |          |  +--Dipodomys_ordii
+|                                         |  |           |          +--|
+|                                         |  |           |             +--Dipodomys_spectabilis
+|                                         |  |        +--|
+|                                         |  |        |  |        +--Marmota_flaviventris
+|                                         |  |        |  |     +--|
+|                                         |  |        |  |     |  |  +--Marmota_marmota_marmota
+|                                         |  |        |  |     |  +--|
+|                                         |  |        |  |     |     +--Marmota_monax
+|                                         |  |        |  +-----|
+|                                         |  |        |        |  +--Ictidomys_tridecemlineatus
+|                                         |  |        |        +--|
+|                                         |  |        |           +--Urocitellus_parryii
+|                                         |  |     +--|
+|                                         |  |     |  |        +--Cavia_porcellus
+|                                         |  |     |  |     +--|
+|                                         |  |     |  |     |  +---Octodon_degus
+|                                         |  |     |  |  +--|
+|                                         |  |     |  |  |  +---Chinchilla_lanigera
+|                                         |  |     |  +--|
+|                                         |  |     |     |  +--Heterocephalus_glaber
+|                                         |  |     |     +--|
+|                                         |  |     |        +--Fukomys_damarensis
+|                                         |  |  +--|
+|                                         |  |  |  |  +---Oryctolagus_cuniculus
+|                                         |  |  |  +--|
+|                                         |  |  |     |    +--Ochotona_curzoniae
+|                                         |  |  |     +----|
+|                                         |  |  |          +--Ochotona_princeps
+|                                         |  +--|
+|                                         |     |                 +--Aotus_nancymaae
+|                                         |     |              +--|
+|                                         |     |              |  |  +--Saimiri_boliviensis_boliviensis
+|                                         |     |              |  +--|
+|                                         |     |              |     |  +--Sapajus_apella
+|                                         |     |              |     +--|
+|                                         |     |              |        +**Cebus_imitator
+|                                         |     |           +--|
+|                                         |     |           |  +--Callithrix_jacchus
+|                                         |     |        +--|
+|                                         |     |        |  |           +--Piliocolobus_tephrosceles
+|                                         |     |        |  |        +**|
+|                                         |     |        |  |        |  +--Colobus_angolensis_palliatus
+|                                         |     |        |  |     +--|
+|                                         |     |        |  |     |  |  +--Trachypithecus_francoisi
+|                                         |     |        |  |     |  +--|
+|                                         |     |        |  |     |     |  +**Rhinopithecus_roxellana
+|                                         |     |        |  |     |     +--|
+|                                         |     |        |  |     |        +--Rhinopithecus_bieti
+|                                         |     |        |  |  +--|
+|                                         |     |        |  |  |  |     +--Cercocebus_atys
+|                                         |     |        |  |  |  |  +--|
+|                                         |     |        |  |  |  |  |  |        +--Macaca_fascicularis
+|                                         |     |        |  |  |  |  |  |     +**|
+|                                         |     |        |  |  |  |  |  |     |  |  +**Macaca_mulatta
+|                                         |     |        |  |  |  |  |  |     |  +**|
+|                                         |     |        |  |  |  |  |  |     |     +**Macaca_nemestrina
+|                                         |     |        |  |  |  |  |  |  +--|
+|                                         |     |        |  |  |  |  |  |  |  +--Macaca_thibetana_thibetana
+|                                         |     |        |  |  |  |  |  +--|
+|                                         |     |        |  |  |  |  |     |     +**Theropithecus_gelada
+|                                         |     |        |  |  |  |  |     |  +--|
+|                                         |     |        |  |  |  |  |     |  |  +--Papio_anubis
+|                                         |     |        |  |  |  |  |     +**|
+|                                         |     |        |  |  |  |  |        +--Mandrillus_leucophaeus
+|                                         |     |        |  |  |  +--|
+|                                         |     |        |  |  |     +--Chlorocebus_sabaeus
+|                                         |     |        |  +--|
+|                                         |     |        |     |     +--Pongo_abelii
+|                                         |     |        |     |  +--|
+|                                         |     |        |     |  |  |  +--Gorilla_gorilla_gorilla
+|                                         |     |        |     |  |  +--|
+|                                         |     |        |     |  |     |  +--Homo_sapiens
+|                                         |     |        |     |  |     +**|
+|                                         |     |        |     |  |        |  +**Pan_paniscus
+|                                         |     |        |     |  |        +--|
+|                                         |     |        |     |  |           +--Pan_troglodytes
+|                                         |     |        |     +--|
+|                                         |     |        |        |  +--Hylobates_moloch
+|                                         |     |        |        +--|
+|                                         |     |        |           +--Nomascus_leucogenys
+|                                         |     |     +--|
+|                                         |     |     |  +----Carlito_syrichta
+|                                         |     |  +--|
+|                                         |     |  |  |        +--Propithecus_coquereli
+|                                         |     |  |  |     +--|
+|                                         |     |  |  |     |  +--Lemur_catta
+|                                         |     |  |  |  +--|
+|                                         |     |  |  |  |  +--Microcebus_murinus
+|                                         |     |  |  +--|
+|                                         |     |  |     +---Otolemur_garnettii
+|                                         |     +--|
+|                                         |        |  +--------Tupaia_chinensis
+|                                         |        +--|
+|                                         |           +---Galeopterus_variegatus
+|                                      +--|
+|                                      |  |  +----Choloepus_didactylus
+|                                      |  +--|
+|                                      |     +-----Dasypus_novemcinctus
+|                                   +--|
+|                                   |  |  +----Orycteropus_afer_afer
+|                                   |  +--|
+|                                   |     +------Chrysochloris_asiatica
+|                               +---|
+|                               |   |  +--Trichechus_manatus_latirostris
+|                               |   +--|
+|                               |      |  +--Elephas_maximus_indicus
+|                               |      +--|
+|                               |         +--Loxodonta_africana
+|                           +---|
+|                           |   +------Echinops_telfairi
+|                +----------|
+|                |          +-------Elephantulus_edwardii
+|           +----|
+|           |    |            +---Tachyglossus_aculeatus
+|           |    +------------|
+|           |                 +----Ornithorhynchus_anatinus
+|        +--|
+|        |  |  +--Monodelphis_domestica
+|        |  +--|
+|        |     +--Gracilinanus_agilis
+|     +--|
+|     |  |    +--Antechinus_flavipes
+|     |  +----|
+|     |       +--Sarcophilus_harrisii
+|  +--|
+|  |  +------Dromiciops_gliroides
++--|
+|  +----Trichosurus_vulpecula
+|
++--Phascolarctos_cinereus
+
+Tree in newick format:
+
+(Vombatus_ursinus:0.0264196970,(((((((((((((((((((((Bos_mutus:0.0030811622,(Bison_bison_bison:0.0030819150,(Bos_indicus:0.0000023564,Bos_taurus:0.0000021941):0.0018450986):0.0006115452):0.0024667494,Bubalus_bubalis:0.0036960218):0.0086335712,(Oryx_dammah:0.0094519538,((Capra_hircus:0.0043155885,Ovis_aries:0.0036997133):0.0006074009,Budorcas_taxicolor:0.0055587727):0.0048107126):0.0041181256):0.0057786876,((Cervus_canadensis:0.0000021064,Cervus_elaphus:0.0000028594):0.0046521726,Odocoileus_virginianus_texanus:0.0046101661):0.0100777735):0.0208040687,((Balaenoptera_acutorostrata_scammoni:0.0033539347,Balaenoptera_musculus:0.0015731253):0.0040527609,(((((Delphinapterus_leucas:0.0006142302,Monodon_monoceros:0.0000026123):0.0099249091,(Neophocaena_asiaeorientalis_asiaeorientalis:0.0000028301,Phocoena_sinus:0.0006142510):0.0043278387):0.0012198143,((Globicephala_melas:0.0000021660,(Orcinus_orca:0.0006139920,Tursiops_truncatus:0.0006140858):0.0000028013):0.0000024929,Lagenorhynchus_obliquidens:0.0018440774):0.0018451847):0.0013914723,Lipotes_vexillifer:0.0029179959):0.0019456335,Physeter_catodon:0.0075049469):0.0032662003):0.0133415859):0.0052659050,Sus_scrofa:0.0372558522):0.0013410941,(((Camelus_bactrianus:0.0000023467,Camelus_ferus:0.0000020840):0.0003801550,Camelus_dromedarius:0.0020807025):0.0028542683,Vicugna_pacos:0.0037308354):0.0248881579):0.0086192312,((((((((Acinonyx_jubatus:0.0006134740,(Puma_concolor:0.0006140516,Puma_yagouaroundi:0.0012291725):0.0012302642):0.0006151508,Lynx_canadensis:0.0030783087):0.0000021972,((Felis_catus:0.0018448859,Prionailurus_bengalensis:0.0030804281):0.0006134370,Leopardus_geoffroyi:0.0049343471):0.0000020807):0.0006129868,(((Panthera_leo:0.0000025654,Panthera_uncia:0.0000029775):0.0000021484,Panthera_tigris:0.0006142234):0.0000027520,Panthera_pardus:0.0024615949):0.0030796393):0.0076309344,Hyaena_hyaena:0.0219441733):0.0037859623,Suricata_suricatta:0.0206099683):0.0077745415,(((Ailuropoda_melanoleuca:0.0078894437,((Ursus_maritimus:0.0006141206,Ursus_arctos:0.0012288976):0.0000021856,Ursus_americanus:0.0024616219):0.0046736897):0.0118399771,((((Enhydra_lutris_kenyoni:0.0041515348,Lontra_canadensis:0.0088482093):0.0018425174,((Mustela_putorius_furo:0.0051485494,Mustela_erminea:0.0024673184):0.0021221652,Neogale_vison:0.0041482775):0.0018255456):0.0041710285,Meles_meles:0.0055448231):0.0193061237,((((Mirounga_angustirostris:0.0006140446,Mirounga_leonina:0.0000022489):0.0030794465,(Neomonachus_schauinslandi:0.0018431013,Leptonychotes_weddellii:0.0497287510):0.0000021905):0.0007938527,(Phoca_vitulina:0.0012296619,Halichoerus_grypus:0.0012293930):0.0041374897):0.0049629683,(((Zalophus_californianus:0.0006139260,Eumetopias_jubatus:0.0006136747):0.0029933184,Callorhinus_ursinus:0.0013183476):0.0030634029,Odobenus_rosmarus_divergens:0.0038089303):0.0065493629):0.0037516691):0.0011702119):0.0039748757,(Canis_lupus_dingo:0.0032774416,(Vulpes_vulpes:0.0000029912,Vulpes_lagopus:0.0012291977):0.0047454653):0.0267083700):0.0055971162):0.0114873568,(Ceratotherium_simum_simum:0.0116085827,((Equus_asinus:0.0006140005,Equus_quagga:0.0012293368):0.0000021950,(Equus_caballus:0.0000024727,Equus_przewalskii:0.0000022402):0.0018429683):0.0173643057):0.0081546882):0.0036927102):0.0033063598,(((Rousettus_aegyptiacus:0.0128633963,((Pteropus_vampyrus:0.0000029521,Pteropus_giganteus:0.0006140777):0.0014651293,Pteropus_alecto:0.0009935195):0.0085350649):0.0302261952,(Rhinolophus_ferrumequinum:0.0236250400,Hipposideros_armiger:0.0221712858):0.0110077200):0.0029707463,((((Artibeus_jamaicensis:0.0149184249,Sturnira_hondurensis:0.0141091806):0.0144760810,(Phyllostomus_hastatus:0.0092982778,Phyllostomus_discolor:0.0051865747):0.0141122851):0.0033368191,Desmodus_rotundus:0.0165324531):0.0213680303,((Molossus_molossus:0.0239439494,Miniopterus_natalensis:0.0202221347):0.0031110214,((Pipistrellus_kuhlii:0.0211642200,Eptesicus_fuscus:0.0087834212):0.0075509839,(Myotis_myotis:0.0043180833,((Myotis_lucifugus:0.0024894486,Myotis_brandtii:0.0030530935):0.0023099264,Myotis_davidii:0.0117248436):0.0008505076):0.0056376854):0.0264164751):0.0040610180):0.0053944080):0.0051342743):0.0063910316,(((Talpa_occidentalis:0.0174082382,Condylura_cristata:0.0180630349):0.0240047330,(Erinaceus_europaeus:0.0456330610,(Sorex_araneus:0.0399897345,Suncus_etruscus:0.0350900191):0.0283252591):0.0066066271):0.0062268934,(Manis_javanica:0.0052885382,Manis_pentadactyla:0.0052774307):0.0433011888):0.0036115018):0.0067500501,((((((((((((((Mus_caroli:0.0040616382,Mus_musculus:0.0071950421):0.0069542801,Mus_pahari:0.0160938387):0.0112975825,Apodemus_sylvaticus:0.0184726212):0.0020103215,(Grammomys_surdaster:0.0185187876,Arvicanthis_niloticus:0.0181883336):0.0128523433):0.0012523816,((Rattus_rattus:0.0046561368,Rattus_norvegicus:0.0047253601):0.0142683534,Mastomys_coucha:0.0208181482):0.0028874123):0.0105422781,(Acomys_russatus:0.0329610924,Meriones_unguiculatus:0.0459090459):0.0084629881):0.0071695655,((Phodopus_roborovskii:0.0285710597,(Cricetulus_griseus:0.0190846271,Mesocricetus_auratus:0.0173020085):0.0067680000):0.0064470788,((Arvicola_amphibius:0.0064065269,(((Microtus_ochrogaster:0.0046594103,Microtus_oregoni:0.0021271774):0.0030820404,Microtus_fortis:0.0070898847):0.0040242413,Myodes_glareolus:0.0062049605):0.0020851984):0.0174211137,(Onychomys_torridus:0.0070811851,((Peromyscus_maniculatus_bairdii:0.0063374856,Peromyscus_leucopus:0.0038779661):0.0061755749,Peromyscus_californicus_insignis:0.0060600383):0.0036994647):0.0141134747):0.0030170002):0.0066370739):0.0160571022,Nannospalax_galili:0.0407833946):0.0100877233,Jaculus_jaculus:0.0533061558):0.0100636754,(Castor_canadensis:0.0411204993,(Perognathus_longimembris_pacificus:0.0170098765,(Dipodomys_ordii:0.0022667608,Dipodomys_spectabilis:0.0020830910):0.0182971941):0.0327248230):0.0102133139):0.0044761809,((Marmota_flaviventris:0.0006239929,(Marmota_marmota_marmota:0.0012340687,Marmota_monax:0.0006162186):0.0012269613):0.0025170383,(Ictidomys_tridecemlineatus:0.0043779252,Urocitellus_parryii:0.0049114645):0.0012230963):0.0379534780):0.0012458834,(((Cavia_porcellus:0.0215577597,Octodon_degus:0.0250529665):0.0058770702,Chinchilla_lanigera:0.0301376783):0.0052989319,(Heterocephalus_glaber:0.0144191457,Fukomys_damarensis:0.0187990588):0.0149929022):0.0228876299):0.0079223872,(Oryctolagus_cuniculus:0.0299138991,(Ochotona_curzoniae:0.0134298267,Ochotona_princeps:0.0100150148):0.0364729554):0.0238707229):0.0033408984,((((((Aotus_nancymaae:0.0055586619,(Saimiri_boliviensis_boliviensis:0.0074285410,(Sapajus_apella:0.0017929465,Cebus_imitator:0.0003071977):0.0017009123):0.0012281223):0.0027367949,Callithrix_jacchus:0.0066725101):0.0111501130,((((Piliocolobus_tephrosceles:0.0018446923,Colobus_angolensis_palliatus:0.0018452017):0.0000022357,(Trachypithecus_francoisi:0.0030787434,(Rhinopithecus_roxellana:0.0000029395,Rhinopithecus_bieti:0.0006142536):0.0024626188):0.0012293686):0.0032630847,((Cercocebus_atys:0.0014672953,(((Macaca_fascicularis:0.0006142549,(Macaca_mulatta:0.0000021377,Macaca_nemestrina:0.0000020571):0.0000025430):0.0000021981,Macaca_thibetana_thibetana:0.0018451600):0.0012288612,((Theropithecus_gelada:0.0000021830,Papio_anubis:0.0012292663):0.0006138600,Mandrillus_leucophaeus:0.0043143527):0.0000020089):0.0006139294):0.0006123060,Chlorocebus_sabaeus:0.0049358797):0.0022831042):0.0060969409,((Pongo_abelii:0.0043298755,(Gorilla_gorilla_gorilla:0.0030889365,(Homo_sapiens:0.0024624941,(Pan_paniscus:0.0000020791,Pan_troglodytes:0.0012317029):0.0006145190):0.0006088597):0.0006136215):0.0012156120,(Hylobates_moloch:0.0006128671,Nomascus_leucogenys:0.0018459550):0.0055715902):0.0034592741):0.0068015145):0.0101143387,Carlito_syrichta:0.0312344967):0.0040064630,(((Propithecus_coquereli:0.0142488785,Lemur_catta:0.0170204699):0.0025051413,Microcebus_murinus:0.0118625138):0.0095056143,Otolemur_garnettii:0.0284190166):0.0100572141):0.0085135522,(Tupaia_chinensis:0.0581413405,Galeopterus_variegatus:0.0276367172):0.0066419305):0.0016204502):0.0079525172):0.0065448574,(Choloepus_didactylus:0.0310068756,Dasypus_novemcinctus:0.0387812675):0.0136524158):0.0132743481,(Orycteropus_afer_afer:0.0363406054,Chrysochloris_asiatica:0.0456234299):0.0081329860):0.0029950110,(Trichechus_manatus_latirostris:0.0181273269,(Elephas_maximus_indicus:0.0013698535,Loxodonta_africana:0.0013350081):0.0236492403):0.0084123490):0.0305602271,Echinops_telfairi:0.0492351799):0.0306775414,Elephantulus_edwardii:0.0535552413):0.0679536037,(Tachyglossus_aculeatus:0.0270608432,Ornithorhynchus_anatinus:0.0356746036):0.0855261000):0.0319548012,(Monodelphis_domestica:0.0225669614,Gracilinanus_agilis:0.0110261107):0.0227042244):0.0237999483,(Antechinus_flavipes:0.0118911047,Sarcophilus_harrisii:0.0089538185):0.0330633885):0.0103027710,Dromiciops_gliroides:0.0445693234):0.0079199691,Trichosurus_vulpecula:0.0334843788):0.0213676672,Phascolarctos_cinereus:0.0245017766);
+
+ALISIM COMMAND
+--------------
+To simulate an alignment of the same length as the original alignment, using the tree and model parameters estimated from this analysis, you can use the following command:
+
+--alisim simulated_MSA -t ./alignments/10574_NT_AL.fasta.treefile -m "K2P{0.58}+FQ" --length 1638
+
+To mimic the alignment used to produce this analysis, i.e. simulate an alignment of the same length as the original alignment, using the tree and model parameters estimated from this analysis *and* copying the same gap positions as the original alignment, you can use the following command:
+
+iqtree -s ./alignments/10574_NT_AL.fasta --alisim mimicked_MSA
+
+To simulate any number of alignments in either of the two commandlines above, use the --num-alignments options, for example mimic 100 alignments you would use the command line:
+
+iqtree -s ./alignments/10574_NT_AL.fasta --alisim mimicked_MSA --num-alignments 100
+
+For more information on using AliSim, please visit: www.iqtree.org/doc/AliSim
+
+TIME STAMP
+----------
+
+Date and time: Wed Jun 26 16:03:33 2024
+Total CPU time used: 18.6322 seconds (0h:0m:18s)
+Total wall-clock time used: 18.9584 seconds (0h:0m:18s)
+
