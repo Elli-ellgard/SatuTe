@@ -50,7 +50,7 @@ class FileHandler:
         """
         return os.path.exists(filepath)
 
-    def read_file(self, filepath)-> list[str]:
+    def read_file(self, filepath: str)-> list[str]:
         """
         Read the contents of a file.
 
@@ -74,7 +74,7 @@ class FileHandler:
         with open(filepath, "r") as file:
             return file.readlines()
 
-    def get_newick_string_from_iq_tree_file(self, path: str) -> str:
+    def get_newick_string_from_iqtree_file(self, path: str) -> str:
         """
         Extracts Newick format string from an IQ-TREE file.
 
@@ -88,11 +88,11 @@ class FileHandler:
         - FileNotFoundError: If the IQ-TREE file does not exist.
         - ValueError: If the IQ-TREE file does not contain a valid Newick format string.
         """
-        iq_tree_file = Path(f"{path}.iqtree")
-        if not iq_tree_file.is_file():
-            raise FileNotFoundError(f"IQ-TREE file not found: {iq_tree_file}")
+        iqtree_file = Path(f"{path}.iqtree")
+        if not iqtree_file.is_file():
+            raise FileNotFoundError(f"IQ-TREE file not found: {iqtree_file}")
 
-        lines = self.read_file(iq_tree_file)
+        lines = self.read_file(iqtree_file)
 
         # Search for the Newick format header and extract the Newick string
         try:
@@ -102,12 +102,12 @@ class FileHandler:
             newick_string = lines[newick_line_index + 2].strip()
         except (StopIteration, IndexError):
             raise ValueError(
-                f"The IQ-TREE file at {iq_tree_file} does not contain a valid Newick format string."
+                f"The IQ-TREE file at {iqtree_file} does not contain a valid Newick format string."
             )
 
         if not newick_string.endswith(";"):
             raise ValueError(
-                f"The IQ-TREE file at {iq_tree_file} contains an invalid Newick format string."
+                f"The IQ-TREE file at {iqtree_file} contains an invalid Newick format string."
             )
 
         return newick_string
@@ -159,10 +159,10 @@ class FileHandler:
             raise FileNotFoundError("No tree file found in directory")
         return tree_file
 
-    def find_iq_tree_file(self)->str:
-        iq_tree_file = self.find_file_by_suffix([".iqtree"])
-        if not iq_tree_file:
+    def find_iqtree_file(self)->str:
+        iqtree_file = self.find_file_by_suffix([".iqtree"])
+        if not iqtree_file:
             raise FileNotFoundError("No .iqtree file found in directory")
-        return iq_tree_file
+        return iqtree_file
 
 

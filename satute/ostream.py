@@ -1,20 +1,18 @@
 # -*- coding: utf-8 -*-
 import re
 import pandas as pd
-from logging import Logger
 from Bio import AlignIO
-from Bio.Align import MultipleSeqAlignment
 from pathlib import Path
 from ete3 import Tree
+from logging import Logger
 from pandas import DataFrame
 from typing import Dict, Any, List
+from Bio.Align import MultipleSeqAlignment
 
 
-from satute.s_logging import log_original_tree, log_rate_info
+from satute.logging import log_original_tree, log_rate_info
 from satute.result import TestStatisticComponentsContainer
-from satute.ztest_posterior_distribution import (
-    calculate_posterior_probabilities_subtree_df,
-)
+from satute.ztest_posterior_distribution import calculate_posterior_probabilities_subtree_df
 from satute.amino_acid_models import AMINO_ACIDS
 
 # New function to format float columns

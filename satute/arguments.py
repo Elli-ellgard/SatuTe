@@ -119,4 +119,9 @@ ARGUMENT_LIST = [
         "help": "Even no warnings on the the terminal.",
         "action": "store_true",
     },
+    {
+        "flag": "-dev",
+        "help": "Even no warnings on the the terminal.",
+        "action": "store_true",
+    },
 ]

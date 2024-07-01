@@ -2,8 +2,6 @@
 import os
 import shutil
 import subprocess
-import sys 
-from pathlib import Path
 from logging import Logger
 from typing import List, Optional
 from satute.exceptions import IqTreeNotFoundError
@@ -11,17 +9,17 @@ from satute.exceptions import IqTreeNotFoundError
 class IqTreeHandler:
     """Handles IQ-TREE related operations for the Satute project."""
 
-    def __init__(self, iqtree_path, logger : Logger=None):
+    def __init__(self, iqtree_path : str, logger : Logger=None):
         """
         Initialize with an optional base directory.
 
         Args:
         - base_directory (str, optional): The directory where the handler might operate. Defaults to None.
         """
-        self.iq_tree_path = iqtree_path
+        self.iqtree_path = iqtree_path
         self.logger = logger
 
-    def validate_and_append_boot_arguments(self, ufboot, bootstrap) -> List[str]:
+    def validate_and_append_boot_arguments(self, ufboot : Optional[int] = None, bootstrap: Optional[int] = None) -> List[str]:
         """Validates the ufboot and boot parameters and appends them to extra_arguments if valid.
 
         Raises:
@@ -63,13 +61,13 @@ class IqTreeHandler:
             RuntimeError: If IQ-TREE execution fails.
         """
         extra_arguments_string = " ".join(extra_arguments)
-        iq_tree_command = f"{self.iq_tree_path} {' '.join(arguments)} {extra_arguments_string}"
+        iqtree_command = f"{self.iqtree_path} {' '.join(arguments)} {extra_arguments_string}"
 
-        self.logger.info(f"Running IQ-TREE command: {iq_tree_command}")
+        self.logger.info(f"Running IQ-TREE command: {iqtree_command}")
 
         try:
             result = subprocess.run(
-                iq_tree_command,
+                iqtree_command,
                 shell=True,
                 check=True,
                 stdout=subprocess.PIPE,
@@ -85,7 +83,7 @@ class IqTreeHandler:
         except subprocess.CalledProcessError as e:
             error_message = (
                 f"IQ-TREE execution failed with error code {e.returncode}.\n"
-                f"Command: {iq_tree_command}\n"
+                f"Command: {iqtree_command}\n"
                 f"Output: {e.stdout}\n"
                 f"Error: {e.stderr}\n"
                 "Please check the command and ensure that IQ-TREE is installed and accessible."
@@ -94,7 +92,7 @@ class IqTreeHandler:
             self.logger.error(error_message)            
             raise RuntimeError(error_message) from e
 
-    def check_iqtree_path(self, iqtree_path):
+    def check_iqtree_path(self, iqtree_path : str):
         """Check if the given IQ-TREE path exists and raise an exception if it doesn't."""
         if os.path.exists(iqtree_path) and os.path.isfile(iqtree_path) or shutil.which(iqtree_path):
             return True

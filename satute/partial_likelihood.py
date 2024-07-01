@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 
 from functools import cache
-from scipy.sparse.linalg import expm
 from ete3 import Tree
 from Bio.Align import MultipleSeqAlignment
 from typing import Dict, Any, List
+from scipy.sparse.linalg import expm
 
 
 from satute.rate_matrix import RateMatrix

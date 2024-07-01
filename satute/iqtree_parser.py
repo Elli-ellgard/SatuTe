@@ -1,60 +1,28 @@
 # -*- coding: utf-8 -*-
 import os
+import re
 import numpy as np
 import pandas as pd
-import re
 from enum import Enum
 from typing import List, Dict
 
 from satute.exceptions import InvalidModelNameError, ModelNotFoundError
-from satute.amino_acid_models import get_aa_state_frequency_substitution_models, normalize_stationary_distribution_aa
 from satute.dna_models import NOT_ACCEPTED_DNA_MODELS
+from satute.substitution_model import SubstitutionModel
+from satute.amino_acid_models import get_aa_state_frequency_substitution_models, normalize_stationary_distribution_aa
+from satute.dna_models import LIE_DNA_MODELS
 
 from satute.amino_acid_models import (
     AMINO_ACID_RATE_MATRIX,
-    create_rate_matrix_with_input,
     AMINO_ACID_MODELS,
     AA_STATE_FREQUENCIES,
     NOT_ACCEPTED_AA_MODELS,
+    create_rate_matrix_with_input    
 )
 
 class ModelType(Enum):
     DNA = "DNA"
     PROTEIN = "Protein"
-
-
-class SubstitutionModel:
-    """
-    A class representing a substitution model used in phylogenetics or related fields.
-
-    Attributes:
-    model (optional): An external model object that may be used for substitution computations.
-    state_frequencies (optional): A data structure (e.g., list or array) containing the frequencies of different states in the model.
-    phi_matrix (optional): A matrix containing phi values, which could represent transition probabilities or other relevant parameters in the model.
-    rate_matrix (optional): A matrix containing rate values which could represent substitution rates or other relevant parameters in the model.
-    number_rates (optional): A scalar indicating the number of different rates in the model.
-    category_rates (optional): A data structure (e.g., list or array) containing the rates of different categories in the model.
-    """
-
-    def __init__(
-        self,
-        model=None,  # An optional external model object
-        state_frequencies=None,  # Optional state frequencies
-        phi_matrix=None,  # Optional phi matrix
-        rate_matrix=None,  # Optional rate matrix
-        number_rates=None,  # Optional number of rates
-        category_rates=None,  # Optional category rates
-    ) -> None:
-        """Initializes a new SubstitutionModel instance with the provided parameters."""
-        self.model = model  # Set the model attribute
-        self.number_rates = number_rates  # Set the number_rates attribute
-        self.rate_matrix = rate_matrix  # Set the rate_matrix attribute
-        self.state_frequencies = (
-            state_frequencies  # Set the state_frequencies attribute
-        )
-        self.phi_matrix = phi_matrix  # Set the phi_matrix attribute
-        self.category_rates = category_rates  # Set the category_rates attribute
-
 
 class IqTreeParser:
     """
@@ -102,6 +70,50 @@ class IqTreeParser:
                 f"An error occurred while reading the file '{self.file_path}': {str(e)}"
             )
 
+    def create_rate_matrix_for_lie_markov_models(self,substitution_rates: Dict[str, float], state_frequencies : List[float]) -> List[List[float]]:
+        """
+        Create a rate matrix from the given substitution rates.
+
+        Parameters:
+        - substitution_rates (Dict[str, float]): A dictionary of substitution rates.
+
+        Returns:
+        - rate_matrix (List[List[float]]): The resulting rate matrix.
+        """
+        rates = list(substitution_rates.values())
+        num_rates = len(rates)
+        matrix_size = int(num_rates**0.5) + 1  # Calculate the size of the matrix (square root of num_rates plus one)
+
+        rate_matrix: List[List[float]] = []
+        rate_index = 0
+        for i in range(matrix_size):
+            row: List[float] = []
+            row_sum = 0
+            for j in range(matrix_size):
+                if i == j:
+                    row.append(0)  # Placeholder for the diagonal
+                else:
+                    rate = rates[rate_index] * state_frequencies[j]
+                    row.append(rate)
+                    row_sum += rate
+                    rate_index += 1
+
+            row[i] = -row_sum  # Set the diagonal element
+            rate_matrix.append(row)
+        
+        
+        for i in range(matrix_size):
+            row_sum = 0 
+            for j in range(matrix_size):
+                if i!= j:
+                    row_sum += rate_matrix[i][j]
+
+            for j in range(matrix_size):
+                rate_matrix[i][j] = rate_matrix[i][j] / row_sum
+                                    
+        rate_matrix = np.array(rate_matrix)
+        return rate_matrix
+
     def load_substitution_model(self) -> SubstitutionModel:
         """
         Load and parse the content of the iqtree file to form the substitution model.
@@ -114,17 +126,37 @@ class IqTreeParser:
         - SubstitutionModel: An object containing the parsed details of the substitution model.
         """
 
-        current_substitution_model = self.parse_substitution_model()
+        self.load_iqtree_file_content()        
+        current_substitution_model : str = self.parse_substitution_model()
         self.check_model(current_substitution_model)
-        self.model_type = self.get_model_type(current_substitution_model)
-        self.load_iqtree_file_content()
-
+        self.model_type : ModelType = self.get_model_type(current_substitution_model)
+        
+        state_frequencies = []
+        phi_matrix = []
+        rate_matrix = []
+        number_rates = 0
+        category_rates = []
+        pre_computed_q_matrix = []
+        
         if self.model_type == ModelType.DNA:
-            # Parse the rate matrix and stationary distribution for the DNA Substitution Model
-            dict_state_frequencies, phi_matrix = self.parse_state_frequencies()
-            state_frequencies = dict_state_frequencies.values()
-            rate_matrix = self.construct_rate_matrix(dict_state_frequencies)
+            
+            pre_computed_q_matrix  = self.parse_nucleotide_q_matrix()            
+            
+            if current_substitution_model in LIE_DNA_MODELS:
+                
+                dict_state_frequencies, phi_matrix = self.parse_state_frequencies()
+                substitution_rates = self.parse_substitution_rates()
+                state_frequencies = list(dict_state_frequencies.values())
+                rate_matrix = self.create_rate_matrix_for_lie_markov_models(substitution_rates, list(dict_state_frequencies.values()))
+            else:                
+                
+                # Parse the rate matrix and stationary distribution for the DNA Substitution Model
+                dict_state_frequencies, phi_matrix = self.parse_state_frequencies()
+                state_frequencies = list(dict_state_frequencies.values())
+                rate_matrix = self.construct_rate_matrix(dict_state_frequencies)
+                
         else:
+            
             current_substitution_model = current_substitution_model.upper()
             # Parse the rate matrix and stationary distribution for the Protein Substitution Model
             state_frequencies, phi_matrix = get_aa_state_frequency_substitution_models(
@@ -132,6 +164,7 @@ class IqTreeParser:
             )
             state_frequencies = normalize_stationary_distribution_aa(state_frequencies)
             rate_matrix = self.get_aa_rate_matrix(current_substitution_model)
+            
 
         number_rates = self.parse_number_rate_categories()
         category_rates = self.parse_category_rates() if number_rates > 1 else None
@@ -143,22 +176,29 @@ class IqTreeParser:
             rate_matrix=rate_matrix,
             number_rates=number_rates,
             category_rates=category_rates,
+            precomputed_q_matrix=pre_computed_q_matrix,
         )
 
     def check_model(self, model: str):
-        # Check if the model is one of the not accepted DNA models
+        """
+        Check if the model is one of the not accepted DNA or Protein models.
+
+        Parameters:
+        - model (str): The model string to be checked.
+
+        Raises:
+        - ValueError: If the model is not accepted for analysis.
+        """
         for dna_model in NOT_ACCEPTED_DNA_MODELS:
             if dna_model in model:
-                # Raise an exception signaling that the model is not accepted
                 raise ValueError(
-                    f"The model '{dna_model}' is not accepted for analysis, because it is non-reversible."
+                    f"The DNA model '{dna_model}' is not accepted for analysis because it is non-reversible."
                 )
-        # Check if the model is one of the not accepted Protein models
+
         for aa_model in NOT_ACCEPTED_AA_MODELS:
             if aa_model in model:
-                # Raise an exception signaling that the model is not accepted
                 raise ValueError(
-                    f"The model '{aa_model}' is not accepted for analysis."
+                    f"The protein model '{aa_model}' is not accepted for analysis."
                 )
 
     def get_model_type(self, model: str) -> ModelType:
@@ -171,52 +211,6 @@ class IqTreeParser:
 
         # Default to DNA if no conditions above are met
         return ModelType.DNA
-
-    def parse_rate_parameters(self, dimension: int, model: str = "GTR"):
-        """
-        Parse rate parameters from the file content to format the model string.
-
-        This method identifies lines in the file content that contain rate parameters.
-        It then formats and returns a model string with the parsed rates.
-
-        Parameters:
-        - dimension (int): The dimension of the rate matrix.
-        - model (str, optional): The substitution model to be used. Defaults to "GTR".
-
-        Returns:
-        - str: The formatted model string with parsed rate parameters.
-        """
-
-        if not isinstance(dimension, int) or dimension <= 0:
-            raise ValueError("Invalid dimension value provided.")
-
-        # Set to store unique rate values
-        rates = set()
-
-        # Flag to indicate when rate parameters are found in the file
-        found = False
-
-        # Loop through each line in the file content
-        for line in self.file_content:
-            # Check for the marker indicating the start of rate parameters
-            if "Rate parameter R:" in line:
-                found = True
-                continue
-            if found:
-                # Extract rate values from the line and add them to the rates set
-                line_parts = line.split(":")
-                if len(line_parts) == 2:
-                    rates.add(line_parts[1].strip())
-
-        if not found:
-            raise ValueError("Rate parameters not found in the file.")
-
-        # Split the model string on '+' to extract the base model (e.g., "GTR")
-        splitted_model = model.split("+")
-        # Combine the base model and rates list to form the final model string
-        model_with_rates_token = f"{splitted_model[0]}{{{' ,'.join(rates)}}}"
-
-        return model_with_rates_token
 
     def parse_state_frequencies(self):
         """
@@ -264,11 +258,11 @@ class IqTreeParser:
 
         # Initialize an empty dictionary to hold the frequencies
         frequencies = {}
-
+        
         # Parse the state frequencies
         for idx, line in enumerate(self.file_content):
             # Parse the state frequencies (empirical counts)
-            if "State frequencies: (empirical counts from alignment)" in line:
+            if "State frequencies: (empirical counts from alignment)" in line or 'State frequencies: (estimated with maximum likelihood)' in line:
                 try:
                     for i in range(n):
                         # Split the line on " = " into a key and a value, and add them to the frequencies dictionary
@@ -284,10 +278,11 @@ class IqTreeParser:
                     )
 
             # If "equal frequencies" is in the log content, return a pseudo dictionary with equal frequencies
-            elif "State frequencies: (equal frequencies)" in line:
+            if "State frequencies: (equal frequencies)" in line:
                 for i in range(n):
                     key = "key_" + str(i)
                     frequencies[key] = float(1 / n)
+                    
 
         phi_matrix = np.diag(list(frequencies.values()))
         return frequencies, phi_matrix
@@ -316,7 +311,7 @@ class IqTreeParser:
         )
 
     @staticmethod
-    def find_dimension_by_rate_matrix_parsing(start_index, file_content) -> int:
+    def find_dimension_by_rate_matrix_parsing(start_index: int, file_content: str) -> int:
         # Detect the number of matrix rows based on numeric entries
         n = 0
         current_idx = start_index + 2  # Adjusting to start from matrix values
@@ -337,17 +332,47 @@ class IqTreeParser:
         - rate_matrix (np.array): The parsed rate matrix Q.
         """
         start_index = IqTreeParser.find_line_index(self.file_content, "Rate matrix Q:")
-        # Detect the number of matrix rows based on numeric entries
         n = IqTreeParser.find_dimension_by_rate_matrix_parsing(
             start_index=start_index, file_content=self.file_content
         )
-        rates_dict = self.extract_rate_parameters()
-
-        rates = list(rates_dict.values())
+        
+        substitution_rates = self.parse_substitution_rates()
+        substitution_rates = list(substitution_rates.values())
         list_state_freq = list(state_frequencies.values())
-        return self.build_rate_matrix(n=n, rates=rates, list_state_freq=list_state_freq)
+        
+        
+                
+        return self.build_rate_matrix(n=n, rates=substitution_rates, list_state_freq=list_state_freq)
 
-    def extract_rate_parameters(self):
+    def parse_nucleotide_q_matrix(self) -> np.array:
+        # Flag to indicate if the next lines contain the Q matrix
+        capture_matrix: bool = False
+        # List to store the rows of the Q matrix
+        string_based_q_matrix: List[str] = []
+
+        for line in self.file_content:
+            # Check for the Q matrix header in the file
+            if 'Rate matrix Q:' in line:
+                capture_matrix = True
+                continue
+                
+            # Capture the matrix after the header is found
+            if capture_matrix:
+                if 'Model of rate heterogeneity:' in line:
+                    break                
+                if line.strip() != '':        
+                    string_based_q_matrix.append(line.strip())
+                    
+        # Process captured lines to format them into a proper matrix
+        
+        # Extract the numeric values from each string
+        numeric_values = []
+        for line in string_based_q_matrix:
+            parts = line.split()
+            numeric_values.append([float(part) for part in parts[1:]])
+        return np.array(numeric_values)
+
+    def parse_substitution_rates(self):
         """
         Extracts rate parameters from the content of the log file. Assumes the rates are listed
         between the lines starting with 'Rate parameter R:' and 'State frequencies'.
@@ -375,16 +400,16 @@ class IqTreeParser:
             )
 
         # Extract the parameters and store them in a dictionary
-        rates = {}
+        substitution_rates = {}
         for line in self.file_content[start_index:end_index]:
             line = line.strip()
             if line:
                 key, value = line.split(":")
-                rates[key.strip()] = float(
+                substitution_rates[key.strip()] = float(
                     value.strip()
                 )  # Ensure keys and values are cleanly extracted
 
-        return rates
+        return substitution_rates
 
     def build_rate_matrix(
         self, rates: List[float], list_state_freq: List[float], n: int
@@ -439,7 +464,7 @@ class IqTreeParser:
 
     @staticmethod
     def assemble_rate_matrix_from_rates_and_frequencies(
-        n, rates: List[float], state_frequencies: List[float]
+        n: int, rates: List[float], state_frequencies: List[float]
     ):
         """
         Fills the upper and lower triangles of a rate matrix based on the provided rates
@@ -464,7 +489,6 @@ class IqTreeParser:
         # Initialize the rate matrix
         rate_matrix = np.zeros((n, n))
         idx = 0
-
         # Fill the upper and lower triangles of the matrix
         for i in range(n):
             for j in range(i + 1, n):
@@ -558,89 +582,33 @@ class IqTreeParser:
         # Return the numpy matrix
         return matrix
 
-    def parse_number_rate_categories(self):
+    def parse_number_rate_categories(self) -> int:
         """
         Parse the number of rate categories from the substitution model string.
-
-        Parameters:
-        - model (str): The substitution model string from the file.
 
         Returns:
         - rate (int): The number of rate categories parsed from the model string.
         """
         index = next(
-            (
-                idx
-                for idx, line in enumerate(self.file_content)
-                if "Model of rate heterogeneity:" in line
-            ),
+            (idx for idx, line in enumerate(self.file_content)
+             if "Model of rate heterogeneity:" in line),
             None,
         )
 
         if index is None:
             raise ValueError("'Model of rate heterogeneity:' not found in file.")
-
-        if "Uniform" in self.file_content[index]:
-            number_rate_categories = 1
-        else:
-            # initialize substrings
-            sub1 = "with "
-            sub2 = " categories"
-            # getting index of substrings
-
-            idx1 = self.file_content[index].index(sub1)
-            idx2 = self.file_content[index].index(sub2)
-
-            res = ""
-            # getting elements in between
-            for idx3 in range(idx1 + len(sub1), idx2):
-                res = res + self.file_content[index][idx3]
-
-            number_rate_categories = int(res)
-
-        return number_rate_categories
-
-    def parse_rate_from_model(self, model: str):
-        """
-        Parse the number of rate categories from the substitution model string.
-
-        Parameters:
-        - model (str): The substitution model string from the file.
-
-        Returns:
-        - rate (int): The number of rate categories parsed from the model string.
-        """
-        plus_g_index = model.find("+G")
-        plus_r_index = model.find("+R")
-
-        if plus_g_index != -1 and plus_r_index != -1:
-            raise ValueError("Cannot use +G and +R")
-
-        if plus_g_index != -1:
-            rate_start_index = plus_g_index + 2
-        elif plus_r_index != -1:
-            rate_start_index = plus_r_index + 2
-        else:
-            return 1  # default number_rates = 1 if no +G or +R model
-
-        try:
-            # Extract the substring after e.g.'+G'
-            number = model[rate_start_index:]
-
-            # Parse the extracted substring as an integer
-            if "{" in number:
-                # e.g. +G{0.9} will fix the Gamma shape parameter (alpha)to 0.9
-                # discrete Gamma model: default 4 rate categories
-                rate = 4
-            else:
-                # number of rate categories
-                rate = int(number)
-
-            return rate
-        except ValueError:
-            # If '+G' is not found or the number after '+G' is not a valid integer
-            # Return None or an appropriate value for error handling
-            raise ValueError("Could not parse the substitution model from the file.")
+        
+        line = self.file_content[index]
+        
+        if "Uniform" in line:
+            return 1
+        if "with" in line and "categories" in line:
+            start = line.index("with ") + len("with ")
+            end = line.index(" categories")
+            return int(line[start:end])
+        if "Invar" in line:
+            return 1
+        raise ValueError("Unexpected format for 'Model of rate heterogeneity:' line.")
 
     def parse_substitution_model(self) -> str:
         """
@@ -712,7 +680,6 @@ class IqTreeParser:
                     }
 
         return table_data
-
 
 def parse_substitution_model(file_path: str) -> str:
     """

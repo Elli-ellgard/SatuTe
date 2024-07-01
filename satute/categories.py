@@ -8,7 +8,7 @@ from Bio.Seq import Seq
 
 """ ## RATE CATEGORIES  """
 
-def get_column_names_with_prefix(data_frame, prefix):
+def get_column_names_with_prefix(data_frame: DataFrame, prefix: str):
     # Filter the columns using the specified prefix
     columns_with_prefix = data_frame.columns[
         data_frame.columns.str.startswith(prefix)
@@ -102,7 +102,6 @@ def change_states_to_allowed(alignment):
     # Return the modified alignment
     return alignment
 
-
 def read_alignment_file(file_name: str) -> MultipleSeqAlignment:
     """
     Reads an alignment file and returns the alignment object.
@@ -146,7 +145,6 @@ def read_alignment_file(file_name: str) -> MultipleSeqAlignment:
         raise ValueError(f"An error occurred while processing the alignment: {str(e)}")
 
     return alignment
-
 
 def cut_alignment_columns_optimized(alignment, columns) -> MultipleSeqAlignment:
     """

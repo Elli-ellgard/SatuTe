@@ -1,8 +1,23 @@
 # -*- coding: utf-8 -*-
-
 import numpy as np
 
-
+LIE_DNA_MODELS =[
+    #Lie Markov Models
+    "1.1",
+    "2.2b",
+    "3.3a", 
+    "3.3c",
+    "3.4",
+    "4.4a",
+    "4.4b",
+    "RY2.2b",
+    "3.3a", 
+    "RY3.3c",
+    "RY3.4",
+    "4.4a",
+    "RY4.4b",
+    
+]
 
 DNA_MODELS = [
     "JC", # Equal substitution rates and equal base frequencies (Jukes and Cantor, 1969).
@@ -44,15 +59,7 @@ DNA_MODELS = [
     "012032", # TIM3, TIM3e
     "012314", # TVM, TVMe
     "012345", # SYM, GTR
-    #Lie Markov Models
-    "1.1",
-    "2.2b",
-    "3.3a", 
-    "3.3c",
-    "3.4",
-    "4.4a",
-    "4.4b",
-]
+] + LIE_DNA_MODELS
 
 NOT_ACCEPTED_DNA_MODELS = [
     #non-reversible Lie Markov Models
