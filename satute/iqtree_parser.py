@@ -114,6 +114,12 @@ class IqTreeParser:
         rate_matrix = np.array(rate_matrix)
         return rate_matrix
 
+    def check_if_lie_model(self, current_substitution_model: str):        
+        for lie_model in LIE_DNA_MODELS:
+            if lie_model in current_substitution_model:
+                return True        
+        return False
+
     def load_substitution_model(self) -> SubstitutionModel:
         """
         Load and parse the content of the iqtree file to form the substitution model.
@@ -142,12 +148,13 @@ class IqTreeParser:
             
             pre_computed_q_matrix  = self.parse_nucleotide_q_matrix()            
             
-            if current_substitution_model in LIE_DNA_MODELS:
+            if self.check_if_lie_model(current_substitution_model):
                 
                 dict_state_frequencies, phi_matrix = self.parse_state_frequencies()
                 substitution_rates = self.parse_substitution_rates()
                 state_frequencies = list(dict_state_frequencies.values())
                 rate_matrix = self.create_rate_matrix_for_lie_markov_models(substitution_rates, list(dict_state_frequencies.values()))
+                
             else:                
                 
                 # Parse the rate matrix and stationary distribution for the DNA Substitution Model
