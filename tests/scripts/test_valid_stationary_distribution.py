@@ -8,13 +8,13 @@ class TestValidStationaryDistribution(unittest.TestCase):
     #     return frequencies
 
     def test_valid_stationary_distribution_case1(self):
-        from satute.repository import (valid_stationary_distribution)
+        from satute.iqtree_parser import (valid_stationary_distribution)
         frequencies = {'A': 0.2, 'B': 0.3, 'C': 0.5}
         frequencies = valid_stationary_distribution(frequencies)
         self.assertEqual(1.0, sum(frequencies.values()))
 
     def test_valid_stationary_distribution_case2(self):
-        from satute.repository import (valid_stationary_distribution)
+        from satute.iqtree_parser import (valid_stationary_distribution)
         frequencies = {'A': 0.2, 'B': 0.3, 'C': 0.24, 'D': 0.25}
         frequencies = valid_stationary_distribution(frequencies)
         self.assertEqual(1.0, sum(frequencies.values()))

@@ -4,7 +4,7 @@ from tests.scripts.satute_test_utils import find_file_with_suffix
 import numpy as np
 from satute.spectral_decomposition import spectral_decomposition
 from satute.rate_matrix import RateMatrix
-from satute.repository import IqTreeParser
+from satute.iqtree_parser import IqTreeParser
 
 
 ''' DNA MODELS '''
@@ -114,6 +114,3 @@ def test_poisson_model():
     assert multiplicity == 19, "The largest non-zero eigenvalue of POISSON should have multiplicity 19."
     assert len(array_right_eigenvectors) == multiplicity, "Dimension of right eigenspace is incorrect."
     assert len(array_left_eigenvectors) == multiplicity, "Dimension of left eigenspace is incorrect."
-
-
- 
