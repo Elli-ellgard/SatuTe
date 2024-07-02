@@ -3,8 +3,8 @@ from tests.scripts.satute_test_utils import find_file_with_suffix
 
 import numpy as np
 from satute.spectral_decomposition import spectral_decomposition
-from satute.rate_matrix import RateMatrix
-from satute.iqtree_parser import IqTreeParser
+from satute.partial_likelihood.rate_matrix import RateMatrix
+from satute.parser.iqtree_parser import IqTreeParser
 
 
 ''' DNA MODELS '''
@@ -123,7 +123,7 @@ def test_LG_model(dir_path_iqtree_files):
 
 
 def test_poisson_model():
-    from satute.amino_acid_models import POISSON_RATE_MATRIX, AA_STATE_FREQUENCIES
+    from satute.models.amino_acid_models import POISSON_RATE_MATRIX, AA_STATE_FREQUENCIES
     rate_matrix = RateMatrix(POISSON_RATE_MATRIX)
     psi_matrix = np.diag(AA_STATE_FREQUENCIES["POISSON"])
 

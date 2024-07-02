@@ -1619,23 +1619,11 @@ AMINO_ACIDS = [
     "V",
 ]
 
+ESTIMATED_AA_MODELS = [
+    'GTR20'
+]
 
-def get_aa_state_frequency_substitution_models(substitution_model: str) -> Tuple[np.ndarray, np.ndarray]:
-    """
-    Extracts amino acid state frequencies and creates a diagonal matrix for a substitution model.
-
-    Args:
-        substitution_model (str): The substitution model string, potentially with extensions.
-
-    Returns:
-        tuple: A tuple containing:
-            - A numpy array of state frequencies.
-            - A diagonal numpy matrix of these frequencies.
-
-    Raises:
-        ModelNotFoundError: If the core model is not found in AA_STATE_FREQUENCIES.
-        InvalidModelNameError: If the core model cannot be extracted.
-    """
+def get_core_model(substitution_model: str):
     # Regular expression to extract the core model name
     match = re.match(r"^[^\+\{]+", substitution_model)
     if match:
@@ -1643,48 +1631,7 @@ def get_aa_state_frequency_substitution_models(substitution_model: str) -> Tuple
     else:
         raise InvalidModelNameError(substitution_model)
 
-    if core_model not in AA_STATE_FREQUENCIES:
-        raise ModelNotFoundError(core_model)
-
-    frequencies = np.array(AA_STATE_FREQUENCIES[core_model])
-    return frequencies, np.diag(frequencies)
-
-def create_rate_matrix_with_input(matrix_size: int, input_string: str, eq) -> np.array:
-    # Split the string into lines
-    # input_string = input_string.replace(" ", "")
-    lines = input_string.split("\n")
-    
-    # Initialize a matrix with 1's for off-diagonal elements
-    rate_matrix = [
-        [0 if i != j else 0 for j in range(matrix_size)] for i in range(matrix_size)
-    ]
-    
-
-    for i, row in enumerate(lines):
-        for j, col in enumerate(row.split()):
-            rate_matrix[i + 1][j] = float(col)
-
-    # Mirror the lower triangle to the upper triangle
-    for i in range(matrix_size):
-        for j in range(i):
-            rate_matrix[j][i] = rate_matrix[i][j]
-
-    # Multiply the rates by the equilibrium distribution
-    rate_matrix = rate_matrix @ np.diag(eq)
-
-    for i in range(matrix_size):
-        rate_matrix[i][i] = -np.sum(rate_matrix[i])
-
-    return np.array(rate_matrix)
-
-def normalize_stationary_distribution_aa(frequencies: List[float]) -> List[float]:
-    sum_freqs = sum(frequencies)
-    if sum_freqs == 1:
-        # Valid stationary distribution
-        return frequencies
-    else:
-        # Normalize frequencies list with new values
-        return [freq / sum_freqs for freq in frequencies]
+    return core_model
 
 def check_rate_matrix(rate_matrix, frequencies):
     n = len(rate_matrix)

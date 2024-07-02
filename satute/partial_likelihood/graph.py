@@ -6,8 +6,8 @@ from typing import List, Tuple, Optional, Dict
 from functools import cache
 from dataclasses import dataclass, field
 
-from satute.dna_models import NUCLEOTIDE_CODE_VECTOR
-from satute.amino_acid_models import AMINO_ACID_CODE_VECTOR
+from satute.models.dna_models import NUCLEOTIDE_CODE_VECTOR
+from satute.models.amino_acid_models import AMINO_ACID_CODE_VECTOR
 
 
 @dataclass

@@ -1,7 +1,7 @@
 import numpy as np
 from ete3 import Tree
 import unittest
-from satute.graph import get_initial_likelihood_vector, convert_tree_to_graph
+from satute.partial_likelihood.graph import get_initial_likelihood_vector, convert_tree_to_graph
 
 def test_get_initial_likelihood_vector_returns_numpy_array():
     # Test with a nucleotide state

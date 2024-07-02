@@ -1,22 +1,19 @@
-import numpy as np
-from ete3 import Tree
-import unittest
 import time
+import unittest
+from ete3 import Tree
+import numpy as np
 from Bio.Align import MultipleSeqAlignment
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 from satute.spectral_decomposition import spectral_decomposition
-from satute.graph import Node
-from satute.rate_matrix import RateMatrix
-from satute.amino_acid_models import POISSON_RATE_MATRIX, AA_STATE_FREQUENCIES
+from satute.partial_likelihood.graph import Node
+from satute.partial_likelihood.partial_likelihood import partial_likelihood
+from satute.partial_likelihood.rate_matrix import RateMatrix
+from satute.models.amino_acid_models import POISSON_RATE_MATRIX, AA_STATE_FREQUENCIES
 from satute.rate_analysis import single_rate_analysis
 from satute.sequences import dict_to_alignment
-from satute.trees import (
-    rename_internal_nodes_pre_order,
-)
-from satute.partial_likelihood import (
-    partial_likelihood,
-)
+from satute.trees import rename_internal_nodes_pre_order
+
 
 RATE_MATRIX = np.array([[-3, 1, 1, 1], [1, -3, 1, 1], [1, 1, -3, 1], [1, 1, 1, -3]])
 

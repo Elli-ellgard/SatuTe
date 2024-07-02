@@ -1,8 +1,10 @@
-from satute.amino_acid_models import create_rate_matrix_with_input, check_rate_matrix
+from satute.models.amino_acid_models import check_rate_matrix
+from satute.parser.iqtree_aa_parser import AminoAcidParser
 
 import numpy as np
 import unittest
-from satute.amino_acid_models import AMINO_ACID_RATE_MATRIX, AA_STATE_FREQUENCIES
+from satute.models.amino_acid_models import AMINO_ACID_RATE_MATRIX, AA_STATE_FREQUENCIES
+
 
 class TestRateMatrixCreation(unittest.TestCase):
     def test_create_rate_matrix_with_input(self):
@@ -21,7 +23,7 @@ class TestRateMatrixCreation(unittest.TestCase):
             [0.25, 0.25, 0.25, -0.75]
         ])
         
-        result_matrix = create_rate_matrix_with_input(matrix_size, input_string, eq)
+        result_matrix = AminoAcidParser.create_rate_matrix_with_input(matrix_size, input_string, eq)
 
         # Use numpy's allclose function to compare floating point matrices
         self.assertTrue(np.allclose(result_matrix, expected_matrix),f"Expected matrix did not match result:\n{result_matrix}\nexpected:\n{expected_matrix}")
@@ -33,7 +35,7 @@ class TestRateMatrixCreation(unittest.TestCase):
                       1 1 1"""
         eq = np.array()
     
-        result_matrix = create_rate_matrix_with_input(matrix_size, input_string, eq)
+        result_matrix =  AminoAcidParser.create_rate_matrix_with_input(matrix_size, input_string, eq)
     
         # Check the properties of the rate matrix
         result, message = check_rate_matrix(result_matrix, eq)
@@ -44,7 +46,7 @@ class TestRateMatrixCreation(unittest.TestCase):
         input_string = AMINO_ACID_RATE_MATRIX['LG']
         eq = AA_STATE_FREQUENCIES["LG"]
     
-        result_matrix = create_rate_matrix_with_input(matrix_size, input_string, eq)
+        result_matrix =AminoAcidParser.create_rate_matrix_with_input(matrix_size, input_string, eq)
     
         # Check the properties of the rate matrix
         result, message = check_rate_matrix(result_matrix, eq)
@@ -57,7 +59,7 @@ class TestRateMatrixCreation(unittest.TestCase):
                 rate_matrix_data = AMINO_ACID_RATE_MATRIX[model_name]
                 
                 # This function needs to be defined to create a rate matrix from the provided data
-                result_matrix = create_rate_matrix_with_input(matrix_size, rate_matrix_data, frequencies)
+                result_matrix = AminoAcidParser.create_rate_matrix_with_input(matrix_size, rate_matrix_data, frequencies)
                 
                 # Check the properties of the rate matrix
                 result, message = check_rate_matrix(result_matrix, frequencies)

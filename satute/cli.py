@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from Bio.Align import MultipleSeqAlignment
 
 import sys
 import argparse
@@ -8,12 +7,13 @@ import numpy as np
 from pathlib import Path
 from ete3 import Tree
 from typing import Dict, List
+from Bio.Align import MultipleSeqAlignment
 
 from satute.exceptions import ModelNotFoundError, InvalidModelNameError
 from satute.spectral_decomposition import spectral_decomposition
-from satute.rate_matrix import RateMatrix
-from satute.file_handler import FileHandler
-from satute.iqtree_handler import IqTreeHandler
+from satute.partial_likelihood.rate_matrix import RateMatrix
+from satute.handler.file_handler import FileHandler
+from satute.handler.iqtree_handler import IqTreeHandler
 from satute.trees import rename_internal_nodes_pre_order
 from satute.arguments import ARGUMENT_LIST
 from satute.sequences import check_if_tree_has_same_taxa_as_msa
@@ -41,7 +41,7 @@ from satute.categories import (
     build_categories_by_sub_tables,
 )
 
-from satute.iqtree_parser import (
+from satute.parser.iqtree_parser import (
     parse_substitution_model,
     parse_rate_from_cli_input,
     parse_file_to_data_frame,
@@ -156,6 +156,7 @@ class Satute:
             self.logger.info(
                 "If no model is specified in input arguments, best-fit model will be extracted from log file."
             )
+            self.logger.error("Hallo")
 
             model_finder_arguments = [
                 "-m MF",
@@ -193,6 +194,8 @@ class Satute:
             )
 
         if arguments_dict["option"] == "msa + model":
+            log_consider_iqtree_message(self.logger)
+
             
             bb_arguments = self.iqtree_handler.validate_and_append_boot_arguments(
                 self.input_args.ufboot, self.input_args.boot
@@ -629,7 +632,7 @@ def main(args=None):
         satute.parse_command_line_input(args)
         # Initialize file handler and logger
         satute.configure(args=args)        
-        setup_logging_configuration(logger = logger, input_args = satute.input_args, msa_file = Path(satute.file_handler.find_msa_file()))
+        setup_logging_configuration(logger = satute.logger, input_args = satute.input_args, msa_file = Path(satute.file_handler.find_msa_file()))
         # IQ-Tree run if necessary
         satute.iqtree_arguments_dict = satute.construct_iqtree_arguments()        
         try:

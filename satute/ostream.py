@@ -13,7 +13,7 @@ from Bio.Align import MultipleSeqAlignment
 from satute.logging import log_original_tree, log_rate_info
 from satute.result import TestStatisticComponentsContainer
 from satute.ztest_posterior_distribution import calculate_posterior_probabilities_subtree_df
-from satute.amino_acid_models import AMINO_ACIDS
+from satute.models.amino_acid_models import AMINO_ACIDS
 
 # New function to format float columns
 def format_float_columns(data_frame: DataFrame):

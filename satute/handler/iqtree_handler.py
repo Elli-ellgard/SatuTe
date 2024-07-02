@@ -74,12 +74,9 @@ class IqTreeHandler:
                 stderr=subprocess.PIPE,
                 text=True
             )
-
             # Log the output and error messages
-            self.logger.info(f"IQ-TREE Output: {result.stdout}")
             if result.stderr:
                 self.logger.error(f"IQ-TREE Error: {result.stderr}")
-
         except subprocess.CalledProcessError as e:
             error_message = (
                 f"IQ-TREE execution failed with error code {e.returncode}.\n"

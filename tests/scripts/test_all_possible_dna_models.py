@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 from tests.scripts.fixtures import *
-from satute.dna_models import (
+from satute.models.dna_models import (
     DNA_MODELS,
     NOT_ACCEPTED_DNA_MODELS
 )

@@ -1,6 +1,6 @@
 import pytest
 import os
-from satute.dna_models import LIE_DNA_MODELS
+from satute.models.dna_models import LIE_DNA_MODELS
 from tests.scripts.satute_test_utils import (
     run_satute,
     check_satute_files,    

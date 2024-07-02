@@ -121,7 +121,7 @@ ARGUMENT_LIST = [
     },
     {
         "flag": "-dev",
-        "help": "Even no warnings on the the terminal.",
+        "help": "Show the stack trace",
         "action": "store_true",
     },
 ]

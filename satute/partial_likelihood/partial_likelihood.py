@@ -7,9 +7,9 @@ from typing import Dict, Any, List
 from scipy.sparse.linalg import expm
 
 
-from satute.rate_matrix import RateMatrix
-from satute.amino_acid_models import AMINO_ACIDS
-from satute.graph import (
+from satute.partial_likelihood.rate_matrix import RateMatrix
+from satute.models.amino_acid_models import AMINO_ACIDS
+from satute.partial_likelihood.graph import (
     filter_graph_edges_by_focus,
     get_alignment_look_up_table,
     convert_tree_to_state_graph,

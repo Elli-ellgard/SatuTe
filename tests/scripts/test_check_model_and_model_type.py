@@ -11,7 +11,7 @@ class TestCheckModelAndType(unittest.TestCase):
         pass
 
     def test_check_model(self):
-        from satute.iqtree_parser import IqTreeParser
+        from satute.parser.iqtree_parser import IqTreeParser
         test_instance = IqTreeParser()
 
         # Test with a not accepted Protein model
@@ -34,7 +34,7 @@ class TestCheckModelAndType(unittest.TestCase):
 
  
     def test_get_model_type(self):
-        from satute.iqtree_parser import (
+        from satute.parser.iqtree_parser import (
             IqTreeParser,
             ModelType
         )

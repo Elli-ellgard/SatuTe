@@ -3,7 +3,7 @@ sys.path.append("./../../")
 
 import unittest
 from ete3 import Tree
-from satute.graph import calculate_subtree_edge_metrics
+from satute.partial_likelihood.graph import calculate_subtree_edge_metrics
 
 class TestCountNodeAndEdges(unittest.TestCase):
     def setUp(self):

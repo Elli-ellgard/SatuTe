@@ -7,7 +7,7 @@ from argparse import Namespace
 from logging import Logger
 from typing import List, Dict, Any
 
-from satute.substitution_model import SubstitutionModel
+from satute.models.substitution_model import SubstitutionModel
 
 def format_matrix(matrix, precision: int = 4):
     """Format a matrix for pretty printing."""
@@ -23,12 +23,8 @@ def format_array(array, precision=4):
 
 def log_consider_iqtree_message(logger: Logger):
     logger.info("Running IQ-TREE with constructed arguments")
-    logger.warning(
-                "Please consider for the analysis that IQ-Tree will be running with default options."
-            )
-    logger.warning(
-                "If specific options are required for the analysis, please run IQ-Tree separately."
-            )
+    logger.warning("Please consider for the analysis that IQ-Tree will be running with default options.")
+    logger.warning("If specific options are required for the analysis, please run IQ-Tree separately.")
 
 def construct_log_file_name(msa_file: Path, input_args: List[Namespace]):
     log_file = f"{msa_file.resolve()}_{input_args.alpha}.satute.log"
@@ -54,10 +50,9 @@ def setup_logging_configuration(logger: Logger, input_args: List[Namespace], msa
     file_handler.setLevel(logging.DEBUG)  # Always log everything in file
     logger.addHandler(file_handler)
         
-    
     # Set the default logging level
     if input_args.verbose:
-        stream_level = logging.DEBUG
+        stream_level = logging.INFO
     elif input_args.quiet:
         stream_level = logging.CRITICAL
     else:
@@ -77,7 +72,7 @@ def log_iqtree_run_and_satute_info(
     msa_file: Path,
     multiplicity: int,
     logger: logging.Logger,
-):
+)-> None:
     """
     Logs information about the initial IQ-TREE run and tests being performed.
     Args:
@@ -108,7 +103,7 @@ def log_substitution_model_info(
         multiplicity: int,
         eigenvectors: List[np.array],
         eigenvalue: float,
-    ):
+    )->None:
         """
         Logs information about substitution model and its spectral decomposition
 
@@ -127,8 +122,7 @@ def log_substitution_model_info(
 
         # Logging the formatted rate matrix and state frequencies
         logger.info(
-            f"Substitution Model:\n\n"
-            f"Model: {input_args.model}\n"
+            f"Substitution Model: {input_args.model}\n\n"
             f"Rate Matrix Q:\n{rate_matrix_str}\n"
             f"State Frequencies:\n{state_frequencies_str}\n"
         )
@@ -161,7 +155,7 @@ def log_iqtree_options(
     logger.info(" ".join(arguments_dict["arguments"]))
     logger.info(" ".join(extra_arguments))
     
-def log_original_tree(logger: Logger, tree: Tree):
+def log_original_tree(logger: Logger, tree: Tree) -> None:
     logger.info(f"Original Tree: {tree.write(format=1, format_root_node=True)}")
 
 def log_rate_info(

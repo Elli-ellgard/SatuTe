@@ -2,15 +2,14 @@
 import pandas as pd
 from ete3 import Tree
 from typing import List
-
 from Bio.Align import MultipleSeqAlignment
 
 from satute.trees import rescale_branch_lengths
-from satute.graph import calculate_subtree_edge_metrics
+from satute.partial_likelihood.graph import calculate_subtree_edge_metrics
 from satute.sequences import dict_to_alignment
-from satute.rate_matrix import RateMatrix
+from satute.partial_likelihood.rate_matrix import RateMatrix
 from satute.ztest_posterior_distribution import calculate_test_statistic_posterior_distribution
-from satute.partial_likelihood import calculate_partial_likelihoods_for_sites
+from satute.partial_likelihood.partial_likelihood import calculate_partial_likelihoods_for_sites
 from satute.result import TestResultsBranches, TestStatisticComponentsContainer
 
 def single_rate_analysis(
@@ -100,7 +99,6 @@ def single_rate_analysis(
     }
 
     return result_test_dictionary
-
 
 
 def multiple_rate_analysis(

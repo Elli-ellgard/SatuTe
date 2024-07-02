@@ -1,6 +1,6 @@
 import os
 from tests.scripts.fixtures import *
-from satute.amino_acid_models import AA_STATE_FREQUENCIES, NOT_ACCEPTED_AA_MODELS
+from satute.models.amino_acid_models import AA_STATE_FREQUENCIES, NOT_ACCEPTED_AA_MODELS
 
 from tests.scripts.satute_test_utils import (
     run_satute,

@@ -1,6 +1,6 @@
 import unittest
 from unittest.mock import Mock, patch
-from satute.iqtree_handler import IqTreeHandler
+from satute.handler.iqtree_handler import IqTreeHandler
 import subprocess
 
 class TestIqTreeHandler(unittest.TestCase):
@@ -21,7 +21,6 @@ class TestIqTreeHandler(unittest.TestCase):
         self.iqtree_handler.run_iqtree_with_arguments(arguments, extra_arguments)
 
         self.logger.info.assert_any_call(f"Running IQ-TREE command: {expected_command}")
-        self.logger.info.assert_any_call("IQ-TREE Output: IQ-TREE output")
         self.logger.error.assert_any_call("IQ-TREE Error: IQ-TREE error")
 
     @patch("subprocess.run")
