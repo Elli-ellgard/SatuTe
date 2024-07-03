@@ -45,6 +45,8 @@ def test_1(data_dir_path, iqtree, python, satute):
     assert not check_iqtree_files_exist(msa, dest_dir_path, []) , "IQ-Tree files check failed: Required files are missing or not created."
     assert not check_satute_files(msa, dest_dir_path, categories, alpha, asr), "Satute files check failed: Required files are missing or not created."
 
+
+
 def test_2(data_dir_path, iqtree, python, satute):
     source_path, msa, _ = data_dir_path    
     suffix = "MODEL TEST 2: msa model no heterogeneity"
@@ -135,6 +137,74 @@ def test_4(data_dir_path, iqtree, python, satute):
             os.path.join(dest_dir_path, msa),
             "-model",
             "JC+G4",
+            "-alpha",
+            "0.05",
+            "-iqtree",
+            iqtree,
+        ]
+    )
+
+    # check the files
+    assert check_iqtree_files_exist(msa, dest_dir_path, []) , "IQ-Tree files check failed: Required files are missing or not created."
+    assert check_satute_files(msa, dest_dir_path, categories, alpha, asr), "Satute files check failed: Required files are missing or not created."
+
+def test_4_plus_i_g_four(data_dir_path, iqtree, python, satute):
+    source_path, msa, _ = data_dir_path
+    suffix = "MODEL TEST 4: msa model  heterogeneity rate number set Plus I Plus G4"
+
+    # create output directory
+    dest_dir_path = create_destination_dir(source_path, suffix)
+
+    # copy msa file to output directory
+    files_to_copy = [msa]
+    copy_files_to_dest_dir(source_path, dest_dir_path, files_to_copy)
+
+    categories = [1, 4]
+    alpha = str(0.05)
+    asr = False
+
+    # Satute run
+    run_satute(
+        [
+            "-msa",
+            os.path.join(dest_dir_path, msa),
+            "-model",
+            "JC+I+G4",
+            "-alpha",
+            "0.05",
+            "-iqtree",
+            iqtree,
+        ]
+    )
+
+    # check the files
+    assert check_iqtree_files_exist(msa, dest_dir_path, []) , "IQ-Tree files check failed: Required files are missing or not created."
+    assert check_satute_files(msa, dest_dir_path, categories, alpha, asr), "Satute files check failed: Required files are missing or not created."
+
+
+
+def test_4_plus_i(data_dir_path, iqtree, python, satute):
+    source_path, msa, _ = data_dir_path
+    suffix = "MODEL TEST 4: msa model  heterogeneity rate number set plus I"
+    
+    # create output directory
+    dest_dir_path = create_destination_dir(source_path, suffix)
+
+    # copy msa file to output directory
+    files_to_copy = [msa]
+    copy_files_to_dest_dir(source_path, dest_dir_path, files_to_copy)
+
+    categories = []
+    alpha = str(0.05)
+    asr = False
+
+    # Satute run
+    run_satute(
+        [
+            "-msa",
+            os.path.join(dest_dir_path, msa),
+            "-model",
+            "JC+I",
             "-alpha",
             "0.05",
             "-iqtree",
@@ -368,7 +438,7 @@ def test_10(data_dir_path, iqtree, python, satute):
 
 def test_11(data_dir_path, iqtree, python, satute):
     source_path, msa, _ = data_dir_path
-    suffix = "MODEL TEST 11: msa model invariante sites"
+    suffix = "MODEL TEST 11: msa model invariant sites"
     
     # create output directory
     dest_dir_path = create_destination_dir(source_path, suffix)
@@ -377,7 +447,7 @@ def test_11(data_dir_path, iqtree, python, satute):
     files_to_copy = [msa]
     copy_files_to_dest_dir(source_path, dest_dir_path, files_to_copy)
 
-    categories = [1, 2, 3, 4]
+    categories = []
     alpha = str(0.05)
     asr = False
 
@@ -411,7 +481,7 @@ def test_12(data_dir_path, iqtree, python, satute):
     files_to_copy = [msa]
     copy_files_to_dest_dir(source_path, dest_dir_path, files_to_copy)
 
-    categories = [1, 2, 3, 4]
+    categories = []
     alpha = str(0.05)
     asr = False
 
