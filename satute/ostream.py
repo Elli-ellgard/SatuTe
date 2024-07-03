@@ -357,7 +357,7 @@ def map_values_to_newick(newick: str, results_per_branch: DataFrame) -> str:
     return newick
 
 
-def update_node_metadata(newick: str, row: DataFrame, columns: list) -> str:
+def update_node_metadata(newick: str, row: DataFrame, columns: List) -> str:
     """
     Updates the metadata for a single node in the Newick string based on the DataFrame row.
 
@@ -376,7 +376,7 @@ def update_node_metadata(newick: str, row: DataFrame, columns: list) -> str:
     return newick
 
 
-def create_meta_data_string(row: DataFrame, columns: list) -> str:
+def create_meta_data_string(row: DataFrame, columns: List) -> str:
     """
     Creates a metadata string from a DataFrame row, focusing on specific columns.
 

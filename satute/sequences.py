@@ -3,6 +3,7 @@ from Bio.Align import MultipleSeqAlignment
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 from ete3 import Tree
+from typing import Dict
 
 # Define these sets at a global level to avoid re-creation
 DNA_CHARACTERS = set("ACGT")
@@ -42,7 +43,7 @@ def check_if_tree_has_same_taxa_as_msa(
         raise TaxaMismatchError(error_message)
 
 
-def dict_to_alignment(sequence_dict: dict) -> MultipleSeqAlignment:
+def dict_to_alignment(sequence_dict: Dict) -> MultipleSeqAlignment:
     """
     Convert a dictionary of sequences to a MultipleSeqAlignment object.
 

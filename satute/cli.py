@@ -6,7 +6,9 @@ import logging
 import numpy as np
 from pathlib import Path
 from ete3 import Tree
-from typing import Dict, List
+import traceback
+
+from typing import Optional, Dict, List
 from Bio.Align import MultipleSeqAlignment
 
 from satute.exceptions import ModelNotFoundError, InvalidModelNameError
@@ -17,10 +19,8 @@ from satute.handler.iqtree_handler import IqTreeHandler
 from satute.trees import rename_internal_nodes_pre_order
 from satute.arguments import ARGUMENT_LIST
 from satute.sequences import check_if_tree_has_same_taxa_as_msa
-from typing import Optional, Dict, List
 from satute.logging import *
 from satute.valid_data_input import *
-import traceback
 
 from satute.rate_analysis import (
     multiple_rate_analysis,
@@ -361,7 +361,7 @@ class Satute:
             focused_edge,
         )
         
-        single_rate_indices : list[int] = [i for i in range(1, alignment.get_alignment_length() + 1, 1)]
+        single_rate_indices : List[int] = [i for i in range(1, alignment.get_alignment_length() + 1, 1)]
         single_rate_category = {"single_rate": single_rate_indices}
 
         write_results_for_category_rates(

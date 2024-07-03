@@ -1,7 +1,7 @@
 from logging import Logger
 from Bio.Align import MultipleSeqAlignment
 from pathlib import Path
-from typing import List
+from typing import List, Dict
 import os
 import argparse
 
@@ -101,7 +101,7 @@ def validate_and_set_rate_category(input_category: int, number_rates: int, logge
         raise ValueError(f"Error: Chosen category '{input_category}' is out of the valid range of {number_rates}.")
     return str(input_category)
 
-def validate_and_check_rate_categories(categorized_sites: dict[str, MultipleSeqAlignment], chosen_category: int, logger: Logger):
+def validate_and_check_rate_categories(categorized_sites: Dict[str, MultipleSeqAlignment], chosen_category: int, logger: Logger):
     """
     Validates rate categories and ensures that the chosen category is not empty.
     

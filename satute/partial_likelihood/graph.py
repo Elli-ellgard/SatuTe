@@ -189,7 +189,7 @@ def add_child_edges(
     parent_ete_node: Tree,
     parent_node: Node,
     msa_column: MultipleSeqAlignment,
-    alignment_look_up_table: dict,
+    alignment_look_up_table: Dict,
     node_dictionary: Dict[str, Node],
     edges: List[Tuple[Node, Node, float]],
     state_type: str,

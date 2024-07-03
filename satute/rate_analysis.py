@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import pandas as pd
 from ete3 import Tree
-from typing import List
+from typing import List, Dict
 from Bio.Align import MultipleSeqAlignment
 
 from satute.trees import rescale_branch_lengths
@@ -17,7 +17,7 @@ def single_rate_analysis(
     alignment: MultipleSeqAlignment,
     rate_matrix: RateMatrix,
     state_frequencies: List[float],
-    array_right_eigenvectors: list,
+    array_right_eigenvectors: List[float],
     multiplicity: int,
     alpha: float = 0.05,
     focused_edge: str = None,
@@ -106,9 +106,9 @@ def multiple_rate_analysis(
     category_rates_factors,
     rate_matrix: RateMatrix,
     state_frequencies: List[float],
-    array_right_eigenvectors: list,
+    array_right_eigenvectors: List,
     multiplicity: int,
-    per_rate_category_alignment: dict[str, MultipleSeqAlignment],
+    per_rate_category_alignment: Dict[str, MultipleSeqAlignment],
     alpha: float = 0.05,
     focused_edge=None,
 ):
