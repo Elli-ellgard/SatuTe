@@ -156,8 +156,6 @@ class Satute:
             self.logger.info(
                 "If no model is specified in input arguments, best-fit model will be extracted from log file."
             )
-            self.logger.error("Hallo")
-
             model_finder_arguments = [
                 "-m MF",
                 "--quiet",
