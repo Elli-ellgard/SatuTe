@@ -86,7 +86,7 @@ def single_rate_analysis(
             "branch_length", left_partial_likelihood.get("branch_length")[0]
         )
 
-        components_container.add_component("edge", components)
+        components_container.add_component(edge, components)
         # Store the results for the given edge
         results.add_branch(edge, result)
 
