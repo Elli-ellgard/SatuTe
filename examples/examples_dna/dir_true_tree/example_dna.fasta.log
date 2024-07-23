@@ -1,0 +1,64 @@
+IQ-TREE multicore version 2.2.2.3 COVID-edition for Linux 64-bit built Mar 13 2023
+Developed by Bui Quang Minh, James Barbetti, Nguyen Lam Tung,
+Olga Chernomor, Heiko Schmidt, Dominik Schrempf, Michael Woodhams, Ly Trong Nhan.
+
+Host:    elgert-lenovo (AVX512, FMA3, 31 GB RAM)
+Command: iqtree2 -s example_dna.fasta -te labelled_true_tree.tree -m JC -blfix
+Seed:    332660 (Using SPRNG - Scalable Parallel Random Number Generator)
+Time:    Fri Jul 19 10:34:16 2024
+Kernel:  AVX+FMA - 1 threads (16 CPU cores detected)
+
+HINT: Use -nt option to specify number of threads because your CPU has 16 cores!
+HINT: -nt AUTO will automatically determine the best number of threads to use.
+
+Reading alignment file example_dna.fasta ... Fasta format detected
+Reading fasta file: done in 0.000541574 secs using 49.85% CPU
+Alignment most likely contains DNA/RNA sequences
+Constructing alignment: done in 0.00101448 secs using 49.98% CPU
+Alignment has 16 sequences with 1000 columns, 894 distinct patterns
+932 parsimony-informative, 49 singleton sites, 19 constant sites
+    Gap/Ambiguity  Composition  p-value
+Analyzing sequences: done in 1.8942e-05 secs using 52.79% CPU
+   1  A1    0.00%    passed     89.19%
+   2  A2    0.00%    passed     92.23%
+   3  A3    0.00%    passed     75.66%
+   4  A4    0.00%    passed     69.41%
+   5  A5    0.00%    passed     36.68%
+   6  A6    0.00%    passed     88.44%
+   7  A7    0.00%    passed     93.76%
+   8  A8    0.00%    passed     77.17%
+   9  B1    0.00%    passed     81.02%
+  10  B2    0.00%    passed     96.64%
+  11  B3    0.00%    passed     18.02%
+  12  B4    0.00%    passed     46.61%
+  13  B5    0.00%    passed     97.15%
+  14  B6    0.00%    passed     64.55%
+  15  B7    0.00%    passed     73.40%
+  16  B8    0.00%    passed     88.28%
+****  TOTAL    0.00%  0 sequences failed composition chi2 test (p-value<5%; df=3)
+Checking for duplicate sequences: done in 3.0173e-05 secs using 49.71% CPU
+Reading input tree file labelled_true_tree.tree ...
+
+NOTE: 0 MB RAM (0 GB) is required!
+Estimate model parameters (epsilon = 0.010)
+1. Initial log-likelihood: -12032.672
+Optimal log-likelihood: -12032.672
+Rate parameters:  A-C: 1.00000  A-G: 1.00000  A-T: 1.00000  C-G: 1.00000  C-T: 1.00000  G-T: 1.00000
+Base frequencies:  A: 0.250  C: 0.250  G: 0.250  T: 0.250
+Parameters optimization took 1 rounds (0.000 sec)
+Wrote distance file to... 
+BEST SCORE FOUND : -12032.672
+Total tree length: 4.419
+
+Total number of iterations: 0
+CPU time used for tree search: 0.000 sec (0h:0m:0s)
+Wall-clock time used for tree search: 0.000 sec (0h:0m:0s)
+Total CPU time used: 0.004 sec (0h:0m:0s)
+Total wall-clock time used: 0.004 sec (0h:0m:0s)
+
+Analysis results written to: 
+  IQ-TREE report:                example_dna.fasta.iqtree
+  Maximum-likelihood tree:       example_dna.fasta.treefile
+  Screen log file:               example_dna.fasta.log
+
+Date and Time: Fri Jul 19 10:34:16 2024
