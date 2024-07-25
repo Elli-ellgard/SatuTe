@@ -25,6 +25,7 @@ The main function of SatuTe operates as follows: Given the required input, SatuT
 
 ![Theoretical Foundation of SatuTe](./docs/figure_1_2024_06_12.png)
 **Figure:** **Theoretical Foundation of SatuTe**
+
 **a**, In an alignment of the sequences from five taxa, each column represents a pattern $\partial$.
 
 **b**, The branch $AB$ splits the five-taxon tree into subtrees $\mathbb{T}_A$ with sequences $S1,S4,S5$ and subtree $\mathbb{T}_B$ with sequences $S2, S3$. Additionally, branch $AB$ splits each pattern, such as $\partial = \text{CTTCT}$, into subpatterns ${\partial A=\text{CTC}}$ and ${\partial B=\text{TT}}$. These subpatterns are used to compute the likelihood vectors ${{L}(\partial A)}$ and ${{L}(\partial B)}$, which are then used to compute the coefficient $C^\partial_1$.
