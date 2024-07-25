@@ -5,6 +5,7 @@ from Bio import AlignIO
 from Bio.Align import MultipleSeqAlignment
 from Bio.SeqRecord import SeqRecord
 from Bio.Seq import Seq
+from typing import Dict
 
 """ ## RATE CATEGORIES  """
 
@@ -169,7 +170,7 @@ def cut_alignment_columns_optimized(alignment, columns) -> MultipleSeqAlignment:
 
 def split_msa_into_rate_categories_in_place(
     site_probability, alignment, rate_category
-) -> dict[str, MultipleSeqAlignment]:
+) -> Dict[str, MultipleSeqAlignment]:
     """
     Splits a multiple sequence alignment into sub-alignments based on rate categories.
 

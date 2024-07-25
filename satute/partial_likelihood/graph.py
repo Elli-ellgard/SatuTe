@@ -343,7 +343,7 @@ def filter_graph_edges_by_focus(graph: Graph, focused_edge: str):
     return filtered_edges
 
 
-def get_alignment_look_up_table(alignment: MultipleSeqAlignment) -> dict:
+def get_alignment_look_up_table(alignment: MultipleSeqAlignment) -> Dict:
     """
     Create a lookup table for quick retrieval of alignment record indices.
 

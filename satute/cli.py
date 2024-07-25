@@ -11,6 +11,8 @@ import traceback
 from typing import Optional, Dict, List
 from Bio.Align import MultipleSeqAlignment
 
+from satute.logging import *
+from satute.valid_data_input import *
 from satute.exceptions import ModelNotFoundError, InvalidModelNameError
 from satute.spectral_decomposition import spectral_decomposition
 from satute.partial_likelihood.rate_matrix import RateMatrix
@@ -19,8 +21,6 @@ from satute.handler.iqtree_handler import IqTreeHandler
 from satute.trees import rename_internal_nodes_pre_order
 from satute.arguments import ARGUMENT_LIST
 from satute.sequences import check_if_tree_has_same_taxa_as_msa
-from satute.logging import *
-from satute.valid_data_input import *
 
 from satute.rate_analysis import (
     multiple_rate_analysis,
