@@ -6,8 +6,9 @@ from satute.exceptions import ModelNotFoundError, InvalidModelNameError
 from satute.models.amino_acid_models import (
     AMINO_ACID_RATE_MATRIX,
     AA_STATE_FREQUENCIES,
-    get_core_model    
+    get_core_model,
 )
+
 
 class AminoAcidParser(BaseParser):
     def parse_state_frequencies(self) -> Tuple[List[float], np.ndarray]:
@@ -22,20 +23,19 @@ class AminoAcidParser(BaseParser):
 
         for line in self.file_content:
             # Check for the state frequencies header in the file
-            if 'State frequencies:' in line:
+            if "State frequencies:" in line:
                 capture_state_frequencies = True
                 continue
-                    
+
             # Capture the frequencies after the header is found
             if capture_state_frequencies:
-                if 'Model of rate heterogeneity:' in line:        
-                    break                
-                if line.strip() != '':        
-                    frequency = line.split('=')[1].strip()
-                    state_frequencies.append(float(frequency))    
+                if "Model of rate heterogeneity:" in line:
+                    break
+                if line.strip() != "":
+                    frequency = line.split("=")[1].strip()
+                    state_frequencies.append(float(frequency))
         return state_frequencies, np.diag(state_frequencies)
-            
-            
+
     @staticmethod
     def get_aa_rate_matrix(current_substitution_model: str) -> np.ndarray:
         """
@@ -63,7 +63,10 @@ class AminoAcidParser(BaseParser):
         else:
             raise InvalidModelNameError(current_substitution_model)
 
-        if core_model not in AMINO_ACID_RATE_MATRIX or core_model not in AA_STATE_FREQUENCIES:
+        if (
+            core_model not in AMINO_ACID_RATE_MATRIX
+            or core_model not in AA_STATE_FREQUENCIES
+        ):
             raise ModelNotFoundError(core_model)
 
         rate_matrix_params = AMINO_ACID_RATE_MATRIX[core_model]
@@ -75,7 +78,6 @@ class AminoAcidParser(BaseParser):
         return np.array(rate_matrix)
 
     def parse_substitution_rates(self) -> str:
-        
         # Flag to indicate if the next lines contain the Q matrix
         capture_substitution_rate: bool = False
         # List to store the rows of the Q matrix
@@ -83,19 +85,21 @@ class AminoAcidParser(BaseParser):
 
         for line in self.file_content:
             # Check for the Q matrix header in the file
-            if 'Substitution parameters' in line:
+            if "Substitution parameters" in line:
                 capture_substitution_rate = True
                 continue
-                
+
             # Capture the matrix after the header is found
             if capture_substitution_rate:
-                if 'State frequencies:' in line:
-                    break                
-                if line.strip() != '':        
+                if "State frequencies:" in line:
+                    break
+                if line.strip() != "":
                     string_based_substitution_rates.append(line.strip())
-        return '\n'.join(string_based_substitution_rates[0:18])
-    
-    def get_aa_state_frequency_substitution_models(self, substitution_model: str) -> Tuple[np.ndarray, np.ndarray]:
+        return "\n".join(string_based_substitution_rates[0:18])
+
+    def get_aa_state_frequency_substitution_models(
+        self, substitution_model: str
+    ) -> Tuple[np.ndarray, np.ndarray]:
         """
         Extracts amino acid state frequencies and creates a diagonal matrix for a substitution model.
 
@@ -121,9 +125,9 @@ class AminoAcidParser(BaseParser):
         return frequencies, np.diag(frequencies)
 
     @staticmethod
-    def create_rate_matrix_with_input(matrix_size: int, input_string: str, eq : List[float]) -> np.array:
-        
-        
+    def create_rate_matrix_with_input(
+        matrix_size: int, input_string: str, eq: List[float]
+    ) -> np.array:
         # Split the string into lines
         # input_string = input_string.replace(" ", "")
         lines = input_string.split("\n")
@@ -132,7 +136,6 @@ class AminoAcidParser(BaseParser):
         rate_matrix = [
             [0 if i != j else 0 for j in range(matrix_size)] for i in range(matrix_size)
         ]
-
 
         for i, row in enumerate(lines):
             for j, col in enumerate(row.split()):

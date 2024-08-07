@@ -1,9 +1,10 @@
+import os
+import argparse
 from logging import Logger
 from Bio.Align import MultipleSeqAlignment
 from pathlib import Path
 from typing import List, Dict
-import os
-import argparse
+
 
 def validate_dir_conflicts(input_args: List[argparse.Namespace]):
     """
@@ -24,6 +25,7 @@ def validate_dir_conflicts(input_args: List[argparse.Namespace]):
             "Choose either '-dir' or the other options."
         )
 
+
 def validate_msa_presence(input_args: List[argparse.Namespace]):
     """
     Ensure either 'msa' or 'dir' is specified, not both.
@@ -35,10 +37,13 @@ def validate_msa_presence(input_args: List[argparse.Namespace]):
         ValueError: If neither or both 'msa' and 'dir' are specified.
     """
     if not input_args.dir and not input_args.msa:
-        raise ValueError("Error: An MSA file must be specified when '-dir' is not used.")
+        raise ValueError(
+            "Error: An MSA file must be specified when '-dir' is not used."
+        )
     if input_args.dir and input_args.msa:
         raise ValueError("Error: The 'msa' and 'dir' options cannot be used together.")
-    
+
+
 def validate_tree_and_model(input_args: List[argparse.Namespace]):
     """
     Ensure a model is specified when using a tree file.
@@ -52,6 +57,7 @@ def validate_tree_and_model(input_args: List[argparse.Namespace]):
     if input_args.tree and not input_args.model:
         raise ValueError("Error: A model must be specified when using a tree file.")
 
+
 def validate_boot_options(input_args: List[argparse.Namespace]):
     """
     Ensure bootstrapping options are not used with a tree file.
@@ -63,12 +69,15 @@ def validate_boot_options(input_args: List[argparse.Namespace]):
         ValueError: If '-ufboot' or '-boot' is used with '-tree'.
     """
     if input_args.tree and (input_args.ufboot or input_args.boot):
-        raise ValueError("Error: The '-ufboot' or '-boot' options cannot be used with '-tree'.")
+        raise ValueError(
+            "Error: The '-ufboot' or '-boot' options cannot be used with '-tree'."
+        )
 
-def validate_category_range(input_args : List[argparse.Namespace], number_rates: int):
+
+def validate_category_range(input_args: List[argparse.Namespace], number_rates: int):
     """
     Validates the category value against the allowed range.
-    
+
     Args:
     - input_args: Object containing model and category attributes.
     - number_rates: Maximum number of rates defining the category range.
@@ -84,7 +93,10 @@ def validate_category_range(input_args : List[argparse.Namespace], number_rates:
                 "Please choose a valid category index."
             )
 
-def validate_and_set_rate_category(input_category: int, number_rates: int, logger: Logger)->str:
+
+def validate_and_set_rate_category(
+    input_category: int, number_rates: int, logger: Logger
+) -> str:
     """
     Validate and set the rate category.
 
@@ -97,14 +109,23 @@ def validate_and_set_rate_category(input_category: int, number_rates: int, logge
         ValueError: If the category is out of the valid range.
     """
     if not 1 <= input_category <= number_rates:
-        logger.error(f"Error: Chosen category '{input_category}' is out of the valid range of {number_rates}.")
-        raise ValueError(f"Error: Chosen category '{input_category}' is out of the valid range of {number_rates}.")
+        logger.error(
+            f"Error: Chosen category '{input_category}' is out of the valid range of {number_rates}."
+        )
+        raise ValueError(
+            f"Error: Chosen category '{input_category}' is out of the valid range of {number_rates}."
+        )
     return str(input_category)
 
-def validate_and_check_rate_categories(categorized_sites: Dict[str, MultipleSeqAlignment], chosen_category: int, logger: Logger):
+
+def validate_and_check_rate_categories(
+    categorized_sites: Dict[str, MultipleSeqAlignment],
+    chosen_category: int,
+    logger: Logger,
+):
     """
     Validates rate categories and ensures that the chosen category is not empty.
-    
+
     Args:
     - categorized_sites (dict): Dictionary where keys are rate categories and values are alignments (lists).
     - chosen_category (int): The category to validate.
@@ -122,9 +143,11 @@ def validate_and_check_rate_categories(categorized_sites: Dict[str, MultipleSeqA
                 "Choose a different category with assigned sites."
             )
 
-#######  INPUT Validation ##########       
-                
-def valid_directory(path: Path)->Path:
+
+#######  INPUT Validation ##########
+
+
+def valid_directory(path: Path) -> Path:
     """
     Custom type function for argparse - checks if the provided path is a valid directory,
     is not empty, and contains a .iqtree file and at least one file with specified suffixes.
@@ -152,7 +175,7 @@ def valid_directory(path: Path)->Path:
         raise argparse.ArgumentTypeError(
             f"No .iqtree file found in the directory {path}"
         )
-        
+
     # Check for the presence of at least one file with a specified suffix
     if not any(
         file.endswith(suffix) for suffix in msa_file_types for file in directory_files
@@ -164,7 +187,8 @@ def valid_directory(path: Path)->Path:
 
     return Path(path)
 
-def valid_file(path: Path)->Path:
+
+def valid_file(path: Path) -> Path:
     """
     Custom type function for argparse - checks if the provided path is a valid file.
 
@@ -180,6 +204,7 @@ def valid_file(path: Path)->Path:
     if not os.path.isfile(path):
         raise argparse.ArgumentTypeError(f"{path} is not a valid file")
     return Path(path)
+
 
 def valid_alpha(alpha: float) -> float:
     """
@@ -199,27 +224,29 @@ def valid_alpha(alpha: float) -> float:
         if not (0 <= alpha < 1):
             raise ValueError(
                 f"Invalid alpha value '{alpha}'. The alpha value must be between 0 and 1, exclusive. "
-                "Please provide a valid alpha value for the significance level.")
+                "Please provide a valid alpha value for the significance level."
+            )
     except ValueError as e:
         # Raise an ArgumentTypeError for argparse compatibility
         raise argparse.ArgumentTypeError(e)
     return alpha
 
-def validate_satute_input_options(input_args : List[argparse.Namespace]):
-        """
-        Validates the combinations of input arguments for Satute analysis.
 
-        This function ensures that:
-        - The -dir option is not used with specific other options (like -msa, -tree).
-        - The -msa option is provided if -dir is not used.
-        - The -tree option, if used, must be accompanied by a -model option.
-        - The -ufboot or -boot options are not used with a specific combination of options.
-        - The chosen category (if provided) is within a valid range.
+def validate_satute_input_options(input_args: List[argparse.Namespace]):
+    """
+    Validates the combinations of input arguments for Satute analysis.
 
-        Raises:
-            ValueError: If an invalid combination of arguments is provided.
-        """
-        validate_dir_conflicts(input_args=input_args)
-        validate_msa_presence(input_args=input_args)
-        validate_tree_and_model(input_args=input_args)
-        validate_boot_options(input_args=input_args)
+    This function ensures that:
+    - The -dir option is not used with specific other options (like -msa, -tree).
+    - The -msa option is provided if -dir is not used.
+    - The -tree option, if used, must be accompanied by a -model option.
+    - The -ufboot or -boot options are not used with a specific combination of options.
+    - The chosen category (if provided) is within a valid range.
+
+    Raises:
+        ValueError: If an invalid combination of arguments is provided.
+    """
+    validate_dir_conflicts(input_args=input_args)
+    validate_msa_presence(input_args=input_args)
+    validate_tree_and_model(input_args=input_args)
+    validate_boot_options(input_args=input_args)

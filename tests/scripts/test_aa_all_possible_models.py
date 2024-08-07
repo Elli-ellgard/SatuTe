@@ -4,7 +4,7 @@ from satute.models.amino_acid_models import AA_STATE_FREQUENCIES, NOT_ACCEPTED_A
 
 from tests.scripts.satute_test_utils import (
     run_satute,
-    check_satute_files,    
+    check_satute_files,
     create_destination_dir,
     copy_files_to_dest_dir,
     check_iqtree_files_exist,
@@ -12,10 +12,12 @@ from tests.scripts.satute_test_utils import (
 
 
 @pytest.mark.parametrize("model", list(AA_STATE_FREQUENCIES.keys()))
-def test_all_substitution_models(data_amino_acids_dir_path, iqtree, python, satute, model):
+def test_all_substitution_models(
+    data_amino_acids_dir_path, iqtree, python, satute, model
+):
     """
     Test function that iterates over all substitution models and verifies the Satute output.
-    
+
     Args:
     - data_amino_acids_dir_path: Directory path containing amino acids data.
     - iqtree: Path to IQ-TREE executable.
@@ -40,25 +42,34 @@ def test_all_substitution_models(data_amino_acids_dir_path, iqtree, python, satu
     # Satute run
     run_satute(
         [
-            "-msa", os.path.join(dest_dir_path, msa),
-            "-model", model,
-            "-alpha", alpha,
+            "-msa",
+            os.path.join(dest_dir_path, msa),
+            "-model",
+            model,
+            "-alpha",
+            alpha,
             "-asr",
-            "-iqtree", iqtree,
+            "-iqtree",
+            iqtree,
         ]
     )
 
     # Check the files
-    assert check_iqtree_files_exist(msa, dest_dir_path, []), "IQ-Tree files check failed: Required files are missing or not created."
-    assert check_satute_files(msa, dest_dir_path, categories, alpha, asr), "Satute files check failed: Required files are missing or not created."
-
+    assert check_iqtree_files_exist(
+        msa, dest_dir_path, []
+    ), "IQ-Tree files check failed: Required files are missing or not created."
+    assert check_satute_files(
+        msa, dest_dir_path, categories, alpha, asr
+    ), "Satute files check failed: Required files are missing or not created."
 
 
 @pytest.mark.parametrize("model", NOT_ACCEPTED_AA_MODELS)
-def test_all_aa_not_substitution_models(data_amino_acids_dir_path, iqtree, python, satute, model):
+def test_all_aa_not_substitution_models(
+    data_amino_acids_dir_path, iqtree, python, satute, model
+):
     """
     Test function that iterates over all substitution models and verifies the Satute output.
-    
+
     Args:
     - data_amino_acids_dir_path: Directory path containing amino acids data.
     - iqtree: Path to IQ-TREE executable.
@@ -83,13 +94,16 @@ def test_all_aa_not_substitution_models(data_amino_acids_dir_path, iqtree, pytho
         # Satute run
         run_satute(
             [
-                "-msa", os.path.join(dest_dir_path, msa),
-                "-model", model,
-                "-alpha", alpha,
+                "-msa",
+                os.path.join(dest_dir_path, msa),
+                "-model",
+                model,
+                "-alpha",
+                alpha,
                 "-asr",
-                "-iqtree", iqtree,
+                "-iqtree",
+                iqtree,
             ]
         )
     # Verify the exit code if needed
     assert excinfo.value.code != 0  # assuming exit code 1 for failure
-

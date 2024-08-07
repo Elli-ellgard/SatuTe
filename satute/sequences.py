@@ -9,6 +9,7 @@ from typing import Dict
 DNA_CHARACTERS = set("ACGT")
 PROTEIN_CHARACTERS = set("ARNDCQEGHILKMFPSTWYV")
 
+
 def check_if_tree_has_same_taxa_as_msa(
     sequence_alignment: MultipleSeqAlignment, tree: Tree
 ) -> None:
@@ -20,7 +21,7 @@ def check_if_tree_has_same_taxa_as_msa(
         tree (Tree): The phylogenetic tree object.
 
     Raises:
-        TaxaMismatchError: If the taxa sets in the alignment and the tree do not match,  explaining which taxa are missing or extra.
+        TaxaMismatchError: If the taxa sets in the alignmsent and the tree do not match,  explaining which taxa are missing or extra.
     """
     # Extract taxa from the multiple sequence alignment
     alignment_taxa = set(record.id for record in sequence_alignment)

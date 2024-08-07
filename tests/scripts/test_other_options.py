@@ -1,16 +1,12 @@
 import os
-
 from tests.scripts.fixtures import *
-
 from tests.scripts.satute_test_utils import (
-    print_test_name, 
     create_destination_dir,
     copy_files_to_dest_dir,
     check_iqtree_files_exist,
     check_satute_files,
     run_satute    
 )
-
 
 def test_1(data_dir_path, iqtree, python, satute):
     source_path, msa, _ = data_dir_path 
@@ -28,8 +24,7 @@ def test_1(data_dir_path, iqtree, python, satute):
     asr = True
 
     # Satute run
-    run_satute(
-        [
+    run_satute([
             "-iqtree",
             iqtree,
             "-msa",
@@ -37,8 +32,7 @@ def test_1(data_dir_path, iqtree, python, satute):
             "-alpha",
             alpha,
             "-asr",
-        ]
-   )
+        ])
 
     # check the files   
     assert check_iqtree_files_exist(msa, dest_dir_path, ["m"] )

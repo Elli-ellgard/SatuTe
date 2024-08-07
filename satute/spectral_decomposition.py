@@ -4,7 +4,11 @@ import numpy as np
 
 
 """ ## SPECTRAL DECOMPOSITION OF THE RATE MATRIX"""
-def spectral_decomposition(rate_matrix, psi_matrix) -> tuple[np.array, np.array, int]:
+
+
+def spectral_decomposition(
+    rate_matrix, psi_matrix
+) -> tuple[np.array, np.array, int, int]:
     """
     Then psi_matrix := Diag(pi). Recall that matrix Q is reversible iff M:= psi_matrix^1/2 x Q x psi_matrix^{-1/2} is symmetric.
     For a real symmetric matrix M, its eigenvectors can be chosen to be an orthonormal basis of R^n
@@ -34,12 +38,8 @@ def spectral_decomposition(rate_matrix, psi_matrix) -> tuple[np.array, np.array,
             index.append(i)
 
     multiplicity = len(index)  # multiplicity of the dominant non-zero eigenvalue
-    array_right_eigenvectors = (
-        []
-    )  # list of right eigenvectors for the dominant non-zero eigenvalue
-    array_left_eigenvectors = (
-        []
-    )  # list of left eigenvectors for the dominant non-zero eigenvalue
+    array_right_eigenvectors = []  # list of right eigenvectors for the dominant non-zero eigenvalue
+    array_left_eigenvectors = []  # list of left eigenvectors for the dominant non-zero eigenvalue
     for i in range(multiplicity):
         # calculate the right eigenvectors for the dominant non-zero eigenvalue
         v1 = scipy.linalg.fractional_matrix_power(psi_matrix, -1 / 2) @ w[:, index[i]]

@@ -5,20 +5,9 @@ import time
 from pathlib import Path
 from Bio import AlignIO
 from Bio.Align import MultipleSeqAlignment
-from pathlib import Path
 from ete3 import Tree
-
 import satute.cli
 
-
-def print_test_name(suffix):
-    print("")
-    print("---------------------------------------------------------")
-    print(suffix)
-    print("---------------------------------------------------------")
-
-def print_colored_message(message, color_code):
-    print(f"\033[{color_code}m{message}\033[0m")
 
 def filter_files_by_last_name(filenames, suffix):
     """
@@ -33,71 +22,80 @@ def filter_files_by_last_name(filenames, suffix):
     """
     filtered_list = []
     for file in filenames:
-        splitted_file_name = file.split('.')
+        splitted_file_name = file.split(".")
 
         if splitted_file_name[-1] != suffix:
             filtered_list.append(file)
 
-        
     return filtered_list
 
-def create_destination_dir(source_dir, suffix, base_dir="./tests/test_results/") -> Path:
+
+def create_destination_dir(
+    source_dir, suffix, base_dir="./tests/test_results/"
+) -> Path:
     source_path = Path(source_dir)
     base_path = Path(base_dir)
-    
+
     # Check if the source directory exists
     if not source_path.is_dir():
         raise ValueError("Source directory does not exist.")
-    
+
     # Create a suffix for the new directory name
     suffix_cleaned = suffix.replace(" ", "_").replace(":", "")
-    
+
     # Create the destination directory path
     dest_dir = base_path / (source_path.name + "_" + suffix_cleaned)
-    
+
     # Remove destination directory if it already exists
     if dest_dir.is_dir():
         shutil.rmtree(dest_dir)
-    
+
     # Create the destination directory
     dest_dir.mkdir(parents=True, exist_ok=True)
-    
+
     return dest_dir
+
 
 def copy_files_to_dest_dir(source_dir, dest_dir, files_to_copy):
     source_path = Path(source_dir)
     dest_path = Path(dest_dir)
-    
+
     # Check if both source and destination directories exist
     if not source_path.is_dir() or not dest_path.is_dir():
         raise ValueError("Source or destination directory does not exist.")
-    
+
     # Copy only the specified files from source to destination
     for file_name in files_to_copy:
         source_file_path = source_path / file_name
         dest_file_path = dest_path / file_name
-        
+
         # Check if the file exists in the source directory
         if source_file_path.is_file():
             shutil.copy2(source_file_path, dest_file_path)
         else:
             print(f"Warning: File '{file_name}' not found in the source directory.")
 
+
 def check_files_exist(directory, file_list, name):
     directory_path = Path(directory)
-    
+
     # Check if the directory exists
     if not directory_path.is_dir():
         raise ValueError(f"Directory '{directory}' does not exist.")
-        
-    missing_files = [file for file in file_list if not (directory_path / file).is_file()]
-    
+
+    missing_files = [
+        file for file in file_list if not (directory_path / file).is_file()
+    ]
+
     if missing_files:
-        print(f"The following {name} files are missing in the directory '{directory}': {', '.join(missing_files)}")
+        print(
+            f"The following {name} files are missing in the directory '{directory}': {', '.join(missing_files)}"
+        )
         return False
     else:
         print(f"All {name} files are present in the directory '{directory}'.")
         return True
+
 
 def check_files_exist_dir(directory_path, filenames, description):
     """
@@ -117,41 +115,52 @@ def check_files_exist_dir(directory_path, filenames, description):
         file_existence[filename] = os.path.isfile(file_path)
     return file_existence
 
+
 def additional_iqtree_files(options):
     suffix = []
     if "ufboot" in options:
         suffix.extend([".contree", ".splits.nex"])
     elif "boot" in options:
         suffix.extend([".boottrees", ".contree"])
-    elif "wspr" in options: 
+    elif "wspr" in options:
         suffix.append(".siteprob")
-    elif "m" in options: 
+    elif "m" in options:
         suffix.append(".model.gz")
-    elif "alnifo" in options: 
+    elif "alnifo" in options:
         suffix.append(".alninfo")
     return suffix
 
+
 def check_iqtree_files_exist(data_name, dest_dir_path, iqtree_options):
-    iqtree_files_endings = [".bionj",".ckp.gz",".iqtree",".log",  ".mldist" , ".treefile"]
+    iqtree_files_endings = [
+        ".bionj",
+        ".ckp.gz",
+        ".iqtree",
+        ".log",
+        ".mldist",
+        ".treefile",
+    ]
     if len(iqtree_options):
         iqtree_files_endings.extend(additional_iqtree_files(iqtree_options))
-    files_to_check = [ data_name + suffix for suffix in iqtree_files_endings]
+    files_to_check = [data_name + suffix for suffix in iqtree_files_endings]
     return check_files_exist(dest_dir_path, files_to_check, "IQ-TREE")
+
 
 def check_satute_files(data_name, dest_dir_path, categories, alpha, asr):
     file_endings = [f"_{alpha}.satute.log"]
-    suffix = [".satute.csv",".satute.nex"]
-    if asr: 
+    suffix = [".satute.csv", ".satute.nex"]
+    if asr:
         suffix.append(".satute.asr.csv")
     if len(categories):
         for rate in categories:
-            category_endings = [f"_p{rate}_{alpha}{x}" for x in suffix]
+            category_endings = [f"_c{rate}_{alpha}{x}" for x in suffix]
             file_endings.extend(category_endings)
     else:
         file_endings.extend([f"_single_rate_{alpha}{x}" for x in suffix])
-        
-    files_to_check = [ data_name + suffix for suffix in file_endings]  
+
+    files_to_check = [data_name + suffix for suffix in file_endings]
     return check_files_exist(dest_dir_path, files_to_check, "Satute")
+
 
 def check_satute_files_dir(dest_dir_path, categories, alpha, asr):
     """
@@ -168,29 +177,31 @@ def check_satute_files_dir(dest_dir_path, categories, alpha, asr):
     """
     file_endings = [f"_{alpha}.satute.log"]
     suffixes = [".satute.csv", ".satute.nex"]
-    
-    if asr: 
+
+    if asr:
         suffixes.append(".satute.asr.csv")
-    
+
     if categories:
         for rate in categories:
-            category_endings = [f"_p{rate}_{alpha}{suffix}" for suffix in suffixes]
+            category_endings = [f"_c{rate}_{alpha}{suffix}" for suffix in suffixes]
             file_endings.extend(category_endings)
     else:
         file_endings.extend([f"_single_rate_{alpha}{suffix}" for suffix in suffixes])
-        
+
     # Construct the filenames based on the suffixes
     files_to_check = file_endings
-    
+
     # Check for file existence
     return check_files_exist_dir(dest_dir_path, files_to_check, "Satute")
 
+
 def run_external_command(command_args):
     subprocess.run(command_args, check=True)
-    
+
+
 def run_satute(args):
     """
-    Runs the satute CLI with the provided arguments, ensuring the 'quiet' 
+    Runs the satute CLI with the provided arguments, ensuring the 'quiet'
     argument is set, and adds a small delay to ensure files are written.
 
     Args:
@@ -206,14 +217,15 @@ def run_satute(args):
         raise TypeError("args must be a list or None")
 
     # Ensure '--quiet' is in the arguments
-    if '-quiet' not in args:
-        args.append('-quiet')
+    if "-quiet" not in args:
+        args.append("-quiet")
 
     # Add a small delay to ensure files are written
     time.sleep(2)
 
     # Call the main function of satute.cli with the arguments
     return satute.cli.main(args)
+
 
 def clean_and_prepare_dir(dir_path, msa):
     pdir = os.path.dirname(dir_path)
@@ -231,6 +243,7 @@ def clean_and_prepare_dir(dir_path, msa):
         if os.path.exists(os.path.join(pdir, msa + ".treefile")):
             shutil.move(os.path.join(pdir, msa + ".treefile"), dir_path)
 
+
 def list_filenames_in_directory(directory_path):
     """
     Lists all filenames in the given directory and its subdirectories.
@@ -242,15 +255,17 @@ def list_filenames_in_directory(directory_path):
     list: List of filenames.
     """
     filenames = []
-    
+
     for root, dirs, files in os.walk(directory_path):
         for file in files:
             filenames.append(file)
-    
+
     return filenames
 
 
-def delete_taxon_from_msa(input_file: str, output_file: str, taxon_id: str, format: str = "phylip-sequential"):
+def delete_taxon_from_msa(
+    input_file: str, output_file: str, taxon_id: str, format: str = "phylip-sequential"
+):
     """
     Delete a taxon from a multiple sequence alignment.
 
@@ -271,8 +286,10 @@ def delete_taxon_from_msa(input_file: str, output_file: str, taxon_id: str, form
     # Write the filtered alignment to the output file
     AlignIO.write(filtered_alignment, output_file, format)
 
-    print(f"Taxon '{taxon_id}' has been removed. The new MSA is saved to '{output_file}'.")
-    
+    print(
+        f"Taxon '{taxon_id}' has been removed. The new MSA is saved to '{output_file}'."
+    )
+
 
 def delete_taxon_from_tree(newick_file: str, taxon: str):
     """

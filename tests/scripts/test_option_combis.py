@@ -1,7 +1,6 @@
 import os
 from tests.scripts.satute_test_utils import (
     run_satute,
-    print_test_name,
     create_destination_dir,
     copy_files_to_dest_dir,
     check_satute_files,

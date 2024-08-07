@@ -14,12 +14,14 @@ from satute.models.amino_acid_models import (
     AMINO_ACID_MODELS,
     NOT_ACCEPTED_AA_MODELS,
     ESTIMATED_AA_MODELS,
-    get_core_model
+    get_core_model,
 )
+
 
 class ModelType(Enum):
     DNA = "DNA"
     PROTEIN = "Protein"
+
 
 class IqTreeParser:
     """
@@ -67,10 +69,10 @@ class IqTreeParser:
                 f"An error occurred while reading the file '{self.file_path}': {str(e)}"
             )
 
-    def check_if_lie_model(self, current_substitution_model: str) -> bool:        
+    def check_if_lie_model(self, current_substitution_model: str) -> bool:
         for lie_model in LIE_DNA_MODELS:
             if lie_model in current_substitution_model:
-                return True        
+                return True
         return False
 
     def load_substitution_model(self) -> SubstitutionModel:
@@ -84,53 +86,69 @@ class IqTreeParser:
         Returns:
         - SubstitutionModel: An object containing the parsed details of the substitution model.
         """
-        current_substitution_model : str = self.parse_substitution_model()
+        current_substitution_model: str = self.parse_substitution_model()
         self.check_model(current_substitution_model)
-        self.model_type : ModelType = self.get_model_type(current_substitution_model)
-        
-        state_frequencies : List[float] = []
-        phi_matrix : Optional[np.ndarray]  = []
-        rate_matrix : Optional[np.ndarray]  = []
-        number_rates  : int = 1
-        category_rates : Optional[Dict[str, Dict[str, float]]]  = {}
-        pre_computed_q_matrix : np.ndarray = []
-        parser : Optional[BaseParser] = None
-        
-        if self.model_type == ModelType.DNA:
+        self.model_type: ModelType = self.get_model_type(current_substitution_model)
 
+        state_frequencies: List[float] = []
+        phi_matrix: Optional[np.ndarray] = []
+        rate_matrix: Optional[np.ndarray] = []
+        number_rates: int = 1
+        category_rates: Optional[Dict[str, Dict[str, float]]] = {}
+        pre_computed_q_matrix: np.ndarray = []
+        parser: Optional[BaseParser] = None
+
+        if self.model_type == ModelType.DNA:
             parser = NucleotideParser(self.file_content)
             dict_state_frequencies, phi_matrix = parser.parse_state_frequencies()
             state_frequencies = list(dict_state_frequencies.values())
-            pre_computed_q_matrix  = parser.parse_q_matrix()            
+            pre_computed_q_matrix = parser.parse_q_matrix()
 
-            if self.check_if_lie_model(current_substitution_model):                                
+            if self.check_if_lie_model(current_substitution_model):
                 substitution_rates = parser.parse_substitution_rates()
-                rate_matrix = parser.create_rate_matrix_for_lie_markov_models(substitution_rates, state_frequencies)
-            else:                                
+                rate_matrix = parser.create_rate_matrix_for_lie_markov_models(
+                    substitution_rates, state_frequencies
+                )
+            else:
                 # Parse the rate matrix and stationary distribution for the DNA Substitution Model
                 state_frequencies = list(dict_state_frequencies.values())
                 rate_matrix = parser.construct_rate_matrix(dict_state_frequencies)
         else:
-            parser = AminoAcidParser(self.file_content)      
-            core_model = get_core_model(current_substitution_model)      
+            parser = AminoAcidParser(self.file_content)
+            core_model = get_core_model(current_substitution_model)
             if core_model in ESTIMATED_AA_MODELS:
-                # In the case when the substitution rates are not estimated so we get the static elements                
+                # In the case when the substitution rates are not estimated so we get the static elements
                 substitution_rates: str = parser.parse_substitution_rates()
                 state_frequencies, phi_matrix = parser.parse_state_frequencies()
-                state_frequencies = AminoAcidParser.normalize_stationary_distribution_aa(state_frequencies)
-                rate_matrix = AminoAcidParser.create_rate_matrix_with_input(20, substitution_rates, state_frequencies)                                
+                state_frequencies = (
+                    AminoAcidParser.normalize_stationary_distribution_aa(
+                        state_frequencies
+                    )
+                )
+                rate_matrix = AminoAcidParser.create_rate_matrix_with_input(
+                    20, substitution_rates, state_frequencies
+                )
             else:
                 # In the case when the substitution rates are not estimated so we get the static elements
                 current_substitution_model = current_substitution_model.upper()
                 # Parse the rate matrix and stationary distribution for the Protein Substitution Model
-                state_frequencies, phi_matrix = parser.get_aa_state_frequency_substitution_models(
+                state_frequencies, phi_matrix = (
+                    parser.get_aa_state_frequency_substitution_models(
+                        current_substitution_model
+                    )
+                )
+                state_frequencies = (
+                    AminoAcidParser.normalize_stationary_distribution_aa(
+                        state_frequencies
+                    )
+                )
+                rate_matrix = AminoAcidParser.get_aa_rate_matrix(
                     current_substitution_model
                 )
-                state_frequencies = AminoAcidParser.normalize_stationary_distribution_aa(state_frequencies)
-                rate_matrix = AminoAcidParser.get_aa_rate_matrix(current_substitution_model)
-            
+
         number_rates = self.parse_number_rate_categories()
         category_rates = self.parse_category_rates() if number_rates > 1 else None
+        gamma_shape = self.parse_gamma_shape()
 
         return SubstitutionModel(
             model=current_substitution_model,
@@ -140,6 +158,7 @@ class IqTreeParser:
             number_rates=number_rates,
             category_rates=category_rates,
             precomputed_q_matrix=pre_computed_q_matrix,
+            gamma_shape=gamma_shape,
         )
 
     def check_model(self, model: str) -> None:
@@ -182,16 +201,19 @@ class IqTreeParser:
         - rate (int): The number of rate categories parsed from the model string.
         """
         index = next(
-            (idx for idx, line in enumerate(self.file_content)
-             if "Model of rate heterogeneity:" in line),
+            (
+                idx
+                for idx, line in enumerate(self.file_content)
+                if "Model of rate heterogeneity:" in line
+            ),
             None,
         )
 
         if index is None:
             raise ValueError("'Model of rate heterogeneity:' not found in file.")
-        
+
         line = self.file_content[index]
-        
+
         if "Uniform" in line:
             return 1
         if "with" in line and "categories" in line:
@@ -273,6 +295,29 @@ class IqTreeParser:
         # If the loop completes without returning, raise an error
         raise ValueError("Substitution model not found in the file content.")
 
+    def parse_gamma_shape(self) -> float:
+        """
+        Parses the file content to extract the substitution model.
+
+        The function searches for lines that contain specific keywords indicative of the substitution model.
+        Once found, it extracts and returns the model as a string.
+
+        Returns:
+        - str: The extracted substitution model. If not found, raises a ValueError.
+        """
+        # Keywords indicating the presence of the substitution model in a line
+        keywords = ["Gamma shape alpha:"]
+
+        for line in self.file_content:
+            # Check if the line contains any of the keywords
+            if any(keyword in line for keyword in keywords):
+                alpha = line.split(":")[1].strip()
+                # If a valid model string is found, return it
+                if alpha:
+                    return float(alpha)
+        # If the loop completes without returning, raise an error
+        return None
+
 
 def parse_substitution_model(file_path: str) -> str:
     """
@@ -281,26 +326,6 @@ def parse_substitution_model(file_path: str) -> str:
     This function reads an IQ-TREE log file and extracts the substitution model
     based on specific lines containing "Best-fit model according to BIC:" or
     "Model of substitution:". The function returns the extracted model as a string.
-
-    Parameters:
-    - file_path (str): The path to the IQ-TREE log file.
-
-    Returns:
-    - str: The parsed substitution model.
-
-    Raises:
-    - ValueError: If the expected model strings are not found in the file.
-    - ValueError: If there's an error reading the file.
-
-    Example:
-    >>> parse_substitution_model("path_to_iqtree_log.txt")
-    'TEST_MODEL_1'
-
-    Note:
-    The function expects the IQ-TREE log file to contain specific lines indicating
-    the substitution model. If these lines are not found or if there's an issue
-    reading the file, a ValueError is raised.
-
     """
     try:
         with open(file_path, "r") as file:
@@ -316,13 +341,13 @@ def parse_substitution_model(file_path: str) -> str:
     except IOError:
         raise ValueError("Could not read the file.")
 
+
 def parse_rate_from_cli_input(model: str) -> int:
     # Find the index of '+G' and '+R' in the model string
     plus_g_index = model.find("+G")
     plus_r_index = model.find("+R")
 
     if plus_g_index != -1 and plus_r_index != -1:
-
         raise ValueError("Cannot use +G and +R")
 
     if plus_g_index != -1:
@@ -354,6 +379,7 @@ def parse_rate_from_cli_input(model: str) -> int:
         # Return None or an appropriate value for error handling
         raise ValueError("Could not parse the substitution model from the file.")
 
+
 def parse_file_to_data_frame(file_path: str) -> pd.DataFrame:
     try:
         # Read the file into a dataframe
@@ -362,4 +388,3 @@ def parse_file_to_data_frame(file_path: str) -> pd.DataFrame:
 
     except FileNotFoundError:
         raise Exception(f"File not found: {file_path}")
-

@@ -9,19 +9,20 @@ from typing import Dict
 
 """ ## RATE CATEGORIES  """
 
+
 def get_column_names_with_prefix(data_frame: DataFrame, prefix: str):
     # Filter the columns using the specified prefix
     columns_with_prefix = data_frame.columns[
         data_frame.columns.str.startswith(prefix)
     ].tolist()
+
     return columns_with_prefix
+
 
 def build_categories_by_sub_tables(data_frame: DataFrame):
     rate_category_dictionary = {}
 
-    # Assuming you already have a dataframe called 'dataframe'
-    # Call the get_columns_with_prefix function to retrieve columns with a specific prefix
-    prefix = "p"  # Specify the desired prefix
+    prefix = "p"
 
     columns_with_prefix = get_column_names_with_prefix(data_frame, prefix)
 
@@ -30,12 +31,13 @@ def build_categories_by_sub_tables(data_frame: DataFrame):
 
     for index, row in data_frame.iterrows():
         p_row = row.filter(like="p")
-
-        rate_category_dictionary[p_row.idxmax()].append(int(row["Site"]) - 1)
+        rate_category_dictionary[(p_row.idxmax())].append(int(row["Site"]) - 1)
 
     return rate_category_dictionary
 
+
 """ ## HANDLE ALIGNMENTS  """
+
 
 def guess_alignment_format(file_name: str) -> str:
     """
@@ -79,6 +81,7 @@ def guess_alignment_format(file_name: str) -> str:
     else:
         raise ValueError(f"Unknown alignment format in file {file_name}")
 
+
 def change_states_to_allowed(alignment):
     """
     This function changes the states of the sequences in the alignment to allowed states.
@@ -102,6 +105,7 @@ def change_states_to_allowed(alignment):
         record.seq = record.seq.replace("!", "-")
     # Return the modified alignment
     return alignment
+
 
 def read_alignment_file(file_name: str) -> MultipleSeqAlignment:
     """
@@ -146,6 +150,7 @@ def read_alignment_file(file_name: str) -> MultipleSeqAlignment:
         raise ValueError(f"An error occurred while processing the alignment: {str(e)}")
 
     return alignment
+
 
 def cut_alignment_columns_optimized(alignment, columns) -> MultipleSeqAlignment:
     """

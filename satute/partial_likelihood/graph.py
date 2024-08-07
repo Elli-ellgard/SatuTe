@@ -131,7 +131,6 @@ def convert_tree_to_state_graph(
 
     # Traverse the tree and create Node objects and edges
     for ete_node in tree.traverse("levelorder"):
-
         node = create_or_get_node(
             ete_node=ete_node,
             msa_column=msa_column,
@@ -284,7 +283,7 @@ def calculate_subtree_edge_metrics(
 
 
 @cache
-def count_leaves_for_subtree(node: Node, coming_from: Node)-> int:
+def count_leaves_for_subtree(node: Node, coming_from: Node) -> int:
     """
     Counts the number of leaf nodes in a subtree.
 

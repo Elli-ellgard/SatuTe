@@ -1,11 +1,12 @@
 import re
-from typing import List, Dict
+from typing import List
+
 
 class BaseParser:
     def __init__(self, file_content: List[str]):
         self.file_content = file_content
-        
-    def find_line_index(self,lines: List[str], search_string: str) -> int:
+
+    def find_line_index(self, lines: List[str], search_string: str) -> int:
         """
         Returns the index of the first line that contains the given search string.
         Raises an exception if the search string is not found.
@@ -26,8 +27,10 @@ class BaseParser:
         raise ValueError(
             f"Search string '{search_string}' not found in the provided lines."
         )
-        
-    def find_dimension_by_rate_matrix_parsing(self,start_index: int, file_content: str) -> int:
+
+    def find_dimension_by_rate_matrix_parsing(
+        self, start_index: int, file_content: str
+    ) -> int:
         # Detect the number of matrix rows based on numeric entries
         n = 0
         current_idx = start_index + 2  # Adjusting to start from matrix values

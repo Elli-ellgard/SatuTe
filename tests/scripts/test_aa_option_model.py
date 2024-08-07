@@ -1,18 +1,16 @@
 import os
 from pathlib import Path
 from tests.scripts.fixtures import *
-
-
 from tests.scripts.satute_test_utils import (
     run_satute,
-    check_satute_files,    
+    check_satute_files,
     create_destination_dir,
     copy_files_to_dest_dir,
     check_iqtree_files_exist,
 )
 
+
 def test_3(data_amino_acids_dir_path, iqtree, python, satute):
-    
     source_path, msa, _ = data_amino_acids_dir_path
     suffix = "Amino Acid MODEL TEST 3: msa model heterogeneity"
 
@@ -23,7 +21,7 @@ def test_3(data_amino_acids_dir_path, iqtree, python, satute):
     files_to_copy = [msa]
     copy_files_to_dest_dir(source_path, dest_dir_path, files_to_copy)
 
-    categories = [1,3,4]
+    categories = [1, 3, 4]
     alpha = str(0.05)
     asr = True
 
@@ -38,13 +36,17 @@ def test_3(data_amino_acids_dir_path, iqtree, python, satute):
             alpha,
             "-iqtree",
             iqtree,
-            "-asr"            
+            "-asr",
         ]
     )
-    
+
     # check the files
-    assert check_iqtree_files_exist(msa, dest_dir_path, []) , "IQTree files check failed: Required files are missing or not created."
-    assert check_satute_files(msa, dest_dir_path, categories, alpha, asr), "Satute files check failed: Required files are missing or not created."
+    assert check_iqtree_files_exist(
+        msa, dest_dir_path, []
+    ), "IQTree files check failed: Required files are missing or not created."
+    assert check_satute_files(
+        msa, dest_dir_path, categories, alpha, asr
+    ), "Satute files check failed: Required files are missing or not created."
 
 
 def test_4(data_amino_acids_dir_path, iqtree, python, satute):
@@ -77,9 +79,12 @@ def test_4(data_amino_acids_dir_path, iqtree, python, satute):
     )
 
     # check the files
-    assert check_iqtree_files_exist(msa, dest_dir_path, []) , "IQTree files check failed: Required files are missing or not created."
-    assert check_satute_files(msa, dest_dir_path, categories, alpha, asr), "Satute files check failed: Required files are missing or not created."
-
+    assert check_iqtree_files_exist(
+        msa, dest_dir_path, []
+    ), "IQTree files check failed: Required files are missing or not created."
+    assert check_satute_files(
+        msa, dest_dir_path, categories, alpha, asr
+    ), "Satute files check failed: Required files are missing or not created."
 
 
 def test_5(data_amino_acids_dir_path, iqtree, python, satute):
@@ -112,8 +117,12 @@ def test_5(data_amino_acids_dir_path, iqtree, python, satute):
     )
 
     # check the files
-    assert check_iqtree_files_exist(msa, dest_dir_path, []) , "IQTree files check failed: Required files are missing or not created."
-    assert check_satute_files(msa, dest_dir_path, categories, alpha, asr), "Satute files check failed: Required files are missing or not created."
+    assert check_iqtree_files_exist(
+        msa, dest_dir_path, []
+    ), "IQTree files check failed: Required files are missing or not created."
+    assert check_satute_files(
+        msa, dest_dir_path, categories, alpha, asr
+    ), "Satute files check failed: Required files are missing or not created."
 
 
 def test_6(data_amino_acids_dir_path, iqtree, python, satute):
@@ -146,12 +155,17 @@ def test_6(data_amino_acids_dir_path, iqtree, python, satute):
     )
 
     # check the files
-    assert check_iqtree_files_exist(msa, dest_dir_path, []), "IQTree files check failed: Required files are missing or not created."
-    assert check_satute_files(msa, dest_dir_path, categories, alpha, asr), "Satute files check failed: Required files are missing or not created."
+    assert check_iqtree_files_exist(
+        msa, dest_dir_path, []
+    ), "IQTree files check failed: Required files are missing or not created."
+    assert check_satute_files(
+        msa, dest_dir_path, categories, alpha, asr
+    ), "Satute files check failed: Required files are missing or not created."
+
 
 def test_7(data_amino_acids_dir_path, iqtree, python, satute):
     source_path, msa, _ = data_amino_acids_dir_path
-    
+
     suffix = "MODEL TEST 7: msa model with parameter free rate"
 
     # create output directory
@@ -159,7 +173,7 @@ def test_7(data_amino_acids_dir_path, iqtree, python, satute):
 
     # copy msa file to output directory
     files_to_copy = [msa]
-    
+
     copy_files_to_dest_dir(source_path, dest_dir_path, files_to_copy)
 
     categories = [1, 2]
@@ -181,8 +195,13 @@ def test_7(data_amino_acids_dir_path, iqtree, python, satute):
     )
 
     # check the files
-    assert check_iqtree_files_exist(msa, dest_dir_path, []), "IQTree files check failed: Required files are missing or not created."
-    assert check_satute_files(msa, dest_dir_path, categories, alpha, asr),  "Satute files check failed: Required files are missing or not created."
+    assert check_iqtree_files_exist(
+        msa, dest_dir_path, []
+    ), "IQTree files check failed: Required files are missing or not created."
+    assert check_satute_files(
+        msa, dest_dir_path, categories, alpha, asr
+    ), "Satute files check failed: Required files are missing or not created."
+
 
 def test_8(data_amino_acids_dir_path, iqtree, python, satute):
     source_path, msa, _ = data_amino_acids_dir_path
@@ -193,7 +212,7 @@ def test_8(data_amino_acids_dir_path, iqtree, python, satute):
 
     # copy msa file to output directory
     files_to_copy = [msa]
-    
+
     copy_files_to_dest_dir(source_path, dest_dir_path, files_to_copy)
 
     categories = []
@@ -216,8 +235,13 @@ def test_8(data_amino_acids_dir_path, iqtree, python, satute):
         ]
     )
 
-    assert check_iqtree_files_exist(msa, dest_dir_path, ["boot"]), "IQTree files check failed: Required files are missing or not created."
-    assert check_satute_files(msa, dest_dir_path, categories, alpha, asr), "Satute files check failed: Required files are missing or not created."
+    assert check_iqtree_files_exist(
+        msa, dest_dir_path, ["boot"]
+    ), "IQTree files check failed: Required files are missing or not created."
+    assert check_satute_files(
+        msa, dest_dir_path, categories, alpha, asr
+    ), "Satute files check failed: Required files are missing or not created."
+
 
 def test_9(data_amino_acids_dir_path, iqtree, python, satute):
     source_path, msa, _ = data_amino_acids_dir_path
@@ -228,13 +252,12 @@ def test_9(data_amino_acids_dir_path, iqtree, python, satute):
 
     # copy msa file to output directory
     files_to_copy = [msa]
-    
+
     copy_files_to_dest_dir(source_path, dest_dir_path, files_to_copy)
 
     categories = [1, 2]
     alpha = str(0.05)
     asr = False
-
 
     # Satute run
     run_satute(
@@ -253,12 +276,17 @@ def test_9(data_amino_acids_dir_path, iqtree, python, satute):
     )
 
     # IQTree files check
-    assert check_iqtree_files_exist(msa, dest_dir_path, ["ufboot"]), f"{suffix} was successful 32"
+    assert check_iqtree_files_exist(
+        msa, dest_dir_path, ["ufboot"]
+    ), f"{suffix} was successful 32"
     # Satute files check
-    assert check_satute_files(msa, dest_dir_path, categories, alpha, asr), f"{suffix} failed 31"
+    assert check_satute_files(
+        msa, dest_dir_path, categories, alpha, asr
+    ), f"{suffix} failed 31"
+
 
 def test_10(data_dir_path, iqtree, python, satute):
-    source_path, msa, _ = data_dir_path    
+    source_path, msa, _ = data_dir_path
     suffix = "MODEL TEST 10: msa model category"
 
     # create output directory
@@ -272,8 +300,7 @@ def test_10(data_dir_path, iqtree, python, satute):
     alpha = str(0.05)
     asr = True
 
-    
-    with pytest.raises(SystemExit) as excinfo: 
+    with pytest.raises(SystemExit) as excinfo:
         # Satute run
         run_satute(
             [
@@ -291,6 +318,9 @@ def test_10(data_dir_path, iqtree, python, satute):
             ]
         )
 
-    assert not check_iqtree_files_exist(msa, Path(dest_dir_path).absolute(), []), "IQTree files check failed: Required files are missing or not created."
-    assert not check_satute_files(msa, Path(dest_dir_path).absolute(), categories, alpha, asr), "Satute files check failed: Required files are missing or not created."
-
+    assert not check_iqtree_files_exist(
+        msa, Path(dest_dir_path).absolute(), []
+    ), "IQTree files check failed: Required files are missing or not created."
+    assert not check_satute_files(
+        msa, Path(dest_dir_path).absolute(), categories, alpha, asr
+    ), "Satute files check failed: Required files are missing or not created."

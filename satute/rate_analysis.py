@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import pandas as pd
+
 from ete3 import Tree
 from typing import List, Dict
 from Bio.Align import MultipleSeqAlignment
@@ -8,9 +9,14 @@ from satute.trees import rescale_branch_lengths
 from satute.partial_likelihood.graph import calculate_subtree_edge_metrics
 from satute.sequences import dict_to_alignment
 from satute.partial_likelihood.rate_matrix import RateMatrix
-from satute.ztest_posterior_distribution import calculate_test_statistic_posterior_distribution
-from satute.partial_likelihood.partial_likelihood import calculate_partial_likelihoods_for_sites
+from satute.ztest_posterior_distribution import (
+    calculate_test_statistic_posterior_distribution,
+)
+from satute.partial_likelihood.partial_likelihood import (
+    calculate_partial_likelihoods_for_sites,
+)
 from satute.result import TestResultsBranches, TestStatisticComponentsContainer
+
 
 def single_rate_analysis(
     initial_tree: Tree,
@@ -151,11 +157,12 @@ def multiple_rate_analysis(
             )
 
             # Step 7: Count leaves and branches for subtrees in the rescaled tree
-            edge_subtree_metrics = calculate_subtree_edge_metrics(rescaled_tree, focused_edge)
+            edge_subtree_metrics = calculate_subtree_edge_metrics(
+                rescaled_tree, focused_edge
+            )
 
             # Step 8: Process each edge and its associated likelihoods
             for edge, likelihoods in partial_likelihood_per_site_storage.items():
-
                 # Convert left and right likelihoods to data frames
                 left_partial_likelihood = pd.DataFrame(
                     likelihoods["left"]["likelihoods"]
@@ -200,7 +207,6 @@ def multiple_rate_analysis(
                     "branch_length", left_partial_likelihood.get("branch_length")[0]
                 )
 
-
             # Step 10: Add the results for the current rate category to the main dictionary
             result_rate_dictionary[rate] = {
                 "result_list": results_list,
@@ -210,5 +216,3 @@ def multiple_rate_analysis(
             }
 
     return result_rate_dictionary
-
-
