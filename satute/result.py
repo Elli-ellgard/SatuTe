@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
-
-from typing import Dict, Any, List
 import pandas as pd
+from typing import Dict, Any, List
 
 
 class TestStatisticComponents:
@@ -31,7 +30,7 @@ class TestStatisticComponents:
 
         # Create a DataFrame from the components
         data = {
-            "coefficient": self.coefficients,
+            "coherence": self.coefficients,
             "sample_variance": self.variances,
         }
         df = pd.DataFrame(data)
@@ -102,7 +101,7 @@ class TestStatisticComponentsContainer:
         for identifier, component in self.components.items():
             df = component.to_dataframe()
             for _, row in df.iterrows():
-                data_row = {"edge": identifier}
+                data_row = {"branch": identifier}
                 data_row.update(row.to_dict())
                 data.append(data_row)
 
@@ -231,7 +230,7 @@ class TestResultsBranches:
 
             # Assuming each branch's results are a dict that you want to turn into a single row
             # Add the branch name to the row
-            row = {"edge": branch_name}
+            row = {"branch": branch_name}
 
             # Assuming results are structured in a way that can directly fill into row data
             row.update(results)

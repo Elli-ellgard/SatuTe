@@ -9,11 +9,13 @@ from pandas import DataFrame
 from typing import Dict, Any, List
 from Bio.Align import MultipleSeqAlignment
 
-
-from satute.logging import log_original_tree, log_rate_info
+from satute.logging import log_rate_and_tree
 from satute.result import TestStatisticComponentsContainer
-from satute.ztest_posterior_distribution import calculate_posterior_probabilities_subtree_df
+from satute.ztest_posterior_distribution import (
+    calculate_posterior_probabilities_subtree_df,
+)
 from satute.models.amino_acid_models import AMINO_ACIDS
+
 
 # New function to format float columns
 def format_float_columns(data_frame: DataFrame):
@@ -71,7 +73,10 @@ def write_components(
         edge (str): Edge parameter for the file name.
         site_indices (List[int]): List of site indices to be included in the DataFrame for each identifier.
     """
-    file_name = construct_file_name(msa_file, output_suffix, rate, alpha, edge)
+    changed_rate_name = rate.replace("p", "c")
+    file_name = construct_file_name(
+        msa_file, output_suffix, changed_rate_name, alpha, edge
+    )
     components_frame = components.to_dataframe()
 
     components_frame["rate_category"] = rate
@@ -80,9 +85,9 @@ def write_components(
     # Assuming every row/component should have an associated site index
     expanded_site_indices = []
 
-    for identifier in components_frame["edge"].unique():
+    for identifier in components_frame["branch"].unique():
         expanded_site_indices.extend(site_indices)
-    
+
     # Add the expanded site indices to the DataFrame
     components_frame["site"] = expanded_site_indices
 
@@ -132,7 +137,6 @@ def write_to_csv(data_frame: pd.DataFrame, file_name: str, logger: Logger) -> No
 
 def write_results_for_category_rates(
     results: Dict[str, Any],
-    to_be_tested_tree: Tree,
     output_suffix: str,
     msa_file: Path,
     alpha: float,
@@ -149,36 +153,9 @@ def write_results_for_category_rates(
     This function serves as an orchestrator for writing the analysis results of different evolutionary rate
     categories into separate files, each named according to the provided parameters to reflect the analysis's specifics.
 
-    Args:
-        results (Dict[str, Any]): A dictionary where keys are rate categories (as strings) and values are the results
-        data (of any type) associated with those categories.
-        to_be_tested_tree (Tree): An ETE tree object that represents the phylogenetic tree to be tested or analyzed.
-        output_suffix (str): A suffix to be appended to the output files' names, providing context or distinguishing
-        between different analysis runs.
-        msa_file (Path): The file path to the multiple sequence alignment (MSA) file that was analyzed. This is used
-        as part of the basis for naming output files.
-        alpha (float): A parameter value used in the analysis, included in the output file names for reference.
-        edge (str): A string representing specific edge information in the phylogenetic tree, also included in the
-        output file names.
-        logger (Logger): A logging.Logger object used for logging informational messages and errors during the process.
-
-    Returns:
-        None
-
-    Raises:
-        Exception: If an error occurs during the logging of the original tree or the processing of category rates,
-        exceptions are caught and logged. Specific handling or re-raising of exceptions should be implemented in the
-        functions `log_original_tree` and `process_rate_category`.
     """
-    try:
-        log_original_tree(logger, to_be_tested_tree)
-    except Exception as e:
-        logger.error(f"Error logging original tree: {e}")
-        # Consider whether to continue execution or raise an exception based on your application's needs.
-
     for rate, results_set in results.items():
         try:
-
             process_rate_category(
                 rate,
                 results_set,
@@ -230,9 +207,10 @@ def write_posterior_probabilities_for_rates(
         None
     """
     for rate, results_set in results.items():
+        changed_rate_name = rate.replace("p", "c")
         # Construct the base file name for this rate category
         base_file_name = construct_file_name(
-            output_file, output_suffix, rate, alpha, edge
+            output_file, output_suffix, changed_rate_name, alpha, edge
         )
 
         # Calculate and write posterior probabilities for this rate category
@@ -298,9 +276,12 @@ def process_rate_category(
     - logger (Logger): Logger for logging events.
     """
     try:
-        file_name = construct_file_name(msa_file, output_suffix, rate, alpha, edge)
+        changed_rate = rate.replace("p", "c")
+        file_name = construct_file_name(
+            msa_file, output_suffix, changed_rate, alpha, edge
+        )
 
-        log_rate_info(logger, file_name, rate, results_set)
+        log_rate_and_tree(logger, file_name, rate, results_set)
 
         results_data_frame = pd.DataFrame(results_set["result_list"].to_dataframe())
         # add sequence length for considered rate category and rate category
@@ -333,7 +314,6 @@ def write_results_to_files(
         logger.info(
             f"Saturation Test Results for rate category mapped to tree in Nexus file: {file_name}.nex"
         )
-    # write_to_components(results_set['components'], file_name, [])
     write_to_csv(results_data_frame, file_name, logger)
 
 
@@ -369,7 +349,7 @@ def update_node_metadata(newick: str, row: DataFrame, columns: List) -> str:
     Returns:
     - str: Newick string with updated metadata for the node.
     """
-    target_node = get_target_node(row["edge"])
+    target_node = get_target_node(row["branch"])
     escaped_target_node = re.escape(target_node)
     meta_data = create_meta_data_string(row, columns)
     newick = insert_metadata_into_newick(newick, escaped_target_node, meta_data)
@@ -539,7 +519,6 @@ def calculate_and_write_posterior_probabilities(
         )
 
     for edge, likelihoods in partial_likelihood_per_site_storage.items():
-
         left_partial_likelihood = pd.DataFrame(likelihoods["left"]["likelihoods"])
 
         right_partial_likelihood = pd.DataFrame(likelihoods["right"]["likelihoods"])
@@ -561,7 +540,7 @@ def calculate_and_write_posterior_probabilities(
 
         right_posterior_probabilities["node"] = right_partial_likelihood["Node"]
 
-        right_posterior_probabilities["edge"] = edge
+        right_posterior_probabilities["branch"] = edge
 
         # Map numerical indices to state names and add side suffix
         state_columns_left = {i: "p" + state for i, state in enumerate(states)}
@@ -579,10 +558,8 @@ def calculate_and_write_posterior_probabilities(
         )
 
         # Ensure 'Site', 'Node', and 'Edge' columns are not suffixed
-        for col in ["site", "edge"]:
-
+        for col in ["site", "branch"]:
             if col + "_left" in left_posterior_probabilities.columns:
-
                 left_posterior_probabilities[col] = left_posterior_probabilities[
                     col + "_left"
                 ]
@@ -590,7 +567,6 @@ def calculate_and_write_posterior_probabilities(
                 left_posterior_probabilities.drop(col + "_left", axis=1, inplace=True)
 
             if col + "_right" in right_posterior_probabilities.columns:
-
                 right_posterior_probabilities[col] = right_posterior_probabilities[
                     col + "_right"
                 ]

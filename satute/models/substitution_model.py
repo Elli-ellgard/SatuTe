@@ -23,3 +23,4 @@ class SubstitutionModel:
     number_rates: Optional[int] = None
     category_rates: Optional[List[float]] = None
     precomputed_q_matrix: Optional[np.ndarray] = None
+    gamma_shape : Optional[float] = None

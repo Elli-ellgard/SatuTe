@@ -76,7 +76,6 @@ def calculate_coefficients_of_test_statistic_for_each_site(
     delta = np.zeros(number_sites)
 
     for i in range(multiplicity):
-
         delta += np.asarray(factors_left_subtree[i]) * np.asarray(
             factors_right_subtree[i]
         )
@@ -454,7 +453,7 @@ def calculate_test_statistic_posterior_distribution(
 
     components = TestStatisticComponents(coefficients, [sample_variance] * number_sites)
 
-    """"Calculation of the test statistc and standard error of the mean"""
+    """"Calculation of the test statistic and standard error of the mean"""
     (test_statistic, coefficient_value, standard_error_of_mean) = (
         calculate_test_statistic(coefficients, sample_variance, number_sites)
     )
@@ -463,7 +462,7 @@ def calculate_test_statistic_posterior_distribution(
         """Calculation of the p-value"""
         p_value = st.norm.sf(test_statistic)
 
-        """ Decision of the statistcal tests"""
+        """ Decision of the statistical tests"""
         # decision of the statistical test
         z_alpha, decision_test = decision_z_test(test_statistic, alpha)
 
@@ -484,24 +483,22 @@ def calculate_test_statistic_posterior_distribution(
         z_alpha = np.nan
         decision_test = np.nan
         z_alpha_corrected = np.nan
-        decision_corrected_test_tips = np.nan
+        # decision_corrected_test_tips = np.nan
         # decision_corrected_test_branches = np.nan
 
     """ Calculation of the saturation coherence between two sequences """
-    decision_test_tip2tip = decision_tip2tip(
-        coefficient_value, number_sites, multiplicity, alpha
-    )
+    # decision_test_tip2tip = decision_tip2tip(
+    #     coefficient_value, number_sites, multiplicity, alpha
+    # )
 
     result = TestResultBranch(
-        coefficient_value=coefficient_value,
+        mean_coherence=coefficient_value,
         standard_error_of_mean=standard_error_of_mean,
         z_score=test_statistic,
         p_value=p_value,
         z_alpha=z_alpha,
         decision_test=decision_test,
-        z_alpha_corrected=z_alpha_corrected,
-        decision_corrected_test_tips=decision_corrected_test_tips,
-        decision_test_tip2tip=decision_test_tip2tip,
+        z_alpha_bonferroni_corrected=z_alpha_corrected,
     )
 
     return components, result
