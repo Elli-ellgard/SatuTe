@@ -73,7 +73,7 @@ class SatuteFileWriter(FileWriter):
 
         self.write_to_file(
             f"\n\n"
-            f"Spectral Decomposition:\n\n"
+            f"SPECTRAL DECOMPOSITION:\n\n"
             f"Eigenvalue: {eigenvalue}\n\n"
             f"Multiplicity: {multiplicity}\n\n"
             f"Eigenvectors: {eigenvector_str}\n"
@@ -107,22 +107,22 @@ class SatuteFileWriter(FileWriter):
             )
         else:
             self.write_to_file(
-                f"IQ-Tree inferred Tree: {tree.write(format=1, format_root_node=True)}"
+                f"\nIQ-Tree inferred Tree: {tree.write(format=1, format_root_node=True)}\n\n"
             )
 
     def write_intro(self):
         self.write_to_file("SatuTe Version 0.0.1 \n\n")
         self.write_to_file(
-            """To cite SatuTe please use: When the past fades: Detecting phylogenetic signal with SatuTe: Cassius Manuel, Christiane Elgert, Enes Sakalli, Heiko A. Schmidt1, Carme Viñas and Arndt von Haeseler\n\n"""
+            """To cite SatuTe please use: When the past fades: Detecting phylogenetic signal with SatuTe: Cassius Manuel, Christiane Elgert, Enes Sakalli, Heiko A. Schmidt1, Carme Viñas and Arndt von Haeseler\n"""
         )
 
     def write_alignment_info(self, msa_file, option):
         if "dir" in option:
             self.write_to_file(
-                f"\nUsed Alignment File from directory {msa_file.resolve()}\n"
+                f"\nUsed Alignment File from directory: {msa_file.resolve()}\n"
             )
         else:
-            self.write_to_file(f"\nUsed Alignment File {msa_file.resolve()}\n")
+            self.write_to_file(f"\nUsed Alignment File: {msa_file.resolve()}\n")
 
     def write_results_to_csv(self, msa_file, results, input_args):
         self.write_to_file(
@@ -173,9 +173,9 @@ class SatuteFileWriter(FileWriter):
 
     def write_considered_branch(self, input_args):
         considered_edge = (
-            f"Run test for saturation for the branch: {input_args.edge}"
+            f"Run test for saturation for the branch: {input_args.edge}\n"
             if input_args.edge
-            else "Run test for saturation for each branch"
+            else "Run test for saturation for each branch\n"
         )
         self.write_to_file(f"{considered_edge}")
 
@@ -200,6 +200,7 @@ class SatuteFileWriter(FileWriter):
         results,
     ):
         self.write_intro()
+
         self.write_input_source(iq_tree_file=iq_tree_file)
 
         self.write_alignment_info(
@@ -207,12 +208,12 @@ class SatuteFileWriter(FileWriter):
             option=iqtree_arguments["option"],
         )
 
-        self.write_considered_branch(input_args=input_args)
-
         self.write_which_tested_tree(
             tree=test_tree,
             option=iqtree_arguments["option"],
         )
+
+        self.write_considered_branch(input_args=input_args)
 
         self.write_substitution_model_info(
             substitution_model=substitution_model,
