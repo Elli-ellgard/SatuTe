@@ -3,7 +3,8 @@ import scipy.stats as st
 import numpy as np
 import pandas as pd
 from typing import List, Tuple
-from satute.result import TestResultBranch, TestStatisticComponents
+from satute.container.testResultBranch import TestResultBranch
+from satute.container.testStatisticComponent import TestStatisticComponents
 
 
 """## CALCULATION OF POSTERIOR DISTRIBUTION """
@@ -487,9 +488,6 @@ def calculate_test_statistic_posterior_distribution(
         # decision_corrected_test_branches = np.nan
 
     """ Calculation of the saturation coherence between two sequences """
-    # decision_test_tip2tip = decision_tip2tip(
-    #     coefficient_value, number_sites, multiplicity, alpha
-    # )
 
     result = TestResultBranch(
         mean_coherence=coefficient_value,
@@ -499,6 +497,7 @@ def calculate_test_statistic_posterior_distribution(
         z_alpha=z_alpha,
         decision_test=decision_test,
         z_alpha_bonferroni_corrected=z_alpha_corrected,
+        decision_bonferroni_corrected= decision_corrected_test_tips
     )
 
     return components, result

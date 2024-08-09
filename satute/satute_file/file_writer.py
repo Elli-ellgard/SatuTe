@@ -12,6 +12,12 @@ class FileWriter:
         else:
             raise ValueError("File is not open. Call open_file() before writing.")
 
+    def write_header(self, content):
+        if self.file:
+            self.file.write(f"\n#### {content} ####\n")
+        else:
+            raise ValueError("File is not open. Call open_file() before writing.")
+
     def close_file(self):
         if self.file:
             self.file.close()

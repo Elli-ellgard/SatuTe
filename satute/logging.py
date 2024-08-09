@@ -4,7 +4,6 @@ from ete3 import Tree
 from argparse import Namespace
 from logging import Logger
 from typing import List, Dict, Any
-from satute.models.substitution_model import SubstitutionModel
 
 
 def log_consider_iqtree_message(logger: Logger):
@@ -18,9 +17,9 @@ def log_consider_iqtree_message(logger: Logger):
 
 
 def construct_log_file_name(msa_file: Path, input_args: List[Namespace]):
-    log_file = f"{msa_file.resolve()}_{input_args.alpha}.satute.log"
+    log_file = f"{msa_file.resolve()}.satute.log"
     if input_args.output_suffix:
-        log_file = f"{msa_file.resolve()}_{input_args.alpha}_{input_args.output_suffix}.satute.log"
+        log_file = f"{msa_file.resolve()}_{input_args.output_suffix}.satute.log"
     return log_file
 
 
@@ -39,8 +38,8 @@ def setup_logging_configuration(
     # File Handler - always active at DEBUG level
     log_file = construct_log_file_name(msa_file, input_args)
     file_handler = logging.FileHandler(log_file)
-    # file_format = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
-    # file_handler.setFormatter(file_format)
+    file_format = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+    file_handler.setFormatter(file_format)
     file_handler.setLevel(logging.DEBUG)  # Always log everything in file
     logger.addHandler(file_handler)
 
@@ -58,44 +57,20 @@ def setup_logging_configuration(
 
 
 def log_iqtree_run_and_satute_info(
-    input_args: List[Namespace],
-    substitution_model: SubstitutionModel,
     active_directory: Path,
-    rate_category: str,
     msa_file: Path,
+    iq_tree_arguments: Dict,
     logger: logging.Logger,
 ) -> None:
-    """
-    Logs information about the initial IQ-TREE run and tests being performed.
-    Args:
-        iq_arguments_dict (dict): Dictionary containing IQ-TREE argument configurations.
-        substitution_model: The substitution model used in the analysis.
-        rate_category: The category of rates being considered.
-        msa_file (Path): Path to the MSA file being used.
-        multiplicity: Multiplicity value from spectral decomposition.
-    """
-    considered_rate_category_text = (
-        f"\n\tConsidered rate category: {rate_category}"
-        if substitution_model.number_rates > 1
-        else ""
-    )
+    logs = [
+        f"Run SatuTe on: {msa_file.resolve()}",
+        f"Tree and parameters are read from: {msa_file.resolve()}.iqtree",
+        f"Results will be written to the directory: {active_directory.resolve()}",
+        f"Running tests and initial IQ-Tree Run with configurations: {iq_tree_arguments['option']}",
+    ]
 
-    considered_edge = (
-        f"Run test for saturation for the branch{input_args.edge}"
-        if input_args.edge
-        else "Run test for saturation for each branch"
-    )
-
-    logger.info(
-        f"""
-        Running tests and initial IQ-Tree with configurations:
-        Significance Level Used for Test: {input_args.alpha}
-        Run SatuTe on: {msa_file.resolve()}        
-        Number of rate categories: {substitution_model.number_rates} {considered_rate_category_text}
-        SatuTe will be applied on {considered_edge}        
-        Results will be written to the directory: {active_directory.name}                
-        """
-    )
+    for log in logs:
+        logger.info(log)
 
 
 def log_iqtree_options(

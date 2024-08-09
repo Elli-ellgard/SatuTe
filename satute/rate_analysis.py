@@ -15,7 +15,8 @@ from satute.ztest_posterior_distribution import (
 from satute.partial_likelihood.partial_likelihood import (
     calculate_partial_likelihoods_for_sites,
 )
-from satute.result import TestResultsBranches, TestStatisticComponentsContainer
+from satute.container.testResultBranch import TestResultsBranches
+from satute.container.testStatisticComponent import TestStatisticComponentsContainer
 
 
 def single_rate_analysis(

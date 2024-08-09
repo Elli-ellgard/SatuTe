@@ -1,0 +1,2 @@
+
+SATUTE_VERSION = """\nSatuTe Version 0.0.1 \n\nTo cite SatuTe please use:\nC. Manuel, C. Elgert, E. Sakalli, H. A. Schmidt, C. Viñas and A. von Haeseler\nWhen the past fades: Detecting phylogenetic signal with SatuTe\nNature Methods\nDOI: \n"""

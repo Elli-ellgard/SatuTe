@@ -2,24 +2,21 @@ import numpy as np
 import pandas as pd
 from ete3 import Tree
 from pathlib import Path
-from typing import List, Union, Dict
+from typing import List, Dict
 
 from satute.ostream import construct_file_name
 from satute.models.substitution_model import SubstitutionModel
 from satute.satute_file.file_writer import FileWriter
+from satute.messages.messages import SATUTE_VERSION
+from datetime import datetime
 
 
 class SatuteFileWriter(FileWriter):
+    
     def write_substitution_model_info(
         self,
         substitution_model: SubstitutionModel,
-        multiplicity: int,
-        eigenvectors: List[np.array],
-        eigenvalue: float,
         option: str,
-        category_rates: Dict[str, Dict[str, Union[int, float]]],
-        categorized_sites: Dict[str, List[int]],
-        alignment_length: int,
     ) -> None:
         """
         Logs information about substitution model and its spectral decomposition
@@ -30,8 +27,6 @@ class SatuteFileWriter(FileWriter):
             eigenvectors: eigenvector corresponding to eigenvalue from spectral decomposition
             eigenvalue:  dominant non-zero eigenvalue from spectral decomposition
         """
-
-        self.write_to_file("""\n\nSUBSTITUTION PROCESS\n\n""")
         # Formatting the rate matrix for loggings
         rate_matrix_str: str = format_matrix(
             substitution_model.rate_matrix, precision=4
@@ -41,43 +36,19 @@ class SatuteFileWriter(FileWriter):
             np.array(list(substitution_model.state_frequencies)), precision=4
         )
 
-        substitution_model_text: str = (
-            f"Substitution Model: {substitution_model.model}\n\n"
-        )
+        substitution_model_text: str = f"{substitution_model.model}\n\n"
 
         model_text: str = (
-            "Best fitted model: " + substitution_model_text
+            "Best fitted substitution model:" + substitution_model_text
             if option == "msa"
-            else "User chosen model: " + substitution_model_text
+            else "User chosen substitution model: " + substitution_model_text
         )
-
-        if substitution_model.gamma_shape:
-            self.write_to_file(f"Gamma shape alpha: {substitution_model.gamma_shape}")
 
         # Logging the formatted rate matrix and state frequencies
         self.write_to_file(
             f"\n{model_text}"
             f"Rate Matrix Q:\n{rate_matrix_str}\n\n"
-            f"Stationary Distribution:\n{state_distribution_str}\n"
-        )
-
-        self.write_rate_categories(
-            category_rates=category_rates,
-            categorized_sites=categorized_sites,
-            alignment_length=alignment_length,
-        )
-
-        eigenvector_str = ""
-        for eigenvector in eigenvectors:
-            eigenvector_str += f"\n{format_array(list(eigenvector))}"
-
-        self.write_to_file(
-            f"\n\n"
-            f"SPECTRAL DECOMPOSITION:\n\n"
-            f"Eigenvalue: {eigenvalue}\n\n"
-            f"Multiplicity: {multiplicity}\n\n"
-            f"Eigenvectors: {eigenvector_str}\n"
-            f"\n\n"
+            f"\nStationary Distribution:\n{state_distribution_str}\n"
         )
 
     def write_rate_categories(
@@ -85,19 +56,28 @@ class SatuteFileWriter(FileWriter):
         category_rates: Dict[str, Dict],
         categorized_sites: Dict[str, List],
         alignment_length: float,
+        substitution_model: SubstitutionModel,
     ):
         if category_rates:
+            if substitution_model.gamma_shape:
+                
+                self.write_to_file(
+                    f"\nGamma shape parameter: {substitution_model.gamma_shape}\n"
+                )
+
             for rate, value in category_rates.items():
                 value["empirical"] = len(categorized_sites[rate]) / alignment_length
             # Convert the category rates dictionary to a pandas DataFrame for table formatting
+
             df = pd.DataFrame.from_dict(category_rates, orient="index")
             df.reset_index(drop=True, inplace=True)
             df.columns = [
                 "Category",
                 "Relative_rate",
                 "Proportion",
-                "Empirical Proportion (Number of Sites)",
+                f"Empirical Proportion (alignment length {alignment_length})",
             ]
+
             self.write_to_file("\n" + df.to_string(index=False) + "\n")
 
     def write_which_tested_tree(self, tree: Tree, option: str) -> None:
@@ -107,80 +87,92 @@ class SatuteFileWriter(FileWriter):
             )
         else:
             self.write_to_file(
-                f"\nIQ-Tree inferred Tree: {tree.write(format=1, format_root_node=True)}\n\n"
+                f"\nIQ-Tree inferred tree: {tree.write(format=1, format_root_node=True)}\n\n"
             )
 
     def write_intro(self):
-        self.write_to_file("SatuTe Version 0.0.1 \n\n")
-        self.write_to_file(
-            """To cite SatuTe please use: When the past fades: Detecting phylogenetic signal with SatuTe: Cassius Manuel, Christiane Elgert, Enes Sakalli, Heiko A. Schmidt1, Carme Viñas and Arndt von Haeseler\n"""
-        )
+        self.write_header("REFERENCE")
+        self.write_to_file(SATUTE_VERSION)
 
-    def write_alignment_info(self, msa_file, option):
+    def write_alignment_info(self, msa_file: Path, option: str):
         if "dir" in option:
             self.write_to_file(
-                f"\nUsed Alignment File from directory: {msa_file.resolve()}\n"
+                f"\nUsed alignment file from directory: {msa_file.resolve()}\n"
             )
         else:
-            self.write_to_file(f"\nUsed Alignment File: {msa_file.resolve()}\n")
+            self.write_to_file(f"\nUsed alignment file: {msa_file.resolve()}\n")
 
     def write_results_to_csv(self, msa_file, results, input_args):
         self.write_to_file(
-            "\nThe satute.csv file provides a comprehensive overview of the saturation test results for specific branches or all branches.\n\n"
+            "\nThe satute.csv file provides a comprehensive overview of the saturation test results for specific branches or all branches.\n"
+        )
+        self.write_to_file(
+            "\nContaining: mean coherence, standard error of mean, z_score, p_value, z_alpha, decision_test, z_alpha bonferroni correcred\nbranch length, number of sites\n\n"
         )
 
         for rate, results_set in results.items():
             replaced_rate_category = rate.replace("p", "c")
             self.write_to_file(
-                f"Writing results for {replaced_rate_category} to CSV File: {construct_file_name(msa_file, input_args.output_suffix, replaced_rate_category, input_args.alpha, input_args.edge)}.csv\n"
+                f"Results for category {replaced_rate_category} to CSV File: {construct_file_name(msa_file, input_args.output_suffix, replaced_rate_category, input_args.alpha, input_args.edge)}.csv\n"
             )
 
     def write_results_to_nexus(self, msa_file, results, input_args):
+        for rate, results_set in results.items():
+            replaced_rate_category = rate.replace("p", "c")
+            self.write_to_file(
+                f"\nResults for category {replaced_rate_category} to Nexus File: {construct_file_name(msa_file, input_args.output_suffix, replaced_rate_category, input_args.alpha, input_args.edge)}.nex"
+            )
+
+    def write_components(self, msa_file, results, input_args):
         self.write_to_file(
-            f"""\nA satute.nex file consists of two blocks, each enclosed by BEGIN and END statements.\nThese blocks contain the taxon labels and the phylogenetic tree, with the most important test results integrated into the NEWICK string as metadata.\n"""
+            "\n\nThe components file provides detailed information about the components of the test statistic \nfor each site and a specific edge in the tree, enabling other analysis of the saturation status like \nsliding window analysis.\n\n"
         )
         for rate, results_set in results.items():
             replaced_rate_category = rate.replace("p", "c")
             self.write_to_file(
-                f"\nWriting results for {replaced_rate_category} to Nexus File: {construct_file_name(msa_file, input_args.output_suffix, replaced_rate_category, input_args.alpha, input_args.edge)}.nex"
+                f"\nResults for category {replaced_rate_category} to CSV File: {construct_file_name(msa_file, input_args.output_suffix, replaced_rate_category, input_args.alpha, input_args.edge)}.components.csv"
+            )
+
+    def write_results_to_ancestral_states(self, msa_file, results, input_args):
+        for rate, results_set in results.items():
+            replaced_rate_category = rate.replace("p", "c")
+            self.write_to_file(
+                f"\nWrite Ancestral States for rate category {replaced_rate_category} to CSV: {construct_file_name(msa_file, input_args.output_suffix, replaced_rate_category, input_args.alpha, input_args.edge)}.asr.csv"
+            )
+
+    def write_results_to_rate_index(self, msa_file, results, input_args):
+        for rate, results_set in results.items():
+            replaced_rate_category = rate.replace("p", "c")
+            self.write_to_file(
+                f"\nWrite Ancestral States{replaced_rate_category} to CSV: {construct_file_name(msa_file, input_args.output_suffix, replaced_rate_category, input_args.alpha, input_args.edge)}.rateidx"
             )
 
     def write_considered_rate_category(
         self, rate_category: int, substitution_model: SubstitutionModel
     ):
         considered_rate_category_text = (
-            f"Test will be applied on the rate categories: {rate_category}"
+            f"\nTested rate categories: {rate_category}"
             if substitution_model.number_rates > 1
             else ""
         )
-        self.write_to_file(f"{considered_rate_category_text}")
+        self.write_to_file(f"{considered_rate_category_text}\n")
 
     def write_significance_level(self, alpha: float):
-        considered_significance_level_text = (
-            f"\nTest will be applied with the significance level: {alpha}\n"
-        )
+        considered_significance_level_text = f"\nSignificance level: {alpha}\n"
         self.write_to_file(f"{considered_significance_level_text}")
-
-    def write_considered_rate_category(
-        self, rate_category: int, substitution_model: SubstitutionModel
-    ):
-        considered_rate_category_text = (
-            f"Test will be applied on the rate categories: {rate_category}"
-            if substitution_model.number_rates > 1
-            else ""
-        )
-        self.write_to_file(f"{considered_rate_category_text}")
 
     def write_considered_branch(self, input_args):
         considered_edge = (
-            f"Run test for saturation for the branch: {input_args.edge}\n"
+            f"Tested branch: {input_args.edge}\n"
             if input_args.edge
-            else "Run test for saturation for each branch\n"
+            else "Tested branches: all\n"
         )
-        self.write_to_file(f"{considered_edge}")
+        self.write_to_file(f"\n{considered_edge}")
 
     def write_input_source(self, iq_tree_file: str):
-        self.write_to_file(f"\nTree and parameters are read from: {iq_tree_file}\n")
+        self.write_to_file(
+            f"\nTree and substitution model are read from: {iq_tree_file}\n"
+        )
 
     def write_satute_file(
         self,
@@ -199,39 +191,65 @@ class SatuteFileWriter(FileWriter):
         alpha,
         results,
     ):
+        self.write_header("TIMESTAMP")
+
+        # Get the current timestamp
+        current_timestamp = datetime.now()
+
+        # Format the timestamp
+        formatted_timestamp = current_timestamp.strftime("%Y-%m-%d %H:%M:%S \n")
+
+        # Print the formatted timestamp
+        self.write_to_file(formatted_timestamp)
+
         self.write_intro()
 
-        self.write_input_source(iq_tree_file=iq_tree_file)
+        self.write_header("INPUT")
 
         self.write_alignment_info(
             msa_file=msa_file,
             option=iqtree_arguments["option"],
         )
 
+        self.write_input_source(iq_tree_file=iq_tree_file)
+
         self.write_which_tested_tree(
             tree=test_tree,
             option=iqtree_arguments["option"],
         )
 
-        self.write_considered_branch(input_args=input_args)
+        self.write_header("SUBSTITUTION MODEL")
 
         self.write_substitution_model_info(
-            substitution_model=substitution_model,
-            multiplicity=multiplicity,
-            eigenvectors=array_right_eigenvectors,
-            eigenvalue=eigenvalue,
-            option=iqtree_arguments["option"],
+            substitution_model=substitution_model, option=iqtree_arguments["option"]
+        )
+
+        self.write_header("MODEL FOR RATE HETEROGENEITY")
+
+        self.write_rate_categories(
             category_rates=substitution_model.category_rates,
             categorized_sites=categorized_sites,
             alignment_length=alignment_length,
+            substitution_model=substitution_model,
         )
+
+        self.write_spectral_decomposition(
+            eigenvalue=eigenvalue,
+            multiplicity=multiplicity,
+            eigenvectors=array_right_eigenvectors,
+        )
+
+        self.write_header("SATURATION TEST")
 
         self.write_significance_level(alpha=alpha)
 
+        self.write_considered_branch(input_args=input_args)
+
         self.write_considered_rate_category(
-            rate_category=rate_category,
-            substitution_model=substitution_model,
+            rate_category=rate_category, substitution_model=substitution_model
         )
+
+        self.write_header("OUTPUT")
 
         self.write_to_file("\n\nCSV FILES\n\n")
 
@@ -241,12 +259,65 @@ class SatuteFileWriter(FileWriter):
             input_args=input_args,
         )
 
-        self.write_to_file("\nNEXUS FILES\n\n")
+        self.write_to_file("\nCOHERENCE AND VARIANCE PER SITE FOR EACH CATEGORY\n")
+
+        self.write_components(
+            msa_file=msa_file,
+            results=results,
+            input_args=input_args,
+        )
+
+        self.write_to_file("\n\nNEXUS FILES\n\n")
+
+        self.write_to_file(
+            "The file contains a block for the taxon labels and a block for the phylogenetic tree,\nwith the most important test results integrated into the NEWICK string as metadata."
+        )
+        self.write_to_file("Containing: z_score, p_value, decision_test.\n\n")
 
         self.write_results_to_nexus(
             msa_file=msa_file,
             results=results,
             input_args=input_args,
+        )
+
+        if input_args.asr:
+            self.write_to_file("\n\nPOSTERIOR DISTRIBUTIONS\n\n")
+
+            self.write_to_file(
+                "The  file contains the posterior distributions of ancestral sequences for the left and right node of  each edge in the tree.\n\n"
+            )
+
+            self.write_results_to_ancestral_states(
+                msa_file=msa_file,
+                results=results,
+                input_args=input_args,
+            )
+
+        if input_args.category_assignment:
+            self.write_to_file("\n\nRATE CATEGORY ASSIGNMENTS\n\n")
+
+            self.write_to_file(
+                "The file contains a multiple sequence alignment subdivided into categories which the sites are assigned to.\n"
+            )
+
+            self.write_results_to_rate_index(
+                msa_file=msa_file,
+                results=results,
+                input_args=input_args,
+            )
+
+    def write_spectral_decomposition(self, eigenvalue, multiplicity, eigenvectors):
+        self.write_header("SPECTRAL DECOMPOSITION")
+
+        eigenvector_str = ""
+        for eigenvector in eigenvectors:
+            eigenvector_str += f"\n{format_array(list(eigenvector))}"
+
+        self.write_to_file(
+            f"\n\n"
+            f"Second Largest Eigenvalue: {eigenvalue}\n\n"
+            f"Multiplicity: {multiplicity}\n\n"
+            f"Eigenvectors: {eigenvector_str}\n"
         )
 
 

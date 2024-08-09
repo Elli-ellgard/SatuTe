@@ -10,10 +10,9 @@ from typing import Dict, Any, List
 from Bio.Align import MultipleSeqAlignment
 
 from satute.logging import log_rate_and_tree
-from satute.result import TestStatisticComponentsContainer
-from satute.ztest_posterior_distribution import (
-    calculate_posterior_probabilities_subtree_df,
-)
+from satute.container.testStatisticComponent import TestStatisticComponentsContainer
+
+from satute.ztest_posterior_distribution import calculate_posterior_probabilities_subtree_df
 from satute.models.amino_acid_models import AMINO_ACIDS
 
 
@@ -62,7 +61,7 @@ def write_components(
     site_indices: List[int],
 ) -> None:
     """
-    Writes the components' DataFrame to a CSV file, including the same site indices for each identifier.
+    Writes the components' DataFrame to a CSV file, ensuring the 'site' column is the second column.
 
     Args:
         components (TestStatisticComponentsContainer): The container of test statistic components.
@@ -73,25 +72,22 @@ def write_components(
         edge (str): Edge parameter for the file name.
         site_indices (List[int]): List of site indices to be included in the DataFrame for each identifier.
     """
-    changed_rate_name = rate.replace("p", "c")
+    renamed_rate = rate.replace("p", "c")
     file_name = construct_file_name(
-        msa_file, output_suffix, changed_rate_name, alpha, edge
+        msa_file, output_suffix, renamed_rate, alpha, edge
     )
     components_frame = components.to_dataframe()
 
-    components_frame["rate_category"] = rate
+    # Add 'rate_category' and ensure it will be the last column
+    components_frame["rate_category"] = renamed_rate
 
-    # Repeat the site_indices for each row in the DataFrame based on the identifier
-    # Assuming every row/component should have an associated site index
-    expanded_site_indices = []
+    # Insert 'site' column right after the first column, whatever it is (likely 'branch' or a similar identifier)
+    if len(components_frame.columns) > 0:
+        components_frame.insert(
+            1, "site", site_indices * (len(components_frame) // len(site_indices))
+        )
 
-    for identifier in components_frame["branch"].unique():
-        expanded_site_indices.extend(site_indices)
-
-    # Add the expanded site indices to the DataFrame
-    components_frame["site"] = expanded_site_indices
-
-    # Write the DataFrame to a CSV file
+    # Write the DataFrame to a CSV file, ensuring no index is included
     components_frame.to_csv(f"{file_name}.components.csv", index=False)
 
 
@@ -276,9 +272,9 @@ def process_rate_category(
     - logger (Logger): Logger for logging events.
     """
     try:
-        changed_rate = rate.replace("p", "c")
+        renamed_rate = rate.replace("p", "c")
         file_name = construct_file_name(
-            msa_file, output_suffix, changed_rate, alpha, edge
+            msa_file, output_suffix, renamed_rate, alpha, edge
         )
 
         log_rate_and_tree(logger, file_name, rate, results_set)
@@ -286,7 +282,7 @@ def process_rate_category(
         results_data_frame = pd.DataFrame(results_set["result_list"].to_dataframe())
         # add sequence length for considered rate category and rate category
         results_data_frame["number_of_sites"] = len(for_categorized_rate_sites)
-        results_data_frame["rate_category"] = rate
+        results_data_frame["rate_category"] = renamed_rate
 
         format_float_columns(results_data_frame)
 

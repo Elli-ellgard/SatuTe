@@ -3,10 +3,12 @@ import shutil
 import subprocess
 import time
 from pathlib import Path
-from Bio import AlignIO
-from Bio.Align import MultipleSeqAlignment
+
 from ete3 import Tree
 import satute.cli
+
+from Bio import AlignIO
+from Bio.Align import MultipleSeqAlignment
 
 
 def filter_files_by_last_name(filenames, suffix):
@@ -147,7 +149,7 @@ def check_iqtree_files_exist(data_name, dest_dir_path, iqtree_options):
 
 
 def check_satute_files(data_name, dest_dir_path, categories, alpha, asr):
-    file_endings = [f"_{alpha}.satute.log"]
+    file_endings = [f".satute.log"]
     suffix = [".satute.csv", ".satute.nex"]
     if asr:
         suffix.append(".satute.asr.csv")

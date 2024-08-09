@@ -3,9 +3,12 @@ import sys
 import argparse
 import logging
 import numpy as np
+import traceback
+
 from pathlib import Path
 from ete3 import Tree
-import traceback
+
+from logging import Logger
 from typing import Optional, Dict, List
 from Bio.Align import MultipleSeqAlignment
 
@@ -13,6 +16,7 @@ from satute.logging import (
     log_iqtree_run_and_satute_info,
     log_tested_tree,
     log_consider_iqtree_message,
+    log_iqtree_options,
     setup_logging_configuration,
 )
 
@@ -26,14 +30,13 @@ from satute.arguments import ARGUMENT_LIST
 from satute.satute_file.satute_file_writer import SatuteFileWriter
 from satute.rate_analysis import multiple_rate_analysis, single_rate_analysis
 from satute.models.substitution_model import SubstitutionModel
+
 from satute.valid_data_input import (
     validate_category_range,
     validate_and_check_rate_categories,
     validate_and_set_rate_category,
     validate_satute_input_options,
 )
-
-from logging import Logger
 
 
 from satute.ostream import (
@@ -56,6 +59,8 @@ from satute.parser.iqtree_parser import (
     parse_file_to_data_frame,
     IqTreeParser,
 )
+
+from satute.messages.messages import SATUTE_VERSION
 
 
 class Satute:
@@ -110,9 +115,6 @@ class Satute:
         validate_satute_input_options(self.input_args)
 
     def initialize_handlers(self):
-        """
-        Initialize the FileHandler and IqTreeHandler.
-        """
         self.file_handler = FileHandler(self.active_directory)
         self.iqtree_handler = IqTreeHandler(self.input_args.iqtree, self.logger)
 
@@ -244,7 +246,9 @@ class Satute:
                 arguments_dict["arguments"], extra_arguments
             )
 
-        # log_iqtree_options(arguments_dict, extra_arguments=extra_arguments, logger=self.logger)
+            log_iqtree_options(
+                arguments_dict, extra_arguments=extra_arguments, logger=self.logger
+            )
 
     def run(self):
         """
@@ -310,12 +314,10 @@ class Satute:
             # ========  Test for Branch Saturation =========
 
             log_iqtree_run_and_satute_info(
-                logger=self.logger,
-                input_args=self.input_args,
-                substitution_model=substitution_model,
                 active_directory=self.active_directory,
-                rate_category=rate_category,
                 msa_file=Path(msa_file),
+                iq_tree_arguments=self.iqtree_arguments,
+                logger=self.logger,
             )
 
             log_tested_tree(
@@ -683,15 +685,20 @@ def main(args=None):
     try:
         # Parse and validate input arguments
         satute.parse_command_line_input(args)
+
         # Initialize file handler and logger
         satute.configure()
+
         setup_logging_configuration(
             logger=satute.logger,
             input_args=satute.input_args,
             msa_file=Path(satute.file_handler.find_msa_file()),
         )
+
         # IQ-Tree run if necessary
         satute.iqtree_arguments = satute.construct_iqtree_arguments()
+        satute.logger.info(f"{SATUTE_VERSION}")
+
         try:
             satute.run_iqtree_workflow(satute.iqtree_arguments)
         except RuntimeError as e:
