@@ -9,7 +9,7 @@ from pandas import DataFrame
 from typing import Dict, Any, List
 from Bio.Align import MultipleSeqAlignment
 
-from satute.logging import log_rate_and_tree
+from satute.logging_utils import log_rate_and_tree
 from satute.container.testStatisticComponent import TestStatisticComponentsContainer
 
 from satute.ztest_posterior_distribution import calculate_posterior_probabilities_subtree_df

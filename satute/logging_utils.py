@@ -93,10 +93,10 @@ def log_iqtree_options(
 
 def log_tested_tree(logger: Logger, tree: Tree, option: str) -> None:
     if "tree" in option:
-        logger.info(f"User defined Tree: {tree.write(format=1, format_root_node=True)}")
+        logger.info(f"User defined tree: {tree.write(format=1, format_root_node=True)}")
     else:
         logger.info(
-            f"IQ-Tree inferred Tree: {tree.write(format=1, format_root_node=True)}"
+            f"IQ-Tree inferred tree: {tree.write(format=1, format_root_node=True)}"
         )
 
 
