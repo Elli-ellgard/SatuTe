@@ -7,6 +7,7 @@ from tests.scripts.satute_test_utils import (
 )
 
 from tests.scripts.fixtures import *
+import pytest
 
 """TODO: The following tests throw all errors, not checking the existence of output files but the standard output """
 

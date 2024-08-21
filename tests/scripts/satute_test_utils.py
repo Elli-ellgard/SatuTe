@@ -149,7 +149,7 @@ def check_iqtree_files_exist(data_name, dest_dir_path, iqtree_options):
 
 
 def check_satute_files(data_name, dest_dir_path, categories, alpha, asr):
-    file_endings = [f".satute.log"]
+    file_endings = [f"_{alpha}.satute.log", f"_{alpha}.satute"]
     suffix = [".satute.csv", ".satute.nex"]
     if asr:
         suffix.append(".satute.asr.csv")

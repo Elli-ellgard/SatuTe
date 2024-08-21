@@ -3,16 +3,15 @@ import pandas as pd
 from ete3 import Tree
 from pathlib import Path
 from typing import List, Dict
+from datetime import datetime
 
 from satute.ostream import construct_file_name
 from satute.models.substitution_model import SubstitutionModel
 from satute.satute_file.file_writer import FileWriter
 from satute.messages.messages import SATUTE_VERSION
-from datetime import datetime
 
 
 class SatuteFileWriter(FileWriter):
-    
     def write_substitution_model_info(
         self,
         substitution_model: SubstitutionModel,
@@ -60,7 +59,6 @@ class SatuteFileWriter(FileWriter):
     ):
         if category_rates:
             if substitution_model.gamma_shape:
-                
                 self.write_to_file(
                     f"\nGamma shape parameter: {substitution_model.gamma_shape}\n"
                 )
@@ -79,6 +77,9 @@ class SatuteFileWriter(FileWriter):
             ]
 
             self.write_to_file("\n" + df.to_string(index=False) + "\n\n")
+        else:
+            self.write_to_file("\nRate Category: None")
+            self.write_to_file("\n\n")
 
     def write_which_tested_tree(self, tree: Tree, option: str) -> None:
         if "tree" in option:
@@ -107,7 +108,7 @@ class SatuteFileWriter(FileWriter):
             "\nThe satute.csv file provides a comprehensive overview of the saturation test results for specific branches or all branches.\n"
         )
         self.write_to_file(
-            "\nContaining: mean coherence, standard error of mean, z_score, p_value, z_alpha, decision_test, z_alpha bonferroni correcred\nbranch length, number of sites\n\n"
+            "\nContaining: branch , mean_coherence, standard_error_of_mean, z_score, p_value, z_alpha, decision_test, z_alpha_bonferroni_corrected, \n decision_bonferroni_corrected, branch_length, number_of_sites, rate_category\n\n"
         )
 
         for rate, results_set in results.items():

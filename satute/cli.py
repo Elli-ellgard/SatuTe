@@ -201,6 +201,8 @@ class Satute:
                 "--quiet",
             ]
 
+            self.handle_number_rates()
+
             if self.number_rates > 1:
                 extra_arguments = extra_arguments + ["-wspr"]
 
@@ -530,8 +532,17 @@ class Satute:
         eigenvalue: float,
         array_right_eigenvectors: List[np.array],
     ):
-        self.file_writer = SatuteFileWriter(f"{msa_file.resolve()}.satute")
+        if self.input_args.edge:
+            self.file_writer = SatuteFileWriter(
+                f"{msa_file.resolve()}_{self.input_args.alpha}_{self.input_args.edge}.satute"
+            )
+        else:
+            self.file_writer = SatuteFileWriter(
+                f"{msa_file.resolve()}_{self.input_args.alpha}.satute"
+            )
+
         self.file_writer.open_file()
+
         self.file_writer.write_satute_file(
             msa_file,
             iq_tree_file,
@@ -548,6 +559,7 @@ class Satute:
             alpha=self.input_args.alpha,
             results=self.results,
         )
+
         self.file_writer.close_file()
 
     """BEGIN Input Argument Construction"""

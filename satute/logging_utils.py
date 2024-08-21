@@ -16,10 +16,20 @@ def log_consider_iqtree_message(logger: Logger):
     )
 
 
-def construct_log_file_name(msa_file: Path, input_args: List[Namespace]):
-    log_file = f"{msa_file.resolve()}.satute.log"
+def construct_log_file_name(msa_file: Path, input_args: List[Namespace]) -> str:
+    # Start with the base file name and mandatory alpha value
+    parts = [msa_file.resolve(), input_args.alpha]
+
+    # Append output suffix if it exists
     if input_args.output_suffix:
-        log_file = f"{msa_file.resolve()}_{input_args.output_suffix}.satute.log"
+        parts.insert(1, input_args.output_suffix)
+
+    # Append edge if it exists
+    if input_args.edge:
+        parts.append(input_args.edge)
+
+    # Join all parts together with underscores and add the file extension
+    log_file = f"{'_'.join(map(str, parts))}.satute.log"
     return log_file
 
 
@@ -37,7 +47,7 @@ def setup_logging_configuration(
     logger.setLevel(logging.DEBUG)
     # File Handler - always active at DEBUG level
     log_file = construct_log_file_name(msa_file, input_args)
-    file_handler = logging.FileHandler(log_file)
+    file_handler = logging.FileHandler(log_file, mode="w")
     file_format = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
     file_handler.setFormatter(file_format)
     file_handler.setLevel(logging.DEBUG)  # Always log everything in file
