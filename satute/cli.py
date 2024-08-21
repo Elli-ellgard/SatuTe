@@ -61,7 +61,7 @@ from satute.parser.iqtree_parser import (
 )
 
 from satute.messages.messages import SATUTE_VERSION
-
+from importlib.metadata import version as get_version
 
 class Satute:
     """Class representing Satute command-line tool for wrapping up functions of IQ-TREE."""
@@ -105,6 +105,14 @@ class Satute:
         configurations, ensuring flexibility and ease of updates.
         """
         parser = argparse.ArgumentParser(description="SatuTe", exit_on_error=True)
+        
+        # Automatically fetch the version from package metadata
+        package_version = get_version("satute")
+
+        # Add version argument
+        parser.add_argument('-v', '--version', action='version', version=f'SatuTe {package_version}', help="Show the program's version and exit.")
+        
+        
         for argument in ARGUMENT_LIST:
             # Unpack the dictionary directly without modifying the original list
             parser.add_argument(
