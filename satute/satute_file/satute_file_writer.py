@@ -48,7 +48,7 @@ class SatuteFileWriter(FileWriter):
         self.write_to_file(
             f"\n{model_text}"
             f"Rate Matrix Q:\n{rate_matrix_str}\n\n"
-            f"\nStationary Distribution:\n{state_distribution_str}\n"
+            f"Stationary Distribution:\n{state_distribution_str}\n\n"
         )
 
     def write_rate_categories(
@@ -78,12 +78,12 @@ class SatuteFileWriter(FileWriter):
                 f"Empirical Proportion (alignment length {alignment_length})",
             ]
 
-            self.write_to_file("\n" + df.to_string(index=False) + "\n")
+            self.write_to_file("\n" + df.to_string(index=False) + "\n\n")
 
     def write_which_tested_tree(self, tree: Tree, option: str) -> None:
         if "tree" in option:
             self.write_to_file(
-                f"User defined Tree: {tree.write(format=1, format_root_node=True)}"
+                f"\nUser defined tree: {tree.write(format=1, format_root_node=True)}\n\n"
             )
         else:
             self.write_to_file(
@@ -314,10 +314,10 @@ class SatuteFileWriter(FileWriter):
             eigenvector_str += f"\n{format_array(list(eigenvector))}"
 
         self.write_to_file(
-            f"\n\n"
+            f"\n"
             f"Second Largest Eigenvalue: {eigenvalue}\n\n"
             f"Multiplicity: {multiplicity}\n\n"
-            f"Eigenvectors: {eigenvector_str}\n"
+            f"Eigenvectors: {eigenvector_str}\n\n"
         )
 
 

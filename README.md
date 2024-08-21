@@ -23,7 +23,7 @@ The minimal input of SatuTe is a multiple sequence alignment, a model of sequenc
 
 The main function of SatuTe operates as follows: Given the required input, SatuTe first calculates the spectral decomposition of the rate matrix and determines the likelihood vectors for each node in the tree. It then performs the test for phylogenetic information on a user-selected branch or on each branch of the tree, as described in the relevant literature. The program outputs the test results and its components in different CSV files and a Nexus file (see [SatuTe Manual PDF](./docs/SatuTe_Manual.pdf)).
 
-![Theoretical Foundation of SatuTe](./docs/figure_1_2024_06_12.png)
+![Theoretical Foundation of SatuTe](./docs/figure_1_2024_08_02.png)
 **Figure:** **Theoretical Foundation of SatuTe**
 
 **a**, In an alignment of the sequences from five taxa, each column represents a pattern $\partial$.

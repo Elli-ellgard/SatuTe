@@ -12,7 +12,7 @@ from logging import Logger
 from typing import Optional, Dict, List
 from Bio.Align import MultipleSeqAlignment
 
-from satute.logging import (
+from satute.logging_utils import (
     log_iqtree_run_and_satute_info,
     log_tested_tree,
     log_consider_iqtree_message,
@@ -104,7 +104,7 @@ class Satute:
         adds arguments to the parser based on a predefined list of argument
         configurations, ensuring flexibility and ease of updates.
         """
-        parser = argparse.ArgumentParser(description="Satute", exit_on_error=True)
+        parser = argparse.ArgumentParser(description="SatuTe", exit_on_error=True)
         for argument in ARGUMENT_LIST:
             # Unpack the dictionary directly without modifying the original list
             parser.add_argument(
