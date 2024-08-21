@@ -1,0 +1,26 @@
+#NEXUS
+BEGIN TAXA;
+    DIMENSIONS NTAX=16;
+     TAXLABELS
+        A1
+        A2
+        A3
+        A4
+        A5
+        A6
+        A7
+        A8
+        B1
+        B2
+        B3
+        B4
+        B5
+        B6
+        B7
+        B8
+    ;
+END;
+
+BEGIN TREES;
+Tree tree1 = (A1:0.0667739[&z_score=15.1062,p_value=0.0,decision_test=Informative],A2:0.0408765[&z_score=15.5311,p_value=0.0,decision_test=Informative],((A3:0.0468396[&z_score=15.7252,p_value=0.0,decision_test=Informative],A4:0.0396135[&z_score=15.4817,p_value=0.0,decision_test=Informative])Node3*:0.044381[&z_score=15.3476,p_value=0.0,decision_test=Informative],(((A5:0.0547854[&z_score=15.5126,p_value=0.0,decision_test=Informative],A6:0.0719637[&z_score=15.557,p_value=0.0,decision_test=Informative])Node6*:0.0485408[&z_score=15.0972,p_value=0.0,decision_test=Informative],(A7:0.0373984[&z_score=15.6187,p_value=0.0,decision_test=Informative],A8:0.0884974[&z_score=15.666,p_value=0.0,decision_test=Informative])Node7*:0.0519213[&z_score=15.0684,p_value=0.0,decision_test=Informative])Node5*:0.0898199[&z_score=14.8189,p_value=0.0,decision_test=Informative],(((B1:0.05724[&z_score=15.2127,p_value=0.0,decision_test=Informative],B2:0.0433403[&z_score=15.2933,p_value=0.0,decision_test=Informative])Node10*:0.0442444[&z_score=15.1679,p_value=0.0,decision_test=Informative],(B3:0.0854852[&z_score=15.2475,p_value=0.0,decision_test=Informative],B4:0.0498753[&z_score=15.5523,p_value=0.0,decision_test=Informative])Node11*:0.0672046[&z_score=15.268,p_value=0.0,decision_test=Informative])Node9*:0.0284089[&z_score=14.8466,p_value=0.0,decision_test=Informative],((B5:0.0407014[&z_score=15.1255,p_value=0.0,decision_test=Informative],B6:0.0777498[&z_score=15.1417,p_value=0.0,decision_test=Informative])Node13*:0.0622385[&z_score=15.0678,p_value=0.0,decision_test=Informative],(B7:0.0541791[&z_score=15.2446,p_value=0.0,decision_test=Informative],B8:0.0839788[&z_score=14.9726,p_value=0.0,decision_test=Informative])Node14*:0.0909571[&z_score=14.971,p_value=0.0,decision_test=Informative])Node12*:0.145076[&z_score=14.8816,p_value=0.0,decision_test=Informative])Node8*:3.60623[&z_score=2.8112,p_value=0.0025,decision_test=Informative])Node4*:0.0379558[&z_score=14.7846,p_value=0.0,decision_test=Informative])Node2*:0.0350634[&z_score=15.282,p_value=0.0,decision_test=Informative])Node1*:0;
+END;
