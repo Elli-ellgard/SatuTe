@@ -126,7 +126,9 @@ class SatuteFileWriter(FileWriter):
 
     def write_components(self, msa_file, results, input_args):
         self.write_to_file(
-            "\n\nThe components file provides detailed information about the components of the test statistic \nfor each site and a specific edge in the tree, enabling other analysis of the saturation status like \nsliding window analysis.\n\n"
+            """\n\nThe components file provides detailed information about the components of the test statistic \nfor each site and a specific edge in the tree, enabling other analysis of the saturation status like \n sliding window analysis.
+            In the files, included are the branch for which the coherence was calculated, the site, the coherence value for the site in the specified rate category, the category variance coherence using all considered sites, and the rate category for which the analysis was performed.\n\n            
+            """
         )
         for rate, results_set in results.items():
             replaced_rate_category = rate.replace("p", "c")
