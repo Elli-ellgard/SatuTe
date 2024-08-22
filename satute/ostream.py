@@ -366,7 +366,7 @@ def create_meta_data_string(row: DataFrame, columns: List) -> str:
     relevant_columns = [
         "z_score",
         "decision_test",
-        "decision_corrected_test_tips",
+        "decision_bonferroni_corrected",
         "p_value",
     ]
     meta_data_parts = [

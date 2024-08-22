@@ -1,6 +1,6 @@
 
 #### TIMESTAMP ####
-2024-08-22 11:07:07 
+2024-08-22 18:17:34 
 
 #### REFERENCE ####
 
@@ -64,7 +64,7 @@ Category  Relative_rate  Proportion  Empirical Proportion (alignment length 1000
 
 #### SPECTRAL DECOMPOSITION ####
 
-Second Largest Eigenvalue: -0.26718097046759803
+Second Largest Eigenvalue: -0.2671809704675966
 
 Multiplicity: 1
 
@@ -100,11 +100,10 @@ COHERENCE AND VARIANCE PER SITE FOR EACH CATEGORY
 
 
 The components file provides detailed information about the components of the test statistic 
-for each site and a specific edge in the tree, enabling other analysis of the saturation status like sliding window analysis.
-In the files, included are the branch for which the coherence was calculated, the site, the coherence value for the site in the specified rate category, the category variance coherence using all considered sites, and the rate category for which the analysis was performed.
+for each site and a specific edge in the tree, enabling other analysis of the saturation status like 
+sliding window analysis.
 
-            
-            
+
 Results for category c1 to CSV File: /examples_aa/dir_ML_tree/example_aa.fasta_c1_0.01.satute.components.csv
 Results for category c2 to CSV File: /examples_aa/dir_ML_tree/example_aa.fasta_c2_0.01.satute.components.csv
 Results for category c3 to CSV File: /examples_aa/dir_ML_tree/example_aa.fasta_c3_0.01.satute.components.csv

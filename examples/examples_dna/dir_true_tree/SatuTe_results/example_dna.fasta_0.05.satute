@@ -1,6 +1,6 @@
 
 #### TIMESTAMP ####
-2024-08-22 11:06:56 
+2024-08-22 18:17:24 
 
 #### REFERENCE ####
 
@@ -42,13 +42,13 @@ Rate Category: None
 
 #### SPECTRAL DECOMPOSITION ####
 
-Second Largest Eigenvalue: -1.3333333333333328
+Second Largest Eigenvalue: -1.3333333333333333
 
 Multiplicity: 3
 
 Eigenvectors: 
-0.0000	1.6125	-1.0297	-0.5828
-0.0000	-0.2580	-1.2674	1.5255
+0.0000	1.5842	-0.4491	-1.1351
+0.0000	0.3961	-1.5700	1.1740
 -1.7321	0.5774	0.5774	0.5774
 
 
@@ -76,11 +76,10 @@ COHERENCE AND VARIANCE PER SITE FOR EACH CATEGORY
 
 
 The components file provides detailed information about the components of the test statistic 
-for each site and a specific edge in the tree, enabling other analysis of the saturation status like sliding window analysis.
-In the files, included are the branch for which the coherence was calculated, the site, the coherence value for the site in the specified rate category, the category variance coherence using all considered sites, and the rate category for which the analysis was performed.
+for each site and a specific edge in the tree, enabling other analysis of the saturation status like 
+sliding window analysis.
 
-            
-            
+
 Results for category single_rate to CSV File: /examples_dna/dir_true_tree/example_dna.fasta_single_rate_0.05.satute.components.csv
 
 NEXUS FILES

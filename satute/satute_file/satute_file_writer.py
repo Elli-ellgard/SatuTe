@@ -45,7 +45,7 @@ class SatuteFileWriter(FileWriter):
 
         # Logging the formatted rate matrix and state frequencies
         self.write_to_file(
-            f"\n{model_text}"
+            f"\n\n{model_text}"
             f"Rate Matrix Q:\n{rate_matrix_str}\n\n"
             f"Stationary Distribution:\n{state_distribution_str}\n\n"
         )
@@ -78,7 +78,7 @@ class SatuteFileWriter(FileWriter):
 
             self.write_to_file("\n" + df.to_string(index=False) + "\n\n")
         else:
-            self.write_to_file("\nRate Category: None")
+            self.write_to_file("\n\nRate Category: None")
             self.write_to_file("\n\n")
 
     def write_which_tested_tree(self, tree: Tree, option: str) -> None:
@@ -96,19 +96,20 @@ class SatuteFileWriter(FileWriter):
         self.write_to_file(SATUTE_VERSION)
 
     def write_alignment_info(self, msa_file: Path, option: str):
+                
         if "dir" in option:
             self.write_to_file(
-                f"\nUsed alignment file from directory: {msa_file.resolve()}\n"
+                f"\n\nUsed alignment file from directory: {msa_file.resolve()}\n"
             )
         else:
-            self.write_to_file(f"\nUsed alignment file: {msa_file.resolve()}\n")
+            self.write_to_file(f"\n\nUsed alignment file: {msa_file.resolve()}\n")
 
     def write_results_to_csv(self, msa_file, results, input_args):
         self.write_to_file(
             "\nThe satute.csv file provides a comprehensive overview of the saturation test results for specific branches or all branches.\n"
         )
         self.write_to_file(
-            "\nContaining: branch , mean_coherence, standard_error_of_mean, z_score, p_value, z_alpha, decision_test, z_alpha_bonferroni_corrected, \n decision_bonferroni_corrected, branch_length, number_of_sites, rate_category\n\n"
+            "\nContaining: branch , mean_coherence, standard_error_of_mean, z_score, p_value, z_alpha, decision_test, z_alpha_bonferroni_corrected,\ndecision_bonferroni_corrected, branch_length, number_of_sites, rate_category\n\n"
         )
 
         for rate, results_set in results.items():
@@ -121,18 +122,17 @@ class SatuteFileWriter(FileWriter):
         for rate, results_set in results.items():
             replaced_rate_category = rate.replace("p", "c")
             self.write_to_file(
-                f"\nResults for category {replaced_rate_category} to Nexus File: {construct_file_name(msa_file, input_args.output_suffix, replaced_rate_category, input_args.alpha, input_args.edge)}.nex"
+                f"Results for category {replaced_rate_category} to Nexus File: {construct_file_name(msa_file, input_args.output_suffix, replaced_rate_category, input_args.alpha, input_args.edge)}.nex\n"
             )
 
     def write_components(self, msa_file, results, input_args):
         self.write_to_file(
-            """\n\nThe components file provides detailed information about the components of the test statistic \nfor each site and a specific edge in the tree, enabling other analysis of the saturation status like sliding window analysis.\nIn the files, included are the branch for which the coherence was calculated, the site, the coherence value for the site in\nthe specified rate category, the category variance coherence using all considered sites, and the rate category for which the analysis was performed.\n\n            
-            """
+            """\nThe components file provides detailed information about the components of the test statistic \nfor each site and a specific edge in the tree, enabling other analysis of the saturation status like sliding window analysis.\n\nIn the files, included are the branch for which the coherence was calculated, the site, the coherence value for the site in\nthe specified rate category, the category variance coherence using all considered sites, and the rate category for which the analysis was performed.\n\n"""
         )
         for rate, results_set in results.items():
             replaced_rate_category = rate.replace("p", "c")
             self.write_to_file(
-                f"\nResults for category {replaced_rate_category} to CSV File: {construct_file_name(msa_file, input_args.output_suffix, replaced_rate_category, input_args.alpha, input_args.edge)}.components.csv"
+                f"Results for category {replaced_rate_category} to CSV File: {construct_file_name(msa_file, input_args.output_suffix, replaced_rate_category, input_args.alpha, input_args.edge)}.components.csv\n"
             )
 
     def write_results_to_ancestral_states(self, msa_file, results, input_args):
@@ -160,7 +160,7 @@ class SatuteFileWriter(FileWriter):
         self.write_to_file(f"{considered_rate_category_text}\n")
 
     def write_significance_level(self, alpha: float):
-        considered_significance_level_text = f"\nSignificance level: {alpha}\n"
+        considered_significance_level_text = f"\n\nSignificance level: {alpha}\n"
         self.write_to_file(f"{considered_significance_level_text}")
 
     def write_considered_branch(self, input_args):
@@ -261,7 +261,7 @@ class SatuteFileWriter(FileWriter):
             input_args=input_args,
         )
 
-        self.write_to_file("\nCOHERENCE AND VARIANCE PER SITE FOR EACH CATEGORY\n")
+        self.write_to_file("\n\nCOHERENCE AND VARIANCE PER SITE FOR EACH CATEGORY\n\n")
 
         self.write_components(
             msa_file=msa_file,
@@ -272,7 +272,7 @@ class SatuteFileWriter(FileWriter):
         self.write_to_file("\n\nNEXUS FILES\n\n")
 
         self.write_to_file(
-            "The file contains a block for the taxon labels and a block for the phylogenetic tree,\nwith the most important test results integrated into the NEWICK string as metadata."
+            "\nThe file contains a block for the taxon labels and a block for the phylogenetic tree,\nwith the most important test results integrated into the NEWICK string as metadata."
         )
         self.write_to_file("Containing: z_score, p_value, decision_test.\n\n")
 
@@ -316,7 +316,7 @@ class SatuteFileWriter(FileWriter):
             eigenvector_str += f"\n{format_array(list(eigenvector))}"
 
         self.write_to_file(
-            f"\n"
+            f"\n\n"
             f"Second Largest Eigenvalue: {eigenvalue}\n\n"
             f"Multiplicity: {multiplicity}\n\n"
             f"Eigenvectors: {eigenvector_str}\n\n"

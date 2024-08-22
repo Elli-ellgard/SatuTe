@@ -92,7 +92,7 @@ or as alternative: Given a path to an IQ-Tree executable, SatuTe runs IQ-Tree wi
 satute  -msa ./examples/data/example_dna.fasta -iqtree path_to_iqtree_exe
 ```
   
-For more detailed information and three explained examples, please refer to the [SatuTe Manual PDF](./docs/SatuTe_Manual.pdf).
+In our examples folder, we provide files for showcasing SatuTe on amino acid alignments in the subdirectory ‘./examples/examples_aa’. For more detailed information and three explained examples, please refer to the [SatuTe Manual PDF](./docs/SatuTe_Manual.pdf).
 
 ## 4. Options of SatuTe
 
@@ -112,4 +112,6 @@ For more detailed information and three explained examples, please refer to the 
 | `-boot <number_of_replicates>` | Number of replicates for traditional bootstrap analysis. This also computes a Maximum Likelihood (ML) tree and a consensus tree. Common value is `100`. |
 | `-asr` | Write ancestral sequences (by empirical Bayesian method) for all nodes of the tree to a .asr.csv file. |
 | `-output_suffix <output_suffix>` | Specify a suffix for the output file. |
-| `-verbose` | Enable verbose logging. |
+| `-verbose` |  Enable verbose logging. |
+| `-quiet`   |  Even no warnings on the the terminal. |
+| `-dev`     |  Show the stack trace. |

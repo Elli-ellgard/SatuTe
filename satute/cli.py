@@ -273,7 +273,6 @@ class Satute:
         try:
             # ======== Arguments =================
             msa_file: Path = self.input_args.msa
-            # ======== Arguments =================
 
             # ======== Tree File Handling ========
             newick_string: str = self.file_handler.get_newick_string_from_iqtree_file(

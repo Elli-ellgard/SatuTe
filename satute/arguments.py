@@ -121,7 +121,7 @@ ARGUMENT_LIST = [
     },
     {
         "flag": "-dev",
-        "help": "Show the stack trace",
+        "help": "Show the stack trace.",
         "action": "store_true",
     },
 ]

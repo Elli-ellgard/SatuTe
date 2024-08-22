@@ -4,6 +4,7 @@ from ete3 import Tree
 from argparse import Namespace
 from logging import Logger
 from typing import List, Dict, Any
+import os
 
 
 def log_consider_iqtree_message(logger: Logger):
@@ -33,6 +34,12 @@ def construct_log_file_name(msa_file: Path, input_args: List[Namespace]) -> str:
     return log_file
 
 
+def close_log_handlers(logger):
+    for handler in logger.handlers:
+        handler.close()
+        logger.removeHandler(handler)
+
+
 def setup_logging_configuration(
     logger: Logger, input_args: List[Namespace], msa_file: Path
 ):
@@ -45,8 +52,15 @@ def setup_logging_configuration(
     """
     # Logger level is set to DEBUG to capture all logs for the file handler
     logger.setLevel(logging.DEBUG)
+
     # File Handler - always active at DEBUG level
+    close_log_handlers(logger)  # Close and remove all existing handlers
+
     log_file = construct_log_file_name(msa_file, input_args)
+
+    if os.path.exists(log_file):
+        os.remove(log_file)
+
     file_handler = logging.FileHandler(log_file, mode="w")
     file_format = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
     file_handler.setFormatter(file_format)
