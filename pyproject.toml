@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "satute"
-version = "1.0.1"
+version = "1.0.3"
 description = ""
 authors = ["CIBIV"]
 license = "MIT"
