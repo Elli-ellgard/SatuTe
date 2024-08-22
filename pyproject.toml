@@ -1,10 +1,21 @@
 [tool.poetry]
 name = "satute"
-version = "1.0.3"
-description = ""
+version = "1.0.6"
+description = "SatuTe (Saturation Test) is a Python-based tool designed to test for phylogenetic information in phylogenetic analyses. The absence of phylogenetic information can be considered saturation. In two sequences, saturation occurs when multiple substitutions obscure the true genetic distances, potentially leading to artifacts and errors."
 authors = ["CIBIV"]
 license = "MIT"
 readme = "README.md"
+keywords = ["bioinformatics", "phylogenetics", "saturation test", "phylogenetic analysis"]
+classifiers = [
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python :: 3.9",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+]
+homepage = "https://github.com/Elli-ellgard/SatuTe"
+
+[tool.poetry.urls]
+documentation = "https://github.com/Elli-ellgard/SatuTe/blob/main/docs/SatuTe_Manual.pdf"
+
 
 [tool.poetry.dependencies]
 python = "^3.9"
