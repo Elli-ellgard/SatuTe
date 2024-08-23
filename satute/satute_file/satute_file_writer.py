@@ -106,10 +106,10 @@ class SatuteFileWriter(FileWriter):
 
     def write_results_to_csv(self, msa_file, results, input_args):
         self.write_to_file(
-            "\nThe satute.csv file provides a comprehensive overview of the saturation test results for specific branches or all branches.\n"
+            "\nThe satute.csv file provides a comprehensive overview of the saturation test results for a specific branch or all branches."
         )
         self.write_to_file(
-            "\nContaining: branch , mean_coherence, standard_error_of_mean, z_score, p_value, z_alpha, decision_test, z_alpha_bonferroni_corrected,\ndecision_bonferroni_corrected, branch_length, number_of_sites, rate_category\n\n"
+            "\nContaining: branch, mean_coherence, standard_error_of_mean, z_score, p_value, z_alpha, decision_test,\nz_alpha_bonferroni_corrected,decision_bonferroni_corrected, branch_length, number_of_sites, rate_category\n\n"
         )
 
         for rate, results_set in results.items():
@@ -119,6 +119,11 @@ class SatuteFileWriter(FileWriter):
             )
 
     def write_results_to_nexus(self, msa_file, results, input_args):
+        self.write_to_file(
+            "\nThe file contains a block for the taxon labels and a block for the phylogenetic tree,\nwith the most important test results integrated into the NEWICK string as metadata."
+        )
+        self.write_to_file("\nContaining: z_score, p_value, decision_test.\n\n")
+
         for rate, results_set in results.items():
             replaced_rate_category = rate.replace("p", "c")
             self.write_to_file(
@@ -127,8 +132,14 @@ class SatuteFileWriter(FileWriter):
 
     def write_components(self, msa_file, results, input_args):
         self.write_to_file(
-            """\nThe components file provides detailed information about the components of the test statistic \nfor each site and a specific edge in the tree, enabling other analysis of the saturation status like sliding window analysis.\n\nIn the files, included are the branch for which the coherence was calculated, the site, the coherence value for the site in\nthe specified rate category, the category variance coherence using all considered sites, and the rate category for which the analysis was performed.\n\n"""
+            "\nThe components file provides the estimated (category) variance and the coherence coefficient for each site and branch in \nthe tree, enabling other analysis of the saturation status like sliding window analysis."
         )
+
+        self.write_to_file(
+            "\nContaining: branch, site, coherence, category_variance, rate_category.\n\n"
+        )
+
+
         for rate, results_set in results.items():
             replaced_rate_category = rate.replace("p", "c")
             self.write_to_file(
@@ -136,6 +147,10 @@ class SatuteFileWriter(FileWriter):
             )
 
     def write_results_to_ancestral_states(self, msa_file, results, input_args):
+        self.write_to_file(
+            "The  file contains the posterior distributions of ancestral sequences for the left and right node of each branch in the tree.\n\n"
+        )
+
         for rate, results_set in results.items():
             replaced_rate_category = rate.replace("p", "c")
             self.write_to_file(
@@ -143,6 +158,10 @@ class SatuteFileWriter(FileWriter):
             )
 
     def write_results_to_rate_index(self, msa_file, results, input_args):
+        self.write_to_file(
+            "The file contains a multiple sequence alignment subdivided into categories which the sites are assigned to.\n"
+        )
+
         for rate, results_set in results.items():
             replaced_rate_category = rate.replace("p", "c")
             self.write_to_file(
@@ -253,7 +272,7 @@ class SatuteFileWriter(FileWriter):
 
         self.write_header("OUTPUT")
 
-        self.write_to_file("\n\nCSV FILES\n\n")
+        self.write_to_file("\n\nCSV FILES\n")
 
         self.write_results_to_csv(
             msa_file=msa_file,
@@ -261,7 +280,7 @@ class SatuteFileWriter(FileWriter):
             input_args=input_args,
         )
 
-        self.write_to_file("\n\nCOHERENCE AND VARIANCE PER SITE FOR EACH CATEGORY\n\n")
+        self.write_to_file("\n\nCOHERENCE AND VARIANCE PER SITE FOR EACH CATEGORY\n")
 
         self.write_components(
             msa_file=msa_file,
@@ -269,12 +288,7 @@ class SatuteFileWriter(FileWriter):
             input_args=input_args,
         )
 
-        self.write_to_file("\n\nNEXUS FILES\n\n")
-
-        self.write_to_file(
-            "\nThe file contains a block for the taxon labels and a block for the phylogenetic tree,\nwith the most important test results integrated into the NEWICK string as metadata."
-        )
-        self.write_to_file("Containing: z_score, p_value, decision_test.\n\n")
+        self.write_to_file("\n\nNEXUS FILES\n")
 
         self.write_results_to_nexus(
             msa_file=msa_file,
@@ -283,11 +297,7 @@ class SatuteFileWriter(FileWriter):
         )
 
         if input_args.asr:
-            self.write_to_file("\n\nPOSTERIOR DISTRIBUTIONS\n\n")
-
-            self.write_to_file(
-                "The  file contains the posterior distributions of ancestral sequences for the left and right node of  each edge in the tree.\n\n"
-            )
+            self.write_to_file("\n\n\nPOSTERIOR DISTRIBUTIONS\n")
 
             self.write_results_to_ancestral_states(
                 msa_file=msa_file,
@@ -296,11 +306,7 @@ class SatuteFileWriter(FileWriter):
             )
 
         if input_args.category_assignment:
-            self.write_to_file("\n\nRATE CATEGORY ASSIGNMENTS\n\n")
-
-            self.write_to_file(
-                "The file contains a multiple sequence alignment subdivided into categories which the sites are assigned to.\n"
-            )
+            self.write_to_file("\n\nRATE CATEGORY ASSIGNMENTS\n")
 
             self.write_results_to_rate_index(
                 msa_file=msa_file,
