@@ -188,6 +188,7 @@ class Satute:
             model_finder_arguments = [
                 "-m MF",
                 "--quiet",
+                "--redo"
             ]
 
             (
@@ -253,6 +254,7 @@ class Satute:
                 self.input_args.model,
                 "--quiet",
                 "--keep-ident",
+                '--redo'
             ]
 
             self.add_wspr_option_if_needed(extra_arguments=extra_arguments)

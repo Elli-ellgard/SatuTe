@@ -73,7 +73,7 @@ For more detailed instructions and information about pipx, refer to the [officia
 After the installation is complete, you can verify that Satute has been installed correctly by running the following command:
 
 ```bash
-satute version
+satute --version
 ```
 
 You should see the version number of Satute printed on the screen, confirming that the installation was successful.
