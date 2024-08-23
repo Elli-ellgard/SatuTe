@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "satute"
-version = "1.0.6"
+version = "1.0.7"
 description = "SatuTe (Saturation Test) is a Python-based tool designed to test for phylogenetic information in phylogenetic analyses. The absence of phylogenetic information can be considered saturation. In two sequences, saturation occurs when multiple substitutions obscure the true genetic distances, potentially leading to artifacts and errors."
 authors = ["CIBIV"]
 license = "MIT"
