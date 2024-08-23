@@ -1,0 +1,22 @@
+2024-08-23 08:13:35,539 - INFO - 
+
+SatuTe Version 1.0.1 
+
+To cite SatuTe please use:
+C. Manuel, C. Elgert, E. Sakalli, H. A. Schmidt, C. Viñas and A. von Haeseler
+When the past fades: Detecting phylogenetic signal with SatuTe
+Nature Methods
+DOI: 
+
+
+2024-08-23 08:13:35,539 - INFO - IQ-TREE will not to be needed the analysis will be done on the already existing iqtree files.
+2024-08-23 08:13:35,546 - INFO - Run SatuTe on: /examples_dna/dir_ML_tree/example_dna.fasta
+2024-08-23 08:13:35,546 - INFO - Tree and parameters are read from: /examples_dna/dir_ML_tree/example_dna.fasta.iqtree
+2024-08-23 08:13:35,546 - INFO - Results will be written to the directory: /examples_dna/dir_ML_tree
+2024-08-23 08:13:35,546 - INFO - Running tests and initial IQ-Tree Run with configurations: dir
+2024-08-23 08:13:35,547 - INFO - IQ-Tree inferred tree: (A1:0.0621711,A2:0.160897,((A3:0.0445287,A4:0.11819)Node3*:0.140177,(((A5:0.0700901,A6:0.0591425)Node6*:0.0702957,(A7:0.0386009,A8:0.0491455)Node7*:0.0402285)Node5*:0.00438521,((((B1:0.117869,B2:0.11077)Node11*:0.0987086,((B5:0.10121,B6:0.0223854)Node13*:0.201145,(B7:0.111385,B8:0.0724772)Node14*:0.0481191)Node12*:0.183942)Node10*:0.110924,B3:0.110564)Node9*:0.0458649,B4:2.3962e-06)Node8*:2.29048)Node4*:0.121673)Node2*:0.168237)Node1*:0;
+2024-08-23 08:13:37,301 - INFO - Writing results for category rates to file: /examples_dna/dir_ML_tree/example_dna.fasta_single_rate_0.01.satute
+2024-08-23 08:13:37,301 - INFO - Tree for rate category single_rate: (A1:0.0621711,A2:0.160897,((A3:0.0445287,A4:0.11819)Node3*:0.140177,(((A5:0.0700901,A6:0.0591425)Node6*:0.0702957,(A7:0.0386009,A8:0.0491455)Node7*:0.0402285)Node5*:0.00438521,((((B1:0.117869,B2:0.11077)Node11*:0.0987086,((B5:0.10121,B6:0.0223854)Node13*:0.201145,(B7:0.111385,B8:0.0724772)Node14*:0.0481191)Node12*:0.183942)Node10*:0.110924,B3:0.110564)Node9*:0.0458649,B4:2.3962e-06)Node8*:2.29048)Node4*:0.121673)Node2*:0.168237)Node1*:0;
+2024-08-23 08:13:37,309 - INFO - Nexus file written successfully: /examples_dna/dir_ML_tree/example_dna.fasta_single_rate_0.01.satute.nex
+2024-08-23 08:13:37,309 - INFO - Saturation Test Results for rate category mapped to tree in Nexus file: /examples_dna/dir_ML_tree/example_dna.fasta_single_rate_0.01.satute.nex
+2024-08-23 08:13:37,309 - INFO - Results saved to CSV file: /examples_dna/dir_ML_tree/example_dna.fasta_single_rate_0.01.satute.csv

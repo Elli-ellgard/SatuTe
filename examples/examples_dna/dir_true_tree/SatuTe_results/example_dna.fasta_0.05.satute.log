@@ -1,0 +1,22 @@
+2024-08-23 08:13:31,196 - INFO - 
+
+SatuTe Version 1.0.1 
+
+To cite SatuTe please use:
+C. Manuel, C. Elgert, E. Sakalli, H. A. Schmidt, C. Viñas and A. von Haeseler
+When the past fades: Detecting phylogenetic signal with SatuTe
+Nature Methods
+DOI: 
+
+
+2024-08-23 08:13:31,196 - INFO - IQ-TREE will not to be needed the analysis will be done on the already existing iqtree files.
+2024-08-23 08:13:31,237 - INFO - Run SatuTe on: /examples_dna/dir_true_tree/example_dna.fasta
+2024-08-23 08:13:31,238 - INFO - Tree and parameters are read from: /examples_dna/dir_true_tree/example_dna.fasta.iqtree
+2024-08-23 08:13:31,238 - INFO - Results will be written to the directory: /examples_dna/dir_true_tree
+2024-08-23 08:13:31,238 - INFO - Running tests and initial IQ-Tree Run with configurations: dir
+2024-08-23 08:13:31,238 - INFO - IQ-Tree inferred tree: (A1:0.0808815,A2:0.142611,((A3:0.0584646,A4:0.0951716)NodeA34*:0.120081,(((A5:0.0628936,A6:0.0604933)NodeA56*:0.0745015,(A7:0.0539545,A8:0.05329)NodeA78*:0.0533933)NodeA5678*:0.0510845,(((B1:0.114325,B2:0.0852386)NodeB12*:0.0841311,(B3:0.108061,B4:0.0456498)NodeB34*:0.101354)NodeB1234*:0.117324,((B5:0.094963,B6:0.0434731)NodeB56*:0.190994,(B7:0.11244,B8:0.0511017)NodeB78*:0.0578483)NodeB5678*:0.0483395)NodeBroot*:2)NodeAroot*:0.0795291)NodeA1234*:0.177477)NodeA12*:0;
+2024-08-23 08:13:32,730 - INFO - Writing results for category rates to file: /examples_dna/dir_true_tree/example_dna.fasta_single_rate_0.05.satute
+2024-08-23 08:13:32,731 - INFO - Tree for rate category single_rate: (A1:0.0808815,A2:0.142611,((A3:0.0584646,A4:0.0951716)NodeA34*:0.120081,(((A5:0.0628936,A6:0.0604933)NodeA56*:0.0745015,(A7:0.0539545,A8:0.05329)NodeA78*:0.0533933)NodeA5678*:0.0510845,(((B1:0.114325,B2:0.0852386)NodeB12*:0.0841311,(B3:0.108061,B4:0.0456498)NodeB34*:0.101354)NodeB1234*:0.117324,((B5:0.094963,B6:0.0434731)NodeB56*:0.190994,(B7:0.11244,B8:0.0511017)NodeB78*:0.0578483)NodeB5678*:0.0483395)NodeBroot*:2)NodeAroot*:0.0795291)NodeA1234*:0.177477)NodeA12*:0;
+2024-08-23 08:13:32,741 - INFO - Nexus file written successfully: /examples_dna/dir_true_tree/example_dna.fasta_single_rate_0.05.satute.nex
+2024-08-23 08:13:32,741 - INFO - Saturation Test Results for rate category mapped to tree in Nexus file: /examples_dna/dir_true_tree/example_dna.fasta_single_rate_0.05.satute.nex
+2024-08-23 08:13:32,742 - INFO - Results saved to CSV file: /examples_dna/dir_true_tree/example_dna.fasta_single_rate_0.05.satute.csv
