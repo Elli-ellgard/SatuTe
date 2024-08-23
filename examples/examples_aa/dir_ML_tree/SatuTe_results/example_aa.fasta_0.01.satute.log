@@ -1,4 +1,4 @@
-2024-08-23 08:13:40,057 - INFO - 
+2024-08-23 08:38:37,207 - INFO - 
 
 SatuTe Version 1.0.1 
 
@@ -9,29 +9,29 @@ Nature Methods
 DOI: 
 
 
-2024-08-23 08:13:40,057 - INFO - IQ-TREE will not to be needed the analysis will be done on the already existing iqtree files.
-2024-08-23 08:13:40,081 - INFO - Run SatuTe on: /examples_aa/dir_ML_tree/example_aa.fasta
-2024-08-23 08:13:40,082 - INFO - Tree and parameters are read from: /examples_aa/dir_ML_tree/example_aa.fasta.iqtree
-2024-08-23 08:13:40,083 - INFO - Results will be written to the directory: /examples_aa/dir_ML_tree
-2024-08-23 08:13:40,084 - INFO - Running tests and initial IQ-Tree Run with configurations: dir
-2024-08-23 08:13:40,088 - INFO - IQ-Tree inferred tree: (A1:0.0668608,A2:0.0409298,((A3:0.0469006,A4:0.0396651)Node3*:0.0444387,(((A5:0.0548568,A6:0.0720574)Node6*:0.048604,(A7:0.0374471,A8:0.0886126)Node7*:0.0519889)Node5*:0.0899368,(((B1:0.0573145,B2:0.0433967)Node10*:0.044302,(B3:0.0855965,B4:0.0499403)Node11*:0.0672921)Node9*:0.0284458,((B5:0.0407544,B6:0.077851)Node13*:0.0623195,(B7:0.0542497,B8:0.0840881)Node14*:0.0910755)Node12*:0.145265)Node8*:3.61092)Node4*:0.0380052)Node2*:0.035109)Node1*:0;
-2024-08-23 08:13:43,449 - INFO - Writing results for category rates to file: /examples_aa/dir_ML_tree/example_aa.fasta_c1_0.01.satute
-2024-08-23 08:13:43,449 - INFO - Tree for rate category p1: (A1:0.00905295,A2:0.00554189,((A3:0.00635034,A4:0.00537065)Node3*:0.006017,(((A5:0.00742761,A6:0.00975657)Node6*:0.00658098,(A7:0.00507034,A8:0.0119981)Node7*:0.0070393)Node5*:0.0121774,(((B1:0.00776039,B2:0.00587591)Node10*:0.0059985,(B3:0.0115898,B4:0.00676191)Node11*:0.00911134)Node9*:0.00385157,((B5:0.00551815,B6:0.010541)Node13*:0.00843807,(B7:0.0073454,B8:0.0113855)Node14*:0.0123316)Node12*:0.0196689)Node8*:0.488919)Node4*:0.00514591)Node2*:0.00475376)Node1*:0;
-2024-08-23 08:13:43,454 - INFO - Nexus file written successfully: /examples_aa/dir_ML_tree/example_aa.fasta_c1_0.01.satute.nex
-2024-08-23 08:13:43,454 - INFO - Saturation Test Results for rate category mapped to tree in Nexus file: /examples_aa/dir_ML_tree/example_aa.fasta_c1_0.01.satute.nex
-2024-08-23 08:13:43,455 - INFO - Results saved to CSV file: /examples_aa/dir_ML_tree/example_aa.fasta_c1_0.01.satute.csv
-2024-08-23 08:13:43,455 - INFO - Writing results for category rates to file: /examples_aa/dir_ML_tree/example_aa.fasta_c2_0.01.satute
-2024-08-23 08:13:43,456 - INFO - Tree for rate category p2: (A1:0.0317188,A2:0.0194171,((A3:0.0222496,A4:0.0188171)Node3*:0.0210817,(((A5:0.026024,A6:0.034184)Node6*:0.0230577,(A7:0.0177649,A8:0.0420378)Node7*:0.0246635)Node5*:0.042666,(((B1:0.02719,B2:0.0205874)Node10*:0.0210169,(B3:0.040607,B4:0.0236917)Node11*:0.0319233)Node9*:0.0134947,((B5:0.0193339,B6:0.0369325)Node13*:0.0295644,(B7:0.025736,B8:0.0398914)Node14*:0.0432062)Node12*:0.0689138)Node8*:1.71302)Node4*:0.0180297)Node2*:0.0166557)Node1*:0;
-2024-08-23 08:13:43,461 - INFO - Nexus file written successfully: /examples_aa/dir_ML_tree/example_aa.fasta_c2_0.01.satute.nex
-2024-08-23 08:13:43,461 - INFO - Saturation Test Results for rate category mapped to tree in Nexus file: /examples_aa/dir_ML_tree/example_aa.fasta_c2_0.01.satute.nex
-2024-08-23 08:13:43,461 - INFO - Results saved to CSV file: /examples_aa/dir_ML_tree/example_aa.fasta_c2_0.01.satute.csv
-2024-08-23 08:13:43,462 - INFO - Writing results for category rates to file: /examples_aa/dir_ML_tree/example_aa.fasta_c3_0.01.satute
-2024-08-23 08:13:43,462 - INFO - Tree for rate category p3: (A1:0.0667739,A2:0.0408765,((A3:0.0468396,A4:0.0396135)Node3*:0.044381,(((A5:0.0547854,A6:0.0719637)Node6*:0.0485408,(A7:0.0373984,A8:0.0884974)Node7*:0.0519213)Node5*:0.0898199,(((B1:0.05724,B2:0.0433403)Node10*:0.0442444,(B3:0.0854852,B4:0.0498753)Node11*:0.0672046)Node9*:0.0284089,((B5:0.0407014,B6:0.0777498)Node13*:0.0622385,(B7:0.0541791,B8:0.0839788)Node14*:0.0909571)Node12*:0.145076)Node8*:3.60623)Node4*:0.0379558)Node2*:0.0350634)Node1*:0;
-2024-08-23 08:13:43,467 - INFO - Nexus file written successfully: /examples_aa/dir_ML_tree/example_aa.fasta_c3_0.01.satute.nex
-2024-08-23 08:13:43,467 - INFO - Saturation Test Results for rate category mapped to tree in Nexus file: /examples_aa/dir_ML_tree/example_aa.fasta_c3_0.01.satute.nex
-2024-08-23 08:13:43,468 - INFO - Results saved to CSV file: /examples_aa/dir_ML_tree/example_aa.fasta_c3_0.01.satute.csv
-2024-08-23 08:13:43,468 - INFO - Writing results for category rates to file: /examples_aa/dir_ML_tree/example_aa.fasta_c4_0.01.satute
-2024-08-23 08:13:43,468 - INFO - Tree for rate category p4: (A1:0.159904,A2:0.0978876,((A3:0.112167,A4:0.0948629)Node3*:0.10628,(((A5:0.131195,A6:0.172332)Node6*:0.116241,(A7:0.0895585,A8:0.211926)Node7*:0.124337)Node5*:0.215093,(((B1:0.137073,B2:0.103787)Node10*:0.105953,(B3:0.204713,B4:0.119437)Node11*:0.160936)Node9*:0.0680311,((B5:0.0974683,B6:0.186189)Node13*:0.149043,(B7:0.129743,B8:0.201105)Node14*:0.217816)Node12*:0.347416)Node8*:8.63589)Node4*:0.0908933)Node2*:0.0839667)Node1*:0;
-2024-08-23 08:13:43,474 - INFO - Nexus file written successfully: /examples_aa/dir_ML_tree/example_aa.fasta_c4_0.01.satute.nex
-2024-08-23 08:13:43,474 - INFO - Saturation Test Results for rate category mapped to tree in Nexus file: /examples_aa/dir_ML_tree/example_aa.fasta_c4_0.01.satute.nex
-2024-08-23 08:13:43,475 - INFO - Results saved to CSV file: /examples_aa/dir_ML_tree/example_aa.fasta_c4_0.01.satute.csv
+2024-08-23 08:38:37,207 - INFO - IQ-TREE will not to be needed the analysis will be done on the already existing iqtree files.
+2024-08-23 08:38:37,211 - INFO - Run SatuTe on: /examples_aa/dir_ML_tree/example_aa.fasta
+2024-08-23 08:38:37,211 - INFO - Tree and parameters are read from: /examples_aa/dir_ML_tree/example_aa.fasta.iqtree
+2024-08-23 08:38:37,211 - INFO - Results will be written to the directory: /examples_aa/dir_ML_tree
+2024-08-23 08:38:37,211 - INFO - Running tests and initial IQ-Tree Run with configurations: dir
+2024-08-23 08:38:37,211 - INFO - IQ-Tree inferred tree: (A1:0.0668608,A2:0.0409298,((A3:0.0469006,A4:0.0396651)Node3*:0.0444387,(((A5:0.0548568,A6:0.0720574)Node6*:0.048604,(A7:0.0374471,A8:0.0886126)Node7*:0.0519889)Node5*:0.0899368,(((B1:0.0573145,B2:0.0433967)Node10*:0.044302,(B3:0.0855965,B4:0.0499403)Node11*:0.0672921)Node9*:0.0284458,((B5:0.0407544,B6:0.077851)Node13*:0.0623195,(B7:0.0542497,B8:0.0840881)Node14*:0.0910755)Node12*:0.145265)Node8*:3.61092)Node4*:0.0380052)Node2*:0.035109)Node1*:0;
+2024-08-23 08:38:39,813 - INFO - Writing results for category rates to file: /examples_aa/dir_ML_tree/example_aa.fasta_c1_0.01.satute
+2024-08-23 08:38:39,813 - INFO - Tree for rate category p1: (A1:0.00905295,A2:0.00554189,((A3:0.00635034,A4:0.00537065)Node3*:0.006017,(((A5:0.00742761,A6:0.00975657)Node6*:0.00658098,(A7:0.00507034,A8:0.0119981)Node7*:0.0070393)Node5*:0.0121774,(((B1:0.00776039,B2:0.00587591)Node10*:0.0059985,(B3:0.0115898,B4:0.00676191)Node11*:0.00911134)Node9*:0.00385157,((B5:0.00551815,B6:0.010541)Node13*:0.00843807,(B7:0.0073454,B8:0.0113855)Node14*:0.0123316)Node12*:0.0196689)Node8*:0.488919)Node4*:0.00514591)Node2*:0.00475376)Node1*:0;
+2024-08-23 08:38:39,826 - INFO - Nexus file written successfully: /examples_aa/dir_ML_tree/example_aa.fasta_c1_0.01.satute.nex
+2024-08-23 08:38:39,826 - INFO - Saturation Test Results for rate category mapped to tree in Nexus file: /examples_aa/dir_ML_tree/example_aa.fasta_c1_0.01.satute.nex
+2024-08-23 08:38:39,827 - INFO - Results saved to CSV file: /examples_aa/dir_ML_tree/example_aa.fasta_c1_0.01.satute.csv
+2024-08-23 08:38:39,827 - INFO - Writing results for category rates to file: /examples_aa/dir_ML_tree/example_aa.fasta_c2_0.01.satute
+2024-08-23 08:38:39,827 - INFO - Tree for rate category p2: (A1:0.0317188,A2:0.0194171,((A3:0.0222496,A4:0.0188171)Node3*:0.0210817,(((A5:0.026024,A6:0.034184)Node6*:0.0230577,(A7:0.0177649,A8:0.0420378)Node7*:0.0246635)Node5*:0.042666,(((B1:0.02719,B2:0.0205874)Node10*:0.0210169,(B3:0.040607,B4:0.0236917)Node11*:0.0319233)Node9*:0.0134947,((B5:0.0193339,B6:0.0369325)Node13*:0.0295644,(B7:0.025736,B8:0.0398914)Node14*:0.0432062)Node12*:0.0689138)Node8*:1.71302)Node4*:0.0180297)Node2*:0.0166557)Node1*:0;
+2024-08-23 08:38:39,830 - INFO - Nexus file written successfully: /examples_aa/dir_ML_tree/example_aa.fasta_c2_0.01.satute.nex
+2024-08-23 08:38:39,831 - INFO - Saturation Test Results for rate category mapped to tree in Nexus file: /examples_aa/dir_ML_tree/example_aa.fasta_c2_0.01.satute.nex
+2024-08-23 08:38:39,831 - INFO - Results saved to CSV file: /examples_aa/dir_ML_tree/example_aa.fasta_c2_0.01.satute.csv
+2024-08-23 08:38:39,831 - INFO - Writing results for category rates to file: /examples_aa/dir_ML_tree/example_aa.fasta_c3_0.01.satute
+2024-08-23 08:38:39,831 - INFO - Tree for rate category p3: (A1:0.0667739,A2:0.0408765,((A3:0.0468396,A4:0.0396135)Node3*:0.044381,(((A5:0.0547854,A6:0.0719637)Node6*:0.0485408,(A7:0.0373984,A8:0.0884974)Node7*:0.0519213)Node5*:0.0898199,(((B1:0.05724,B2:0.0433403)Node10*:0.0442444,(B3:0.0854852,B4:0.0498753)Node11*:0.0672046)Node9*:0.0284089,((B5:0.0407014,B6:0.0777498)Node13*:0.0622385,(B7:0.0541791,B8:0.0839788)Node14*:0.0909571)Node12*:0.145076)Node8*:3.60623)Node4*:0.0379558)Node2*:0.0350634)Node1*:0;
+2024-08-23 08:38:39,835 - INFO - Nexus file written successfully: /examples_aa/dir_ML_tree/example_aa.fasta_c3_0.01.satute.nex
+2024-08-23 08:38:39,835 - INFO - Saturation Test Results for rate category mapped to tree in Nexus file: /examples_aa/dir_ML_tree/example_aa.fasta_c3_0.01.satute.nex
+2024-08-23 08:38:39,835 - INFO - Results saved to CSV file: /examples_aa/dir_ML_tree/example_aa.fasta_c3_0.01.satute.csv
+2024-08-23 08:38:39,835 - INFO - Writing results for category rates to file: /examples_aa/dir_ML_tree/example_aa.fasta_c4_0.01.satute
+2024-08-23 08:38:39,836 - INFO - Tree for rate category p4: (A1:0.159904,A2:0.0978876,((A3:0.112167,A4:0.0948629)Node3*:0.10628,(((A5:0.131195,A6:0.172332)Node6*:0.116241,(A7:0.0895585,A8:0.211926)Node7*:0.124337)Node5*:0.215093,(((B1:0.137073,B2:0.103787)Node10*:0.105953,(B3:0.204713,B4:0.119437)Node11*:0.160936)Node9*:0.0680311,((B5:0.0974683,B6:0.186189)Node13*:0.149043,(B7:0.129743,B8:0.201105)Node14*:0.217816)Node12*:0.347416)Node8*:8.63589)Node4*:0.0908933)Node2*:0.0839667)Node1*:0;
+2024-08-23 08:38:39,839 - INFO - Nexus file written successfully: /examples_aa/dir_ML_tree/example_aa.fasta_c4_0.01.satute.nex
+2024-08-23 08:38:39,839 - INFO - Saturation Test Results for rate category mapped to tree in Nexus file: /examples_aa/dir_ML_tree/example_aa.fasta_c4_0.01.satute.nex
+2024-08-23 08:38:39,840 - INFO - Results saved to CSV file: /examples_aa/dir_ML_tree/example_aa.fasta_c4_0.01.satute.csv
