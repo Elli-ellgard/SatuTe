@@ -1,4 +1,4 @@
-# Examples DNA Alignments
+# Examples Nucleotide Alignments
 
 This directory provides examples to help users understand and utilize the SatuTe software tool effectively. The minimal input of SatuTe is a multiple sequence alignment, a model of sequence evolution with its parameters, and a phylogenetic tree. SatuTe parses these essential pieces of information from the output of [IQ-Tree](http://www.iqtree.org/). Therefore, the easiest way to get started with SatuTe is to use the option `-dir /path/to/iqtree_output`.  We provide here two examples subfolders: `dir_ML_tree` and `dir_true_tree`.
 
@@ -43,7 +43,7 @@ To use the software tool with the provided iqtree runs, follow these steps:
     - We consider now the output file `satute.csv`. This file provides a comprehensive overview of the saturation test results for a specific branch or all branches
 
         We get the following results:
-        | edge                       | ... | **z_score** | p_value | ...|**decision_test** | ... | branch_length | number_of_sites |
+        | branch                       | ... | **z_score** | p_value | ...|**decision_test** | ... | branch_length | number_of_sites |
         |----------------------------|-----|-------------|---------|---|-------------------|-----|---------------|-----------------|
         | ...                        | ... | ...         | ...   | ...  | ...               | ... | ...           | ...             |
         | (NodeA5678*, NodeAroot*)   | ... | **38.7316** | 0   | ...    | **Informative**   | ... | 0.05108455    | 1000            |
@@ -58,13 +58,13 @@ To use the software tool with the provided iqtree runs, follow these steps:
      - By default, the significance level is set to 5%. Analogously to the first example, run SatuTe adjusting the significance level to a more stringent one:
 
          ```bash
-         satute -dir ./dir_true_tree -alpha 0.01
+         satute -dir ./dir_ML_tree -alpha 0.01
          ```
 
      - The SatuTe output files are again directly written into the directory.  For comparison the files are provided in the subfolder `SatuTe_results`.
      - Reconstructing a ML tree from an alignment and then determining which branches of this ML tree are supported by the same alignment is a circular analysis that leads to an inflation of type I error. Therefore, a Bonferroni correction is necessary. Now, we consider the following columns of the output file `satute.csv`.
 
-        | edge                       | ... | **z_score** | ... | **z_alpha_corrected** | **decision_corrected_test_tips** | ... | branch_length | number_of_sites |
+        | branch                       | ... | **z_score** | ... | **z_alpha_bonferroni_corrected** | **decision_bonferroni_corrected** | ... | branch_length | number_of_sites |
         |----------------------------|-----|-------------|-----|-----------------------|----------------------------------|-----|---------------|-----------------|
         | ...                        | ... | ...         | ... | ...                   | ...                              | ... | ...           | ...             |
         | (Node5*, Node4*)           | ... | **38.7977** | ... | **3.5293**            | **Informative**                  | ... | 0.0043852088  | 1000            |
@@ -78,7 +78,7 @@ To use the software tool with the provided iqtree runs, follow these steps:
 
 Given a path to an IQ-Tree executable, SatuTe runs IQ-Tree with default options to generate the required data for the test of saturation, namely  a multiple sequence alignment (MSA), a model of sequence evolution with its parameters, and a phylogenetic tree. The following commands can be used to generate the same results using other SatuTe options.
 
-### True-tree
+### True Tree
 
 In this case, use the SatuTe mode  MSA+Model+Tree  with additional IQ-Tree arguments:
 
@@ -87,7 +87,7 @@ satute -msa ./data/example_dna.fasta -model JC -tree labelled_true_tree.tree \
         -iqtree iqtree2 -add_iqtree_options "-blfix"
 ```
 
-### ML-tree
+### ML Tree
 
 Here, use the SatuTe mode MSA:
 

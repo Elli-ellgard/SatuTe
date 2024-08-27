@@ -1,10 +1,10 @@
-# Software Manual for SatuTe
+# SatuTe in a nutshell
 
 ## 1. Introduction
 
 ### Overview
 
-Welcome to the SatuTe manual. This document provides comprehensive information on how to install, configure, and use SatuTe effectively.
+Welcome to SatuTe. This document provides comprehensive information on how to install, configure, and use SatuTe effectively.
 
 SatuTe (**Satu**ration **Te**st) is a Python-based tool designed to test for phylogenetic information in phylogenetic analyses. The absence of phylogenetic information can be considered saturation. For two sequences, saturation occurs when multiple substitutions obscure true genetic distances, potentially leading to artifacts and errors. SatuTe provides a new measure that generalizes the concept of saturation between two sequences to a theory of saturation between subtrees. The implemented test quantifies whether the given alignment provides enough phylogenetic information shared between two subtrees connected by a branch in a phylogeny.
 
@@ -21,9 +21,9 @@ The minimal input of SatuTe is a multiple sequence alignment, a model of sequenc
 
 ### Main Workflow
 
-The main function of SatuTe operates as follows: Given the required input, SatuTe first calculates the spectral decomposition of the rate matrix and determines the likelihood vectors for each node in the tree. It then performs the test for phylogenetic information on a user-selected branch or on each branch of the tree, as described in the relevant literature. The program outputs the test results and its components in different CSV files and a Nexus file (see [SatuTe Manual PDF](./docs/SatuTe_Manual.pdf)).
+The main function of SatuTe operates as follows: Given the required input, SatuTe first calculates the spectral decomposition of the rate matrix and determines the likelihood vectors for each node in the tree. It then performs the test for phylogenetic information on a user-selected branch or on each branch of the tree, as described in the relevant literature. The program outputs the test results and its components in different CSV files and a Nexus file (see [SatuTe Manual PDF](https://github.com/Elli-ellgard/SatuTe/blob/main/docs/SatuTe_Manual.pdf)).
 
-![Theoretical Foundation of SatuTe](./docs/figure_1_2024_08_02.png)
+![Theoretical Foundation of SatuTe](https://github.com/Elli-ellgard/SatuTe/blob/main/docs/figure_1_2024_08_02.png)
 **Figure:** **Theoretical Foundation of SatuTe**
 
 **a**, In an alignment of the sequences from five taxa, each column represents a pattern $\partial$.
@@ -38,15 +38,15 @@ In cases where a model of rate heterogeneity is used, SatuTe assigns each site t
 
 ## 2. Installation
 
-Satute is available as a python package from pypi and can be normally installed via pip.
-We recommend to use [pipx](https://pipx.pypa.io/stable/) to install Satute as a standalone command line tool. Using pipx ensures that Satute and its dependencies are installed in an isolated environment, minimizing potential conflicts with other Python packages on your system.
+SatuTe is available as a python package from pypi and can be normally installed via pip.
+We recommend to use [pipx](https://pipx.pypa.io/stable/) to install SatuTe as a standalone command line tool. Using pipx ensures that SatuTe and its dependencies are installed in an isolated environment, minimizing potential conflicts with other Python packages on your system.
 
 ### Prerequisites
 
 - Python 3.6 or higher
 - `pipx` (Python package installer)
 
-### Install Satute using pipx
+### Install SatuTe using pipx
 
 1. **Install pipx:**  If you don't have pipx installed, you can install it using pip:
 
@@ -60,7 +60,7 @@ We recommend to use [pipx](https://pipx.pypa.io/stable/) to install Satute as a 
     pipx ensurepath
     ```
 
-2. **Install Satute using pipx:**  Once pipx is installed, you can use it to install Satute:
+2. **Install SatuTe using pipx:**  Once pipx is installed, you can use it to install SatuTe:
 
     ```bash
     pipx install satute
@@ -70,17 +70,19 @@ For more detailed instructions and information about pipx, refer to the [officia
 
 ### Verifying the Installation
 
-After the installation is complete, you can verify that Satute has been installed correctly by running the following command:
+After the installation is complete, you can verify that SatuTe has been installed correctly by running the following command:
 
 ```bash
 satute --version
 ```
 
-You should see the version number of Satute printed on the screen, confirming that the installation was successful.
+You should see the version number of SatuTe printed on the screen, confirming that the installation was successful.
 
 ## 3. Getting Started
 
-If you have a previous output from an [IQ-Tree](http://www.iqtree.org/) run, such as one from the Webserver, you can specify the directory using the `-dir` option for an easy start.
+In our example folder, we provide files for phylogenetic analyses of nucleotide alignments (located in the `./examples/examples_dna` subdirectory) and amino acid alignments (in the `./examples/examples_aa` subdirectory). In addition to the input and output files from an IQ-Tree run, the SatuTe output files are also included for comparison.
+
+If you have a previous output from an [IQ-Tree](http://www.iqtree.org/) run, such as one generated from the Webserver, you can easily get started with SatuTe by specifying the directory using the `-dir` option.
 
 ```bash
 satute -dir ./examples/example_dna/dir_ML_tree
@@ -92,7 +94,7 @@ or as alternative: Given a path to an IQ-Tree executable, SatuTe runs IQ-Tree wi
 satute  -msa ./examples/data/example_dna.fasta -iqtree path_to_iqtree_exe
 ```
   
-In our examples folder, we provide files for showcasing SatuTe on amino acid alignments in the subdirectory ‘./examples/examples_aa’. For more detailed information and three explained examples, please refer to the [SatuTe Manual PDF](./docs/SatuTe_Manual.pdf).
+For more information on SatuTe and a detailed explanation of the three provided examples, please refer to the [SatuTe Manual PDF](https://github.com/Elli-ellgard/SatuTe/blob/main/docs/SatuTe_Manual.pdf).
 
 ## 4. Options of SatuTe
 
