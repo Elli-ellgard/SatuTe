@@ -122,7 +122,7 @@ class SatuteFileWriter(FileWriter):
         self.write_to_file(
             "\nThe file contains a block for the taxon labels and a block for the phylogenetic tree,\nwith the most important test results integrated into the NEWICK string as metadata."
         )
-        self.write_to_file("\nContaining: z_score, p_value, decision_test.\n\n")
+        self.write_to_file("\nContaining: z_score, p_value, decision_test, decision_bonferroni_corrected.\n\n")
 
         for rate, results_set in results.items():
             replaced_rate_category = rate.replace("p", "c")
